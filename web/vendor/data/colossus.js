@@ -1,0 +1,225 @@
+import { UNITS } from './units.js';
+
+// Faction Colossus: one weekly boss per faction, with a shared HP pool far
+// larger than one battle can remove. See docs/daily-activities-design.md.
+//
+// Every number a tester is likely to ask about lives here: pool size, reset
+// time, phases, milestones and payouts. The database holds only the live pool
+// and who hit it (sql/colossus.sql).
+
+const COLOSSUS_MAX_HP = 10000;
+
+// Monday 18:00 UTC — 21:00 Moscow, the testers' evening.
+const COLOSSUS_RESET = { weekday: 1, hourUtc: 18 };
+
+// The boss is a row unit on the middle row: it spans both lines, so melee and
+// ranged units can both reach it from the first round.
+const COLOSSUS_CELL = 2;
+
+// Resource the Colossus pays out, banked until Engravings give it a use.
+// The name is still open (see the design doc).
+const COLOSSUS_CURRENCY = 'Valor';
+
+// Season score for the order factions kill their boss in.
+const COLOSSUS_KILL_POINTS = { 1: 3, 2: 2, 3: 1 };
+
+// A phase is picked from the pool's HP, and it is LIVE: the boss changes phase
+// the moment damage takes it into a lower band, mid-battle, so a player who gets
+// the pool over a threshold watches the stone crack open and the fight change
+// under them. It used to be chosen once per attempt and frozen, which meant the
+// transitions — the most dramatic thing in the design — happened between
+// attempts where nobody could see them. `below_pct` is inclusive: at exactly 75%
+// the boss is in phase 2. Phases only ever go FORWARD (see maybeAdvancePhases).
+//
+// Overrides replace fields on the base unit in data/units.js. Every phase
+// declares the SAME set of fields, so applying one on top of another is total
+// rather than partial: a field one phase set and the next left out would
+// otherwise linger from the earlier phase. Adding a field to one phase means
+// adding it to all four.
+//
+// Phase 1 is meant to be easy. From phase 2 the sweep leaves physical damage
+// (so armor stops carrying the fight) and every hit cuts healing on the whole
+// line (infect, then decay), because a healer line outlasts a flat sweep forever.
+//
+// `spells` is an ORDERED ROTATION, not a menu — the boss casts them in turn and
+// banks power for the next one rather than buying whatever it can afford (see
+// `spell_cycle` on reliquary_titan and aiPickCycledSpell in the engine). Each
+// kit is a cheap chip spell plus one heavy hit that is TELEGRAPHED a round ahead
+// in data/spells.js, which gives the rotation a rhythm the player can read and
+// answer. The old kits held one spell each for a reason that no longer applies:
+// under greedy selection a cheap second spell meant the boss never saved up for
+// the expensive one, and a rotation cannot be starved that way.
+//
+// KEEP THE KITS SHORT. Power is +1 per boss turn capped at 5, and a cast empties
+// the bank, so every extra entry pushes the heavy hit further out: a three-entry
+// kit of 2/3/4 needs eleven-odd rounds to come round to the 4, and an attempt
+// only lasts until the Withering finishes the player's army (~14 rounds). Two
+// entries per phase is what makes the telegraphed spell land twice in an attempt
+// instead of once or never.
+const COLOSSUS_PHASES = [
+  {
+    id: 1, below_pct: 100,
+    name: 'Awakened', name_ru: 'Пробуждение',
+    description: 'Stone and root stir. It sweeps the whole line.',
+    description_ru: 'Камень и корни приходят в движение. Бьёт по всему строю.',
+    overrides: {
+      action_power: 14, damage_source: 'physical', armor: 25, initiative: 40,
+      passive: ['unbreakable 2', 'stoicism 1'],
+    },
+    spells: [
+      { spell_id: 'boss_sundering_stone',  power: 2 },
+      { spell_id: 'boss_reliquary_grasp',  power: 3 },
+    ],
+  },
+  {
+    id: 2, below_pct: 75,
+    name: 'Roots Take Hold', name_ru: 'Корни впиваются',
+    description: 'Thorned roots strike past armor, sap healing and spread rot.',
+    description_ru: 'Шипастые корни бьют сквозь броню, ослабляют лечение и сеют гниль.',
+    overrides: {
+      action_power: 22, damage_source: 'nature', armor: 25, initiative: 40,
+      passive: ['unbreakable 2', 'stoicism 1', 'thorns 1', 'infect 1'],
+    },
+    spells: [
+      { spell_id: 'boss_grave_rot',        power: 3 },
+      { spell_id: 'boss_strangling_roots', power: 4 },
+    ],
+  },
+  {
+    id: 3, below_pct: 50,
+    name: 'The Bells Toll', name_ru: 'Звонят колокола',
+    description: 'Death rings through the line, and the bells pass sentence on the weakest.',
+    description_ru: 'Смерть звенит над строем, а колокола выносят приговор слабейшему.',
+    overrides: {
+      action_power: 28, damage_source: 'death', armor: 25, initiative: 40,
+      passive: ['unbreakable 2', 'stoicism 1', 'thorns 1', 'infect 2'],
+    },
+    spells: [
+      { spell_id: 'boss_toll_of_bells',    power: 2 },
+      { spell_id: 'boss_deaths_verdict',   power: 4 },
+    ],
+  },
+  {
+    id: 4, below_pct: 25,
+    name: 'Last Light', name_ru: 'Последний свет',
+    description: 'The stone cracks open and burns. Faster, deadlier, easier to hurt.',
+    description_ru: 'Камень трескается и пылает. Быстрее, смертоноснее — и уязвимее.',
+    overrides: {
+      action_power: 34, damage_source: 'fire', armor: 15, initiative: 55,
+      passive: ['unbreakable 2', 'stoicism 1', 'thorns 2', 'infect 2', 'decay 2'],
+    },
+    spells: [
+      { spell_id: 'boss_ember_spit',       power: 2 },
+      { spell_id: 'boss_cinder_cascade',   power: 4 },
+      { spell_id: 'boss_deaths_verdict',   power: 4 },
+    ],
+  },
+];
+
+// Personal damage for the week. `faction_crystal` pays in the player's own
+// faction crystal.
+const COLOSSUS_MILESTONES = [
+  { damage: 300,  rewards: { [COLOSSUS_CURRENCY]: 20, faction_crystal: 10 } },
+  { damage: 800,  rewards: { [COLOSSUS_CURRENCY]: 30, faction_crystal: 15 } },
+  { damage: 1500, rewards: { [COLOSSUS_CURRENCY]: 50, faction_crystal: 25 } },
+  { damage: 2500, rewards: { [COLOSSUS_CURRENCY]: 80, faction_crystal: 40 } },
+];
+
+// Paid to everyone who dealt any damage to a boss that was killed.
+const COLOSSUS_KILL_REWARD = { [COLOSSUS_CURRENCY]: 100, Gold: 300, faction_crystal: 30 };
+
+// What it costs to send ONE resting unit back in on the same day, charged per
+// unit. A follower rests after an attempt, which caps the week at one squad a
+// day; this buys that cap off a unit at a time rather than lifting it.
+//
+// Gold is the point of it — the game had no recurring gold sink past the castle —
+// and the potions stop it being a pure gold tap: they are earned, so a player
+// cannot simply out-grind the rest by hoarding coin.
+const COLOSSUS_REST_REFRESH = { Gold: 50, health_potion: 2 };
+
+// The bill for n units, shaped for spendResources.
+function colossusRefreshBill(units) {
+  const n = Math.max(0, Math.floor(Number(units) || 0));
+  if (!n) return {};
+  return Object.fromEntries(Object.entries(COLOSSUS_REST_REFRESH).map(([item, each]) => [item, each * n]));
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// The week `now` falls in: the date of its reset (the row key) and when it ends.
+function colossusWeek(now = Date.now()) {
+  const d = new Date(now);
+  const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), COLOSSUS_RESET.hourUtc));
+  start.setUTCDate(start.getUTCDate() - ((start.getUTCDay() - COLOSSUS_RESET.weekday + 7) % 7));
+  if (start.getTime() > now) start.setUTCDate(start.getUTCDate() - 7);
+  return {
+    weekStart: start.toISOString().slice(0, 10),
+    startsAt:  start.getTime(),
+    resetsAt:  start.getTime() + 7 * DAY_MS,
+  };
+}
+
+function colossusPhaseFor(hp, maxHp = COLOSSUS_MAX_HP) {
+  const pct = maxHp > 0 ? (hp / maxHp) * 100 : 0;
+  return [...COLOSSUS_PHASES].reverse().find(p => pct <= p.below_pct) ?? COLOSSUS_PHASES[0];
+}
+
+function colossusBaseDef() {
+  return UNITS.enemies?.colossus?.reliquary_titan ?? null;
+}
+
+// The boss as it stands for an attempt: base unit, the phase's changes, and the
+// pool's current HP. Same flat shape getEncounter returns.
+function buildColossusBoss(hp) {
+  const def = colossusBaseDef();
+  if (!def) return null;
+  const phase = colossusPhaseFor(hp);
+  const current = Math.max(0, Math.min(COLOSSUS_MAX_HP, Math.floor(hp)));
+  return {
+    ...def,
+    ...phase.overrides,
+    resistances:   { ...(def.resistances || {}) },
+    hp:            COLOSSUS_MAX_HP,
+    max_hp:        COLOSSUS_MAX_HP,
+    current_hp:    current,
+    cell:          COLOSSUS_CELL,
+    item_id:       null,
+    spells:        phase.spells,
+    phase:         phase.id,
+    // The whole ladder travels with the boss, because the engine advances it
+    // mid-battle (maybeAdvancePhases) rather than reading this module: the boss's
+    // battle HP IS the pool, so `battle_hp / max_hp` is the pool percentage the
+    // thresholds are written against.
+    phases:        COLOSSUS_PHASES,
+    // Withering is the attempt's timer: it wears the player's army down, never the boss.
+    wither_immune: true,
+  };
+}
+
+// Milestones passed going from `before` to `after` weekly damage.
+function colossusMilestonesCrossed(before, after) {
+  return COLOSSUS_MILESTONES.filter(m => before < m.damage && after >= m.damage);
+}
+
+// A reward table as grant lines. `factionCrystal` is the player's crystal item name.
+function colossusGrants(rewards, factionCrystal) {
+  const lines = [];
+  for (const [item, amount] of Object.entries(rewards || {})) {
+    const name = item === 'faction_crystal' ? factionCrystal : item;
+    if (name && amount > 0) lines.push({ item: name, amount });
+  }
+  return lines;
+}
+
+export {
+  COLOSSUS_MAX_HP, COLOSSUS_RESET, COLOSSUS_CELL, COLOSSUS_CURRENCY, COLOSSUS_KILL_POINTS,
+  COLOSSUS_PHASES, COLOSSUS_MILESTONES, COLOSSUS_KILL_REWARD, COLOSSUS_REST_REFRESH,
+  colossusWeek, colossusPhaseFor, colossusBaseDef, buildColossusBoss, colossusMilestonesCrossed, colossusGrants,
+  colossusRefreshBill,
+};
+if (typeof module !== 'undefined') module.exports = {
+  COLOSSUS_MAX_HP, COLOSSUS_RESET, COLOSSUS_CELL, COLOSSUS_CURRENCY, COLOSSUS_KILL_POINTS,
+  COLOSSUS_PHASES, COLOSSUS_MILESTONES, COLOSSUS_KILL_REWARD, COLOSSUS_REST_REFRESH,
+  colossusWeek, colossusPhaseFor, colossusBaseDef, buildColossusBoss, colossusMilestonesCrossed, colossusGrants,
+  colossusRefreshBill,
+};

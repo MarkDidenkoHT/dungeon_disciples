@@ -1,0 +1,1613 @@
+// Each entry is an item blueprint. Fields the crafting/equip systems care about:
+//   faction       null = craftable by anyone; otherwise only that faction may
+//                 craft it, AND it is hidden from other factions' catalogs.
+//   unique        true = the player may only ever own ONE copy (crafting a
+//                 second is refused). Absent/false = craft as many as you like.
+//                 By convention every epic/mythic item is unique; commons and
+//                 rares are stackable. Flip per-item as balance needs.
+//
+// Rarities: common, rare, epic, mythic — a power ladder — plus SHATTERED, which
+// is not on that ladder. A shattered item is epic in scale and epic in what it
+// costs to craft; it is its own rarity purely so tournament rules can budget it
+// separately ("1 mythic, 1 shattered, 2 epic"), because what these items do is
+// structural — they take a tag off a unit — rather than bigger numbers.
+//
+//   cost/item_cost resource + item-ingredient cost to craft.
+//   requires      embark progress the craft is gated behind. Omit for the
+//                 rarity default; see the craft gating block below ITEM_DEFS.
+//
+// Equip restrictions (checked in data/item_rules.js, enforced by
+// POST /items/equip and mirrored by the roster UI):
+//   tag_required  unit must carry this tag
+// Tag composition:
+//   adds_tag      'Construct'    unit also counts as this tag while worn
+//   removes_tag   'Engineer'     unit STOPS counting as this tag while worn.
+//                 Applied after adds_tag. Enables the exclusivity passives
+//                 ("while this is your only Engineer") to be built for.
+//   blocked_tags    ['Construct']  refuse units carrying ANY of these
+//   blocked_actions ['heal']       refuse units whose action is of this kind
+//                                  ('damage' | 'heal' | 'sacrifice' | 'none')
+//   requires_action 'damage'       unit's action MUST be of this kind
+//   max_targets     1              unit's action may hit at most this many
+//                                  targets. Put it on per-hit effects (bleed,
+//                                  burn, poison) so an AoE unit cannot apply
+//                                  them to the whole enemy line at once.
+// The last three are only needed for special cases: an item whose `passive`
+// declares a trigger that requires attacking (on_hit / on_kill /
+// preemptive_strike) or healing (on_heal) is ALREADY refused automatically on a
+// unit that cannot do that — no authoring required.
+const ITEM_DEFS = {
+
+  // The counterpart to every `adds_tag` item in this file. Wearing it makes the
+  // unit stop counting as the listed tag(s) — which is a downgrade on its face
+  // and the ONLY way to satisfy an exclusivity passive ("while this is your only
+  // Engineer") while still fielding a second unit that would otherwise break it.
+  // `removes_tag` takes a tag or a list; retune it per campaign without touching
+  // any code.
+  broken_sigil: {
+    key:          'broken_sigil',
+    name:         'Broken Sigil',
+    name_ru:      'Расколотая Печать',
+    faction:      null,
+    tag_required: 'Engineer',
+    adds_tag:     null,
+    removes_tag:  'Construct',
+    stat_mods:    { hp: 4, armor: 2 },
+    passive:      'vow_of_silence 1',
+    icon:         'broken_sigil',
+    rarity:       'shattered',
+    unique:       true,
+    cost:         { Gold: 200, Crystals_Air: 30, Crystals_Nature: 30, vial_of_pure_blood: 2,grave_dust: 2  },
+    requires:     { region: 'any', level: 3 },
+  },
+  desecrated_plate: {
+    key:          'desecrated_plate',
+    name:         'Desecrated Plate',
+    name_ru:      'Оскверненные Латы',
+    faction:      null,
+    tag_required: 'Knight',
+    adds_tag:     'Zombie',
+    removes_tag:  'Holy',
+    stat_mods:    { hp: 5, armor: 5 },
+    passive:      'essence_of_power 1',
+    icon:         'desecrated_plate',
+    rarity:       'shattered',
+    unique:       true,
+    cost:         { Gold: 200, Crystals_Death: 30, Crystals_Nature: 30, vial_of_pure_blood: 2,grave_dust: 2  },
+    requires:     { region: 'any', level: 3 },
+  },
+  blood_of_a_saint: {
+    key:          'blood_of_a_saint',
+    name:         "Blood Of A Saint",
+    name_ru:      'Кровь Святого',
+    faction:      null,
+    tag_required: 'Holy',
+    adds_tag:     null,
+    removes_tag:  'Spirit',
+    stat_mods:    { hp: 5, death_resist: 5},
+    passive:      'inner_fire 1',
+    icon:         'blood_of_a_saint',
+    rarity:       'shattered',
+    unique:       true,
+    cost:         { Gold: 200, Crystals_Life: 30, Crystals_Death: 30, vial_of_pure_blood: 2,grave_dust: 2 },
+    requires:     { region: 'any', level: 3 },
+  },
+  bloodless: {
+    key:          'bloodless',
+    name:         "Bloodless",
+    name_ru:      'Обескровленный',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     'Skeleton',
+    removes_tag:  'Zombie',
+    stat_mods:    { hp: 5, life_resist: 5},
+    passive:      'vampires_vigil 1',
+    icon:         'bloodless',
+    rarity:       'shattered',
+    unique:       true,
+    cost:         { Gold: 200, Crystals_Nature: 30, Crystals_Death: 30, vial_of_pure_blood: 2,grave_dust: 2 },
+    requires:     { region: 'any', level: 3 },
+  },
+  oathbreaker: {
+    key:          'oathbreaker',
+    name:         'Oathbreaker',
+    name_ru:      'Клятвопреступник',
+    faction:      null,
+    tag_required: 'Holy',
+    adds_tag:     'Demon',
+    stat_mods:    { hp: 5, fire_resist: 5 },
+    passive:      'vow_of_ash 1',
+    icon:         'oathbreaker',
+    rarity:       'shattered',
+    unique:       true,
+    cost:         { Gold: 200, Crystals_Fire: 30, Crystals_Death: 30, vial_of_pure_blood: 2, grave_dust: 2 },
+    requires:     { region: 'any', level: 3 },
+  },
+  crystal_exoskeleton: {
+    key:          'crystal_exoskeleton',
+    name:         'Crystal Exoskeleton',
+    name_ru:      'Кристальный Экзоскелет',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     'Construct',
+    stat_mods:    { hp: 3, armor: 3, cold_resist: 5 },
+    passive:      'magic_attunement 1',
+    blocked_tags: ['Spirit', 'Demon'],      
+    icon:         'crystal_exoskeleton',
+    rarity:       'mythic',
+    unique:       true,
+    cost:         { living_geode: 10, crystal_dust: 2, crystal_shard: 1, Gold: 300, Crystals_Frost: 50 },
+    item_cost:    { iron_armor: 1, cold_resistance_potion: 2 },
+    requires:     [
+      { region: 'glittering_abyss',  level: 4 },
+      { region: 'chamber_of_unrest', level: 6 },
+    ],
+  },
+  crystal_shield: {
+    key:          'crystal_shield',
+    name:         'Crystal Shield',
+    name_ru:      'Кристальный Щит',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { hp: 2, armor: 3, cold_resist: 5 },
+    passive:      'protector 2',
+    icon:         'crystal_shield',
+    rarity:       'epic',
+    cost:         { crystal_shard: 1, Gold: 150, Crystals_Frost: 25 },
+    item_cost:    { iron_shield: 1, cold_resistance_potion: 1 },
+  },
+  aegis_of_the_first_ward: {
+    key:          'aegis_of_the_first_ward',
+    name:         'Aegis of the First Ward',
+    name_ru:      'Эгида Первой Стражи',
+    faction:      null,
+    tag_required: 'Knight',
+    adds_tag:     null,
+    stat_mods:    { fire_resist: 8, death_resist: 8 },
+    passive:      'radiance 1',
+    icon:         'aegis_of_the_first_ward',
+    rarity:       'mythic',
+    unique:       true,
+    cost:         { Gold: 200, vial_of_pure_blood: 3, crystal_shard: 3, Crystals_Life: 40 },
+    item_cost:    { iron_shield: 1, death_resistance_potion: 1, fire_resistance_potion: 1, veterans_medal: 1 },
+  },
+  clockwork_plate: {
+    key:          'clockwork_plate',
+    name:         'Clockwork Plate',
+    name_ru:      'Заводной Доспех',
+    faction:      null,
+    tag_required: 'Engineer',
+    adds_tag:     'Construct',
+    stat_mods:    { hp: 4, armor: 5 },
+    passive:      'sole_artificer 1',
+    icon:         'clockwork_plate',
+    rarity:       'mythic',
+    unique:       true,
+    cost:         { Gold: 200, vial_of_pure_blood: 5, crystal_shard: 5, Crystals_Life: 50 },
+    item_cost:    { iron_armor: 2, veterans_medal: 1 },
+  },
+  might_of_the_pure: {
+    key:          'might_of_the_pure',
+    name:         'Might Of The Pure',
+    name_ru:      'Мощь Непорочных',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     'Knight',
+    stat_mods:    { action_power: 5, death_resist: 5 },
+    passive:      'iron_will 2',
+    icon:         'might_of_the_pure',
+    rarity:       'mythic',
+    unique:       true,
+    cost:         { shard_of_might: 10, vial_of_pure_blood: 2, Gold: 350, Crystals_Life: 25, Crystals_Death: 25 },
+    item_cost:    { death_resistance_potion: 2, mace: 1, seal_of_power: 1}
+  },
+  sanctified_bulwark: {
+    key:          'sanctified_bulwark',
+    name:         'Sanctified Bulwark',
+    name_ru:      'Освящённый Оплот',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     'Holy',
+    stat_mods:    { hp: 2, armor: 5 },
+    passive:      'stoicism 2',
+    icon:         'sanctified_bulwark',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { aggrails_signet: 2, Gold: 150, Crystals_Nature: 10  },
+    item_cost:    { iron_armor: 1, orb_of_light: 1 },
+  },
+  divine_circlet: {
+    key:          'divine_circlet',
+    name:         'Divine Circlet',
+    name_ru:      'Освященная Диадема',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     'Spirit',
+    blocked_tags: ['Skeleton', 'Zombie'],
+    stat_mods:    { hp: 5, action_power: 2 },
+    passive:      'pure_blood 1',
+    icon:         'divine_circlet',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { Gold: 100, aggrails_signet: 2  },
+    item_cost:    { orb_of_pure_blood: 1, orb_of_light: 1 },
+  },
+  sanctified_guardian: {
+    key:          'sanctified_guardian',
+    name:         'Sanctified Guardian',
+    name_ru:      'Освящённый Страж',
+    faction:      'empire',
+    tag_required: null,
+    adds_tag:     'Holy',
+    blocked_tags: ['Demon', 'Zombie'],
+    stat_mods:    { hp: 2, armor: 5 },
+    passive:      'protector 2',
+    icon:         'sanctified_guardian',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { aggrails_signet: 2, Gold: 190, Crystals_Life: 25, Crystals_Air: 10 },
+    item_cost:    { iron_shield: 1 },
+  },
+  knights_oath: {
+    key:          'knights_oath',
+    name:         'Knights Oath',
+    name_ru:      'Обет Рыцарства',
+    faction:      null,
+    tag_required:  null,
+    adds_tag:     'Knight',
+    stat_mods:    { hp: 2, armor: 5 },
+    passive:      'iron_will 1',
+    icon:         'knights_oath',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { aggrails_signet: 2, Gold: 190, Crystals_Life: 25 },
+    item_cost:    { codex_aeternum: 1 },
+  },
+  iron_shield: {
+    key:          'iron_shield',
+    name:         'Iron Shield',
+    name_ru:      'Железный Щит',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { armor: 5 },
+    passive:      'protector 1',
+    icon:         'iron_shield',
+    rarity:       'rare',
+    cost:         { aggrails_signet: 2, Gold: 90, Crystals_Life: 25 },
+  },
+  codex_aeternum: {
+    key:          'codex_aeternum',
+    name:         'Codex Aeternum',
+    name_ru:      'Кодекс Вечности',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { hp: 2, armor: 3 },
+    passive:      'inspiration_max_hp 1',
+    icon:         'codex_aeternum',
+    rarity:       'rare',
+    cost:         { Gold: 50, Crystals_Life: 25 },
+    item_cost:    { padded_armor: 1 },
+  },
+  gift_of_eternity: {
+    key:          'gift_of_eternity',
+    name:         'Gift Of Eternity',
+    name_ru:      'Дар Вечности',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     'Vampire',
+    stat_mods:    { action_power: 3, hp: 3, armor: 3 },
+    passive:      'inspiration_max_hp 1',
+    icon:         'gift_of_eternity',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { Gold: 150, Crystals_Life: 10, Crystals_Frost: 10 },
+    item_cost:    { codex_aeternum: 1, vampirics_dagger: 1 },
+  },
+  codex_militarum: {
+    key:          'codex_militarum',
+    name:         'Codex Militarum',
+    name_ru:      'Кодекс Воинства',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { action_power: 3 },
+    passive:      'inspiration_damage 1',
+    icon:         'codex_militarum',
+    rarity:       'rare',
+    cost:         { Gold: 90, Crystals_Life: 25 },
+  },
+  court_regalia: {
+    key:          'court_regalia',
+    name:         'Court Regalia',
+    name_ru:      'Придворные Регалии',
+    faction:      'choir_of_the_cursed',
+    tag_required: 'Court',
+    adds_tag:     null,
+    stat_mods:    { hp: 3 },
+    passive:      'choir 1',
+    icon:         'court_regalia',
+    rarity:       'rare',
+    cost:         { vial_of_pure_blood: 1, Gold: 50 },
+    item_cost:    { life_charm: 2},
+  },
+  dragon_skin: {
+    key:          'dragon_skin',
+    name:         'Dragon Skin',
+    name_ru:      'Драконья Кожа',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     'Dragon',
+    stat_mods:    { armor: 2, hp: 4, fire_resist: 8 },
+    passive:      'volcanic_skin 1',
+    icon:         'dragon_skin',
+    rarity:       'mythic',
+    unique:       true,
+    cost:         { crystal_dust: 3, Gold: 275, Crystals_Fire: 25 },
+    item_cost:    { iron_armor: 1, fire_resistance_potion: 1, dragon_scale: 3 },
+  },
+  aldras_devotion: {
+    key:          'aldras_devotion',
+    name:         "Aldra's Devotion",
+    name_ru:      'Преданность Алдры',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     'Demon',
+    stat_mods:    { armor: 3, hp: 3, death_resist: 5},
+    passive:      'beacon_of_despair 1',
+    icon:         'aldras_devotion',
+    rarity:       'mythic',
+    unique:       true,
+    cost:         { shard_of_devotion: 10, Gold: 275, Crystals_Life: 40, Crystals_Death: 35 },
+    item_cost:    { iron_armor: 1, death_resistance_potion: 2 },
+  },
+  aldras_patience: {
+    key:          'aldras_patience',
+    name:         "Aldra's Patience",
+    name_ru:      'Терпение Алдры',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     'Demon',
+    stat_mods:    { action_power: 5, death_resist: 5},
+    passive:      'aggrails_blessing 1',
+    icon:         'aldras_patience',
+    rarity:       'mythic',
+    unique:       true,
+    cost:         { shard_of_devotion: 10, Gold: 275, Crystals_Fire: 40, Crystals_Death: 35 },
+    item_cost:    { iron_armor: 1, death_resistance_potion: 2 },
+  },
+  shroud_of_the_fallen: {
+    key:          'shroud_of_the_fallen',
+    name:         'Shroud of the Fallen',
+    name_ru:      'Саван Павших',
+    faction:      'grail_of_sorrow',
+    tag_required:  null,
+    adds_tag:     'Zombie',         
+    stat_mods:    { hp: 3, armor: 3 },
+    passive:      'horde 1',
+    icon:         'shroud_of_the_fallen',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { grave_dust: 2, Gold: 150, Crystals_Death: 20 },
+    item_cost:    { iron_armor: 1, mothers_gift: 1 },
+  },
+  mothers_gift: {
+    key:          'mothers_gift',
+    name:         "Mother's Gift",
+    name_ru:      'Дар Матери',
+    faction:      'grail_of_sorrow',
+    tag_required: 'Vampire',
+    adds_tag:     'Zombie',
+    stat_mods:    null,
+    passive:      'banquet 1',
+    icon:         'mothers_gift',
+    rarity:       'rare',
+    cost:         { Gold: 50, Crystals_Death: 20, Crystals_Frost: 10, Crystals_Air: 10 },
+    requires:     { region: 'any', level: 1 },
+  },
+  shadow_robe: {
+    key:          'shadow_robe',
+    name:         "Shadow Robe",
+    name_ru:      'Мантия Теней',
+    faction:      'grail_of_sorrow',
+    tag_required: 'Caster',
+    adds_tag:     null,
+    stat_mods:    { hp: 3 },
+    passive:      'banquet 2',
+    icon:         'shadow_robe',
+    unique:       true,
+    rarity:       'epic',
+    cost:         { Gold: 150, Crystals_Death: 20, Crystals_Frost: 10, Crystals_Nature: 20 },
+    item_cost:    { mothers_gift: 1},
+    requires:     { region: 'any', level: 1 },
+  },
+  dark_determination: {
+    key:          'dark_determination',
+    name:         "Dark Determination",
+    name_ru:      'Темная Решимость',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     'Zombie',
+    stat_mods:    { hp: 2, initiative: 2},
+    passive:      'horde 1',
+    icon:         'dark_determination',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { Gold: 50, Crystals_Death: 20, Crystals_Nature: 20 },
+    requires:     { region: 'any', level: 1 },
+  },
+  vampirics_dagger: {
+    key:          'vampirics_dagger',
+    name:         "Vampiric Dagger",
+    name_ru:      'Вампирский Кинжал',
+    faction:      null,
+    tag_required: 'Vampire',
+    adds_tag:     null,
+    stat_mods:    { hp: 2 },
+    passive:      'lifesteal 1',
+    icon:         'vampirics_dagger',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { Gold: 40, Crystals_Death: 15, Crystals_Life: 15 },
+    requires:     { region: 'any', level: 1 },
+    item_cost:    { life_charm: 1 }
+  },
+  orb_of_light: {
+    key:          'orb_of_light',
+    name:         "Orb Of Light",
+    name_ru:      'Сфера Света',
+    faction:      null,
+    tag_required: 'Holy',
+    requires_action: 'damage',
+    adds_tag:     null,
+    stat_mods:    { hp: 2 },
+    passive:      'stoicism 1',
+    icon:         'orb_of_light',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { Gold: 40, Crystals_Life: 30 },
+    requires:     { region: 'any', level: 1 },
+    item_cost:    { life_charm: 1 }
+  },
+  padded_armor: {
+    key:          'padded_armor',
+    name:         "Padded Armor",
+    name_ru:      'Стёганый Доспех',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { hp: 2, armor: 2 },
+    passive:      null,
+    icon:         'padded_armor',
+    rarity:       'common',
+    cost:         { Gold: 50 },
+  },
+  iron_armor: {
+    key:          'iron_armor',
+    name:         "Iron Armor",
+    name_ru:      'Железный Доспех',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { armor: 3, hp: 4 },
+    passive:      null,
+    blocked_tags: ['Spirit', 'Caster'],
+    icon:         'iron_armor',
+    rarity:       'rare',
+    cost:         { Gold: 40, Crystals_Frost: 15, Crystals_Fire: 15 },
+    item_cost:    { padded_armor: 1 },
+  },
+  rimeheart: {
+    key:          'rimeheart',
+    name:         "Rime Heart",
+    name_ru:      'Сердце Зимы',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { armor: 3, hp: 2, cold_resist: 5 },
+    passive:      'rimeguard 1',
+    blocked_tags: ['Spirit', 'Caster'],
+    icon:         'rimeheart',
+    rarity:       'epic',
+    cost:         { Gold: 150, Crystals_Frost: 25 },
+    item_cost:    { iron_armor: 1, cold_resistance_potion: 1 },
+  },
+  everliving_stalk: {
+    key:          'everliving_stalk',
+    name:         "Everliving Stalk",
+    name_ru:      'Стебель Вечноживника',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     'Treefolk',
+    stat_mods:    {hp: 5},
+    passive:      'regenerate 1',
+    blocked_tags: ['Demon', 'Zombie'],
+    icon:         'everliving_stalk',
+    rarity:       'epic',
+    cost:         { Gold: 200, Crystals_Life: 20, Crystals_Death: 20, Crystals_Nature: 20, Crystals_Air: 20, Crystals_Fire: 20 },
+  },
+  fire_resistance_potion: {
+    key:          'fire_resistance_potion',
+    name:         "Fire Resistance Potion",
+    name_ru:      'Зелье Огнестойкости',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { fire_resist: 5 },
+    passive:      null,
+    icon:         'fire_resistance_potion',
+    rarity:       'common',
+    cost:         { Gold: 30, Crystals_Fire: 10 },
+    requires:     { region: 'any', level: 1 },
+  },
+  orb_of_fire: {
+    key:          'orb_of_fire',
+    name:         "Orb Of Fire",
+    name_ru:      'Сфера Пламени',
+    faction:      null,
+    tag_required: 'Caster',
+    max_targets:  1,
+    adds_tag:     null,
+    stat_mods:    { fire_resist: 5 },
+    passive:      'burn 1',
+    blocked_tags: ['Spirit', 'Zombie'],
+    icon:         'orb_of_fire',
+    rarity:       'rare',
+    cost:         { Gold: 50, Crystals_Fire: 25 },
+    item_cost:    { fire_resistance_potion: 1 },
+  },
+  fire_staff: {
+    key:          'fire_staff',
+    name:         "Fire Staff",
+    name_ru:      'Посох Пламени',
+    faction:      null,
+    tag_required: 'Caster',
+    max_targets:  1,
+    adds_tag:     null,
+    stat_mods:    { fire_resist: 10 },
+    passive:      'burn 2',
+    blocked_tags: ['Spirit', 'Zombie'],
+    icon:         'fire_staff',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { Gold: 150, Crystals_Fire: 25, aggrails_signet: 1 },
+    item_cost:    { fire_resistance_potion: 1, orb_of_fire: 1 },
+  },
+  burning_tyrant: {
+    key:          'burning_tyrant',
+    name:         "Burning Tyrant",
+    name_ru:      'Пылающий Тиран',
+    faction:      'choir_of_the_cursed',
+    tag_required: 'Caster',
+    max_targets:  1,
+    adds_tag:     null,
+    stat_mods:    { fire_resist: 7, hp: 2, action_power: 2, armor: 2 },
+    passive:      'burn 2',
+    icon:         'burning_tyrant',
+    rarity:       'mythic',
+    unique:       true,
+    cost:         { Gold: 200, aggrails_signet: 2, grave_dust: 2 },
+    item_cost:    { fire_staff: 1, orb_of_fire: 1, dragon_scale: 1 },
+  },
+  dragon_scale: {
+    key:          'dragon_scale',
+    name:         "Dragon Scale",
+    name_ru:      'Драконья Чешуя',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { hp: 1, action_power: 1, armor: 1 },
+    passive:      null,
+    icon:         'dragon_scale',
+    rarity:       'common',
+    cost:         { Gold: 20, Crystals_Fire: 15 },
+  },
+  frost_cloak: {
+    key:          'frost_cloak',
+    name:         "Cloak of Frost Protection",
+    name_ru:      'Плащ Защиты От Холода',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { cold_resist: 5 },
+    passive:      'resist_aura_cold 2',
+    icon:         'frost_cloak',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { Crystals_Life: 5, Crystals_Death: 5, Crystals_Nature: 5, Crystals_Air: 5, Crystals_Fire: 5 },
+    requires:     { region: 'any', level: 2 },
+    item_cost:    { cold_resistance_potion: 2 }
+  },
+  ember_mantle: {
+    key:          'ember_mantle',
+    name:         'Ember Mantle',
+    name_ru:      'Тлеющая Мантия',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { fire_resist: 5 },
+    passive:      'resist_aura_fire 2',
+    icon:         'ember_mantle',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { Gold: 30, Crystals_Fire: 15, Crystals_Life: 5 },
+    item_cost:    { fire_resistance_potion: 2 },
+  },
+  mossweave_cloak: {
+    key:          'mossweave_cloak',
+    name:         'Mossweave Cloak',
+    name_ru:      'Плащ Из Мха',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { nature_resist: 5 },
+    passive:      'resist_aura_nature 2',
+    icon:         'mossweave_cloak',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { Gold: 30, Crystals_Nature: 15, Crystals_Air: 5 },
+    item_cost:    { nature_resistance_potion: 2 },
+  },
+  caster_hat: {
+    key:          'caster_hat',
+    name:         "Caster's Hat",
+    name_ru:      'Шляпа Мага',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     'Caster',
+    stat_mods:    { hp: 2 },
+    passive:      'concentration 1',
+    blocked_tags: ['Engineer', 'Zombie'],
+    icon:         'caster_hat',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { Crystals_Frost: 5, Crystals_Air: 5  },
+    requires:     { region: 'any', level: 2 },
+    item_cost:    { seal_of_power: 1, life_charm: 1}
+  },
+  arcane_staff: {
+    key:          'arcane_staff',
+    name:         "Arcane Staff",
+    name_ru:      'Чародейский Посох',
+    faction:      null,
+    tag_required: 'Caster',
+    adds_tag:     null,
+    stat_mods:    { action_power: 2, hp: 5 },
+    passive:      'dissipate 1',
+    requires_action: 'damage',
+    blocked_tags: ['Engineer', 'Zombie'],
+    icon:         'arcane_staff',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { Gold: 150, Crystals_Frost: 10, Crystals_Air: 10, Crystals_Nature: 10, Crystals_Fire: 10, Crystals_Life: 10, Crystals_Death: 10  },
+    requires:     { region: 'any', level: 2 },
+    item_cost:    { caster_hat: 1 }
+  },
+  death_resistance_potion: {
+    key:          'death_resistance_potion',
+    name:         "Death Resistance Potion",
+    name_ru:      'Зелье Защиты От Смерти',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { death_resist: 5 },
+    passive:      null,
+    icon:         'death_resistance_potion',
+    rarity:       'common',
+    cost:         { Gold: 30, Crystals_Death: 10 },
+  },
+  cold_resistance_potion: {
+    key:          'cold_resistance_potion',
+    name:         "Cold Resistance Potion",
+    name_ru:      'Зелье Защиты От Холода',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { cold_resist: 5 },
+    passive:      null,
+    icon:         'cold_resistance_potion',
+    rarity:       'common',
+    cost:         { Gold: 30, Crystals_Frost: 10 },
+    requires:     { region: 'any', level: 1 },
+  },
+  life_resistance_potion: {
+    key:          'life_resistance_potion',
+    name:         "Life Resistance Potion",
+    name_ru:      'Зелье Защиты От Жизни',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { life_resist: 5 },
+    passive:      null,
+    icon:         'life_resistance_potion',
+    rarity:       'common',
+    cost:         { Gold: 30, Crystals_Life: 10 },
+    requires:     { region: 'any', level: 1 },
+  },
+  nature_resistance_potion: {
+    key:          'nature_resistance_potion',
+    name:         "Nature Resistance Potion",
+    name_ru:      'Зелье Защиты От Природы',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { nature_resist: 5 },
+    passive:      null,
+    icon:         'nature_resistance_potion',
+    rarity:       'common',
+    cost:         { Gold: 30, Crystals_Nature: 10 },
+    requires:     { region: 'any', level: 1 },
+  },
+  air_resistance_potion: {
+    key:          'air_resistance_potion',
+    name:         "Air Resistance Potion",
+    name_ru:      'Зелье Защиты От Воздуха',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { air_resist: 5 },
+    passive:      null,
+    icon:         'air_resistance_potion',
+    rarity:       'common',
+    cost:         { Gold: 30, Crystals_Air: 10 },
+    requires:     { region: 'any', level: 1 },
+  },
+  crude_sword: {
+    key:          'crude_sword',
+    name:         "Crude Sword",
+    name_ru:      'Грубый Меч',
+    faction:      null,
+    tag_required: null,
+    requires_action: 'damage',
+    adds_tag:     null,
+    stat_mods:    { action_power: 1, initiative: 1 },
+    passive:      null,
+    icon:         'crude_sword',
+    rarity:       'common',
+    cost:         { Gold: 25, Crystals_Death: 5, Crystals_Fire: 5 },
+  },
+  iron_sword: {
+    key:          'iron_sword',
+    name:         "Iron Sword",
+    name_ru:      'Железный Меч',
+    faction:      null,
+    tag_required: null,
+    requires_action: 'damage',
+    adds_tag:     null,
+    stat_mods:    { action_power: 3, initiative: 2 },
+    passive:      null,
+    icon:         'iron_sword',
+    rarity:       'rare',
+    cost:         { Gold: 40, Crystals_Fire: 15, Crystals_Nature: 15 },
+    item_cost:    { crude_sword: 1 },
+  },
+  crystal_sword: {
+    key:          'crystal_sword',
+    name:         "Crystal Sword",
+    name_ru:      'Кристальный Меч',
+    faction:      null,
+    tag_required: null,
+    requires_action: 'damage',
+    adds_tag:     null,
+    stat_mods:    { action_power: 4, initiative: 2 },
+    passive:      'chill 2',
+    icon:         'crystal_sword',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { crystal_shard: 1, Gold: 175, Crystals_Air: 20, Crystals_Frost: 20 },
+    item_cost:    { iron_sword: 1 },
+  },
+  lightbringer: {
+    key:          'lightbringer',
+    name:         "Lightbringer",
+    name_ru:      'Несущий Свет',
+    faction:      'empire',
+    tag_required: 'Knight',
+    requires_action: 'damage',
+    adds_tag:     null,
+    stat_mods:    { action_power: 5, initiative: 2 },
+    passive:      'gravebane 2',
+    icon:         'lightbringer',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { crystal_shard: 1, Gold: 125 },
+    item_cost:    { iron_sword: 1, orb_of_light: 1 },
+  },
+  forbidden_vow: {
+    key:          'forbidden_vow',
+    name:         "Forbidden Vow",
+    name_ru:      'Запретная Клятва',
+    faction:      null,
+    tag_required: 'Skeleton',
+    adds_tag:     null,
+    stat_mods:    { action_power: 2, initiative: 3 },
+    passive:      'decay 2',
+    blocked_tags: ['Holy'],         
+    icon:         'forbidden_vow',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { grave_dust: 2, Gold: 150, Crystals_Air: 15, Crystals_Frost: 15 },
+    item_cost:    { iron_sword: 1, poisonous_dagger: 1 },
+  },
+  burning_fury: {
+    key:          'burning_fury',
+    name:         "Burning Fury",
+    name_ru:      'Пылающая Ярость',
+    faction:      null,
+    tag_required: 'Demon',
+    adds_tag:     null,
+    stat_mods:    { action_power: 4 },
+    passive:      'rage 1',
+    icon:         'burning_fury',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { Gold: 190, Crystals_Air: 15, Crystals_Frost: 15 },
+    item_cost:    { iron_sword: 1 },
+  },
+  mace: {
+    key:          'mace',
+    name:         "Mace",
+    name_ru:      'Булава',
+    faction:      null,
+    tag_required: null,
+    requires_action: 'damage',
+    adds_tag:     null,
+    stat_mods:    null,
+    passive:      'shatter 1',
+    icon:         'mace',
+    rarity:       'common',
+    unique:       true,
+    cost:         { Gold: 30, Crystals_Death: 5, Crystals_Air: 5 },
+  },
+  morning_star: {
+    key:          'morning_star',
+    name:         "Morning Star",
+    name_ru:      'Утренняя Звезда',
+    faction:      null,
+    tag_required: null,
+    requires_action: 'damage',
+    adds_tag:     null,
+    stat_mods:    { action_power: 3 },
+    passive:      'shatter 1',
+    icon:         'morning_star',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { shard_of_devotion: 1, Gold: 40, Crystals_Death: 15, Crystals_Nature: 15 },
+    item_cost:    {mace: 1},
+  },
+  shard_of_hate: {
+    key:          'shard_of_hate',
+    name:         "Shard Of Hate",
+    name_ru:      'Осколок Гнева',
+    faction:      null,
+    tag_required: null,
+    requires_action: 'damage',
+    adds_tag:     null,
+    stat_mods:    { action_power: 3 },
+    passive:      'aggrails_blessing 1',
+    icon:         'shard_of_hate',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { shard_of_devotion: 1, aggrails_signet:1, Gold: 40, Crystals_Death: 15, Crystals_Fire: 15 },
+    item_cost:    {mace: 1},
+  },
+  hatemace: {
+    key:          'hatemace',
+    name:         "Hatemace",
+    name_ru:      'Булава Ненависти',
+    faction:      null,
+    tag_required: null,
+    requires_action: 'damage',
+    adds_tag:     null,
+    stat_mods:    { action_power: 5, initiative: 2 },
+    passive:      'aggrails_blessing 2',
+    icon:         'hatemace',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { shard_of_might: 2, aggrails_signet:1, Gold: 140, Crystals_Death: 15, Crystals_Fire: 15 },
+    item_cost:    { shard_of_hate: 1, seal_of_power: 1},
+  },
+  seal_of_power: {
+    key:          'seal_of_power',
+    name:         "Seal Of Power",
+    name_ru:      'Печать Силы',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { action_power: 2 },
+    passive:      null,
+    icon:         'seal_of_power',
+    rarity:       'common',
+    cost:         { Gold: 50 },
+  },
+  lion_signet: {
+    key:          'lion_signet',
+    name:         "Lion Signet",
+    name_ru:      'Львиный Перстень',
+    faction:      'empire',
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { action_power: 3, hp: 3 },
+    passive:      null,
+    icon:         'lion_signet',
+    rarity:       'rare',
+    cost:         { aggrails_signet: 1, Gold: 25, Crystals_Life: 10 },
+    item_cost:    { seal_of_power: 1, life_charm: 1 },
+  },
+  life_charm: {
+    key:          'life_charm',
+    name:         "Life Charm",
+    name_ru:      'Кулон Жизни',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { hp: 3 },
+    passive:      null,
+    icon:         'life_charm',
+    rarity:       'common',
+    cost:         { Gold: 10, Crystals_Life: 10, Crystals_Death: 10 },
+  },
+  orb_of_pure_blood: {
+    key:          'orb_of_pure_blood',
+    name:         "Orb Of Pure Blood",
+    name_ru:      'Сфера Чистой Крови',
+    faction:      null,
+    tag_required: 'Caster',
+    max_targets:  1,
+    adds_tag:     null,
+    stat_mods:    { hp: 4 },
+    passive:      'bleed 1',
+    icon:         'orb_of_pure_blood',
+    rarity:       'rare',
+    cost:         { vial_of_pure_blood: 1, Crystals_Death: 25 },
+    item_cost:    { seal_of_power: 1, life_charm: 1 },
+  },
+  staff_of_thaumaturgy: {
+    key:          'staff_of_thaumaturgy',
+    name:         "Staff Of Thaumaturgy",
+    name_ru:      'Посох Тауматургии',
+    faction:      null,
+    tag_required: 'Caster',
+    max_targets:  1,
+    requires_action: 'damage',
+    adds_tag:     'Vampire',
+    stat_mods:    { action_power: 3, hp: 3 },
+    passive:      'bleed 1',
+    icon:         'staff_of_thaumaturgy',
+    rarity:       'mythic',
+    unique:       true,
+    cost:         { vial_of_pure_blood: 4, Gold: 325 },
+    item_cost:    { seal_of_power: 1, orb_of_pure_blood: 2 },
+  },
+  grovekeeper_staff: {
+    key:          'grovekeeper_staff',
+    name:         "Grovekeeper's Staff",
+    name_ru:      "Посох Хранителя Рощи",
+    faction:      null,
+    tag_required: null,
+    adds_tag:     'Treefolk',
+    stat_mods:    { action_power: 2, nature_resist: 3 },
+    passive:      null,
+    icon:         'grovekeeper_staff',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { vial_of_pure_blood: 1, Gold: 40, Crystals_Nature: 25 },
+    item_cost:    { seal_of_power: 1 },
+  },
+  poisonous_dagger: {
+    key:          'poisonous_dagger',
+    name:         "Poisonous Dagger",
+    name_ru:      'Ядовитый Кинжал',
+    faction:      null,
+    tag_required: null,
+    max_targets:  1,
+    adds_tag:     null,
+    stat_mods:    null,
+    passive:      'poison 1',
+    icon:         'poisonous_dagger',
+    rarity:       'common',
+    cost:         { Gold: 30, Crystals_Nature: 10  },
+  },
+  frost_lance: {
+    key:          'frost_lance',
+    name:         "Frost Lance",
+    name_ru:      'Морозная Пика',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { action_power: 2 },
+    passive:      'chill 1',
+    icon:         'frost_lance',
+    rarity:       'rare',
+    cost:         { crystal_dust: 1, Gold: 25, Crystals_Frost: 25 },
+    item_cost:    { seal_of_power: 1 },
+  },
+  bone_barrier: {
+    key:          'bone_barrier',
+    name:         "Bone Barrier",
+    name_ru:      'Костяной Барьер',
+    faction:      null,
+    tag_required: 'Skeleton',
+    adds_tag:     null,
+    stat_mods:    { hp: 3, armor: 5 },
+    passive:      'bone_armor 1',
+    icon:         'bone_barrier',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { grave_dust: 2, shard_of_might: 1, shard_of_devotion: 1, Gold: 225 },
+    item_cost:    { iron_armor: 1 },
+  },
+  veil_of_discord: {
+    key:          'veil_of_discord',
+    name:         "Veil Of Discord",
+    name_ru:      'Покров Раздора',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { cold_resist: 5, air_resist: 5 },
+    passive:      'resist_aura_life 2',
+    icon:         'veil_of_discord',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { grave_dust: 2, Gold: 190 },
+    item_cost:    { cold_resistance_potion: 1, air_resistance_potion: 1, life_resistance_potion: 2 },
+  },
+  reliquary_of_dawn: {
+    key:          'reliquary_of_dawn',
+    name:         'Reliquary Of Dawn',
+    name_ru:      'Реликварий Рассвета',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { death_resist: 10, hp: 3 },
+    passive:      'resist_aura_death 2',
+    icon:         'reliquary_of_dawn',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { Gold: 210, Crystals_Life: 25, Crystals_Death: 10 },
+    item_cost:    { life_resistance_potion: 3 },
+  },
+  cloak_of_evasion: {
+    key:          'cloak_of_evasion',
+    name:         "Cloak Of Evasion",
+    name_ru:      'Плащ Уклонения',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    null,
+    passive:      'dodge 1',
+    icon:         'cloak_of_evasion',
+    rarity:       'common',
+    cost:         { Gold: 10, Crystals_Air: 10, Crystals_Nature: 10  },
+  },
+  travelers_bedroll: {
+    key:          'travelers_bedroll',
+    name:         "Traveler's Bedroll",
+    name_ru:      'Походная Скатка',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    {hp: 3},
+    passive:      'field_medic 1',
+    icon:         'travelers_bedroll',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { Gold: 100, Crystals_Life: 15, Crystals_Frost: 10 },
+  },
+  veterans_medal: {
+    key:          'veterans_medal',
+    name:         "Veteran's Medal",
+    name_ru:      'Медаль Ветерана',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    {hp: 3},
+    passive:      'combat_veteran 1',
+    icon:         'veterans_medal',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { Gold: 100, Crystals_Fire: 15, Crystals_Air: 10 },
+  },
+  shackle_of_servitude: {
+    key:          'shackle_of_servitude',
+    name:         'Shackle of Servitude',
+    name_ru:      'Оковы Служения',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    {hp: 3},
+    passive:      'unending_servitude 1',
+    icon:         'shackle_of_servitude',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { Gold: 100, Crystals_Death: 15, Crystals_Life: 10 },
+  },
+  scavengers_satchel: {
+    key:          'scavengers_satchel',
+    name:         "Scavenger's Satchel",
+    name_ru:      'Сумка Мародёра',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    {hp: 3},
+    passive:      'scavenger 1',
+    icon:         'scavengers_satchel',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { Gold: 100, Crystals_Nature: 15, Crystals_Fire: 10 },
+  },
+  attuned_focus: {
+    key:          'attuned_focus',
+    name:         'Attuned Focus',
+    name_ru:      'Настроенный Фокус',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    {hp: 3},
+    passive:      'magic_attunement 1',
+    icon:         'attuned_focus',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { Gold: 100, Crystals_Air: 15, Crystals_Frost: 10 },
+  },
+  striders: {
+    key:          'striders',
+    name:         'Travellers Boots',
+    name_ru:      'Сапоги Путешественника',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { initiative: 3},
+    passive:      null,
+    icon:         'striders',
+    rarity:       'common',
+    cost:         { Gold: 20, Crystals_Air: 15 },
+  },
+  ranger_boots: {
+    key:          'ranger_boots',
+    name:         'Ranger Boots',
+    name_ru:      'Сапоги Рейнджера',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { initiative: 5},
+    passive:      null,
+    icon:         'ranger_boots',
+    rarity:       'rare',
+    cost:         { Gold: 25, Crystals_Nature: 10 },
+    item_cost:    { striders: 1}
+  },
+  dragon_step: {
+    key:          'dragon_step',
+    name:         'Dragon Step',
+    name_ru:      'Драконья Поступь',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     'Dragon',
+    stat_mods:    { initiative: 6, hp: 2},
+    passive:      null,
+    icon:         'dragon_step',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { Gold: 200, Crystals_Nature: 15, Crystals_Fire: 15, Crystals_Life: 15 },
+    item_cost:    { ranger_boots: 1, dragon_scale: 1}
+  },
+  glimmering_steps: {
+    key:          'glimmering_steps',
+    name:         'Glimmering Steps',
+    name_ru:      'Мерцающая Поступь',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { initiative: 6, hp: 2},
+    passive:      'resist_aura_air 1',
+    icon:         'glimmering_steps',
+    rarity:       'mythic',
+    unique:       true,
+    cost:         { Gold: 225, Crystals_Nature: 10, Crystals_Fire: 10 },
+    item_cost:    { dragon_step: 1, dragon_scale: 1}
+  },
+  stormglass_diadem: {
+    key:          'stormglass_diadem',
+    name:         'Stormglass Diadem',
+    name_ru:      'Диадема Грозового Стекла',
+    faction:      null,
+    tag_required: 'Caster',
+    adds_tag:     null,
+    stat_mods:    { action_power: 2, air_resist: 10 },
+    passive:      'resist_aura_air 3',
+    icon:         'stormglass_diadem',
+    rarity:       'mythic',
+    unique:       true,
+    cost:         { Gold: 325, Crystals_Air: 30 },
+    item_cost:    { air_resistance_potion: 2, seal_of_power: 1 },
+  },
+  iron_greaves: {
+    key:          'iron_greaves',
+    name:         'Iron Greaves',
+    name_ru:      'Железные Поножи',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { initiative: 3, armor: 3},
+    passive:      null,
+    icon:         'iron_greaves',
+    rarity:       'rare',
+    unique:       true,
+    cost:         { Gold: 50, Crystals_Nature: 15, Crystals_Life: 15 },
+    item_cost:    { striders: 1}
+  },
+  healers_staff: {
+    key:             'healers_staff',
+    name:            "Healer's Staff",
+    name_ru:         'Посох Целителя',
+    faction:         null,
+    tag_required:    null,
+    requires_action: 'heal',
+    max_targets:     1,
+    adds_tag:        null,
+    stat_mods:       { action_power: 2 },
+    passive:         'dispel 2',
+    icon:            'healers_staff',
+    rarity:          'epic',
+    unique:          true,
+    cost:            { Gold: 200, Crystals_Life: 25, Crystals_Air: 15 },
+    item_cost:       { orb_of_pure_blood: 1, orb_of_light: 1 },
+  },
+  hunger: {
+    key:             'hunger',
+    name:            "Hunger",
+    name_ru:         'Голод',
+    faction:         null,
+    tag_required:    'Vampire',
+    requires_action: 'damage',
+    max_targets:     1,
+    adds_tag:        null,
+    stat_mods:       { action_power: 3, hp: 5 },
+    passive:         'leech 1',
+    icon:            'hunger',
+    rarity:          'epic',
+    unique:          true,
+    cost:            { grave_dust: 2, Gold: 190, Crystals_Death: 20, Crystals_Nature: 15 },
+    item_cost:       { iron_sword: 1, vampirics_dagger: 1 },
+  },
+  blessed_spear: {
+    key:             'blessed_spear',
+    name:            'Blessed Spear',
+    name_ru:         'Освященное Копьё',
+    faction:         null,
+    tag_required:    'Knight',
+    requires_action: 'damage',
+    adds_tag:        null,
+    stat_mods:       { action_power: 3, hp: 3 },
+    passive:         'heartpiercer 2',
+    icon:            'blessed_spear',
+    rarity:          'epic',
+    unique:          true,
+    cost:            { aggrails_signet: 2, Gold: 190, Crystals_Life: 20, Crystals_Fire: 15 },
+    item_cost:       { morning_star: 1, seal_of_power: 1 },
+  },
+  mithrails_touch: {
+    key:             'mithrails_touch',
+    name:            "Mithrail's Touch",
+    name_ru:         'Касание Митраила',
+    faction:         'empire',
+    tag_required:    'Holy',
+    requires_action: 'damage',
+    max_targets:     1,
+    adds_tag:        null,
+    stat_mods:       { action_power: 2, hp: 5, fire_resist: 5 },
+    passive:         'mithrails_light 2',
+    icon:            'mithrails_touch',
+    rarity:          'mythic',
+    unique:          true,
+    cost:            { shard_of_devotion: 10, vial_of_pure_blood: 2, Gold: 325, Crystals_Life: 40 },
+    item_cost:       { orb_of_light: 2, life_resistance_potion: 1 },
+  },
+};
+
+// ── Craft gating ─────────────────────────────────────────────────────────────
+// Not every blueprint should be makeable on day one. A craft can require that
+// the player has CLEARED a given level of a given embark region.
+//
+// Declare it on the item as `requires`:
+//
+//   requires: { region: 'crimson_basilica', level: 3 }   // one condition
+//   requires: { region: 'any',              level: 2 }   // any single region
+//   requires: [                                          // ANY of these (OR)
+//     { region: 'crimson_basilica', level: 3 },
+//     { region: 'glittering_abyss', level: 5 },
+//   ]
+//
+// `level: 3` means "level 3 of that region has been beaten". Regions run 1..6.
+// `requires: null` on an item forces it ungated regardless of the rarity default
+// below. Omit the field entirely and the rarity default applies.
+//
+// Both the roster catalog and POST /items/craft call meetsCraftRequirements(),
+// so the Craft button and the server can never disagree. The server is the
+// authority; the client uses it to disable the button and say what is missing.
+const CRAFT_REGION_LABELS = {
+  crimson_basilica:  { en: 'Crimson Basilica',  ru: 'Багровая базилика' },
+  glittering_abyss:  { en: 'Glittering Abyss',  ru: 'Мерцающая бездна' },
+  chamber_of_unrest: { en: 'Chamber of Unrest', ru: 'Чертог беспокойства' },
+};
+
+// The default gate for an item that declares no `requires` of its own. Tuning
+// these four lines re-gates the whole catalog at once; a per-item `requires`
+// always wins over them. Commons stay open so a new player has a starting kit.
+const CRAFT_GATE_BY_RARITY = {
+  common:    null,
+  rare:      { region: 'any', level: 2 },
+  epic:      { region: 'any', level: 4 },
+  // Gated with the epics it sits beside in power, not above them: shattered is a
+  // separate BUDGET, not a separate tier of strength.
+  shattered: { region: 'any', level: 4 },
+  mythic:    { region: 'any', level: 6 },
+};
+
+// Normalises whatever an item declared into a flat list of {region, level}.
+// An empty list means "craftable from the start".
+function craftRequirements(itemDef) {
+  if (!itemDef) return [];
+  const raw = Object.prototype.hasOwnProperty.call(itemDef, 'requires')
+    ? itemDef.requires
+    : CRAFT_GATE_BY_RARITY[itemDef.rarity];
+  if (!raw) return [];
+  return (Array.isArray(raw) ? raw : [raw])
+    .filter(r => r && r.region && Number(r.level) > 0)
+    .map(r => ({ region: r.region, level: Number(r.level) }));
+}
+
+// `progress` is the player's { region_id: next_playable_level } map — beating
+// level N writes N+1 (see POST /battle/complete), and a region never played is
+// absent, which reads as level 1 playable / nothing cleared.
+function clearedLevel(progress, regionId) {
+  return Math.max(0, Number(progress?.[regionId] ?? 1) - 1);
+}
+
+function meetsCraftRequirements(itemDef, progress) {
+  const reqs = craftRequirements(itemDef);
+  if (!reqs.length) return true;
+  // Any single satisfied condition unlocks the craft.
+  return reqs.some(r => r.region === 'any'
+    ? Object.keys(CRAFT_REGION_LABELS).some(id => clearedLevel(progress, id) >= r.level)
+    : clearedLevel(progress, r.region) >= r.level);
+}
+
+// One line for the card and the server's error: "Requires Crimson Basilica lv. 3
+// or Glittering Abyss lv. 5". Empty string when the item is ungated.
+function craftRequirementText(itemDef, lang = 'en') {
+  const reqs = craftRequirements(itemDef);
+  if (!reqs.length) return '';
+  const L = lang === 'ru' ? 'ru' : 'en';
+  const anyLabel = L === 'ru' ? 'любой регион' : 'any region';
+  const parts = reqs.map(r => {
+    const label = r.region === 'any' ? anyLabel : (CRAFT_REGION_LABELS[r.region]?.[L] || r.region);
+    return L === 'ru' ? `${label}, ур. ${r.level}` : `${label} lv. ${r.level}`;
+  });
+  const joined = parts.join(L === 'ru' ? ' или ' : ' or ');
+  return L === 'ru' ? `Требуется пройти: ${joined}` : `Requires clearing ${joined}`;
+}
+
+// Every tag a unit can carry, in the ONE casing the game compares against. Tag
+// checks are exact string matches (engine.tagCountFor, vs_tag, tag_required),
+// so a tag that differs only in case grants nothing at all.
+//
+// This exists because an item's stats are COPIED onto the owned row when it
+// drops: correcting a definition here does not correct the rows already in the
+// database, and rows written while `caster_hat` said 'caster' still say
+// 'caster'. Canonicalising on the way in fixes those rows without a migration.
+const CANONICAL_TAGS = [
+  'Archer', 'Caster', 'Construct', 'Court', 'Demon', 'Engineer', 'Holy',
+  'Knight', 'Skeleton', 'Spirit', 'Treefolk', 'Vampire', 'Warrior', 'Zombie',
+];
+const CANONICAL_TAG_BY_LOWER = new Map(CANONICAL_TAGS.map(t => [t.toLowerCase(), t]));
+
+// Unknown tags pass through untouched rather than being dropped: 'Treefolk' is
+// deliberately carried by no unit yet, and a future tag must not silently
+// vanish because this list has not caught up.
+function canonicalTag(tag) {
+  if (!tag) return null;
+  return CANONICAL_TAG_BY_LOWER.get(String(tag).toLowerCase()) ?? String(tag);
+}
+
+// The tags an item strips, canonicalised, as a list — `removes_tag` may be a
+// single tag or an array of them. Shared by the roster/battle stat derivation
+// here and by the errand tag check in data/errands.js, so a stripped tag is
+// stripped everywhere or nowhere.
+function removedTags(spec) {
+  if (!spec) return [];
+  return (Array.isArray(spec) ? spec : [spec]).map(canonicalTag).filter(Boolean);
+}
+
+// Stat keys that owned rows spell differently from what the loop below reads.
+// Same reason as the tags: `caster_hat` shipped with `power`, so every hat
+// already owned carries `power: 2` and silently granted nothing.
+const STAT_MOD_ALIASES = { power: 'action_power', max_hp: 'hp' };
+
+// A stat_mod may be NEGATIVE: an item is allowed to buy a strong bonus with a
+// real penalty somewhere else, and the item card already draws a negative as a
+// red chip with no `+`. What a penalty may never do is push a stat past the
+// bottom of its own range, because nothing downstream expects it:
+//
+//   action_power  a negative power reaches `hurt()` as a negative amount, and
+//                 `hurt` subtracts — so the "attack" would HEAL the target.
+//                 The final damage number is floored at 1, but the passives
+//                 that derive splash/chain/DoT from `dmg` run before that floor.
+//   initiative    turn order sorts on it; below zero is untested and means
+//                 nothing the design wants to say.
+//   hp            a max_hp at or below zero makes the unit unfieldable, and
+//                 createCombatant would quietly swap in its default.
+//
+// Armor and resistances are floored here as well. clampDefenses() in
+// utils/passive-processor.js already does it at combatant creation, so battle
+// was never at risk — but the roster and item screens read straight out of this
+// function, and a unit with 6 armor wearing a -10 armor item was showing "-4"
+// on its card. The UPPER bound stays with clampDefenses, which owns the
+// mitigation cap.
+const STAT_MOD_FLOORS = { action_power: 0, initiative: 0, hp: 1, armor: 0, resist: 0 };
+
+// Applies every modifier an item grants (hp, armor, action_power, initiative,
+// resistances, added tag, granted passive) on top of a unit_data object.
+//
+// This is the SINGLE place item stats are applied. Equipping only records that
+// the item is worn (items.equipped_by); nothing is ever baked into the roster
+// row. Roster, battle-prep and the battle engine all derive stats by running a
+// unit through here, so a unit's stats are always base + currently-worn item.
+//
+// `max_hp` and `hp` both get the bonus so this works for roster rows (max_hp)
+// and raw unit defs (hp). `current_hp` is real damage carried between battles,
+// so it is never inflated — only clamped so it can't exceed the new maximum.
+function applyItemModifiers(unitData, itemStats) {
+  if (!itemStats) return unitData;
+
+  let tags = Array.isArray(unitData.tags) ? [...unitData.tags] : [];
+  const granted = canonicalTag(itemStats.adds_tag);
+  if (granted && !tags.includes(granted)) tags.push(granted);
+  // STRIPPING a tag, the mirror of adds_tag. Applied AFTER the grant so an item
+  // that both gives and takes reads left to right, and so `removes_tag` can undo
+  // a tag this same item granted rather than racing it.
+  //
+  // A removed tag is genuinely gone for every consumer: tag_required on abilities
+  // and items, engine.tagCountFor, vs_tag, errand requirements. That is the whole
+  // point — it is how a roster gets UNDER the "only one of me" clauses that
+  // Sole Artificer, Sovereign's Levy and Procession of Grief gate on.
+  //
+  // Accepts a single tag or a list, so one sigil can silence several tags at
+  // once without needing an item (and an icon) per tag.
+  const stripped = removedTags(itemStats.removes_tag);
+  if (stripped.length) tags = tags.filter(t => !stripped.includes(canonicalTag(t)));
+
+  const resistances = { ...(unitData.resistances || {}) };
+  const mods  = itemStats.stat_mods || {};
+  let   armor        = unitData.armor        ?? 0;
+  let   action_power = unitData.action_power ?? 0;
+  let   initiative   = unitData.initiative   ?? 0;
+  let   hpBonus      = 0;
+
+  for (const [rawKey, val] of Object.entries(mods)) {
+    const statKey = STAT_MOD_ALIASES[rawKey] ?? rawKey;
+    if (statKey === 'hp')           { hpBonus      += val; continue; }
+    if (statKey === 'armor')        { armor        += val; continue; }
+    if (statKey === 'action_power') { action_power += val; continue; }
+    if (statKey === 'initiative')   { initiative   += val; continue; }
+    const resistMatch = statKey.match(/^(air|fire|nature|cold|life|death)_resist$/);
+    if (resistMatch) {
+      const resType = resistMatch[1];
+      resistances[resType] = (resistances[resType] || 0) + val;
+    }
+  }
+
+  // The unit's OWN passives, before the item's is folded in. A unit can carry up
+  // to three natively and an item can add a fourth — the ability row only has
+  // three slots, and the item's passive belongs to the item, shown on the item.
+  const nativePassive = unitData.native_passive ?? unitData.passive;
+
+  let passive = unitData.passive;
+  if (itemStats.passive) {
+    if (Array.isArray(passive)) passive = [...passive, itemStats.passive];
+    else if (passive)           passive = [passive, itemStats.passive];
+    else                        passive = itemStats.passive;
+  }
+
+  action_power = Math.max(STAT_MOD_FLOORS.action_power, action_power);
+  initiative   = Math.max(STAT_MOD_FLOORS.initiative,   initiative);
+  armor        = Math.max(STAT_MOD_FLOORS.armor,        armor);
+  for (const k of Object.keys(resistances)) {
+    resistances[k] = Math.max(STAT_MOD_FLOORS.resist, resistances[k] ?? 0);
+  }
+
+  const out = { ...unitData, tags, armor, action_power, initiative, resistances, passive, native_passive: nativePassive };
+  if (hpBonus) {
+    if (typeof out.max_hp === 'number') out.max_hp = Math.max(STAT_MOD_FLOORS.hp, out.max_hp + hpBonus);
+    if (typeof out.hp     === 'number') out.hp     = Math.max(STAT_MOD_FLOORS.hp, out.hp     + hpBonus);
+    // The bonus is extra HP the unit actually gains, so current_hp rises with it
+    // (a full unit stays full instead of entering battle already wounded), then
+    // clamps to the new max. Derivation always runs from the stored BASE current_hp,
+    // so this stays idempotent — re-deriving never stacks the bonus.
+    // A penalty takes current HP down with the maximum, but never to zero: a
+    // unit must not be able to die by being handed an item.
+    if (typeof out.current_hp === 'number' && typeof out.max_hp === 'number') {
+      out.current_hp = Math.max(1, Math.min(out.current_hp + hpBonus, out.max_hp));
+    }
+  }
+  return out;
+}
+
+// Cheaper stand-ins, for a tourney that caps item rarity.
+//
+// A bot under `plain_gear` used to have its Epic and Mythic gear simply NULLED,
+// which is a different rule — `bare_steel` — and a much harsher one than the
+// player pays. The player wears a legal Rare; the bot wore nothing.
+//
+// Each entry lists substitutes cheapest-last, and the adapter takes the FIRST
+// one that fits under the cap and is legal on that unit
+// (data/item_rules.js). Chosen to preserve, in this order of priority:
+//
+//   1. `adds_tag` — a granted tag is not a stat. Tags gate ability targeting
+//      (utils/tag-rules.js) and count for `horde`, `banquet` and every other
+//      per-tag passive, so losing one can leave a unit's passive dead rather
+//      than merely weaker. Where a same-tag Rare exists it is always the pick:
+//      `shroud_of_the_fallen` → `dark_determination` keeps +Zombie and `horde`.
+//   2. the passive's FAMILY, at a lower rank — `crystal_shield`'s
+//      `protector 2` → `iron_shield`'s `protector 1`, `fire_staff`'s `burn 2` →
+//      `orb_of_fire`'s `burn 1`.
+//   3. failing both, the nearest stat line, so the slot is still worn.
+//
+// No Rare in the game grants Vampire, Holy or Knight, so those three cannot be
+// carried down. Where a native passive reads the lost tag the template needs a
+// prepared lineup instead, and the audit (utils/bot-template-audit.js) says
+// which: `empire_holy_construct` is the one that does.
+const ITEM_DOWNGRADES = {
+  // Tag AND passive preserved — the ideal case.
+  shroud_of_the_fallen:    ['dark_determination'],
+  everliving_stalk:        ['grovekeeper_staff'],
+
+  // Passive family preserved at a lower rank; no tag to keep.
+  crystal_shield:          ['iron_shield'],
+  fire_staff:              ['orb_of_fire'],
+  burning_tyrant:          ['orb_of_fire', 'fire_resistance_potion'],
+  aegis_of_the_first_ward: ['ember_mantle', 'fire_resistance_potion'],
+
+  // Passive family preserved; the granted tag is lost because no Rare carries
+  // it. Sound only where the tag is redundant — `aldras_patience` rides Demons
+  // that are already Demons — or where the tag fed nothing but the item's own
+  // passive, which leaves with it.
+  aldras_patience:         ['shard_of_hate'],
+  crystal_exoskeleton:     ['attuned_focus'],
+  staff_of_thaumaturgy:    ['orb_of_pure_blood', 'lion_signet'],
+
+  // No Rare carries `dispel`, `leech`, `heartpiercer` or `mithrails_light`, so
+  // these four fall to the nearest stat line that is still LEGAL on the carrier:
+  // a heal-locked item must come down to something a healer may wear, and the
+  // Holy/Knight-locked ones to something that unit can still equip. Nothing is
+  // lost but the passive, because none of the four grants a tag.
+  surgeons_lantern:        ['codex_militarum', 'seal_of_power'],
+  butchers_fang:           ['iron_sword', 'crude_sword'],
+  ardent_spear:            ['morning_star', 'mace'],
+  mithrails_sconce:        ['orb_of_light', 'seal_of_power'],
+
+  // Neither tag nor passive has a cheaper rung, so the nearest stat line.
+  veil_of_discord:         ['frost_cloak'],
+  burning_fury:            ['lion_signet', 'seal_of_power'],
+  forbidden_vow:           ['iron_sword', 'crude_sword'],
+  lightbringer:            ['iron_sword', 'crude_sword'],
+  dragon_skin:             ['life_charm', 'padded_armor'],
+  gift_of_eternity:        ['codex_aeternum', 'life_charm'],
+  knights_oath:            ['iron_shield', 'padded_armor'],
+  might_of_the_pure:       ['lion_signet', 'seal_of_power'],
+  sanctified_bulwark:      ['iron_shield', 'padded_armor'],
+};
+
+export {
+  ITEM_DEFS, ITEM_DOWNGRADES, applyItemModifiers, removedTags, STAT_MOD_FLOORS,
+  CRAFT_REGION_LABELS, CRAFT_GATE_BY_RARITY,
+  craftRequirements, meetsCraftRequirements, craftRequirementText,
+};
+if (typeof module !== 'undefined') module.exports = {
+  ITEM_DEFS, ITEM_DOWNGRADES, applyItemModifiers, removedTags, STAT_MOD_FLOORS,
+  CRAFT_REGION_LABELS, CRAFT_GATE_BY_RARITY,
+  craftRequirements, meetsCraftRequirements, craftRequirementText,
+};

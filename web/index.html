@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shattered Crown — turn-based tactics in Telegram</title>
+<meta name="description" content="Raise a castle, recruit a line, forge items and fight for position. A turn-based tactics game played inside Telegram. Try the real mechanics in your browser.">
+<meta property="og:title" content="Shattered Crown">
+<meta property="og:description" content="Turn-based tactics in Telegram. Three factions, six-unit formations, positional combat.">
+<meta property="og:image" content="https://assets.markdidenkowork.workers.dev/screens/embark.jpg">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0c0d11">
+<link rel="icon" href="https://assets.markdidenkowork.workers.dev/crests/empire.jpg">
+<link rel="preconnect" href="https://assets.markdidenkowork.workers.dev" crossorigin>
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="#top">Shattered Crown</a>
+    <nav class="topbar-nav">
+      <a href="#factions" data-i18n="nav.factions">Factions</a>
+      <a href="#loop" data-i18n="nav.loop">How it plays</a>
+      <a href="#castle" data-i18n="nav.mechanics">Mechanics</a>
+    </nav>
+    <div class="topbar-right">
+      <div class="lang" id="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="en" aria-pressed="true">EN</button>
+        <button type="button" data-lang="ru" aria-pressed="false">RU</button>
+      </div>
+      <a class="btn" href="https://t.me/shattered_crown_bot" data-i18n="nav.play">Play</a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+  <div class="hero">
+    <div class="wrap hero-inner">
+      <h1>Shattered Crown</h1>
+      <p class="hero-tagline" data-i18n="hero.tagline">One crown, broken into pieces. Three powers that will not share them.</p>
+      <p class="hero-sub" data-i18n="hero.sub">A turn-based tactics game played inside Telegram. Raise a castle, recruit a line, equip it, and take it down into the dark — six-unit formations, positional combat, and a roster that is permanently yours.</p>
+      <div class="hero-cta">
+        <a class="btn btn--lg" href="https://t.me/shattered_crown_bot" data-i18n="hero.cta">Play on Telegram</a>
+        <a class="btn btn--lg btn--ghost" href="#castle" data-i18n="hero.cta2">See the mechanics</a>
+      </div>
+      <p class="hero-meta" data-i18n="hero.meta">Free to play · no install · opens in Telegram</p>
+    </div>
+  </div>
+
+  <section id="lore">
+    <div class="wrap">
+      <p class="section-label" data-i18n="lore.label">The realm</p>
+      <h2 data-i18n="lore.h2">A Realm Divided</h2>
+      <p class="lede" data-i18n="lore.p1">The old order has fallen. Where a single crown once held dominion, three powers now claw for what remains.</p>
+      <p class="lede" data-i18n="lore.p2">At the heart of the conflict lies a fractured relic — a vessel said to grant dominion over life, death, and the space between. Empire, Choir, and Grail each stake a rightful claim to its power, and none will yield.</p>
+      <p class="lede" data-i18n="lore.p3">You are a Disciple, bound to serve one banner in the dungeons and battlefields ahead. Choose wisely — your faction shapes not only your allies, but the fate of the realm.</p>
+    </div>
+  </section>
+
+  <div class="wrap"><div class="rule"></div></div>
+
+  <section id="factions">
+    <div class="wrap">
+      <p class="section-label" data-i18n="factions.label">Choose a banner</p>
+      <h2 data-i18n="factions.h2">Three answers to the same war</h2>
+      <p class="lede" data-i18n="factions.lede">Your faction is picked once and never again. It decides which units you can recruit, which items you can forge, what your castle looks like, and which Colossus you spend your week killing.</p>
+
+      <div class="factions">
+        <article class="faction" data-bg="screens/empire.jpg">
+          <div class="faction-head">
+            <img class="faction-crest" data-src="crests/empire.jpg" alt="" loading="lazy">
+            <h3 class="faction-name" data-i18n="f.empire.name">Aurex</h3>
+          </div>
+          <div class="faction-body">
+            <p class="faction-desc" data-i18n="f.empire.desc">The Empire of Aurex keeps to Mithrail, the Golden Lion, who rewards those who hold the line. Its knights, priests and engineers fight as one wall — armored, sanctified, and certain that every shard belongs to Aurex.</p>
+          </div>
+        </article>
+        <article class="faction" data-bg="screens/choir.jpg">
+          <div class="faction-head">
+            <img class="faction-crest" data-src="crests/choir.jpg" alt="" loading="lazy">
+            <h3 class="faction-name" data-i18n="f.choir.name">The Choir</h3>
+          </div>
+          <div class="faction-body">
+            <p class="faction-desc" data-i18n="f.choir.desc">The court of Cinderhold was losing the war for the crown, and tried everything: rites, oaths, older rites. Nothing held. Then a troupe nobody had invited played in the hall, in a tongue nobody knew, and the court learned the First Song. Aggrail answered it. The lords are demons now and the court is a choir, and it is still singing.</p>
+          </div>
+        </article>
+        <article class="faction" data-bg="screens/grail.jpg">
+          <div class="faction-head">
+            <img class="faction-crest" data-src="crests/grail.jpg" alt="" loading="lazy">
+            <h3 class="faction-name" data-i18n="f.grail.name">The Grail</h3>
+          </div>
+          <div class="faction-body">
+            <p class="faction-desc" data-i18n="f.grail.desc">In the war for Ilmenar its scholars cast a spell to carry their people forward. The working was wrong: their bodies were never moved into the future — they lived a century through in an instant. Two answers divide them now: accept the rot, or hold it back with the blood and living essence of others.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="loop">
+    <div class="wrap">
+      <p class="section-label" data-i18n="loop.label">The loop</p>
+      <h2 data-i18n="loop.h2">What you actually do</h2>
+      <p class="lede" data-i18n="loop.lede">A session is a few minutes. The castle grows over weeks, and nothing you build is taken away from you.</p>
+
+      <div class="loop">
+        <div class="loop-step">
+          <h3 data-i18n="loop.s1.h">Raise the castle</h3>
+          <p data-i18n="loop.s1.p">Every building is a decision: a barracks recruits one line of units, a hall opens a mechanic. Two pages, twenty-four plots, and prices that make you choose.</p>
+        </div>
+        <div class="loop-step">
+          <h3 data-i18n="loop.s2.h">Recruit and branch</h3>
+          <p data-i18n="loop.s2.p">Units are not bought from a shop — they are recruited from the building that houses them, then upgraded along a branching tree. The branch you take is the unit you keep.</p>
+        </div>
+        <div class="loop-step">
+          <h3 data-i18n="loop.s3.h">Forge and equip</h3>
+          <p data-i18n="loop.s3.p">Eighty-four items across five rarities, crafted from what you drag out of the dungeons. An item changes stats, grants a passive, and can add or strip a unit’s tags outright.</p>
+        </div>
+        <div class="loop-step">
+          <h3 data-i18n="loop.s4.h">Embark</h3>
+          <p data-i18n="loop.s4.p">Three regions, ten floors each, bosses on three of them. Six units in a two-by-three formation where the cell a unit stands in decides what can reach it.</p>
+        </div>
+        <div class="loop-step">
+          <h3 data-i18n="loop.s5.h">Fight for position</h3>
+          <p data-i18n="loop.s5.p">Turn order comes from initiative, damage from six elements and armor, and most abilities care where everyone is standing. A formation is a plan, not a seating chart.</p>
+        </div>
+        <div class="loop-step">
+          <h3 data-i18n="loop.s6.h">Weekly and daily</h3>
+          <p data-i18n="loop.s6.p">A faction Colossus with ten thousand health and four phases, errands, a nightly Crown Tourney, PvP, and engravings paid for with what you win.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="demo-section" id="castle">
+    <div class="wrap">
+      <p class="section-label" data-i18n="d.castle.label">Mechanic</p>
+      <h2 data-i18n="d.castle.h2">The castle</h2>
+      <div class="demo-layout">
+        <div class="demo-copy">
+          <p data-i18n="d.castle.p1">Your castle is two pages of plots. The first holds the throne and the barracks that recruit your units; the second holds the halls — forge, infirmary, mage guild, temple — each with its own ladder of levels.</p>
+          <p data-i18n="d.castle.p2">The three factions do not share a single building. Switch banner below and the whole grid changes: different units behind the same plots, different art, different prices.</p>
+          <ul class="demo-points">
+            <li data-i18n="d.castle.li1">Tap any square to see what stands there and what it cost.</li>
+            <li data-i18n="d.castle.li2">Empty plots show the one building they will take, greyed out.</li>
+            <li data-i18n="d.castle.li3">Arrows move between the two pages.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="phone"><iframe data-demo="castle" title="Castle" loading="lazy"></iframe></div>
+          <p class="phone-caption" data-i18n="d.castle.caption">The real castle screen, with a castle built out for you.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="demo-section" id="heroes">
+    <div class="wrap">
+      <p class="section-label" data-i18n="d.heroes.label">Mechanic</p>
+      <h2 data-i18n="d.heroes.h2">Heroes</h2>
+      <div class="demo-layout">
+        <div class="demo-copy">
+          <p data-i18n="d.heroes.p1">Three champions answer each banner, and the one you take is permanent. Every hero casts the spells you research — what separates them is the blow they strike and the passive they carry.</p>
+          <p data-i18n="d.heroes.p2">A hero is also the only unit that banks power, which is what pays for spells mid-battle. Build the formation around what theirs rewards: Holy allies beside the Paladin, a stacked column behind the Regent, Vampires at the Prophet’s side.</p>
+          <ul class="demo-points">
+            <li data-i18n="d.heroes.li1">Switch banner to meet its three.</li>
+            <li data-i18n="d.heroes.li2">Tap a portrait to bring up that hero’s card.</li>
+            <li data-i18n="d.heroes.li3">Tap any stat or ability icon for the detail.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="phone"><iframe data-demo="heroes" title="Heroes" loading="lazy"></iframe></div>
+          <p class="phone-caption" data-i18n="d.heroes.caption">The real unit card, and the text new players read at registration.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="demo-section" id="evolve">
+    <div class="wrap">
+      <p class="section-label" data-i18n="d.evolve.label">Mechanic</p>
+      <h2 data-i18n="d.evolve.h2">Unit evolution</h2>
+      <div class="demo-layout">
+        <div class="demo-copy">
+          <p data-i18n="d.evolve.p1">A recruit is a starting point, not a purchase. Every unit sits at the root of a branching line, and each tier you pay for is a fork — the same conscript becomes infantry, cavalry or a banner, and the three go different places from there.</p>
+          <p data-i18n="d.evolve.p2">The branch is permanent, and it is per unit rather than per account: two players running the same faction can field rosters with nothing in common. This is the longest decision in the game, which is why the tree shows you the whole line before you commit to one step of it.</p>
+          <ul class="demo-points">
+            <li data-i18n="d.evolve.li1">Pick a line along the bottom to see its whole tree.</li>
+            <li data-i18n="d.evolve.li2">Tap a node for its card — stats shown as the change from its parent.</li>
+            <li data-i18n="d.evolve.li3">Tap a stat or ability on the card to have it explained.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="phone"><iframe data-demo="evolve" title="Unit evolution" loading="lazy"></iframe></div>
+          <p class="phone-caption" data-i18n="d.evolve.caption">The castle’s own evolution tree, over the real upgrade paths.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="demo-section" id="embark">
+    <div class="wrap">
+      <p class="section-label" data-i18n="d.embark.label">Mechanic</p>
+      <h2 data-i18n="d.embark.h2">Embark</h2>
+      <div class="demo-layout">
+        <div class="demo-copy">
+          <p data-i18n="d.embark.p1">Three regions, ten floors each. Every floor is a fixed encounter — the same enemies, in the same cells, with the same equipment — so a floor you lose is a floor you can plan against.</p>
+          <p data-i18n="d.embark.p2">The guaranteed crystal on each card tells you what the region pays. Which is how you decide where to go when the forge wants two of something you have none of.</p>
+          <ul class="demo-points">
+            <li data-i18n="d.embark.li1">Ten floors per region, each a fixed encounter.</li>
+            <li data-i18n="d.embark.li2">The guaranteed crystal tells you what the region pays.</li>
+            <li data-i18n="d.embark.li3">Floors 3, 6 and 10 end in a boss.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="phone"><iframe data-demo="embark" title="Embark" loading="lazy"></iframe></div>
+          <p class="phone-caption" data-i18n="d.embark.caption">Live encounter tables — the same ones the game fights.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="demo-section" id="items">
+    <div class="wrap">
+      <p class="section-label" data-i18n="d.items.label">Mechanic</p>
+      <h2 data-i18n="d.items.h2">Items</h2>
+      <div class="demo-layout">
+        <div class="demo-copy">
+          <p data-i18n="d.items.p1">Eighty-four items, five rarities. Commons and rares stack; every epic and mythic is unique, so you will only ever own one. SHATTERED is not on that power ladder at all — epic in scale, epic in price, and its own rarity purely so tournament rules can budget it separately.</p>
+          <p data-i18n="d.items.p2">An item is more than numbers. It carries a passive, it can require a tag before a unit may wear it, and it can grant or strip tags outright: Bloodless turns a Zombie into a Skeleton, and everything that cared about Zombies stops caring.</p>
+          <ul class="demo-points">
+            <li data-i18n="d.items.li1">Filter by rarity, tap a card for its passive and its full price.</li>
+            <li data-i18n="d.items.li2">Every card is the game’s own item card.</li>
+            <li data-i18n="d.items.li3">Prices are the live crafting costs.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="phone"><iframe data-demo="items" title="Items" loading="lazy"></iframe></div>
+          <p class="phone-caption" data-i18n="d.items.caption">The whole catalog, straight out of the game data.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="demo-section" id="transmute">
+    <div class="wrap">
+      <p class="section-label" data-i18n="d.transmute.label">Mechanic</p>
+      <h2 data-i18n="d.transmute.h2">Transmutation</h2>
+      <div class="demo-layout">
+        <div class="demo-copy">
+          <p data-i18n="d.transmute.p1">Six kinds of crystal, and a recipe always wants the one you are short of. Transmutation turns the surplus into it: two different crystals go in — one of each per crystal made — and a third kind of your choosing comes out.</p>
+          <p data-i18n="d.transmute.p2">It costs time rather than gold: one hour, plus a minute for every crystal produced. You start it and come back. The lab has to be built before any of this is available.</p>
+          <ul class="demo-points">
+            <li data-i18n="d.transmute.li1">Tap a corner to choose a crystal, then − and + to size the batch.</li>
+            <li data-i18n="d.transmute.li2">Hold − or + to run by five.</li>
+            <li data-i18n="d.transmute.li3">The wait is shortened here so you can watch it finish.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="phone"><iframe data-demo="transmute" title="Transmutation" loading="lazy"></iframe></div>
+          <p class="phone-caption" data-i18n="d.transmute.caption">The real widget. Shortened timer, live crystal maths.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="demo-section" id="engrave">
+    <div class="wrap">
+      <p class="section-label" data-i18n="d.engrave.label">Mechanic</p>
+      <h2 data-i18n="d.engrave.h2">Engraving</h2>
+      <div class="demo-layout">
+        <div class="demo-copy">
+          <p data-i18n="d.engrave.p1">Permanent, per-unit stat surgery. A combo is three stats; you mark one of them negative and the other two positive. The magnitudes are not yours to pick — the negative is worth about twice its positive, so the sacrifice pays for the pair.</p>
+          <p data-i18n="d.engrave.p2">The tier multiplies the whole triangle, and the price is Valor from the Colossus, gold, and tokens that can only be won in the Crown Tourney. An engraving can be replaced. It can never be removed.</p>
+          <ul class="demo-points">
+            <li data-i18n="d.engrave.li1">Pick a unit, pick a combo, then spend the points with − and +.</li>
+            <li data-i18n="d.engrave.li2">Every number shown is that unit’s real stat.</li>
+            <li data-i18n="d.engrave.li3">The eighth combo trades passive ranks instead of stats.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="phone"><iframe data-demo="engrave" title="Engraving" loading="lazy"></iframe></div>
+          <p class="phone-caption" data-i18n="d.engrave.caption">The real engraving page over a three-unit roster.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="demo-section" id="colossus">
+    <div class="wrap">
+      <p class="section-label" data-i18n="d.colossus.label">Mechanic</p>
+      <h2 data-i18n="d.colossus.h2">The Colossus</h2>
+      <div class="demo-layout">
+        <div class="demo-copy">
+          <p data-i18n="d.colossus.p1">One boss per faction per week, ten thousand health, and your whole faction hitting it together. Every point of damage is banked against your own milestones, and the three factions can see each other’s progress.</p>
+          <p data-i18n="d.colossus.p2">It is not a health bar with a hat on. Four phases, and it changes what it does at each one: a line sweep at full health becomes armor-piercing roots, then a death knell, then whatever is left at the bottom. Units that fight it come back exhausted and have to be paid for.</p>
+          <ul class="demo-points">
+            <li data-i18n="d.colossus.li1">Attack repeatedly and watch the phase change under it.</li>
+            <li data-i18n="d.colossus.li2">Tap a rival faction to see how far along they are.</li>
+            <li data-i18n="d.colossus.li3">In the game, Attack opens a real battle.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="phone"><iframe data-demo="colossus" title="Colossus" loading="lazy"></iframe></div>
+          <p class="phone-caption" data-i18n="d.colossus.caption">The real Colossus page. Attack resolves a round here.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="join" id="join">
+    <div class="wrap">
+      <p class="section-label" data-i18n="join.label">Join</p>
+      <h2 data-i18n="join.h2">It runs inside Telegram</h2>
+      <p class="lede" data-i18n="join.lede">No install, no account to make, no store page. Open the bot, choose a banner, and the first castle is yours in a couple of minutes.</p>
+      <a class="btn btn--lg" href="https://t.me/shattered_crown_bot" data-i18n="join.cta">Open @shattered_crown_bot</a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap footer-inner">
+    <span data-i18n="footer.note">Shattered Crown — a turn-based tactics game in Telegram.</span>
+    <span data-i18n="footer.demos">Every demo on this page runs the game’s own code against its own data.</span>
+  </div>
+</footer>
+
+<script type="module" src="landing.js"></script>
+</body>
+</html>

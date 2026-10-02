@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Castle</title>
+<link rel="stylesheet" href="../vendor/public/style.css">
+<link rel="stylesheet" href="demo.css">
+</head>
+<body>
+<div class="demo-root">
+  <div class="resource-bar-row"><div class="resource-bar" id="resource-bar"></div></div>
+  <div class="demo-tabs" id="factions"></div>
+  <div class="screen screen-castle">
+    <main class="castle-main">
+      <div class="castle-grounds">
+        <button class="castle-layer-arrow castle-layer-arrow--prev" id="layer-prev" type="button" aria-label="Previous"><span>&lsaquo;</span></button>
+        <div class="castle-layer-viewport">
+          <div class="castle-layer-track" id="castle-layer-track">
+            <div class="castle-layer" data-layer="1">
+              <div class="castle-grid-wrap">
+                <div class="outer-ring" id="outer-ring"></div>
+                <div class="center-slot" id="center-slot"></div>
+              </div>
+            </div>
+            <div class="castle-layer" data-layer="2">
+              <div class="castle-grid-wrap castle-grid-wrap--upgrades">
+                <div class="upgrade-col" id="hall-col"></div>
+                <div class="upgrade-col" id="merc-col"></div>
+                <div class="upgrade-col" id="barracks-col"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="castle-layer-arrow castle-layer-arrow--next" id="layer-next" type="button" aria-label="Next"><span>&rsaquo;</span></button>
+      </div>
+    </main>
+  </div>
+  <div class="demo-note" id="note"></div>
+</div>
+<script type="module" src="castle.js"></script>
+</body>
+</html>

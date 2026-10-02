@@ -1,0 +1,6506 @@
+{
+ "BUILDING_POOLS": {
+  "empire": {
+   "throne": [
+    {
+     "id": "throne",
+     "label": "Throne",
+     "label_ru": "Трон",
+     "category": "throne",
+     "unit_id": null
+    },
+    {
+     "id": "paladin_cathedral_1",
+     "label": "Paladin Cathedral",
+     "label_ru": "Собор паладинов",
+     "category": "throne",
+     "unit_id": "h_e_1",
+     "tier": 1,
+     "upgrades": [
+      "paladin_cathedral_2_a",
+      "paladin_cathedral_2_b"
+     ]
+    },
+    {
+     "id": "paladin_cathedral_2_a",
+     "label": "Paladin Cathedral II A",
+     "label_ru": "Собор паладинов II A",
+     "category": "throne",
+     "unit_id": "h_e_11",
+     "tier": 2,
+     "upgrades": [
+      "paladin_cathedral_3_a"
+     ]
+    },
+    {
+     "id": "paladin_cathedral_2_b",
+     "label": "Paladin Cathedral II B",
+     "label_ru": "Собор паладинов II B",
+     "category": "throne",
+     "unit_id": "h_e_12",
+     "tier": 2,
+     "upgrades": [
+      "paladin_cathedral_3_b"
+     ]
+    },
+    {
+     "id": "paladin_cathedral_3_a",
+     "label": "Paladin Cathedral III A",
+     "label_ru": "Собор паладинов III A",
+     "category": "throne",
+     "unit_id": "h_e_111",
+     "tier": 3,
+     "upgrades": [
+      "paladin_cathedral_4_a",
+      "paladin_cathedral_4_a_alt"
+     ]
+    },
+    {
+     "id": "paladin_cathedral_3_b",
+     "label": "Paladin Cathedral III B",
+     "label_ru": "Собор паладинов III B",
+     "category": "throne",
+     "unit_id": "h_e_121",
+     "tier": 3,
+     "upgrades": [
+      "paladin_cathedral_4_b",
+      "paladin_cathedral_4_b_alt"
+     ]
+    },
+    {
+     "id": "paladin_cathedral_4_a",
+     "label": "Paladin Cathedral IV A",
+     "label_ru": "Собор паладинов IV A",
+     "category": "throne",
+     "unit_id": "h_e_1111",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "paladin_cathedral_4_a_alt",
+     "label": "Paladin Cathedral IV A Alt",
+     "label_ru": "Собор паладинов IV A Alt",
+     "category": "throne",
+     "unit_id": "h_e_1112",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "paladin_cathedral_4_b",
+     "label": "Paladin Cathedral IV B",
+     "label_ru": "Собор паладинов IV B",
+     "category": "throne",
+     "unit_id": "h_e_1211",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "paladin_cathedral_4_b_alt",
+     "label": "Paladin Cathedral IV B Alt",
+     "label_ru": "Собор паладинов IV B Alt",
+     "category": "throne",
+     "unit_id": "h_e_1212",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "inquisitor_tower_1",
+     "label": "Inquisitor Tower",
+     "label_ru": "Башня инквизиторов",
+     "category": "throne",
+     "unit_id": "h_e_2",
+     "tier": 1,
+     "upgrades": [
+      "inquisitor_tower_2_a",
+      "inquisitor_tower_2_b"
+     ]
+    },
+    {
+     "id": "inquisitor_tower_2_a",
+     "label": "Inquisitor Tower II A",
+     "label_ru": "Башня инквизиторов II A",
+     "category": "throne",
+     "unit_id": "h_e_2_a2",
+     "tier": 2,
+     "upgrades": [
+      "inquisitor_tower_3_a"
+     ]
+    },
+    {
+     "id": "inquisitor_tower_2_b",
+     "label": "Inquisitor Tower II B",
+     "label_ru": "Башня инквизиторов II B",
+     "category": "throne",
+     "unit_id": "h_e_2_b2",
+     "tier": 2,
+     "upgrades": [
+      "inquisitor_tower_3_b"
+     ]
+    },
+    {
+     "id": "inquisitor_tower_3_a",
+     "label": "Inquisitor Tower III A",
+     "label_ru": "Башня инквизиторов III A",
+     "category": "throne",
+     "unit_id": "h_e_2_a3",
+     "tier": 3,
+     "upgrades": [
+      "inquisitor_tower_4_a",
+      "inquisitor_tower_4_a_alt"
+     ]
+    },
+    {
+     "id": "inquisitor_tower_3_b",
+     "label": "Inquisitor Tower III B",
+     "label_ru": "Башня инквизиторов III B",
+     "category": "throne",
+     "unit_id": "h_e_2_b3",
+     "tier": 3,
+     "upgrades": [
+      "inquisitor_tower_4_b",
+      "inquisitor_tower_4_b_alt"
+     ]
+    },
+    {
+     "id": "inquisitor_tower_4_a",
+     "label": "Inquisitor Tower IV A",
+     "label_ru": "Башня инквизиторов IV A",
+     "category": "throne",
+     "unit_id": "h_e_2_a41",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "inquisitor_tower_4_a_alt",
+     "label": "Inquisitor Tower IV A Alt",
+     "label_ru": "Башня инквизиторов IV A Alt",
+     "category": "throne",
+     "unit_id": "h_e_2_a42",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "inquisitor_tower_4_b",
+     "label": "Inquisitor Tower IV B",
+     "label_ru": "Башня инквизиторов IV B",
+     "category": "throne",
+     "unit_id": "h_e_2_b41",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "inquisitor_tower_4_b_alt",
+     "label": "Inquisitor Tower IV B Alt",
+     "label_ru": "Башня инквизиторов IV B Alt",
+     "category": "throne",
+     "unit_id": "h_e_2_b42",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "artificer_guild_1",
+     "label": "Artificer Guild",
+     "label_ru": "Гильдия артефакторов",
+     "category": "throne",
+     "unit_id": "h_e_3",
+     "tier": 1,
+     "upgrades": [
+      "artificer_guild_2_a",
+      "artificer_guild_2_b"
+     ]
+    },
+    {
+     "id": "artificer_guild_2_a",
+     "label": "Artificer Guild II A",
+     "label_ru": "Гильдия артефакторов II A",
+     "category": "throne",
+     "unit_id": "h_e_3_a2",
+     "tier": 2,
+     "upgrades": [
+      "artificer_guild_3_a"
+     ]
+    },
+    {
+     "id": "artificer_guild_2_b",
+     "label": "Artificer Guild II B",
+     "label_ru": "Гильдия артефакторов II B",
+     "category": "throne",
+     "unit_id": "h_e_3_b2",
+     "tier": 2,
+     "upgrades": [
+      "artificer_guild_3_b"
+     ]
+    },
+    {
+     "id": "artificer_guild_3_a",
+     "label": "Artificer Guild III A",
+     "label_ru": "Гильдия артефакторов III A",
+     "category": "throne",
+     "unit_id": "h_e_3_a3",
+     "tier": 3,
+     "upgrades": [
+      "artificer_guild_4_a",
+      "artificer_guild_4_a_alt"
+     ]
+    },
+    {
+     "id": "artificer_guild_3_b",
+     "label": "Artificer Guild III B",
+     "label_ru": "Гильдия артефакторов III B",
+     "category": "throne",
+     "unit_id": "h_e_3_b3",
+     "tier": 3,
+     "upgrades": [
+      "artificer_guild_4_b",
+      "artificer_guild_4_b_alt"
+     ]
+    },
+    {
+     "id": "artificer_guild_4_a",
+     "label": "Artificer Guild IV A",
+     "label_ru": "Гильдия артефакторов IV A",
+     "category": "throne",
+     "unit_id": "h_e_3_a41",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "artificer_guild_4_a_alt",
+     "label": "Artificer Guild IV A Alt",
+     "label_ru": "Гильдия артефакторов IV A Alt",
+     "category": "throne",
+     "unit_id": "h_e_3_a42",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "artificer_guild_4_b",
+     "label": "Artificer Guild IV B",
+     "label_ru": "Гильдия артефакторов IV B",
+     "category": "throne",
+     "unit_id": "h_e_3_b41",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "artificer_guild_4_b_alt",
+     "label": "Artificer Guild IV B Alt",
+     "label_ru": "Гильдия артефакторов IV B Alt",
+     "category": "throne",
+     "unit_id": "h_e_3_b42",
+     "tier": 4,
+     "upgrades": []
+    }
+   ],
+   "barracks": [
+    {
+     "id": "conscript_barracks",
+     "label": "Conscript Barracks",
+     "label_ru": "Казармы рекрутов",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "e1",
+     "upgrades": [
+      "infantry_barracks",
+      "cavalry_stables",
+      "banner_yard"
+     ],
+     "cost": {
+      "gold": 40,
+      "Crystals_Life": 20,
+      "Crystals_Air": 5
+     }
+    },
+    {
+     "id": "banner_yard",
+     "label": "Banner Yard",
+     "label_ru": "Знамённый двор",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "e13",
+     "upgrades": [
+      "banneret_hall"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Life": 30,
+      "Crystals_Air": 8
+     }
+    },
+    {
+     "id": "banneret_hall",
+     "label": "Banneret Hall",
+     "label_ru": "Зал баннеретов",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e131",
+     "upgrades": [
+      "gonfalonier_hall"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Air": 12,
+      "Crystals_Nature": 12
+     }
+    },
+    {
+     "id": "gonfalonier_hall",
+     "label": "Gonfalonier Hall",
+     "label_ru": "Зал гонфалоньеров",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e1311",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Life": 77,
+      "Crystals_Air": 19,
+      "Crystals_Nature": 19
+     }
+    },
+    {
+     "id": "infantry_barracks",
+     "label": "Infantry Barracks",
+     "label_ru": "Пехотные казармы",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "e11",
+     "upgrades": [
+      "crossbow_range",
+      "heavy_barracks",
+      "blade_guard_hall"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Life": 30,
+      "Crystals_Nature": 8
+     }
+    },
+    {
+     "id": "crossbow_range",
+     "label": "Crossbow Range",
+     "label_ru": "Стрельбище арбалетчиков",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e111",
+     "upgrades": [
+      "sniper_nest"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Air": 12,
+      "Crystals_Frost": 12
+     }
+    },
+    {
+     "id": "sniper_nest",
+     "label": "Sniper Nest",
+     "label_ru": "Гнездо снайперов",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e1111",
+     "upgrades": [],
+     "cost": {
+      "gold": 400
+     }
+    },
+    {
+     "id": "heavy_barracks",
+     "label": "Heavy Barracks",
+     "label_ru": "Тяжёлые казармы",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e112",
+     "upgrades": [
+      "vindicator_barracks"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Death": 12,
+      "Crystals_Frost": 12
+     }
+    },
+    {
+     "id": "vindicator_barracks",
+     "label": "Vindicator Barracks",
+     "label_ru": "Казармы поборников",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e1121",
+     "upgrades": [],
+     "cost": {
+      "gold": 400
+     }
+    },
+    {
+     "id": "blade_guard_hall",
+     "label": "Blade Guard Hall",
+     "label_ru": "Зал Стражей Клинка",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e113",
+     "upgrades": [
+      "blade_master_hall"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Fire": 12,
+      "Crystals_Air": 12
+     }
+    },
+    {
+     "id": "blade_master_hall",
+     "label": "Blade Master Hall",
+     "label_ru": "Зал Мастеров Клинка",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e1131",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Life": 77,
+      "Crystals_Fire": 19,
+      "Crystals_Air": 19
+     }
+    },
+    {
+     "id": "cavalry_stables",
+     "label": "Cavalry Stables",
+     "label_ru": "Кавалерийские конюшни",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "e12",
+     "upgrades": [
+      "knights_stables"
+     ],
+     "cost": {
+      "gold": 90,
+      "Crystals_Life": 45,
+      "Crystals_Frost": 12,
+      "Crystals_Nature": 12
+     }
+    },
+    {
+     "id": "knights_stables",
+     "label": "Knights Stables",
+     "label_ru": "Рыцарские конюшни",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e121",
+     "upgrades": [
+      "retributor_stables"
+     ],
+     "cost": {
+      "gold": 144,
+      "Crystals_Life": 72,
+      "Crystals_Frost": 18,
+      "Crystals_Nature": 18
+     }
+    },
+    {
+     "id": "retributor_stables",
+     "label": "Retributor Stables",
+     "label_ru": "Конюшни воздаятелей",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e1211",
+     "upgrades": [],
+     "cost": {
+      "gold": 400
+     }
+    },
+    {
+     "id": "sentinel_forge",
+     "label": "Sentinel Forge",
+     "label_ru": "Кузня стражей",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "e3",
+     "upgrades": [
+      "automaton_lab",
+      "siege_workshop"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Life": 30,
+      "Crystals_Death": 8,
+      "Crystals_Frost": 8
+     }
+    },
+    {
+     "id": "automaton_lab",
+     "label": "Automaton Lab",
+     "label_ru": "Лаборатория автоматонов",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "e31",
+     "upgrades": [
+      "golden_lion_lab"
+     ],
+     "cost": {
+      "gold": 90,
+      "Crystals_Life": 45,
+      "Crystals_Death": 12,
+      "Crystals_Frost": 12
+     }
+    },
+    {
+     "id": "golden_lion_lab",
+     "label": "Golden Lion Lab",
+     "label_ru": "Лаборатория золотых львов",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e311",
+     "upgrades": [
+      "golden_lion_den"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Air": 12,
+      "Crystals_Frost": 12
+     }
+    },
+    {
+     "id": "golden_lion_den",
+     "label": "Golden Lion Prime Den",
+     "label_ru": "Логово Золотого Льва Прайм",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e3111",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Life": 77,
+      "Crystals_Air": 19,
+      "Crystals_Frost": 19
+     }
+    },
+    {
+     "id": "siege_workshop",
+     "label": "Siege Workshop",
+     "label_ru": "Осадная мастерская",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "e32",
+     "upgrades": [
+      "siege_dreadnought_workshop"
+     ],
+     "cost": {
+      "gold": 90,
+      "Crystals_Life": 45,
+      "Crystals_Fire": 12,
+      "Crystals_Death": 12
+     }
+    },
+    {
+     "id": "siege_dreadnought_workshop",
+     "label": "Siege Dreadnought Workshop",
+     "label_ru": "Мастерская осадных дредноутов",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e321",
+     "upgrades": [
+      "dreadnought_foundry"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Fire": 12,
+      "Crystals_Air": 12
+     }
+    },
+    {
+     "id": "dreadnought_foundry",
+     "label": "Siege Leviathan Foundry",
+     "label_ru": "Литейная Левиафанов",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e3211",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Life": 77,
+      "Crystals_Fire": 19,
+      "Crystals_Air": 19
+     }
+    },
+    {
+     "id": "smith_workshop",
+     "label": "Smith Workshop",
+     "label_ru": "Кузнечная мастерская",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "e6",
+     "upgrades": [
+      "mechanic_den",
+      "rifleman_range"
+     ],
+     "cost": {
+      "gold": 40,
+      "Crystals_Life": 20,
+      "Crystals_Fire": 5,
+      "Crystals_Nature": 5
+     }
+    },
+    {
+     "id": "mechanic_den",
+     "label": "Mechanic Den",
+     "label_ru": "Мастерская механиков",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "e61",
+     "upgrades": [
+      "mechanic_den_2"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Life": 30,
+      "Crystals_Fire": 8,
+      "Crystals_Nature": 8
+     }
+    },
+    {
+     "id": "mechanic_den_2",
+     "label": "Mechanic Den II",
+     "label_ru": "Мастерская механиков II",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e611",
+     "upgrades": [
+      "machinist_hall",
+      "armsmaster_hall"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Fire": 12,
+      "Crystals_Nature": 12
+     }
+    },
+    {
+     "id": "machinist_hall",
+     "label": "Machinist Hall",
+     "label_ru": "Зал машинистов",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e6111",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Life": 77,
+      "Crystals_Fire": 19,
+      "Crystals_Nature": 19
+     }
+    },
+    {
+     "id": "armsmaster_hall",
+     "label": "Armsmaster Hall",
+     "label_ru": "Зал оружейных мастеров",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e6112",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Life": 77,
+      "Crystals_Fire": 19,
+      "Crystals_Frost": 19
+     }
+    },
+    {
+     "id": "rifleman_range",
+     "label": "Rifleman Range",
+     "label_ru": "Стрельбище стрелков",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "e62",
+     "upgrades": [
+      "devastator_post",
+      "flamethrower_post"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Life": 30,
+      "Crystals_Fire": 8,
+      "Crystals_Nature": 8
+     }
+    },
+    {
+     "id": "devastator_post",
+     "label": "Devastator Post",
+     "label_ru": "Пост разрушителей",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e621",
+     "upgrades": [
+      "devastator_battery"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Fire": 12,
+      "Crystals_Nature": 12
+     }
+    },
+    {
+     "id": "devastator_battery",
+     "label": "Annihilator Battery",
+     "label_ru": "Батарея Аннигиляторов",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e6211",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Life": 77,
+      "Crystals_Fire": 19,
+      "Crystals_Air": 19
+     }
+    },
+    {
+     "id": "flamethrower_post",
+     "label": "Flamethrower Post",
+     "label_ru": "Пост огнемётчиков",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e622",
+     "upgrades": [
+      "flamethrower_foundry"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Fire": 12,
+      "Crystals_Nature": 12
+     }
+    },
+    {
+     "id": "flamethrower_foundry",
+     "label": "Inferno Gunner Foundry",
+     "label_ru": "Литейная Огнемётчиков Инферно",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e6221",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Fire": 77,
+      "Crystals_Life": 19,
+      "Crystals_Nature": 19
+     }
+    },
+    {
+     "id": "acolyte_shrine",
+     "label": "Acolyte Shrine",
+     "label_ru": "Святилище послушников",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "e2",
+     "upgrades": [
+      "sun_temple",
+      "priest_shrine"
+     ],
+     "cost": {
+      "gold": 40,
+      "Crystals_Life": 20,
+      "Crystals_Nature": 5
+     }
+    },
+    {
+     "id": "sun_temple",
+     "label": "Sun Temple",
+     "label_ru": "Храм Солнца",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "e21",
+     "upgrades": [
+      "mithrails_champion_keep",
+      "mithrails_warden_keep"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Life": 30,
+      "Crystals_Death": 8,
+      "Crystals_Nature": 8
+     }
+    },
+    {
+     "id": "mithrails_warden_keep",
+     "label": "Mithrails Warden Keep",
+     "label_ru": "Твердыня хранителей Митраила",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e212",
+     "upgrades": [
+      "mithrails_paragon_keep"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Air": 12,
+      "Crystals_Frost": 12
+     }
+    },
+    {
+     "id": "mithrails_paragon_keep",
+     "label": "Mithrails Paragon Keep",
+     "label_ru": "Твердыня идеалов Митраила",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e2121",
+     "upgrades": [],
+     "cost": {
+      "gold": 160,
+      "Crystals_Life": 80,
+      "Crystals_Air": 20,
+      "Crystals_Frost": 20
+     }
+    },
+    {
+     "id": "mithrails_exemplar_keep",
+     "label": "Mithrails Exemplar Keep",
+     "label_ru": "Твердыня экземпларов Митраила",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e2111",
+     "upgrades": [],
+     "cost": {
+      "gold": 160,
+      "Crystals_Life": 80,
+      "Crystals_Air": 20,
+      "Crystals_Fire": 20
+     }
+    },
+    {
+     "id": "mithrails_champion_keep",
+     "label": "Mithrails Champion Keep",
+     "label_ru": "Твердыня поборников Митраила",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e211",
+     "upgrades": [
+      "mithrails_exemplar_keep"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Air": 12,
+      "Crystals_Fire": 12
+     }
+    },
+    {
+     "id": "priest_shrine",
+     "label": "Priest Shrine",
+     "label_ru": "Святилище жрецов",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "e22",
+     "upgrades": [
+      "ardent_shrine",
+      "seraphic_shrine"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Life": 30,
+      "Crystals_Nature": 8
+     }
+    },
+    {
+     "id": "ardent_shrine",
+     "label": "Ardent Shrine",
+     "label_ru": "Ревностное святилище",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e221",
+     "upgrades": [
+      "high_priest_shrine"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Fire": 12,
+      "Crystals_Nature": 12
+     }
+    },
+    {
+     "id": "high_priest_shrine",
+     "label": "High Priest Shrine",
+     "label_ru": "Святилище верховных жрецов",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e2211",
+     "upgrades": [],
+     "cost": {
+      "gold": 160,
+      "Crystals_Life": 80,
+      "Crystals_Fire": 20,
+      "Crystals_Nature": 20
+     }
+    },
+    {
+     "id": "seraphic_shrine",
+     "label": "Seraphic Shrine",
+     "label_ru": "Серафическое святилище",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e222",
+     "upgrades": [
+      "seraph_shrine"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Air": 12,
+      "Crystals_Nature": 12
+     }
+    },
+    {
+     "id": "seraph_shrine",
+     "label": "Seraph Shrine",
+     "label_ru": "Святилище серафимов",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e2221",
+     "upgrades": [],
+     "cost": {
+      "gold": 160,
+      "Crystals_Life": 80,
+      "Crystals_Air": 20,
+      "Crystals_Nature": 20
+     }
+    },
+    {
+     "id": "blessed_soul_shrine",
+     "label": "Blessed Soul Shrine",
+     "label_ru": "Святилище благословенных душ",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "e7",
+     "upgrades": [
+      "mithrails_light_temple"
+     ],
+     "cost": {
+      "gold": 40,
+      "Crystals_Life": 20,
+      "Crystals_Air": 5,
+      "Crystals_Fire": 5
+     }
+    },
+    {
+     "id": "mithrails_light_temple",
+     "label": "Mithrails Light Temple",
+     "label_ru": "Храм Света Митраила",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "e71",
+     "upgrades": [
+      "mithrails_will_temple"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Life": 30,
+      "Crystals_Air": 8,
+      "Crystals_Fire": 8
+     }
+    },
+    {
+     "id": "mithrails_will_temple",
+     "label": "Mithrails Will Temple",
+     "label_ru": "Храм Воли Митраила",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e711",
+     "upgrades": [
+      "mithrails_verdict_temple"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Air": 12,
+      "Crystals_Fire": 12
+     }
+    },
+    {
+     "id": "mithrails_verdict_temple",
+     "label": "Mithrails Verdict Temple",
+     "label_ru": "Храм приговора Митраила",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e7111",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Life": 77,
+      "Crystals_Air": 19,
+      "Crystals_Frost": 19
+     }
+    },
+    {
+     "id": "mage_tower",
+     "label": "Mage Tower",
+     "label_ru": "Башня магов",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "e4",
+     "upgrades": [
+      "red_mage_tower",
+      "blue_mage_tower",
+      "warder_sanctum"
+     ],
+     "cost": {
+      "gold": 40,
+      "Crystals_Life": 20,
+      "Crystals_Air": 5,
+      "Crystals_Fire": 5
+     }
+    },
+    {
+     "id": "red_mage_tower",
+     "label": "Red Mage Tower",
+     "label_ru": "Башня красных магов",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "e41",
+     "upgrades": [
+      "ash_sanctum",
+      "cinder_forge"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Life": 30,
+      "Crystals_Fire": 8,
+      "Crystals_Air": 8
+     }
+    },
+    {
+     "id": "ash_sanctum",
+     "label": "Ash Sanctum",
+     "label_ru": "Пепельный санктум",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e411",
+     "upgrades": [
+      "ash_priest_sanctum"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Fire": 12,
+      "Crystals_Air": 12
+     }
+    },
+    {
+     "id": "ash_priest_sanctum",
+     "label": "Ash Hierophant Sanctum",
+     "label_ru": "Святилище Пепельных Иерофантов",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e4111",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Fire": 77,
+      "Crystals_Life": 19,
+      "Crystals_Air": 19
+     }
+    },
+    {
+     "id": "cinder_forge",
+     "label": "Cinder Forge",
+     "label_ru": "Кузня углей",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e412",
+     "upgrades": [
+      "dragon_knight_forge"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Fire": 12,
+      "Crystals_Air": 12
+     }
+    },
+    {
+     "id": "dragon_knight_forge",
+     "label": "Dragon Knight Forge",
+     "label_ru": "Кузня драконьих рыцарей",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e4121",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Life": 77,
+      "Crystals_Fire": 19,
+      "Crystals_Death": 19
+     }
+    },
+    {
+     "id": "blue_mage_tower",
+     "label": "Blue Mage Tower",
+     "label_ru": "Башня синих магов",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "e42",
+     "upgrades": [
+      "cryomancer_tower"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Life": 30,
+      "Crystals_Frost": 8,
+      "Crystals_Air": 8
+     }
+    },
+    {
+     "id": "cryomancer_tower",
+     "label": "Cryomancer Tower",
+     "label_ru": "Башня криомантов",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e421",
+     "upgrades": [
+      "winter_magus_tower"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Fire": 12,
+      "Crystals_Frost": 12
+     }
+    },
+    {
+     "id": "winter_magus_tower",
+     "label": "Winter Magus Tower",
+     "label_ru": "Башня зимних магов",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e4211",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Life": 77,
+      "Crystals_Frost": 19,
+      "Crystals_Air": 19
+     }
+    },
+    {
+     "id": "warder_sanctum",
+     "label": "Warder Sanctum",
+     "label_ru": "Санктум хранителей",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "e43",
+     "upgrades": [
+      "bulwark_sanctum",
+      "aegis_bastion"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Life": 30,
+      "Crystals_Air": 8
+     }
+    },
+    {
+     "id": "bulwark_sanctum",
+     "label": "Bulwark Sanctum",
+     "label_ru": "Санктум оплота",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e431",
+     "upgrades": [
+      "archon_sanctum"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Air": 12,
+      "Crystals_Frost": 12
+     }
+    },
+    {
+     "id": "archon_sanctum",
+     "label": "Archon Sanctum",
+     "label_ru": "Санктум архонтов",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e4311",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Life": 77,
+      "Crystals_Air": 19,
+      "Crystals_Frost": 19
+     }
+    },
+    {
+     "id": "aegis_bastion",
+     "label": "Aegis Bastion",
+     "label_ru": "Бастион Эгиды",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "e432",
+     "upgrades": [
+      "aegis_citadel"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Life": 48,
+      "Crystals_Air": 12,
+      "Crystals_Frost": 12
+     }
+    },
+    {
+     "id": "aegis_citadel",
+     "label": "Aegis Citadel",
+     "label_ru": "Цитадель Эгиды",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "e4321",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Life": 77,
+      "Crystals_Air": 19,
+      "Crystals_Nature": 19
+     }
+    }
+   ],
+   "special": [],
+   "hall_up": [
+    {
+     "id": "crystal_mine",
+     "label": "Crystal Mine",
+     "label_ru": "Кристальная шахта",
+     "category": "hall_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "crystal_mine",
+     "desc": "Raises the crystals your daily reward pays: +15%, then +25%.",
+     "desc_ru": "Увеличивает кристаллы ежедневной награды: +15%, затем +25%.",
+     "cost": {
+      "gold": 120,
+      "Crystals_Life": 40
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 300,
+       "Crystals_Life": 100
+      }
+     }
+    },
+    {
+     "id": "mage_guild",
+     "label": "Mage Guild",
+     "label_ru": "Гильдия магов",
+     "category": "hall_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "mage_guild",
+     "desc": "Opens one tier of spell research per level, and makes research cheaper: 10% off, then 20%.",
+     "desc_ru": "Открывает по одному кругу заклинаний за уровень и удешевляет изучение: на 10%, затем на 20%.",
+     "cost": {
+      "gold": 150,
+      "Crystals_Life": 50
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 350,
+       "Crystals_Life": 120
+      },
+      "3": {
+       "gold": 800,
+       "Crystals_Life": 260
+      }
+     }
+    },
+    {
+     "id": "infirmary",
+     "label": "Infirmary",
+     "label_ru": "Лазарет",
+     "category": "hall_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "infirmary",
+     "desc": "Wounded units recover between battles. Each level speeds it up. From level 2 it brews a Health Potion daily, two at level 3.",
+     "desc_ru": "Раненые бойцы восстанавливаются между боями. Каждый уровень ускоряет это. С уровня 2 производит Зелье Здоровья каждый день, на уровне 3 — два.",
+     "cost": {
+      "gold": 100,
+      "Crystals_Life": 30
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 240,
+       "Crystals_Life": 80
+      },
+      "3": {
+       "gold": 450,
+       "Crystals_Life": 150
+      }
+     }
+    },
+    {
+     "id": "blacksmith",
+     "label": "Blacksmith",
+     "label_ru": "Кузница",
+     "category": "hall_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "blacksmith",
+     "desc": "Opens the forge. Without it nothing can be crafted. Level 2 opens Engraving.",
+     "desc_ru": "Открывает кузню. Без неё ничего нельзя создать. Уровень 2 открывает Гравировку.",
+     "cost": {
+      "gold": 10
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 400,
+       "Crystals_Life": 120
+      }
+     }
+    }
+   ],
+   "merc_up": [
+    {
+     "id": "supply_depot",
+     "label": "Quartermaster's Yard",
+     "label_ru": "Двор квартирмейстера",
+     "category": "merc_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "supply_depot",
+     "desc": "Holds your Camping Supplies. Every embark spends one, and they come back on their own over time. Holds 10, then 15, then 20.",
+     "desc_ru": "Хранит Походные припасы. Каждый поход тратит один, и они восполняются сами со временем. Вмещает 10, затем 15, затем 20.",
+     "cost": {},
+     "upgrade_costs": {
+      "2": {
+       "gold": 1500,
+       "Crystals_Life": 400
+      },
+      "3": {
+       "gold": 4000,
+       "Crystals_Life": 1000
+      }
+     }
+    },
+    {
+     "id": "messenger_post",
+     "label": "Messenger's Post",
+     "label_ru": "Почтовый двор",
+     "category": "merc_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "messenger_post",
+     "desc": "Opens errands. Each level pays more for every errand run.",
+     "desc_ru": "Открывает поручения. Каждый уровень увеличивает награду.",
+     "cost": {
+      "gold": 10
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 200,
+       "Crystals_Life": 60
+      },
+      "3": {
+       "gold": 400,
+       "Crystals_Life": 120
+      }
+     }
+    },
+    {
+     "id": "transmute_lab",
+     "label": "Transmutation Lab",
+     "label_ru": "Лаборатория трансмутации",
+     "category": "merc_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "transmute_lab",
+     "desc": "Turns two crystals into a third.",
+     "desc_ru": "Превращает два кристалла в третий.",
+     "cost": {
+      "Crystals_Life": 10
+     }
+    },
+    {
+     "id": "mercenary_hall",
+     "label": "Mercenary Hall",
+     "label_ru": "Зал наёмников",
+     "category": "merc_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "mercenary_hall",
+     "desc": "Opens one mercenary slot per level.",
+     "desc_ru": "Открывает по одному слоту наёмника за уровень.",
+     "cost": {
+      "gold": 120,
+      "Crystals_Life": 40
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 260,
+       "Crystals_Life": 90
+      },
+      "3": {
+       "gold": 480,
+       "Crystals_Life": 160
+      }
+     }
+    }
+   ],
+   "barracks_up": [
+    {
+     "id": "garrison_annex",
+     "label": "Garrison Annex",
+     "label_ru": "Гарнизонная пристройка",
+     "category": "barracks_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "garrison_annex",
+     "desc": "Opens one more unit slot per level.",
+     "desc_ru": "Открывает по одному слоту бойца за уровень.",
+     "cost": {
+      "gold": 150,
+      "Crystals_Life": 50
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 320,
+       "Crystals_Life": 110
+      },
+      "3": {
+       "gold": 560,
+       "Crystals_Life": 190
+      }
+     }
+    },
+    {
+     "id": "proving_grounds",
+     "label": "Proving Grounds",
+     "label_ru": "Ристалище",
+     "category": "barracks_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "proving_grounds",
+     "desc": "Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4. Level 3 teaches the litanies.",
+     "desc_ru": "Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4. 3 уровень обучает литаниям.",
+     "cost": {
+      "gold": 200,
+      "Crystals_Life": 60
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 500,
+       "Crystals_Life": 160
+      },
+      "3": {
+       "gold": 900,
+       "Crystals_Life": 290
+      }
+     }
+    },
+    {
+     "id": "training_grounds",
+     "label": "Training Grounds",
+     "label_ru": "Тренировочный двор",
+     "category": "barracks_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "training_grounds",
+     "desc": "Every embark pays more XP: +3%, then +5%.",
+     "desc_ru": "Каждый поход приносит больше опыта: +3%, затем +5%.",
+     "cost": {
+      "gold": 150,
+      "Crystals_Life": 50
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 350,
+       "Crystals_Life": 120
+      }
+     }
+    },
+    {
+     "id": "temple",
+     "label": "Temple of the Lion",
+     "label_ru": "Храм Льва",
+     "category": "barracks_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "temple",
+     "desc": "Every unit you field gains +1 max HP per level, to +5. Paid for in gold and in all six crystals.",
+     "desc_ru": "Каждый ваш боец получает +1 к максимуму HP за уровень, до +5. Оплачивается золотом и всеми шестью кристаллами.",
+     "cost": {
+      "gold": 500,
+      "Crystals_Life": 25,
+      "Crystals_Fire": 25,
+      "Crystals_Death": 25,
+      "Crystals_Frost": 25,
+      "Crystals_Nature": 25,
+      "Crystals_Air": 25
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 1000,
+       "Crystals_Life": 50,
+       "Crystals_Fire": 50,
+       "Crystals_Death": 50,
+       "Crystals_Frost": 50,
+       "Crystals_Nature": 50,
+       "Crystals_Air": 50
+      },
+      "3": {
+       "gold": 1500,
+       "Crystals_Life": 75,
+       "Crystals_Fire": 75,
+       "Crystals_Death": 75,
+       "Crystals_Frost": 75,
+       "Crystals_Nature": 75,
+       "Crystals_Air": 75
+      },
+      "4": {
+       "gold": 2000,
+       "Crystals_Life": 100,
+       "Crystals_Fire": 100,
+       "Crystals_Death": 100,
+       "Crystals_Frost": 100,
+       "Crystals_Nature": 100,
+       "Crystals_Air": 100
+      },
+      "5": {
+       "gold": 2500,
+       "Crystals_Life": 125,
+       "Crystals_Fire": 125,
+       "Crystals_Death": 125,
+       "Crystals_Frost": 125,
+       "Crystals_Nature": 125,
+       "Crystals_Air": 125
+      }
+     }
+    }
+   ]
+  },
+  "choir_of_the_cursed": {
+   "throne": [
+    {
+     "id": "dark_throne",
+     "label": "Dark Throne",
+     "label_ru": "Тёмный трон",
+     "category": "throne",
+     "unit_id": null
+    },
+    {
+     "id": "warlord_keep_1",
+     "label": "Warlord Keep",
+     "label_ru": "Твердыня военачальников",
+     "category": "throne",
+     "unit_id": "h_d_1",
+     "tier": 1,
+     "upgrades": [
+      "warlord_keep_2_a",
+      "warlord_keep_2_b"
+     ]
+    },
+    {
+     "id": "warlord_keep_2_a",
+     "label": "Warlord Keep II A",
+     "label_ru": "Твердыня военачальников II A",
+     "category": "throne",
+     "unit_id": "h_d_1_a2",
+     "tier": 2,
+     "upgrades": [
+      "warlord_keep_3_a"
+     ]
+    },
+    {
+     "id": "warlord_keep_2_b",
+     "label": "Warlord Keep II B",
+     "label_ru": "Твердыня военачальников II B",
+     "category": "throne",
+     "unit_id": "h_d_1_b2",
+     "tier": 2,
+     "upgrades": [
+      "warlord_keep_3_b"
+     ]
+    },
+    {
+     "id": "warlord_keep_3_a",
+     "label": "Warlord Keep III A",
+     "label_ru": "Твердыня военачальников III A",
+     "category": "throne",
+     "unit_id": "h_d_1_a3",
+     "tier": 3,
+     "upgrades": [
+      "warlord_keep_4_a",
+      "warlord_keep_4_a_alt"
+     ]
+    },
+    {
+     "id": "warlord_keep_3_b",
+     "label": "Warlord Keep III B",
+     "label_ru": "Твердыня военачальников III B",
+     "category": "throne",
+     "unit_id": "h_d_1_b3",
+     "tier": 3,
+     "upgrades": [
+      "warlord_keep_4_b",
+      "warlord_keep_4_b_alt"
+     ]
+    },
+    {
+     "id": "warlord_keep_4_a",
+     "label": "Warlord Keep IV A",
+     "label_ru": "Твердыня военачальников IV A",
+     "category": "throne",
+     "unit_id": "h_d_1_a41",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "warlord_keep_4_a_alt",
+     "label": "Warlord Keep IV A Alt",
+     "label_ru": "Твердыня военачальников IV A Alt",
+     "category": "throne",
+     "unit_id": "h_d_1_a42",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "warlord_keep_4_b",
+     "label": "Warlord Keep IV B",
+     "label_ru": "Твердыня военачальников IV B",
+     "category": "throne",
+     "unit_id": "h_d_1_b41",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "warlord_keep_4_b_alt",
+     "label": "Warlord Keep IV B Alt",
+     "label_ru": "Твердыня военачальников IV B Alt",
+     "category": "throne",
+     "unit_id": "h_d_1_b42",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "hexblade_sanctum_1",
+     "label": "Hexblade Sanctum",
+     "label_ru": "Санктум проклятого клинка",
+     "category": "throne",
+     "unit_id": "h_d_2",
+     "tier": 1,
+     "upgrades": [
+      "hexblade_sanctum_2_a",
+      "hexblade_sanctum_2_b"
+     ]
+    },
+    {
+     "id": "hexblade_sanctum_2_a",
+     "label": "Hexblade Sanctum II A",
+     "label_ru": "Санктум проклятого клинка II A",
+     "category": "throne",
+     "unit_id": "h_d_2_a2",
+     "tier": 2,
+     "upgrades": [
+      "hexblade_sanctum_3_a"
+     ]
+    },
+    {
+     "id": "hexblade_sanctum_2_b",
+     "label": "Hexblade Sanctum II B",
+     "label_ru": "Санктум проклятого клинка II B",
+     "category": "throne",
+     "unit_id": "h_d_2_b2",
+     "tier": 2,
+     "upgrades": [
+      "hexblade_sanctum_3_b"
+     ]
+    },
+    {
+     "id": "hexblade_sanctum_3_a",
+     "label": "Hexblade Sanctum III A",
+     "label_ru": "Санктум проклятого клинка III A",
+     "category": "throne",
+     "unit_id": "h_d_2_a3",
+     "tier": 3,
+     "upgrades": [
+      "hexblade_sanctum_4_a",
+      "hexblade_sanctum_4_a_alt"
+     ]
+    },
+    {
+     "id": "hexblade_sanctum_3_b",
+     "label": "Hexblade Sanctum III B",
+     "label_ru": "Санктум проклятого клинка III B",
+     "category": "throne",
+     "unit_id": "h_d_2_b3",
+     "tier": 3,
+     "upgrades": [
+      "hexblade_sanctum_4_b",
+      "hexblade_sanctum_4_b_alt"
+     ]
+    },
+    {
+     "id": "hexblade_sanctum_4_a",
+     "label": "Hexblade Sanctum IV A",
+     "label_ru": "Санктум проклятого клинка IV A",
+     "category": "throne",
+     "unit_id": "h_d_2_a41",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "hexblade_sanctum_4_a_alt",
+     "label": "Hexblade Sanctum IV A Alt",
+     "label_ru": "Санктум проклятого клинка IV A Alt",
+     "category": "throne",
+     "unit_id": "h_d_2_a42",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "hexblade_sanctum_4_b",
+     "label": "Hexblade Sanctum IV B",
+     "label_ru": "Санктум проклятого клинка IV B",
+     "category": "throne",
+     "unit_id": "h_d_2_b41",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "hexblade_sanctum_4_b_alt",
+     "label": "Hexblade Sanctum IV B Alt",
+     "label_ru": "Санктум проклятого клинка IV B Alt",
+     "category": "throne",
+     "unit_id": "h_d_2_b42",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "infernal_spire_1",
+     "label": "Infernal Spire",
+     "label_ru": "Инфернальный шпиль",
+     "category": "throne",
+     "unit_id": "h_d_3",
+     "tier": 1,
+     "upgrades": [
+      "infernal_spire_2_a",
+      "infernal_spire_2_b"
+     ]
+    },
+    {
+     "id": "infernal_spire_2_a",
+     "label": "Infernal Spire II A",
+     "label_ru": "Инфернальный шпиль II A",
+     "category": "throne",
+     "unit_id": "h_d_3_a2",
+     "tier": 2,
+     "upgrades": [
+      "infernal_spire_3_a"
+     ]
+    },
+    {
+     "id": "infernal_spire_2_b",
+     "label": "Infernal Spire II B",
+     "label_ru": "Инфернальный шпиль II B",
+     "category": "throne",
+     "unit_id": "h_d_3_b2",
+     "tier": 2,
+     "upgrades": [
+      "infernal_spire_3_b"
+     ]
+    },
+    {
+     "id": "infernal_spire_3_a",
+     "label": "Infernal Spire III A",
+     "label_ru": "Инфернальный шпиль III A",
+     "category": "throne",
+     "unit_id": "h_d_3_a3",
+     "tier": 3,
+     "upgrades": [
+      "infernal_spire_4_a",
+      "infernal_spire_4_a_alt"
+     ]
+    },
+    {
+     "id": "infernal_spire_3_b",
+     "label": "Infernal Spire III B",
+     "label_ru": "Инфернальный шпиль III B",
+     "category": "throne",
+     "unit_id": "h_d_3_b3",
+     "tier": 3,
+     "upgrades": [
+      "infernal_spire_4_b",
+      "infernal_spire_4_b_alt"
+     ]
+    },
+    {
+     "id": "infernal_spire_4_a",
+     "label": "Infernal Spire IV A",
+     "label_ru": "Инфернальный шпиль IV A",
+     "category": "throne",
+     "unit_id": "h_d_3_a41",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "infernal_spire_4_a_alt",
+     "label": "Infernal Spire IV A Alt",
+     "label_ru": "Инфернальный шпиль IV A Alt",
+     "category": "throne",
+     "unit_id": "h_d_3_a42",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "infernal_spire_4_b",
+     "label": "Infernal Spire IV B",
+     "label_ru": "Инфернальный шпиль IV B",
+     "category": "throne",
+     "unit_id": "h_d_3_b41",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "infernal_spire_4_b_alt",
+     "label": "Infernal Spire IV B Alt",
+     "label_ru": "Инфернальный шпиль IV B Alt",
+     "category": "throne",
+     "unit_id": "h_d_3_b42",
+     "tier": 4,
+     "upgrades": []
+    }
+   ],
+   "barracks": [
+    {
+     "id": "imp_den",
+     "label": "Imp Den",
+     "label_ru": "Логово бесов",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "d1",
+     "upgrades": [
+      "tormentor_pit",
+      "chorister_chamber"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Fire": 30,
+      "Crystals_Nature": 8
+     }
+    },
+    {
+     "id": "tormentor_pit",
+     "label": "Tormentor Pit",
+     "label_ru": "Яма мучителей",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "d11",
+     "upgrades": [
+      "praetor_pit"
+     ],
+     "cost": {
+      "gold": 90,
+      "Crystals_Fire": 45,
+      "Crystals_Air": 12,
+      "Crystals_Death": 12
+     }
+    },
+    {
+     "id": "praetor_pit",
+     "label": "Praetor Pit",
+     "label_ru": "Яма преторов",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "d111",
+     "upgrades": [
+      "conqueror_pit"
+     ],
+     "cost": {
+      "gold": 144,
+      "Crystals_Fire": 72,
+      "Crystals_Air": 18,
+      "Crystals_Death": 18
+     }
+    },
+    {
+     "id": "conqueror_pit",
+     "label": "Conqueror Pit",
+     "label_ru": "Яма завоевателей",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "d1111",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Fire": 77,
+      "Crystals_Death": 19,
+      "Crystals_Life": 19
+     }
+    },
+    {
+     "id": "chorister_chamber",
+     "label": "Chorister Chamber",
+     "label_ru": "Палата хористов",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "d12",
+     "upgrades": [
+      "chanter_chamber"
+     ],
+     "cost": {
+      "gold": 90,
+      "Crystals_Fire": 45,
+      "Crystals_Death": 12
+     }
+    },
+    {
+     "id": "chanter_chamber",
+     "label": "Chanter Chamber",
+     "label_ru": "Палата певчих",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "d121",
+     "upgrades": [
+      "archchanter_chamber",
+      "doomchanter_chamber"
+     ],
+     "cost": {
+      "gold": 144,
+      "Crystals_Fire": 72,
+      "Crystals_Death": 18
+     }
+    },
+    {
+     "id": "archchanter_chamber",
+     "label": "Archchanter Chamber",
+     "label_ru": "Палата архипевчих",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "d1211",
+     "upgrades": [],
+     "cost": {
+      "gold": 240,
+      "Crystals_Fire": 120,
+      "Crystals_Death": 30
+     }
+    },
+    {
+     "id": "doomchanter_chamber",
+     "label": "Doomchanter Chamber",
+     "label_ru": "Палата певчих гибели",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "d1212",
+     "upgrades": [],
+     "cost": {
+      "gold": 240,
+      "Crystals_Death": 120,
+      "Crystals_Fire": 30
+     }
+    },
+    {
+     "id": "ash_novitiate",
+     "label": "Ash Novitiate",
+     "label_ru": "Пепельный новициат",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "d2",
+     "upgrades": [
+      "ember_vigil"
+     ],
+     "cost": {
+      "gold": 40,
+      "Crystals_Fire": 20,
+      "Crystals_Air": 5
+     }
+    },
+    {
+     "id": "ember_vigil",
+     "label": "Ember Vigil",
+     "label_ru": "Бдение углей",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "d21",
+     "upgrades": [
+      "pyre_watch"
+     ],
+     "cost": {
+      "gold": 90,
+      "Crystals_Fire": 45,
+      "Crystals_Life": 12
+     }
+    },
+    {
+     "id": "pyre_watch",
+     "label": "Pyre Watch",
+     "label_ru": "Дозор костра",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "d211",
+     "upgrades": [
+      "ashen_warden_watch",
+      "pyre_choir_hall"
+     ],
+     "cost": {
+      "gold": 144,
+      "Crystals_Fire": 72,
+      "Crystals_Life": 18,
+      "Crystals_Air": 12
+     }
+    },
+    {
+     "id": "pyre_choir_hall",
+     "label": "Pyre Choir Hall",
+     "label_ru": "Зал погребального хора",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "d2112",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Fire": 77,
+      "Crystals_Nature": 19,
+      "Crystals_Air": 19
+     }
+    },
+    {
+     "id": "ashen_warden_watch",
+     "label": "Ashen Warden Watch",
+     "label_ru": "Дозор пепельных стражей",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "d2111",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Fire": 77,
+      "Crystals_Death": 19,
+      "Crystals_Air": 19
+     }
+    },
+    {
+     "id": "gargoyle_roost",
+     "label": "Gargoyle Roost",
+     "label_ru": "Насест горгулий",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "d3",
+     "upgrades": [
+      "stone_gargoyle_den",
+      "quartz_gargoyle_den"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Fire": 30,
+      "Crystals_Air": 8,
+      "Crystals_Life": 8
+     }
+    },
+    {
+     "id": "stone_gargoyle_den",
+     "label": "Stone Gargoyle Den",
+     "label_ru": "Логово каменных горгулий",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "d31",
+     "upgrades": [
+      "onyx_gargoyle_den"
+     ],
+     "cost": {
+      "gold": 90,
+      "Crystals_Fire": 45,
+      "Crystals_Air": 12,
+      "Crystals_Life": 12
+     }
+    },
+    {
+     "id": "onyx_gargoyle_den",
+     "label": "Onyx Gargoyle Den",
+     "label_ru": "Логово ониксовых горгулий",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "d311",
+     "upgrades": [
+      "obsidian_gargoyle_den"
+     ],
+     "cost": {
+      "gold": 144,
+      "Crystals_Fire": 72,
+      "Crystals_Air": 18,
+      "Crystals_Death": 18
+     }
+    },
+    {
+     "id": "obsidian_gargoyle_den",
+     "label": "Obsidian Gargoyle Den",
+     "label_ru": "Логово обсидиановых горгулий",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "d3111",
+     "upgrades": [],
+     "cost": {
+      "gold": 230,
+      "Crystals_Fire": 115,
+      "Crystals_Air": 29,
+      "Crystals_Death": 29
+     }
+    },
+    {
+     "id": "quartz_gargoyle_den",
+     "label": "Quartz Gargoyle Den",
+     "label_ru": "Логово кварцевых горгулий",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "d32",
+     "upgrades": [
+      "azurite_gargoyle_den"
+     ],
+     "cost": {
+      "gold": 90,
+      "Crystals_Fire": 45,
+      "Crystals_Death": 12,
+      "Crystals_Frost": 12
+     }
+    },
+    {
+     "id": "azurite_gargoyle_den",
+     "label": "Azurite Gargoyle Den",
+     "label_ru": "Логово азуритовых горгулий",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "d321",
+     "upgrades": [
+      "malachite_gargoyle_den",
+      "alabaster_gargoyle_den"
+     ],
+     "cost": {
+      "gold": 144,
+      "Crystals_Fire": 72,
+      "Crystals_Frost": 18,
+      "Crystals_Death": 18
+     }
+    },
+    {
+     "id": "malachite_gargoyle_den",
+     "label": "Malachite Gargoyle Den",
+     "label_ru": "Логово малахитовых горгулий",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "d3211",
+     "upgrades": [],
+     "cost": {
+      "gold": 230,
+      "Crystals_Fire": 115,
+      "Crystals_Frost": 29,
+      "Crystals_Death": 29
+     }
+    },
+    {
+     "id": "alabaster_gargoyle_den",
+     "label": "Alabaster Gargoyle Den",
+     "label_ru": "Логово алебастровых горгулий",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "d3212",
+     "upgrades": [],
+     "cost": {
+      "gold": 230,
+      "Crystals_Fire": 115,
+      "Crystals_Life": 29,
+      "Crystals_Frost": 29
+     }
+    },
+    {
+     "id": "heretic_pit",
+     "label": "Heretic Pit",
+     "label_ru": "Яма еретиков",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "d4",
+     "upgrades": [
+      "possessed_pit"
+     ],
+     "cost": {
+      "gold": 40,
+      "Crystals_Fire": 20,
+      "Crystals_Life": 5
+     }
+    },
+    {
+     "id": "possessed_pit",
+     "label": "Possessed Pit",
+     "label_ru": "Яма одержимых",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "d41",
+     "upgrades": [
+      "vessel_altar",
+      "pain_projector_den"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Fire": 30,
+      "Crystals_Life": 8,
+      "Crystals_Death": 8
+     }
+    },
+    {
+     "id": "vessel_altar",
+     "label": "Vessel Altar",
+     "label_ru": "Алтарь сосудов",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "d411",
+     "upgrades": [
+      "broken_vessel_altar"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Fire": 48,
+      "Crystals_Death": 12
+     }
+    },
+    {
+     "id": "broken_vessel_altar",
+     "label": "Broken Vessel Altar",
+     "label_ru": "Алтарь сломленных сосудов",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "d4111",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Fire": 77,
+      "Crystals_Life": 19,
+      "Crystals_Death": 19
+     }
+    },
+    {
+     "id": "pain_projector_den",
+     "label": "Pain Projector Den",
+     "label_ru": "Логово проводников боли",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "d412",
+     "upgrades": [
+      "agony_engine_den"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Fire": 48,
+      "Crystals_Death": 12
+     }
+    },
+    {
+     "id": "agony_engine_den",
+     "label": "Agony Engine Den",
+     "label_ru": "Логово машин агонии",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "d4121",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Fire": 77,
+      "Crystals_Nature": 19,
+      "Crystals_Life": 19
+     }
+    },
+    {
+     "id": "peer_court",
+     "label": "Peer Court",
+     "label_ru": "Двор пэров",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "d6",
+     "upgrades": [
+      "nether_baron_hall"
+     ],
+     "cost": {
+      "gold": 40,
+      "Crystals_Fire": 20,
+      "Crystals_Life": 5
+     }
+    },
+    {
+     "id": "nether_baron_hall",
+     "label": "Nether Baron Hall",
+     "label_ru": "Зал баронов Преисподней",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "d61",
+     "upgrades": [
+      "nether_lord_hall"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Fire": 30,
+      "Crystals_Life": 8
+     }
+    },
+    {
+     "id": "nether_lord_hall",
+     "label": "Nether Lord Hall",
+     "label_ru": "Зал владык Преисподней",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "d611",
+     "upgrades": [
+      "nether_sovereign_hall"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Fire": 48,
+      "Crystals_Life": 12
+     }
+    },
+    {
+     "id": "nether_sovereign_hall",
+     "label": "Nether Sovereign Hall",
+     "label_ru": "Зал государей Преисподней",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "d6111",
+     "upgrades": [],
+     "cost": {
+      "gold": 160,
+      "Crystals_Fire": 80,
+      "Crystals_Life": 20
+     }
+    },
+    {
+     "id": "flame_spawn_pit",
+     "label": "Flame Spawn Pit",
+     "label_ru": "Яма порождений пламени",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "d7",
+     "upgrades": [
+      "greater_flame_spawn_pit"
+     ],
+     "cost": {
+      "gold": 40,
+      "Crystals_Fire": 20,
+      "Crystals_Death": 5
+     }
+    },
+    {
+     "id": "greater_flame_spawn_pit",
+     "label": "Greater Flame Spawn Pit",
+     "label_ru": "Большая яма порождений пламени",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "d71",
+     "upgrades": [
+      "inferno_spawn_pit"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Fire": 30,
+      "Crystals_Frost": 8
+     }
+    },
+    {
+     "id": "inferno_spawn_pit",
+     "label": "Inferno Spawn Pit",
+     "label_ru": "Яма порождений инферно",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "d711",
+     "upgrades": [
+      "inferno_scion_crucible"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Fire": 48,
+      "Crystals_Life": 12
+     }
+    },
+    {
+     "id": "inferno_scion_crucible",
+     "label": "Inferno Scion Crucible",
+     "label_ru": "Горнило отпрысков инферно",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "d7111",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Fire": 77,
+      "Crystals_Death": 19,
+      "Crystals_Air": 19
+     }
+    },
+    {
+     "id": "cultist_shrine",
+     "label": "Cultist Shrine",
+     "label_ru": "Святилище культистов",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "d5",
+     "upgrades": [
+      "choir_servant_shrine",
+      "ash_cantor_chancel"
+     ],
+     "cost": {
+      "gold": 40,
+      "Crystals_Fire": 20,
+      "Crystals_Life": 5
+     }
+    },
+    {
+     "id": "choir_servant_shrine",
+     "label": "Choir Servant Shrine",
+     "label_ru": "Святилище служек Хора",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "d51",
+     "upgrades": [
+      "choir_ascendant_shrine"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Fire": 30,
+      "Crystals_Life": 8,
+      "Crystals_Death": 8
+     }
+    },
+    {
+     "id": "choir_ascendant_shrine",
+     "label": "Choir Ascendant Shrine",
+     "label_ru": "Святилище вознесённых Хора",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "d511",
+     "upgrades": [
+      "choir_exalted_shrine"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Fire": 48,
+      "Crystals_Life": 12,
+      "Crystals_Death": 12
+     }
+    },
+    {
+     "id": "choir_exalted_shrine",
+     "label": "Choir Exalted Shrine",
+     "label_ru": "Святилище превознесённых Хора",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "d5111",
+     "upgrades": [],
+     "cost": {
+      "gold": 160,
+      "Crystals_Fire": 80,
+      "Crystals_Life": 20,
+      "Crystals_Death": 20
+     }
+    },
+    {
+     "id": "ash_cantor_chancel",
+     "label": "Ash Cantor Chancel",
+     "label_ru": "Клирос пепельного кантора",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "d52",
+     "upgrades": [
+      "ash_precentor_chancel"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Fire": 30,
+      "Crystals_Life": 12,
+      "Crystals_Air": 5
+     }
+    },
+    {
+     "id": "ash_precentor_chancel",
+     "label": "Ash Precentor Chancel",
+     "label_ru": "Клирос пепельного регента",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "d521",
+     "upgrades": [
+      "ash_hierophant_chancel"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Fire": 48,
+      "Crystals_Life": 18,
+      "Crystals_Air": 8
+     }
+    },
+    {
+     "id": "ash_hierophant_chancel",
+     "label": "Ash Liturgist Chancel",
+     "label_ru": "Клирос пепельного литургиста",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "d5211",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Fire": 77,
+      "Crystals_Life": 29,
+      "Crystals_Air": 19
+     }
+    }
+   ],
+   "special": [],
+   "hall_up": [
+    {
+     "id": "crystal_mine",
+     "label": "Crystal Mine",
+     "label_ru": "Кристальная шахта",
+     "category": "hall_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "crystal_mine",
+     "desc": "Raises the crystals your daily reward pays: +15%, then +25%.",
+     "desc_ru": "Увеличивает кристаллы ежедневной награды: +15%, затем +25%.",
+     "cost": {
+      "gold": 120,
+      "Crystals_Fire": 40
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 300,
+       "Crystals_Fire": 100
+      }
+     }
+    },
+    {
+     "id": "mage_guild",
+     "label": "Mage Guild",
+     "label_ru": "Гильдия магов",
+     "category": "hall_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "mage_guild",
+     "desc": "Opens one tier of spell research per level, and makes research cheaper: 10% off, then 20%.",
+     "desc_ru": "Открывает по одному кругу заклинаний за уровень и удешевляет изучение: на 10%, затем на 20%.",
+     "cost": {
+      "gold": 150,
+      "Crystals_Fire": 50
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 350,
+       "Crystals_Fire": 120
+      },
+      "3": {
+       "gold": 800,
+       "Crystals_Fire": 260
+      }
+     }
+    },
+    {
+     "id": "infirmary",
+     "label": "Infirmary",
+     "label_ru": "Лазарет",
+     "category": "hall_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "infirmary",
+     "desc": "Wounded units recover between battles. Each level speeds it up. From level 2 it brews a Health Potion daily, two at level 3.",
+     "desc_ru": "Раненые бойцы восстанавливаются между боями. Каждый уровень ускоряет это. С уровня 2 производит Зелье Здоровья каждый день, на уровне 3 — два.",
+     "cost": {
+      "gold": 100,
+      "Crystals_Fire": 30
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 240,
+       "Crystals_Fire": 80
+      },
+      "3": {
+       "gold": 450,
+       "Crystals_Fire": 150
+      }
+     }
+    },
+    {
+     "id": "blacksmith",
+     "label": "Blacksmith",
+     "label_ru": "Кузница",
+     "category": "hall_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "blacksmith",
+     "desc": "Opens the forge. Without it nothing can be crafted. Level 2 opens Engraving.",
+     "desc_ru": "Открывает кузню. Без неё ничего нельзя создать. Уровень 2 открывает Гравировку.",
+     "cost": {
+      "gold": 10
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 400,
+       "Crystals_Fire": 120
+      }
+     }
+    }
+   ],
+   "merc_up": [
+    {
+     "id": "supply_depot",
+     "label": "Sin Distillery",
+     "label_ru": "Винокурня греха",
+     "category": "merc_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "supply_depot",
+     "desc": "Holds your Liquid Sin. Every embark spends one to open the way, and the vats refill on their own over time. Holds 10, then 15, then 20.",
+     "desc_ru": "Хранит Жидкий грех. Каждый поход тратит один, чтобы открыть путь, а чаны наполняются сами со временем. Вмещает 10, затем 15, затем 20.",
+     "cost": {},
+     "upgrade_costs": {
+      "2": {
+       "gold": 1500,
+       "Crystals_Life": 400
+      },
+      "3": {
+       "gold": 4000,
+       "Crystals_Life": 1000
+      }
+     }
+    },
+    {
+     "id": "messenger_post",
+     "label": "Messenger's Post",
+     "label_ru": "Почтовый двор",
+     "category": "merc_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "messenger_post",
+     "desc": "Opens errands. Each level pays more for every errand run.",
+     "desc_ru": "Открывает поручения. Каждый уровень увеличивает награду.",
+     "cost": {
+      "gold": 10
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 200,
+       "Crystals_Fire": 60
+      },
+      "3": {
+       "gold": 400,
+       "Crystals_Fire": 120
+      }
+     }
+    },
+    {
+     "id": "transmute_lab",
+     "label": "Transmutation Lab",
+     "label_ru": "Лаборатория трансмутации",
+     "category": "merc_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "transmute_lab",
+     "desc": "Turns two crystals into a third.",
+     "desc_ru": "Превращает два кристалла в третий.",
+     "cost": {
+      "Crystals_Fire": 10
+     }
+    },
+    {
+     "id": "mercenary_hall",
+     "label": "Mercenary Hall",
+     "label_ru": "Зал наёмников",
+     "category": "merc_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "mercenary_hall",
+     "desc": "Opens one mercenary slot per level.",
+     "desc_ru": "Открывает по одному слоту наёмника за уровень.",
+     "cost": {
+      "gold": 120,
+      "Crystals_Fire": 40
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 260,
+       "Crystals_Fire": 90
+      },
+      "3": {
+       "gold": 480,
+       "Crystals_Fire": 160
+      }
+     }
+    }
+   ],
+   "barracks_up": [
+    {
+     "id": "garrison_annex",
+     "label": "Garrison Annex",
+     "label_ru": "Гарнизонная пристройка",
+     "category": "barracks_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "garrison_annex",
+     "desc": "Opens one more unit slot per level.",
+     "desc_ru": "Открывает по одному слоту бойца за уровень.",
+     "cost": {
+      "gold": 150,
+      "Crystals_Fire": 50
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 320,
+       "Crystals_Fire": 110
+      },
+      "3": {
+       "gold": 560,
+       "Crystals_Fire": 190
+      }
+     }
+    },
+    {
+     "id": "proving_grounds",
+     "label": "Proving Grounds",
+     "label_ru": "Ристалище",
+     "category": "barracks_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "proving_grounds",
+     "desc": "Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4. Level 3 teaches the chants.",
+     "desc_ru": "Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4. 3 уровень обучает распевам.",
+     "cost": {
+      "gold": 200,
+      "Crystals_Fire": 60
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 500,
+       "Crystals_Fire": 160
+      },
+      "3": {
+       "gold": 900,
+       "Crystals_Fire": 290
+      }
+     }
+    },
+    {
+     "id": "training_grounds",
+     "label": "Training Grounds",
+     "label_ru": "Тренировочный двор",
+     "category": "barracks_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "training_grounds",
+     "desc": "Every embark pays more XP: +3%, then +5%.",
+     "desc_ru": "Каждый поход приносит больше опыта: +3%, затем +5%.",
+     "cost": {
+      "gold": 150,
+      "Crystals_Fire": 50
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 350,
+       "Crystals_Fire": 120
+      }
+     }
+    },
+    {
+     "id": "temple",
+     "label": "Temple of Embers",
+     "label_ru": "Храм Угольев",
+     "category": "barracks_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "temple",
+     "desc": "Every unit you field gains +1 max HP per level, to +5. Paid for in gold and in all six crystals.",
+     "desc_ru": "Каждый ваш боец получает +1 к максимуму HP за уровень, до +5. Оплачивается золотом и всеми шестью кристаллами.",
+     "cost": {
+      "gold": 500,
+      "Crystals_Life": 25,
+      "Crystals_Fire": 25,
+      "Crystals_Death": 25,
+      "Crystals_Frost": 25,
+      "Crystals_Nature": 25,
+      "Crystals_Air": 25
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 1000,
+       "Crystals_Life": 50,
+       "Crystals_Fire": 50,
+       "Crystals_Death": 50,
+       "Crystals_Frost": 50,
+       "Crystals_Nature": 50,
+       "Crystals_Air": 50
+      },
+      "3": {
+       "gold": 1500,
+       "Crystals_Life": 75,
+       "Crystals_Fire": 75,
+       "Crystals_Death": 75,
+       "Crystals_Frost": 75,
+       "Crystals_Nature": 75,
+       "Crystals_Air": 75
+      },
+      "4": {
+       "gold": 2000,
+       "Crystals_Life": 100,
+       "Crystals_Fire": 100,
+       "Crystals_Death": 100,
+       "Crystals_Frost": 100,
+       "Crystals_Nature": 100,
+       "Crystals_Air": 100
+      },
+      "5": {
+       "gold": 2500,
+       "Crystals_Life": 125,
+       "Crystals_Fire": 125,
+       "Crystals_Death": 125,
+       "Crystals_Frost": 125,
+       "Crystals_Nature": 125,
+       "Crystals_Air": 125
+      }
+     }
+    }
+   ]
+  },
+  "grail_of_sorrow": {
+   "throne": [
+    {
+     "id": "sorrow_throne",
+     "label": "Throne of Sorrow",
+     "label_ru": "Трон Скорби",
+     "category": "throne",
+     "unit_id": null
+    },
+    {
+     "id": "prophet_sepulchre_1",
+     "label": "Prophet Sepulchre",
+     "label_ru": "Гробница пророков",
+     "category": "throne",
+     "unit_id": "h_g_1",
+     "tier": 1,
+     "upgrades": [
+      "prophet_sepulchre_2_a",
+      "prophet_sepulchre_2_b"
+     ]
+    },
+    {
+     "id": "prophet_sepulchre_2_a",
+     "label": "Prophet Sepulchre II A",
+     "label_ru": "Гробница пророков II A",
+     "category": "throne",
+     "unit_id": "h_g_1_a2",
+     "tier": 2,
+     "upgrades": [
+      "prophet_sepulchre_3_a"
+     ]
+    },
+    {
+     "id": "prophet_sepulchre_2_b",
+     "label": "Prophet Sepulchre II B",
+     "label_ru": "Гробница пророков II B",
+     "category": "throne",
+     "unit_id": "h_g_1_b2",
+     "tier": 2,
+     "upgrades": [
+      "prophet_sepulchre_3_b"
+     ]
+    },
+    {
+     "id": "prophet_sepulchre_3_a",
+     "label": "Prophet Sepulchre III A",
+     "label_ru": "Гробница пророков III A",
+     "category": "throne",
+     "unit_id": "h_g_1_a3",
+     "tier": 3,
+     "upgrades": [
+      "prophet_sepulchre_4_a",
+      "prophet_sepulchre_4_a_alt"
+     ]
+    },
+    {
+     "id": "prophet_sepulchre_3_b",
+     "label": "Prophet Sepulchre III B",
+     "label_ru": "Гробница пророков III B",
+     "category": "throne",
+     "unit_id": "h_g_1_b3",
+     "tier": 3,
+     "upgrades": [
+      "prophet_sepulchre_4_b",
+      "prophet_sepulchre_4_b_alt"
+     ]
+    },
+    {
+     "id": "prophet_sepulchre_4_a",
+     "label": "Prophet Sepulchre IV A",
+     "label_ru": "Гробница пророков IV A",
+     "category": "throne",
+     "unit_id": "h_g_1_a41",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "prophet_sepulchre_4_a_alt",
+     "label": "Prophet Sepulchre IV A Alt",
+     "label_ru": "Гробница пророков IV A Alt",
+     "category": "throne",
+     "unit_id": "h_g_1_a42",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "prophet_sepulchre_4_b",
+     "label": "Prophet Sepulchre IV B",
+     "label_ru": "Гробница пророков IV B",
+     "category": "throne",
+     "unit_id": "h_g_1_b41",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "prophet_sepulchre_4_b_alt",
+     "label": "Prophet Sepulchre IV B Alt",
+     "label_ru": "Гробница пророков IV B Alt",
+     "category": "throne",
+     "unit_id": "h_g_1_b42",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "warden_crypt_1",
+     "label": "Warden Crypt",
+     "label_ru": "Склеп стражей",
+     "category": "throne",
+     "unit_id": "h_g_2",
+     "tier": 1,
+     "upgrades": [
+      "warden_crypt_2_a",
+      "warden_crypt_2_b"
+     ]
+    },
+    {
+     "id": "warden_crypt_2_a",
+     "label": "Warden Crypt II A",
+     "label_ru": "Склеп стражей II A",
+     "category": "throne",
+     "unit_id": "h_g_2_a2",
+     "tier": 2,
+     "upgrades": [
+      "warden_crypt_3_a"
+     ]
+    },
+    {
+     "id": "warden_crypt_2_b",
+     "label": "Warden Crypt II B",
+     "label_ru": "Склеп стражей II B",
+     "category": "throne",
+     "unit_id": "h_g_2_b2",
+     "tier": 2,
+     "upgrades": [
+      "warden_crypt_3_b"
+     ]
+    },
+    {
+     "id": "warden_crypt_3_a",
+     "label": "Warden Crypt III A",
+     "label_ru": "Склеп стражей III A",
+     "category": "throne",
+     "unit_id": "h_g_2_a3",
+     "tier": 3,
+     "upgrades": [
+      "warden_crypt_4_a",
+      "warden_crypt_4_a_alt"
+     ]
+    },
+    {
+     "id": "warden_crypt_3_b",
+     "label": "Warden Crypt III B",
+     "label_ru": "Склеп стражей III B",
+     "category": "throne",
+     "unit_id": "h_g_2_b3",
+     "tier": 3,
+     "upgrades": [
+      "warden_crypt_4_b",
+      "warden_crypt_4_b_alt"
+     ]
+    },
+    {
+     "id": "warden_crypt_4_a",
+     "label": "Warden Crypt IV A",
+     "label_ru": "Склеп стражей IV A",
+     "category": "throne",
+     "unit_id": "h_g_2_a41",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "warden_crypt_4_a_alt",
+     "label": "Warden Crypt IV A Alt",
+     "label_ru": "Склеп стражей IV A Alt",
+     "category": "throne",
+     "unit_id": "h_g_2_a42",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "warden_crypt_4_b",
+     "label": "Warden Crypt IV B",
+     "label_ru": "Склеп стражей IV B",
+     "category": "throne",
+     "unit_id": "h_g_2_b41",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "warden_crypt_4_b_alt",
+     "label": "Warden Crypt IV B Alt",
+     "label_ru": "Склеп стражей IV B Alt",
+     "category": "throne",
+     "unit_id": "h_g_2_b42",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "voice_chapel_1",
+     "label": "Voice Chapel",
+     "label_ru": "Часовня Голоса",
+     "category": "throne",
+     "unit_id": "h_g_3",
+     "tier": 1,
+     "upgrades": [
+      "voice_chapel_2_a",
+      "voice_chapel_2_b"
+     ]
+    },
+    {
+     "id": "voice_chapel_2_a",
+     "label": "Voice Chapel II A",
+     "label_ru": "Часовня Голоса II A",
+     "category": "throne",
+     "unit_id": "h_g_3_a2",
+     "tier": 2,
+     "upgrades": [
+      "voice_chapel_3_a"
+     ]
+    },
+    {
+     "id": "voice_chapel_2_b",
+     "label": "Voice Chapel II B",
+     "label_ru": "Часовня Голоса II B",
+     "category": "throne",
+     "unit_id": "h_g_3_b2",
+     "tier": 2,
+     "upgrades": [
+      "voice_chapel_3_b"
+     ]
+    },
+    {
+     "id": "voice_chapel_3_a",
+     "label": "Voice Chapel III A",
+     "label_ru": "Часовня Голоса III A",
+     "category": "throne",
+     "unit_id": "h_g_3_a3",
+     "tier": 3,
+     "upgrades": [
+      "voice_chapel_4_a",
+      "voice_chapel_4_a_alt"
+     ]
+    },
+    {
+     "id": "voice_chapel_3_b",
+     "label": "Voice Chapel III B",
+     "label_ru": "Часовня Голоса III B",
+     "category": "throne",
+     "unit_id": "h_g_3_b3",
+     "tier": 3,
+     "upgrades": [
+      "voice_chapel_4_b",
+      "voice_chapel_4_b_alt"
+     ]
+    },
+    {
+     "id": "voice_chapel_4_a",
+     "label": "Voice Chapel IV A",
+     "label_ru": "Часовня Голоса IV A",
+     "category": "throne",
+     "unit_id": "h_g_3_a41",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "voice_chapel_4_a_alt",
+     "label": "Voice Chapel IV A Alt",
+     "label_ru": "Часовня Голоса IV A Alt",
+     "category": "throne",
+     "unit_id": "h_g_3_a42",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "voice_chapel_4_b",
+     "label": "Voice Chapel IV B",
+     "label_ru": "Часовня Голоса IV B",
+     "category": "throne",
+     "unit_id": "h_g_3_b41",
+     "tier": 4,
+     "upgrades": []
+    },
+    {
+     "id": "voice_chapel_4_b_alt",
+     "label": "Voice Chapel IV B Alt",
+     "label_ru": "Часовня Голоса IV B Alt",
+     "category": "throne",
+     "unit_id": "h_g_3_b42",
+     "tier": 4,
+     "upgrades": []
+    }
+   ],
+   "barracks": [
+    {
+     "id": "zombie_pit",
+     "label": "Zombie Pit",
+     "label_ru": "Яма зомби",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "gs1",
+     "upgrades": [
+      "ghoul_pit",
+      "cannibal_pit",
+      "cesswalker_mire"
+     ],
+     "cost": {
+      "gold": 40,
+      "Crystals_Death": 20,
+      "Crystals_Air": 5,
+      "Crystals_Frost": 5
+     }
+    },
+    {
+     "id": "ghoul_pit",
+     "label": "Ghoul Pit",
+     "label_ru": "Яма упырей",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs11",
+     "upgrades": [
+      "plague_knight_barrow"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Death": 30,
+      "Crystals_Air": 8,
+      "Crystals_Frost": 8
+     }
+    },
+    {
+     "id": "plague_knight_barrow",
+     "label": "Plague Knight Barrow",
+     "label_ru": "Курган чумных рыцарей",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs111",
+     "upgrades": [
+      "plague_knight_mausoleum"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Death": 48,
+      "Crystals_Nature": 12,
+      "Crystals_Air": 12
+     }
+    },
+    {
+     "id": "plague_knight_mausoleum",
+     "label": "Plague Champion Mausoleum",
+     "label_ru": "Мавзолей чумных поборников",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs1111",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Death": 77,
+      "Crystals_Nature": 19,
+      "Crystals_Air": 19
+     }
+    },
+    {
+     "id": "cannibal_pit",
+     "label": "Cannibal Pit",
+     "label_ru": "Яма людоедов",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs12",
+     "upgrades": [
+      "abomination_vat"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Death": 30,
+      "Crystals_Air": 8,
+      "Crystals_Frost": 8
+     }
+    },
+    {
+     "id": "abomination_vat",
+     "label": "Abomination Vat",
+     "label_ru": "Чан мерзости",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs121",
+     "upgrades": [
+      "abomination_crucible"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Death": 48,
+      "Crystals_Air": 12,
+      "Crystals_Frost": 12
+     }
+    },
+    {
+     "id": "abomination_crucible",
+     "label": "Abomination Crucible",
+     "label_ru": "Горнило мерзости",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs1211",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Death": 77,
+      "Crystals_Air": 19,
+      "Crystals_Frost": 19
+     }
+    },
+    {
+     "id": "cesswalker_mire",
+     "label": "Stitcher Mire",
+     "label_ru": "Топь сшивателей",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs13",
+     "upgrades": [
+      "blightwalker_mire"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Death": 30,
+      "Crystals_Air": 8,
+      "Crystals_Nature": 8
+     }
+    },
+    {
+     "id": "blightwalker_mire",
+     "label": "Flesh Mender Mire",
+     "label_ru": "Топь ткачей плоти",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs131",
+     "upgrades": [
+      "blightwalker_fen"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Death": 48,
+      "Crystals_Air": 12,
+      "Crystals_Nature": 12
+     }
+    },
+    {
+     "id": "blightwalker_fen",
+     "label": "Blight Surgeon Fen",
+     "label_ru": "Трясина врачевателей порчи",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs1311",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Death": 77,
+      "Crystals_Air": 19,
+      "Crystals_Nature": 19
+     }
+    },
+    {
+     "id": "communicant_chapel",
+     "label": "Communicant Chapel",
+     "label_ru": "Часовня причастников",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "gs2",
+     "upgrades": [
+      "crimson_communicant_chapel"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Death": 30,
+      "Crystals_Frost": 8
+     }
+    },
+    {
+     "id": "crimson_communicant_chapel",
+     "label": "Crimson Communicant Chapel",
+     "label_ru": "Часовня багровых причастников",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs21",
+     "upgrades": [
+      "chosen_chapel"
+     ],
+     "cost": {
+      "gold": 90,
+      "Crystals_Death": 45,
+      "Crystals_Nature": 12
+     }
+    },
+    {
+     "id": "chosen_chapel",
+     "label": "Chosen Chapel",
+     "label_ru": "Часовня избранных",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs211",
+     "upgrades": [
+      "anointed_altar",
+      "consecrated_sanctum"
+     ],
+     "cost": {
+      "gold": 144,
+      "Crystals_Death": 72,
+      "Crystals_Life": 18
+     }
+    },
+    {
+     "id": "anointed_altar",
+     "label": "Anointed Altar",
+     "label_ru": "Алтарь помазания",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs2111",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Death": 77,
+      "Crystals_Life": 19,
+      "Crystals_Frost": 19
+     }
+    },
+    {
+     "id": "consecrated_sanctum",
+     "label": "Consecrated Sanctum",
+     "label_ru": "Святилище освящённых",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs2112",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Death": 77,
+      "Crystals_Life": 19,
+      "Crystals_Nature": 19
+     }
+    },
+    {
+     "id": "adept_crypt",
+     "label": "Adept Crypt",
+     "label_ru": "Склеп адептов",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "gs3",
+     "upgrades": [
+      "blood_adept_chamber",
+      "necromancer_crypt",
+      "plague_scholar_lab"
+     ],
+     "cost": {
+      "gold": 40,
+      "Crystals_Death": 20,
+      "Crystals_Life": 5
+     }
+    },
+    {
+     "id": "blood_adept_chamber",
+     "label": "Blood Adept Chamber",
+     "label_ru": "Палата адептов крови",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs31",
+     "upgrades": [
+      "crimson_mage_tower",
+      "blood_knight_crypt"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Death": 30,
+      "Crystals_Air": 8
+     }
+    },
+    {
+     "id": "crimson_mage_tower",
+     "label": "Crimson Mage Tower",
+     "label_ru": "Башня багровых магов",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs312",
+     "upgrades": [
+      "crimson_archon_tower"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Death": 48,
+      "Crystals_Nature": 12
+     }
+    },
+    {
+     "id": "blood_knight_crypt",
+     "label": "Blood Knight Crypt",
+     "label_ru": "Склеп рыцарей крови",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs311",
+     "upgrades": [
+      "sanguine_lord_crypt"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Death": 48,
+      "Crystals_Life": 12
+     }
+    },
+    {
+     "id": "crimson_archon_tower",
+     "label": "Crimson Archon Tower",
+     "label_ru": "Башня багровых архонтов",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs3121",
+     "upgrades": [],
+     "cost": {
+      "gold": 400
+     }
+    },
+    {
+     "id": "sanguine_lord_crypt",
+     "label": "Sanguine Lord Crypt",
+     "label_ru": "Склеп кровавых владык",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs3111",
+     "upgrades": [],
+     "cost": {
+      "gold": 400
+     }
+    },
+    {
+     "id": "necromancer_crypt",
+     "label": "Necromancer Crypt",
+     "label_ru": "Склеп некромантов",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs32",
+     "upgrades": [
+      "death_lord_crypt"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Death": 30,
+      "Crystals_Frost": 8
+     }
+    },
+    {
+     "id": "death_lord_crypt",
+     "label": "Death Lord Crypt",
+     "label_ru": "Склеп владык смерти",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs321",
+     "upgrades": [
+      "mothers_hand_ossuary"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Death": 48,
+      "Crystals_Life": 12
+     }
+    },
+    {
+     "id": "mothers_hand_ossuary",
+     "label": "Mother's Hand Ossuary",
+     "label_ru": "Оссуарий Длани Матери",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs3211",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Death": 77,
+      "Crystals_Life": 19
+     }
+    },
+    {
+     "id": "plague_scholar_lab",
+     "label": "Plague Scholar Lab",
+     "label_ru": "Лаборатория чумных учёных",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs33",
+     "upgrades": [
+      "plague_lord_lab"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Death": 30,
+      "Crystals_Nature": 8
+     }
+    },
+    {
+     "id": "plague_lord_lab",
+     "label": "Plague Lord Lab",
+     "label_ru": "Лаборатория владык чумы",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs331",
+     "upgrades": [
+      "plague_archon_lab"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Death": 48,
+      "Crystals_Nature": 12
+     }
+    },
+    {
+     "id": "plague_archon_lab",
+     "label": "Plague Archon Lab",
+     "label_ru": "Лаборатория архонтов чумы",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs3311",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Death": 77,
+      "Crystals_Nature": 19
+     }
+    },
+    {
+     "id": "colossus_barrow",
+     "label": "Colossus Barrow",
+     "label_ru": "Курган колоссов",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "gs4",
+     "upgrades": [
+      "seraph_shrine",
+      "chalice_vault"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Death": 30,
+      "Crystals_Air": 8,
+      "Crystals_Fire": 8
+     }
+    },
+    {
+     "id": "seraph_shrine",
+     "label": "Seraph Shrine",
+     "label_ru": "Святилище серафимов",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs41",
+     "upgrades": [
+      "grail_angel_shrine"
+     ],
+     "cost": {
+      "gold": 90,
+      "Crystals_Death": 45,
+      "Crystals_Frost": 12,
+      "Crystals_Nature": 12
+     }
+    },
+    {
+     "id": "grail_angel_shrine",
+     "label": "Grail Angel Shrine",
+     "label_ru": "Святилище ангелов Грааля",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs411",
+     "upgrades": [
+      "grail_archangel_shrine"
+     ],
+     "cost": {
+      "gold": 144,
+      "Crystals_Death": 72,
+      "Crystals_Frost": 18,
+      "Crystals_Nature": 18
+     }
+    },
+    {
+     "id": "grail_archangel_shrine",
+     "label": "Grail Archangel Shrine",
+     "label_ru": "Святилище архангелов Грааля",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs4111",
+     "upgrades": [],
+     "cost": {
+      "gold": 400
+     }
+    },
+    {
+     "id": "chalice_vault",
+     "label": "Chalice Vault",
+     "label_ru": "Хранилище чаши",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs42",
+     "upgrades": [
+      "sorrow_vessel_vault"
+     ],
+     "cost": {
+      "gold": 90,
+      "Crystals_Death": 45,
+      "Crystals_Fire": 12
+     }
+    },
+    {
+     "id": "sorrow_vessel_vault",
+     "label": "Sorrow Vessel Vault",
+     "label_ru": "Хранилище сосудов скорби",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs421",
+     "upgrades": [
+      "sorrow_reliquary_vault"
+     ],
+     "cost": {
+      "gold": 144,
+      "Crystals_Death": 72,
+      "Crystals_Fire": 18
+     }
+    },
+    {
+     "id": "sorrow_reliquary_vault",
+     "label": "Sorrow Reliquary Vault",
+     "label_ru": "Хранилище реликвариев скорби",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs4211",
+     "upgrades": [],
+     "cost": {
+      "gold": 400
+     }
+    },
+    {
+     "id": "grail_acolyte_chamber",
+     "label": "Grail Acolyte Chamber",
+     "label_ru": "Палата послушников Грааля",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "gs5",
+     "upgrades": [
+      "grail_tender_chamber",
+      "grieving_servant_chamber"
+     ],
+     "cost": {
+      "gold": 40,
+      "Crystals_Death": 20,
+      "Crystals_Air": 5
+     }
+    },
+    {
+     "id": "grail_tender_chamber",
+     "label": "Grail Tender Chamber",
+     "label_ru": "Палата смотрителей Грааля",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs51",
+     "upgrades": [
+      "grail_keeper_chamber"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Death": 30,
+      "Crystals_Fire": 8,
+      "Crystals_Frost": 8
+     }
+    },
+    {
+     "id": "grail_keeper_chamber",
+     "label": "Grail Keeper Chamber",
+     "label_ru": "Палата хранителей Грааля",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs511",
+     "upgrades": [
+      "grail_custodian_chamber"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Death": 48,
+      "Crystals_Fire": 12,
+      "Crystals_Frost": 12
+     }
+    },
+    {
+     "id": "grail_custodian_chamber",
+     "label": "Grail Custodian Chamber",
+     "label_ru": "Палата блюстителей Грааля",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs5111",
+     "upgrades": [],
+     "cost": {
+      "gold": 154,
+      "Crystals_Death": 77,
+      "Crystals_Fire": 19,
+      "Crystals_Nature": 19
+     }
+    },
+    {
+     "id": "grieving_servant_chamber",
+     "label": "Grieving Servant Chamber",
+     "label_ru": "Палата скорбящих слуг",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs52",
+     "upgrades": [
+      "grieving_custodian_chamber"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Death": 30,
+      "Crystals_Nature": 8
+     }
+    },
+    {
+     "id": "grieving_custodian_chamber",
+     "label": "Grieving Custodian Chamber",
+     "label_ru": "Палата скорбящих блюстителей",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs521",
+     "upgrades": [
+      "grieving_warden_chamber"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Death": 48,
+      "Crystals_Frost": 12
+     }
+    },
+    {
+     "id": "grieving_warden_chamber",
+     "label": "Grieving Warden Chamber",
+     "label_ru": "Палата скорбящих стражей",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs5211",
+     "upgrades": [],
+     "cost": {
+      "gold": 160,
+      "Crystals_Death": 80,
+      "Crystals_Frost": 20,
+      "Crystals_Nature": 20
+     }
+    },
+    {
+     "id": "ghost_manor",
+     "label": "Ghost Manor",
+     "label_ru": "Усадьба призраков",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "gs6",
+     "upgrades": [
+      "specter_hall",
+      "apparition_mist"
+     ],
+     "cost": {
+      "gold": 40,
+      "Crystals_Death": 20,
+      "Crystals_Air": 5
+     }
+    },
+    {
+     "id": "specter_hall",
+     "label": "Specter Hall",
+     "label_ru": "Зал спектров",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs61",
+     "upgrades": [
+      "wraith_hall"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Death": 30,
+      "Crystals_Frost": 8
+     }
+    },
+    {
+     "id": "wraith_hall",
+     "label": "Wraith Hall",
+     "label_ru": "Зал духов",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs611",
+     "upgrades": [
+      "revenant_hall"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Death": 48,
+      "Crystals_Frost": 12
+     }
+    },
+    {
+     "id": "revenant_hall",
+     "label": "Revenant Hall",
+     "label_ru": "Зал ревенантов",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs6111",
+     "upgrades": [],
+     "cost": {
+      "gold": 400
+     }
+    },
+    {
+     "id": "apparition_mist",
+     "label": "Apparition Mist",
+     "label_ru": "Туман привидений",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs62",
+     "upgrades": [
+      "phantom_mist"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Death": 30,
+      "Crystals_Frost": 8
+     }
+    },
+    {
+     "id": "phantom_mist",
+     "label": "Phantom Mist",
+     "label_ru": "Туман фантомов",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs621",
+     "upgrades": [
+      "nightmare_mist"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Death": 48,
+      "Crystals_Frost": 12
+     }
+    },
+    {
+     "id": "nightmare_mist",
+     "label": "Nightmare Mist",
+     "label_ru": "Туман кошмаров",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs6211",
+     "upgrades": [],
+     "cost": {
+      "gold": 400
+     }
+    },
+    {
+     "id": "pale_maiden_barrow",
+     "label": "Pale Maiden Barrow",
+     "label_ru": "Курган бледных дев",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "gs7",
+     "upgrades": [
+      "pale_dame_barrow",
+      "pale_votaress_chantry",
+      "pale_mourner_shrine"
+     ],
+     "cost": {
+      "gold": 40,
+      "Crystals_Death": 20,
+      "Crystals_Frost": 5
+     }
+    },
+    {
+     "id": "pale_dame_barrow",
+     "label": "Pale Dame Barrow",
+     "label_ru": "Курган бледных госпож",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs71",
+     "upgrades": [
+      "pale_matriarch_barrow"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Death": 30,
+      "Crystals_Frost": 8
+     }
+    },
+    {
+     "id": "pale_matriarch_barrow",
+     "label": "Pale Matriarch Barrow",
+     "label_ru": "Курган бледных праматерей",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs711",
+     "upgrades": [
+      "pale_sovereign_barrow"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Death": 48,
+      "Crystals_Frost": 12
+     }
+    },
+    {
+     "id": "pale_sovereign_barrow",
+     "label": "Pale Sovereign Barrow",
+     "label_ru": "Курган бледных владычиц",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs7111",
+     "upgrades": [],
+     "cost": {
+      "gold": 400
+     }
+    },
+    {
+     "id": "pale_votaress_chantry",
+     "label": "Pale Votaress Chantry",
+     "label_ru": "Часовня бледных послушниц",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs72",
+     "upgrades": [
+      "pale_abbess_chantry"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Death": 30,
+      "Crystals_Frost": 8,
+      "Crystals_Air": 8
+     }
+    },
+    {
+     "id": "pale_abbess_chantry",
+     "label": "Pale Abbess Chantry",
+     "label_ru": "Часовня бледных аббатис",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs721",
+     "upgrades": [
+      "pale_prioress_chantry"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Death": 48,
+      "Crystals_Air": 12,
+      "Crystals_Frost": 12
+     }
+    },
+    {
+     "id": "pale_prioress_chantry",
+     "label": "Pale Prioress Chantry",
+     "label_ru": "Часовня бледных приоресс",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs7211",
+     "upgrades": [],
+     "cost": {
+      "gold": 400
+     }
+    },
+    {
+     "id": "pale_mourner_shrine",
+     "label": "Pale Mourner Shrine",
+     "label_ru": "Святилище бледных плакальщиц",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs73",
+     "upgrades": [
+      "pale_lamenter_shrine"
+     ],
+     "cost": {
+      "gold": 60,
+      "Crystals_Death": 30,
+      "Crystals_Nature": 8
+     }
+    },
+    {
+     "id": "pale_lamenter_shrine",
+     "label": "Pale Lamenter Shrine",
+     "label_ru": "Святилище бледных скорбниц",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs731",
+     "upgrades": [
+      "pale_dirge_shrine"
+     ],
+     "cost": {
+      "gold": 96,
+      "Crystals_Death": 48,
+      "Crystals_Nature": 12,
+      "Crystals_Frost": 12
+     }
+    },
+    {
+     "id": "pale_dirge_shrine",
+     "label": "Pale Dirge Shrine",
+     "label_ru": "Святилище бледных панихид",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs7311",
+     "upgrades": [],
+     "cost": {
+      "gold": 400
+     }
+    },
+    {
+     "id": "mothers_tear_font",
+     "label": "Mother's Tear Font",
+     "label_ru": "Купель Слезы Матери",
+     "category": "barracks",
+     "tier": 1,
+     "unit_id": "gs8",
+     "upgrades": [
+      "mothers_sorrow_font",
+      "mothers_vigil_reliquary",
+      "mothers_chalice_altar"
+     ],
+     "cost": {
+      "gold": 50
+     }
+    },
+    {
+     "id": "mothers_sorrow_font",
+     "label": "Mother's Sorrow Font",
+     "label_ru": "Купель Скорби Матери",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs81",
+     "upgrades": [
+      "mothers_grief_font"
+     ],
+     "cost": {
+      "gold": 100
+     }
+    },
+    {
+     "id": "mothers_grief_font",
+     "label": "Mother's Grief Font",
+     "label_ru": "Купель Горя Матери",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs811",
+     "upgrades": [
+      "mothers_anguish_font"
+     ],
+     "cost": {
+      "gold": 200
+     }
+    },
+    {
+     "id": "mothers_anguish_font",
+     "label": "Mother's Anguish Font",
+     "label_ru": "Купель Муки Матери",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs8111",
+     "upgrades": [],
+     "cost": {
+      "gold": 400
+     }
+    },
+    {
+     "id": "mothers_vigil_reliquary",
+     "label": "Mother's Vigil Reliquary",
+     "label_ru": "Реликварий Бдения Матери",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs82",
+     "upgrades": [
+      "mothers_shroud_reliquary"
+     ],
+     "cost": {
+      "gold": 100
+     }
+    },
+    {
+     "id": "mothers_shroud_reliquary",
+     "label": "Mother's Shroud Reliquary",
+     "label_ru": "Реликварий Покрова Матери",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs821",
+     "upgrades": [
+      "mothers_mantle_reliquary"
+     ],
+     "cost": {
+      "gold": 200
+     }
+    },
+    {
+     "id": "mothers_mantle_reliquary",
+     "label": "Mother's Mantle Reliquary",
+     "label_ru": "Реликварий Мантии Матери",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs8211",
+     "upgrades": [],
+     "cost": {
+      "gold": 400
+     }
+    },
+    {
+     "id": "mothers_chalice_altar",
+     "label": "Mother's Chalice Altar",
+     "label_ru": "Алтарь Чаши Матери",
+     "category": "barracks",
+     "tier": 2,
+     "unit_id": "gs83",
+     "upgrades": [
+      "mothers_vessel_altar"
+     ],
+     "cost": {
+      "gold": 100
+     }
+    },
+    {
+     "id": "mothers_vessel_altar",
+     "label": "Mother's Vessel Altar",
+     "label_ru": "Алтарь Сосуда Матери",
+     "category": "barracks",
+     "tier": 3,
+     "unit_id": "gs831",
+     "upgrades": [
+      "mothers_font_altar"
+     ],
+     "cost": {
+      "gold": 200
+     }
+    },
+    {
+     "id": "mothers_font_altar",
+     "label": "Mother's Font Altar",
+     "label_ru": "Алтарь Купели Матери",
+     "category": "barracks",
+     "tier": 4,
+     "unit_id": "gs8311",
+     "upgrades": [],
+     "cost": {
+      "gold": 400
+     }
+    }
+   ],
+   "special": [],
+   "hall_up": [
+    {
+     "id": "crystal_mine",
+     "label": "Crystal Mine",
+     "label_ru": "Кристальная шахта",
+     "category": "hall_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "crystal_mine",
+     "desc": "Raises the crystals your daily reward pays: +15%, then +25%.",
+     "desc_ru": "Увеличивает кристаллы ежедневной награды: +15%, затем +25%.",
+     "cost": {
+      "gold": 120,
+      "Crystals_Death": 40
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 300,
+       "Crystals_Death": 100
+      }
+     }
+    },
+    {
+     "id": "mage_guild",
+     "label": "Mage Guild",
+     "label_ru": "Гильдия магов",
+     "category": "hall_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "mage_guild",
+     "desc": "Opens one tier of spell research per level, and makes research cheaper: 10% off, then 20%.",
+     "desc_ru": "Открывает по одному кругу заклинаний за уровень и удешевляет изучение: на 10%, затем на 20%.",
+     "cost": {
+      "gold": 150,
+      "Crystals_Death": 50
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 350,
+       "Crystals_Death": 120
+      },
+      "3": {
+       "gold": 800,
+       "Crystals_Death": 260
+      }
+     }
+    },
+    {
+     "id": "infirmary",
+     "label": "Infirmary",
+     "label_ru": "Лазарет",
+     "category": "hall_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "infirmary",
+     "desc": "Wounded units recover between battles. Each level speeds it up. From level 2 it brews a Health Potion daily, two at level 3.",
+     "desc_ru": "Раненые бойцы восстанавливаются между боями. Каждый уровень ускоряет это. С уровня 2 производит Зелье Здоровья каждый день, на уровне 3 — два.",
+     "cost": {
+      "gold": 100,
+      "Crystals_Death": 30
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 240,
+       "Crystals_Death": 80
+      },
+      "3": {
+       "gold": 450,
+       "Crystals_Death": 150
+      }
+     }
+    },
+    {
+     "id": "blacksmith",
+     "label": "Blacksmith",
+     "label_ru": "Кузница",
+     "category": "hall_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "blacksmith",
+     "desc": "Opens the forge. Without it nothing can be crafted. Level 2 opens Engraving.",
+     "desc_ru": "Открывает кузню. Без неё ничего нельзя создать. Уровень 2 открывает Гравировку.",
+     "cost": {
+      "gold": 10
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 400,
+       "Crystals_Death": 120
+      }
+     }
+    }
+   ],
+   "merc_up": [
+    {
+     "id": "supply_depot",
+     "label": "Reliquary of the Chalice",
+     "label_ru": "Реликварий чаши",
+     "category": "merc_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "supply_depot",
+     "desc": "Holds your Chalice Of Sustenance. Every embark spends one, and the chalices fill again on their own over time. Holds 10, then 15, then 20.",
+     "desc_ru": "Хранит Чашу насыщения. Каждый поход тратит одну, и чаши наполняются сами со временем. Вмещает 10, затем 15, затем 20.",
+     "cost": {},
+     "upgrade_costs": {
+      "2": {
+       "gold": 1500,
+       "Crystals_Life": 400
+      },
+      "3": {
+       "gold": 4000,
+       "Crystals_Life": 1000
+      }
+     }
+    },
+    {
+     "id": "messenger_post",
+     "label": "Messenger's Post",
+     "label_ru": "Почтовый двор",
+     "category": "merc_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "messenger_post",
+     "desc": "Opens errands. Each level pays more for every errand run.",
+     "desc_ru": "Открывает поручения. Каждый уровень увеличивает награду.",
+     "cost": {
+      "gold": 10
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 200,
+       "Crystals_Death": 60
+      },
+      "3": {
+       "gold": 400,
+       "Crystals_Death": 120
+      }
+     }
+    },
+    {
+     "id": "transmute_lab",
+     "label": "Transmutation Lab",
+     "label_ru": "Лаборатория трансмутации",
+     "category": "merc_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "transmute_lab",
+     "desc": "Turns two crystals into a third.",
+     "desc_ru": "Превращает два кристалла в третий.",
+     "cost": {
+      "Crystals_Death": 10
+     }
+    },
+    {
+     "id": "mercenary_hall",
+     "label": "Mercenary Hall",
+     "label_ru": "Зал наёмников",
+     "category": "merc_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "mercenary_hall",
+     "desc": "Opens one mercenary slot per level.",
+     "desc_ru": "Открывает по одному слоту наёмника за уровень.",
+     "cost": {
+      "gold": 120,
+      "Crystals_Death": 40
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 260,
+       "Crystals_Death": 90
+      },
+      "3": {
+       "gold": 480,
+       "Crystals_Death": 160
+      }
+     }
+    }
+   ],
+   "barracks_up": [
+    {
+     "id": "garrison_annex",
+     "label": "Garrison Annex",
+     "label_ru": "Гарнизонная пристройка",
+     "category": "barracks_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "garrison_annex",
+     "desc": "Opens one more unit slot per level.",
+     "desc_ru": "Открывает по одному слоту бойца за уровень.",
+     "cost": {
+      "gold": 150,
+      "Crystals_Death": 50
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 320,
+       "Crystals_Death": 110
+      },
+      "3": {
+       "gold": 560,
+       "Crystals_Death": 190
+      }
+     }
+    },
+    {
+     "id": "proving_grounds",
+     "label": "Proving Grounds",
+     "label_ru": "Ристалище",
+     "category": "barracks_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "proving_grounds",
+     "desc": "Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4. Level 3 teaches the dirges.",
+     "desc_ru": "Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4. 3 уровень обучает панихидам.",
+     "cost": {
+      "gold": 200,
+      "Crystals_Death": 60
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 500,
+       "Crystals_Death": 160
+      },
+      "3": {
+       "gold": 900,
+       "Crystals_Death": 290
+      }
+     }
+    },
+    {
+     "id": "training_grounds",
+     "label": "Training Grounds",
+     "label_ru": "Тренировочный двор",
+     "category": "barracks_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "training_grounds",
+     "desc": "Every embark pays more XP: +3%, then +5%.",
+     "desc_ru": "Каждый поход приносит больше опыта: +3%, затем +5%.",
+     "cost": {
+      "gold": 150,
+      "Crystals_Death": 50
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 350,
+       "Crystals_Death": 120
+      }
+     }
+    },
+    {
+     "id": "temple",
+     "label": "Temple of Sorrow",
+     "label_ru": "Храм Скорби",
+     "category": "barracks_up",
+     "unit_id": null,
+     "tier": 1,
+     "upgrades": [],
+     "art": "temple",
+     "desc": "Every unit you field gains +1 max HP per level, to +5. Paid for in gold and in all six crystals.",
+     "desc_ru": "Каждый ваш боец получает +1 к максимуму HP за уровень, до +5. Оплачивается золотом и всеми шестью кристаллами.",
+     "cost": {
+      "gold": 500,
+      "Crystals_Life": 25,
+      "Crystals_Fire": 25,
+      "Crystals_Death": 25,
+      "Crystals_Frost": 25,
+      "Crystals_Nature": 25,
+      "Crystals_Air": 25
+     },
+     "upgrade_costs": {
+      "2": {
+       "gold": 1000,
+       "Crystals_Life": 50,
+       "Crystals_Fire": 50,
+       "Crystals_Death": 50,
+       "Crystals_Frost": 50,
+       "Crystals_Nature": 50,
+       "Crystals_Air": 50
+      },
+      "3": {
+       "gold": 1500,
+       "Crystals_Life": 75,
+       "Crystals_Fire": 75,
+       "Crystals_Death": 75,
+       "Crystals_Frost": 75,
+       "Crystals_Nature": 75,
+       "Crystals_Air": 75
+      },
+      "4": {
+       "gold": 2000,
+       "Crystals_Life": 100,
+       "Crystals_Fire": 100,
+       "Crystals_Death": 100,
+       "Crystals_Frost": 100,
+       "Crystals_Nature": 100,
+       "Crystals_Air": 100
+      },
+      "5": {
+       "gold": 2500,
+       "Crystals_Life": 125,
+       "Crystals_Fire": 125,
+       "Crystals_Death": 125,
+       "Crystals_Frost": 125,
+       "Crystals_Nature": 125,
+       "Crystals_Air": 125
+      }
+     }
+    }
+   ]
+  }
+ },
+ "SLOT_CATEGORIES": {
+  "slot_0": "throne",
+  "slot_1": "barracks",
+  "slot_2": "barracks",
+  "slot_3": "barracks",
+  "slot_4": "barracks",
+  "slot_5": "barracks",
+  "slot_6": "special",
+  "slot_7": "special",
+  "slot_8": "special",
+  "slot_9": "barracks",
+  "slot_10": "barracks",
+  "slot_11": "barracks",
+  "slot_12": "hall_up",
+  "slot_16": "merc_up",
+  "slot_20": "barracks_up",
+  "slot_13": "hall_up",
+  "slot_17": "merc_up",
+  "slot_21": "barracks_up",
+  "slot_14": "hall_up",
+  "slot_18": "merc_up",
+  "slot_22": "barracks_up",
+  "slot_15": "hall_up",
+  "slot_19": "merc_up",
+  "slot_23": "barracks_up"
+ },
+ "SLOT_IDS": [
+  "slot_0",
+  "slot_1",
+  "slot_2",
+  "slot_3",
+  "slot_4",
+  "slot_5",
+  "slot_6",
+  "slot_7",
+  "slot_8",
+  "slot_9",
+  "slot_10",
+  "slot_11",
+  "slot_12",
+  "slot_16",
+  "slot_20",
+  "slot_13",
+  "slot_17",
+  "slot_21",
+  "slot_14",
+  "slot_18",
+  "slot_22",
+  "slot_15",
+  "slot_19",
+  "slot_23"
+ ],
+ "SLOT_LAYERS": {
+  "slot_0": 1,
+  "slot_1": 1,
+  "slot_2": 1,
+  "slot_3": 1,
+  "slot_4": 1,
+  "slot_5": 1,
+  "slot_6": 1,
+  "slot_7": 1,
+  "slot_8": 1,
+  "slot_9": 1,
+  "slot_10": 1,
+  "slot_11": 1,
+  "slot_12": 2,
+  "slot_16": 2,
+  "slot_20": 2,
+  "slot_13": 2,
+  "slot_17": 2,
+  "slot_21": 2,
+  "slot_14": 2,
+  "slot_18": 2,
+  "slot_22": 2,
+  "slot_15": 2,
+  "slot_19": 2,
+  "slot_23": 2
+ },
+ "SLOT_FIXED_BUILDING": {
+  "slot_12": "infirmary",
+  "slot_15": "blacksmith",
+  "slot_13": "crystal_mine",
+  "slot_14": "mage_guild",
+  "slot_16": "messenger_post",
+  "slot_17": "mercenary_hall",
+  "slot_18": "transmute_lab",
+  "slot_19": "supply_depot",
+  "slot_20": "garrison_annex",
+  "slot_21": "proving_grounds",
+  "slot_22": "training_grounds",
+  "slot_23": "temple"
+ },
+ "BUILDING_MAX_LEVELS": {
+  "blacksmith": 2,
+  "infirmary": 3,
+  "crystal_mine": 2,
+  "mage_guild": 3,
+  "messenger_post": 3,
+  "mercenary_hall": 3,
+  "supply_depot": 3,
+  "garrison_annex": 3,
+  "proving_grounds": 3,
+  "training_grounds": 2,
+  "temple": 5
+ },
+ "UNIT_UPGRADE_PATHS": {
+  "empire": {
+   "e311": [
+    {
+     "unit_id": "e3111",
+     "building_id": "golden_lion_den",
+     "label": "Golden Lion Prime Den",
+     "label_ru": "Логово Золотого Льва Прайм"
+    }
+   ],
+   "e321": [
+    {
+     "unit_id": "e3211",
+     "building_id": "dreadnought_foundry",
+     "label": "Siege Leviathan Foundry",
+     "label_ru": "Литейная Левиафанов"
+    }
+   ],
+   "e411": [
+    {
+     "unit_id": "e4111",
+     "building_id": "ash_priest_sanctum",
+     "label": "Ash Hierophant Sanctum",
+     "label_ru": "Святилище Пепельных Иерофантов"
+    }
+   ],
+   "e621": [
+    {
+     "unit_id": "e6211",
+     "building_id": "devastator_battery",
+     "label": "Annihilator Battery",
+     "label_ru": "Батарея Аннигиляторов"
+    }
+   ],
+   "e622": [
+    {
+     "unit_id": "e6221",
+     "building_id": "flamethrower_foundry",
+     "label": "Inferno Gunner Foundry",
+     "label_ru": "Литейная Огнемётчиков Инферно"
+    }
+   ],
+   "e711": [
+    {
+     "unit_id": "e7111",
+     "building_id": "mithrails_verdict_temple",
+     "label": "Mithrails Verdict Temple",
+     "label_ru": "Храм приговора Митраила"
+    }
+   ],
+   "e412": [
+    {
+     "unit_id": "e4121",
+     "building_id": "dragon_knight_forge",
+     "label": "Dragon Knight Forge",
+     "label_ru": "Кузня драконьих рыцарей"
+    }
+   ],
+   "e1": [
+    {
+     "unit_id": "e11",
+     "building_id": "infantry_barracks",
+     "label": "Infantry Barracks",
+     "label_ru": "Пехотные казармы"
+    },
+    {
+     "unit_id": "e12",
+     "building_id": "cavalry_stables",
+     "label": "Cavalry Stables",
+     "label_ru": "Кавалерийские конюшни"
+    },
+    {
+     "unit_id": "e13",
+     "building_id": "banner_yard",
+     "label": "Banner Yard",
+     "label_ru": "Знамённый двор"
+    }
+   ],
+   "e13": [
+    {
+     "unit_id": "e131",
+     "building_id": "banneret_hall",
+     "label": "Banneret Hall",
+     "label_ru": "Зал баннеретов"
+    }
+   ],
+   "e121": [
+    {
+     "unit_id": "e1211",
+     "building_id": "retributor_stables",
+     "label": "Retributor Stables",
+     "label_ru": "Конюшни воздаятелей"
+    }
+   ],
+   "e131": [
+    {
+     "unit_id": "e1311",
+     "building_id": "gonfalonier_hall",
+     "label": "Gonfalonier Hall",
+     "label_ru": "Зал гонфалоньеров"
+    }
+   ],
+   "e11": [
+    {
+     "unit_id": "e111",
+     "building_id": "crossbow_range",
+     "label": "Crossbow Range",
+     "label_ru": "Стрельбище арбалетчиков"
+    },
+    {
+     "unit_id": "e112",
+     "building_id": "heavy_barracks",
+     "label": "Heavy Barracks",
+     "label_ru": "Тяжёлые казармы"
+    },
+    {
+     "unit_id": "e113",
+     "building_id": "blade_guard_hall",
+     "label": "Blade Guard Hall",
+     "label_ru": "Зал Стражей Клинка"
+    }
+   ],
+   "e113": [
+    {
+     "unit_id": "e1131",
+     "building_id": "blade_master_hall",
+     "label": "Blade Master Hall",
+     "label_ru": "Зал Мастеров Клинка"
+    }
+   ],
+   "e111": [
+    {
+     "unit_id": "e1111",
+     "building_id": "sniper_nest",
+     "label": "Sniper Nest",
+     "label_ru": "Гнездо снайперов"
+    }
+   ],
+   "e112": [
+    {
+     "unit_id": "e1121",
+     "building_id": "vindicator_barracks",
+     "label": "Vindicator Barracks",
+     "label_ru": "Казармы поборников"
+    }
+   ],
+   "e3": [
+    {
+     "unit_id": "e31",
+     "building_id": "automaton_lab",
+     "label": "Automaton Lab",
+     "label_ru": "Лаборатория автоматонов"
+    },
+    {
+     "unit_id": "e32",
+     "building_id": "siege_workshop",
+     "label": "Siege Workshop",
+     "label_ru": "Осадная мастерская"
+    }
+   ],
+   "e6": [
+    {
+     "unit_id": "e61",
+     "building_id": "mechanic_den",
+     "label": "Mechanic Den",
+     "label_ru": "Мастерская механиков"
+    },
+    {
+     "unit_id": "e62",
+     "building_id": "rifleman_range",
+     "label": "Rifleman Range",
+     "label_ru": "Стрельбище стрелков"
+    }
+   ],
+   "e61": [
+    {
+     "unit_id": "e611",
+     "building_id": "mechanic_den_2",
+     "label": "Mechanic Den II",
+     "label_ru": "Мастерская механиков II"
+    }
+   ],
+   "e611": [
+    {
+     "unit_id": "e6111",
+     "building_id": "machinist_hall",
+     "label": "Machinist Hall",
+     "label_ru": "Зал машинистов"
+    },
+    {
+     "unit_id": "e6112",
+     "building_id": "armsmaster_hall",
+     "label": "Armsmaster Hall",
+     "label_ru": "Зал оружейных мастеров"
+    }
+   ],
+   "e62": [
+    {
+     "unit_id": "e621",
+     "building_id": "devastator_post",
+     "label": "Devastator Post",
+     "label_ru": "Пост опустошителей"
+    },
+    {
+     "unit_id": "e622",
+     "building_id": "flamethrower_post",
+     "label": "Flamethrower Post",
+     "label_ru": "Пост огнемётчиков"
+    }
+   ],
+   "e2": [
+    {
+     "unit_id": "e21",
+     "building_id": "sun_temple",
+     "label": "Sun Temple",
+     "label_ru": "Храм Солнца"
+    },
+    {
+     "unit_id": "e22",
+     "building_id": "priest_shrine",
+     "label": "Priest Shrine",
+     "label_ru": "Святилище жрецов"
+    }
+   ],
+   "e21": [
+    {
+     "unit_id": "e211",
+     "building_id": "mithrails_champion_keep",
+     "label": "Mithrails Champion Keep",
+     "label_ru": "Твердыня поборников Митраила"
+    },
+    {
+     "unit_id": "e212",
+     "building_id": "mithrails_warden_keep",
+     "label": "Mithrails Warden Keep",
+     "label_ru": "Твердыня хранителей Митраила"
+    }
+   ],
+   "e212": [
+    {
+     "unit_id": "e2121",
+     "building_id": "mithrails_paragon_keep",
+     "label": "Mithrails Paragon Keep",
+     "label_ru": "Твердыня идеалов Митраила"
+    }
+   ],
+   "e211": [
+    {
+     "unit_id": "e2111",
+     "building_id": "mithrails_exemplar_keep",
+     "label": "Mithrails Exemplar Keep",
+     "label_ru": "Твердыня экземпларов Митраила"
+    }
+   ],
+   "e22": [
+    {
+     "unit_id": "e221",
+     "building_id": "ardent_shrine",
+     "label": "Ardent Shrine",
+     "label_ru": "Ревностное святилище"
+    },
+    {
+     "unit_id": "e222",
+     "building_id": "seraphic_shrine",
+     "label": "Seraphic Shrine",
+     "label_ru": "Серафическое святилище"
+    }
+   ],
+   "e221": [
+    {
+     "unit_id": "e2211",
+     "building_id": "high_priest_shrine",
+     "label": "High Priest Shrine",
+     "label_ru": "Святилище верховных жрецов"
+    }
+   ],
+   "e222": [
+    {
+     "unit_id": "e2221",
+     "building_id": "seraph_shrine",
+     "label": "Seraph Shrine",
+     "label_ru": "Святилище серафимов"
+    }
+   ],
+   "e7": [
+    {
+     "unit_id": "e71",
+     "building_id": "mithrails_light_temple",
+     "label": "Mithrails Light Temple",
+     "label_ru": "Храм Света Митраила"
+    }
+   ],
+   "e71": [
+    {
+     "unit_id": "e711",
+     "building_id": "mithrails_will_temple",
+     "label": "Mithrails Will",
+     "label_ru": "Воля Митраила"
+    }
+   ],
+   "e4": [
+    {
+     "unit_id": "e41",
+     "building_id": "red_mage_tower",
+     "label": "Red Mage Tower",
+     "label_ru": "Башня красных магов"
+    },
+    {
+     "unit_id": "e42",
+     "building_id": "blue_mage_tower",
+     "label": "Blue Mage Tower",
+     "label_ru": "Башня синих магов"
+    },
+    {
+     "unit_id": "e43",
+     "building_id": "warder_sanctum",
+     "label": "Warder Sanctum",
+     "label_ru": "Санктум хранителей"
+    }
+   ],
+   "e41": [
+    {
+     "unit_id": "e411",
+     "building_id": "ash_sanctum",
+     "label": "Ash Sanctum",
+     "label_ru": "Пепельный санктум"
+    },
+    {
+     "unit_id": "e412",
+     "building_id": "cinder_forge",
+     "label": "Cinder Forge",
+     "label_ru": "Кузня углей"
+    }
+   ],
+   "h_e_1": [
+    {
+     "unit_id": "h_e_11",
+     "building_id": "paladin_cathedral_2_a",
+     "label": "Paladin Cathedral II A",
+     "label_ru": "Собор паладинов II A"
+    },
+    {
+     "unit_id": "h_e_12",
+     "building_id": "paladin_cathedral_2_b",
+     "label": "Paladin Cathedral II B",
+     "label_ru": "Собор паладинов II B"
+    }
+   ],
+   "h_e_11": [
+    {
+     "unit_id": "h_e_111",
+     "building_id": "paladin_cathedral_3_a",
+     "label": "Paladin Cathedral III A",
+     "label_ru": "Собор паладинов III A"
+    }
+   ],
+   "h_e_12": [
+    {
+     "unit_id": "h_e_121",
+     "building_id": "paladin_cathedral_3_b",
+     "label": "Paladin Cathedral III B",
+     "label_ru": "Собор паладинов III B"
+    }
+   ],
+   "h_e_111": [
+    {
+     "unit_id": "h_e_1111",
+     "building_id": "paladin_cathedral_4_a",
+     "label": "Paladin Cathedral IV A",
+     "label_ru": "Собор паладинов IV A"
+    },
+    {
+     "unit_id": "h_e_1112",
+     "building_id": "paladin_cathedral_4_a_alt",
+     "label": "Paladin Cathedral IV A Alt",
+     "label_ru": "Собор паладинов IV A Alt"
+    }
+   ],
+   "h_e_121": [
+    {
+     "unit_id": "h_e_1211",
+     "building_id": "paladin_cathedral_4_b",
+     "label": "Paladin Cathedral IV B",
+     "label_ru": "Собор паладинов IV B"
+    },
+    {
+     "unit_id": "h_e_1212",
+     "building_id": "paladin_cathedral_4_b_alt",
+     "label": "Paladin Cathedral IV B Alt",
+     "label_ru": "Собор паладинов IV B Alt"
+    }
+   ],
+   "h_e_2": [
+    {
+     "unit_id": "h_e_2_a2",
+     "building_id": "inquisitor_tower_2_a",
+     "label": "Inquisitor Tower II A",
+     "label_ru": "Башня инквизиторов II A"
+    },
+    {
+     "unit_id": "h_e_2_b2",
+     "building_id": "inquisitor_tower_2_b",
+     "label": "Inquisitor Tower II B",
+     "label_ru": "Башня инквизиторов II B"
+    }
+   ],
+   "h_e_2_a2": [
+    {
+     "unit_id": "h_e_2_a3",
+     "building_id": "inquisitor_tower_3_a",
+     "label": "Inquisitor Tower III A",
+     "label_ru": "Башня инквизиторов III A"
+    }
+   ],
+   "h_e_2_b2": [
+    {
+     "unit_id": "h_e_2_b3",
+     "building_id": "inquisitor_tower_3_b",
+     "label": "Inquisitor Tower III B",
+     "label_ru": "Башня инквизиторов III B"
+    }
+   ],
+   "h_e_2_a3": [
+    {
+     "unit_id": "h_e_2_a41",
+     "building_id": "inquisitor_tower_4_a",
+     "label": "Inquisitor Tower IV A",
+     "label_ru": "Башня инквизиторов IV A"
+    },
+    {
+     "unit_id": "h_e_2_a42",
+     "building_id": "inquisitor_tower_4_a_alt",
+     "label": "Inquisitor Tower IV A Alt",
+     "label_ru": "Башня инквизиторов IV A Alt"
+    }
+   ],
+   "h_e_2_b3": [
+    {
+     "unit_id": "h_e_2_b41",
+     "building_id": "inquisitor_tower_4_b",
+     "label": "Inquisitor Tower IV B",
+     "label_ru": "Башня инквизиторов IV B"
+    },
+    {
+     "unit_id": "h_e_2_b42",
+     "building_id": "inquisitor_tower_4_b_alt",
+     "label": "Inquisitor Tower IV B Alt",
+     "label_ru": "Башня инквизиторов IV B Alt"
+    }
+   ],
+   "h_e_3": [
+    {
+     "unit_id": "h_e_3_a2",
+     "building_id": "artificer_guild_2_a",
+     "label": "Artificer Guild II A",
+     "label_ru": "Гильдия артефакторов II A"
+    },
+    {
+     "unit_id": "h_e_3_b2",
+     "building_id": "artificer_guild_2_b",
+     "label": "Artificer Guild II B",
+     "label_ru": "Гильдия артефакторов II B"
+    }
+   ],
+   "h_e_3_a2": [
+    {
+     "unit_id": "h_e_3_a3",
+     "building_id": "artificer_guild_3_a",
+     "label": "Artificer Guild III A",
+     "label_ru": "Гильдия артефакторов III A"
+    }
+   ],
+   "h_e_3_b2": [
+    {
+     "unit_id": "h_e_3_b3",
+     "building_id": "artificer_guild_3_b",
+     "label": "Artificer Guild III B",
+     "label_ru": "Гильдия артефакторов III B"
+    }
+   ],
+   "h_e_3_a3": [
+    {
+     "unit_id": "h_e_3_a41",
+     "building_id": "artificer_guild_4_a",
+     "label": "Artificer Guild IV A",
+     "label_ru": "Гильдия артефакторов IV A"
+    },
+    {
+     "unit_id": "h_e_3_a42",
+     "building_id": "artificer_guild_4_a_alt",
+     "label": "Artificer Guild IV A Alt",
+     "label_ru": "Гильдия артефакторов IV A Alt"
+    }
+   ],
+   "h_e_3_b3": [
+    {
+     "unit_id": "h_e_3_b41",
+     "building_id": "artificer_guild_4_b",
+     "label": "Artificer Guild IV B",
+     "label_ru": "Гильдия артефакторов IV B"
+    },
+    {
+     "unit_id": "h_e_3_b42",
+     "building_id": "artificer_guild_4_b_alt",
+     "label": "Artificer Guild IV B Alt",
+     "label_ru": "Гильдия артефакторов IV B Alt"
+    }
+   ],
+   "e12": [
+    {
+     "unit_id": "e121",
+     "building_id": "knights_stables",
+     "label": "Knights Stables",
+     "label_ru": "Рыцарские конюшни"
+    }
+   ],
+   "e31": [
+    {
+     "unit_id": "e311",
+     "building_id": "golden_lion_lab",
+     "label": "Golden Lion Lab",
+     "label_ru": "Лаборатория золотых львов"
+    }
+   ],
+   "e32": [
+    {
+     "unit_id": "e321",
+     "building_id": "siege_dreadnought_workshop",
+     "label": "Siege Dreadnought Workshop",
+     "label_ru": "Мастерская осадных дредноутов"
+    }
+   ],
+   "e42": [
+    {
+     "unit_id": "e421",
+     "building_id": "cryomancer_tower",
+     "label": "Cryomancer Tower",
+     "label_ru": "Башня криомантов"
+    }
+   ],
+   "e421": [
+    {
+     "unit_id": "e4211",
+     "building_id": "winter_magus_tower",
+     "label": "Winter Magus Tower",
+     "label_ru": "Башня зимних магов"
+    }
+   ],
+   "e43": [
+    {
+     "unit_id": "e431",
+     "building_id": "bulwark_sanctum",
+     "label": "Bulwark Sanctum",
+     "label_ru": "Санктум оплота"
+    },
+    {
+     "unit_id": "e432",
+     "building_id": "aegis_bastion",
+     "label": "Aegis Bastion",
+     "label_ru": "Бастион Эгиды"
+    }
+   ],
+   "e431": [
+    {
+     "unit_id": "e4311",
+     "building_id": "archon_sanctum",
+     "label": "Archon Sanctum",
+     "label_ru": "Санктум архонтов"
+    }
+   ],
+   "e432": [
+    {
+     "unit_id": "e4321",
+     "building_id": "aegis_citadel",
+     "label": "Aegis Citadel",
+     "label_ru": "Цитадель Эгиды"
+    }
+   ]
+  },
+  "choir_of_the_cursed": {
+   "d412": [
+    {
+     "unit_id": "d4121",
+     "building_id": "agony_engine_den",
+     "label": "Agony Engine Den",
+     "label_ru": "Логово машин агонии"
+    }
+   ],
+   "d411": [
+    {
+     "unit_id": "d4111",
+     "building_id": "broken_vessel_altar",
+     "label": "Broken Vessel Altar",
+     "label_ru": "Алтарь сломленных сосудов"
+    }
+   ],
+   "d211": [
+    {
+     "unit_id": "d2111",
+     "building_id": "ashen_warden_watch",
+     "label": "Ashen Warden Watch",
+     "label_ru": "Дозор пепельных стражей"
+    },
+    {
+     "unit_id": "d2112",
+     "building_id": "pyre_choir_hall",
+     "label": "Pyre Choir Hall",
+     "label_ru": "Зал погребального хора"
+    }
+   ],
+   "d111": [
+    {
+     "unit_id": "d1111",
+     "building_id": "conqueror_pit",
+     "label": "Conqueror Pit",
+     "label_ru": "Яма завоевателей"
+    }
+   ],
+   "d1": [
+    {
+     "unit_id": "d11",
+     "building_id": "tormentor_pit",
+     "label": "Tormentor Pit",
+     "label_ru": "Яма мучителей"
+    },
+    {
+     "unit_id": "d12",
+     "building_id": "chorister_chamber",
+     "label": "Chorister Chamber",
+     "label_ru": "Палата хористов"
+    }
+   ],
+   "d11": [
+    {
+     "unit_id": "d111",
+     "building_id": "praetor_pit",
+     "label": "Praetor Pit",
+     "label_ru": "Яма преторов"
+    }
+   ],
+   "d12": [
+    {
+     "unit_id": "d121",
+     "building_id": "chanter_chamber",
+     "label": "Chanter Chamber",
+     "label_ru": "Палата певчих"
+    }
+   ],
+   "d121": [
+    {
+     "unit_id": "d1211",
+     "building_id": "archchanter_chamber",
+     "label": "Archchanter Chamber",
+     "label_ru": "Палата архипевчих"
+    },
+    {
+     "unit_id": "d1212",
+     "building_id": "doomchanter_chamber",
+     "label": "Doomchanter Chamber",
+     "label_ru": "Палата певчих гибели"
+    }
+   ],
+   "d2": [
+    {
+     "unit_id": "d21",
+     "building_id": "ember_vigil",
+     "label": "Ember Vigil",
+     "label_ru": "Бдение углей"
+    }
+   ],
+   "d21": [
+    {
+     "unit_id": "d211",
+     "building_id": "pyre_watch",
+     "label": "Pyre Watch",
+     "label_ru": "Дозор костра"
+    }
+   ],
+   "d3": [
+    {
+     "unit_id": "d31",
+     "building_id": "stone_gargoyle_den",
+     "label": "Stone Gargoyle Den",
+     "label_ru": "Логово каменных горгулий"
+    },
+    {
+     "unit_id": "d32",
+     "building_id": "quartz_gargoyle_den",
+     "label": "Quartz Gargoyle Den",
+     "label_ru": "Логово кварцевых горгулий"
+    }
+   ],
+   "d31": [
+    {
+     "unit_id": "d311",
+     "building_id": "onyx_gargoyle_den",
+     "label": "Onyx Gargoyle Den",
+     "label_ru": "Логово ониксовых горгулий"
+    }
+   ],
+   "d311": [
+    {
+     "unit_id": "d3111",
+     "building_id": "obsidian_gargoyle_den",
+     "label": "Obsidian Gargoyle Den",
+     "label_ru": "Логово обсидиановых горгулий"
+    }
+   ],
+   "d32": [
+    {
+     "unit_id": "d321",
+     "building_id": "azurite_gargoyle_den",
+     "label": "Azurite Gargoyle Den",
+     "label_ru": "Логово азуритовых горгулий"
+    }
+   ],
+   "d321": [
+    {
+     "unit_id": "d3211",
+     "building_id": "malachite_gargoyle_den",
+     "label": "Malachite Gargoyle Den",
+     "label_ru": "Логово малахитовых горгулий"
+    },
+    {
+     "unit_id": "d3212",
+     "building_id": "alabaster_gargoyle_den",
+     "label": "Alabaster Gargoyle Den",
+     "label_ru": "Логово алебастровых горгулий"
+    }
+   ],
+   "d4": [
+    {
+     "unit_id": "d41",
+     "building_id": "possessed_pit",
+     "label": "Possessed Pit",
+     "label_ru": "Яма одержимых"
+    }
+   ],
+   "d41": [
+    {
+     "unit_id": "d411",
+     "building_id": "vessel_altar",
+     "label": "Vessel Altar",
+     "label_ru": "Алтарь сосудов"
+    },
+    {
+     "unit_id": "d412",
+     "building_id": "pain_projector_den",
+     "label": "Pain Projector Den",
+     "label_ru": "Логово проводников боли"
+    }
+   ],
+   "d6": [
+    {
+     "unit_id": "d61",
+     "building_id": "nether_baron_hall",
+     "label": "Nether Baron Hall",
+     "label_ru": "Зал баронов Преисподней"
+    }
+   ],
+   "d7": [
+    {
+     "unit_id": "d71",
+     "building_id": "greater_flame_spawn_pit",
+     "label": "Greater Flame Spawn Pit",
+     "label_ru": "Большая яма порождений пламени"
+    }
+   ],
+   "d5": [
+    {
+     "unit_id": "d51",
+     "building_id": "choir_servant_shrine",
+     "label": "Choir Servant Shrine",
+     "label_ru": "Святилище служек Хора"
+    },
+    {
+     "unit_id": "d52",
+     "building_id": "ash_cantor_chancel",
+     "label": "Ash Cantor Chancel",
+     "label_ru": "Клирос пепельного кантора"
+    }
+   ],
+   "d52": [
+    {
+     "unit_id": "d521",
+     "building_id": "ash_precentor_chancel",
+     "label": "Ash Precentor Chancel",
+     "label_ru": "Клирос пепельного регента"
+    }
+   ],
+   "d521": [
+    {
+     "unit_id": "d5211",
+     "building_id": "ash_hierophant_chancel",
+     "label": "Ash Liturgist Chancel",
+     "label_ru": "Клирос пепельного литургиста"
+    }
+   ],
+   "h_d_1": [
+    {
+     "unit_id": "h_d_1_a2",
+     "building_id": "warlord_keep_2_a",
+     "label": "Warlord Keep II A",
+     "label_ru": "Твердыня военачальников II A"
+    },
+    {
+     "unit_id": "h_d_1_b2",
+     "building_id": "warlord_keep_2_b",
+     "label": "Warlord Keep II B",
+     "label_ru": "Твердыня военачальников II B"
+    }
+   ],
+   "h_d_1_a2": [
+    {
+     "unit_id": "h_d_1_a3",
+     "building_id": "warlord_keep_3_a",
+     "label": "Warlord Keep III A",
+     "label_ru": "Твердыня военачальников III A"
+    }
+   ],
+   "h_d_1_b2": [
+    {
+     "unit_id": "h_d_1_b3",
+     "building_id": "warlord_keep_3_b",
+     "label": "Warlord Keep III B",
+     "label_ru": "Твердыня военачальников III B"
+    }
+   ],
+   "h_d_1_a3": [
+    {
+     "unit_id": "h_d_1_a41",
+     "building_id": "warlord_keep_4_a",
+     "label": "Warlord Keep IV A",
+     "label_ru": "Твердыня военачальников IV A"
+    },
+    {
+     "unit_id": "h_d_1_a42",
+     "building_id": "warlord_keep_4_a_alt",
+     "label": "Warlord Keep IV A Alt",
+     "label_ru": "Твердыня военачальников IV A Alt"
+    }
+   ],
+   "h_d_1_b3": [
+    {
+     "unit_id": "h_d_1_b41",
+     "building_id": "warlord_keep_4_b",
+     "label": "Warlord Keep IV B",
+     "label_ru": "Твердыня военачальников IV B"
+    },
+    {
+     "unit_id": "h_d_1_b42",
+     "building_id": "warlord_keep_4_b_alt",
+     "label": "Warlord Keep IV B Alt",
+     "label_ru": "Твердыня военачальников IV B Alt"
+    }
+   ],
+   "h_d_2": [
+    {
+     "unit_id": "h_d_2_a2",
+     "building_id": "hexblade_sanctum_2_a",
+     "label": "Hexblade Sanctum II A",
+     "label_ru": "Санктум проклятого клинка II A"
+    },
+    {
+     "unit_id": "h_d_2_b2",
+     "building_id": "hexblade_sanctum_2_b",
+     "label": "Hexblade Sanctum II B",
+     "label_ru": "Санктум проклятого клинка II B"
+    }
+   ],
+   "h_d_2_a2": [
+    {
+     "unit_id": "h_d_2_a3",
+     "building_id": "hexblade_sanctum_3_a",
+     "label": "Hexblade Sanctum III A",
+     "label_ru": "Санктум проклятого клинка III A"
+    }
+   ],
+   "h_d_2_b2": [
+    {
+     "unit_id": "h_d_2_b3",
+     "building_id": "hexblade_sanctum_3_b",
+     "label": "Hexblade Sanctum III B",
+     "label_ru": "Санктум проклятого клинка III B"
+    }
+   ],
+   "h_d_2_a3": [
+    {
+     "unit_id": "h_d_2_a41",
+     "building_id": "hexblade_sanctum_4_a",
+     "label": "Hexblade Sanctum IV A",
+     "label_ru": "Санктум проклятого клинка IV A"
+    },
+    {
+     "unit_id": "h_d_2_a42",
+     "building_id": "hexblade_sanctum_4_a_alt",
+     "label": "Hexblade Sanctum IV A Alt",
+     "label_ru": "Санктум проклятого клинка IV A Alt"
+    }
+   ],
+   "h_d_2_b3": [
+    {
+     "unit_id": "h_d_2_b41",
+     "building_id": "hexblade_sanctum_4_b",
+     "label": "Hexblade Sanctum IV B",
+     "label_ru": "Санктум проклятого клинка IV B"
+    },
+    {
+     "unit_id": "h_d_2_b42",
+     "building_id": "hexblade_sanctum_4_b_alt",
+     "label": "Hexblade Sanctum IV B Alt",
+     "label_ru": "Санктум проклятого клинка IV B Alt"
+    }
+   ],
+   "h_d_3": [
+    {
+     "unit_id": "h_d_3_a2",
+     "building_id": "infernal_spire_2_a",
+     "label": "Infernal Spire II A",
+     "label_ru": "Инфернальный шпиль II A"
+    },
+    {
+     "unit_id": "h_d_3_b2",
+     "building_id": "infernal_spire_2_b",
+     "label": "Infernal Spire II B",
+     "label_ru": "Инфернальный шпиль II B"
+    }
+   ],
+   "h_d_3_a2": [
+    {
+     "unit_id": "h_d_3_a3",
+     "building_id": "infernal_spire_3_a",
+     "label": "Infernal Spire III A",
+     "label_ru": "Инфернальный шпиль III A"
+    }
+   ],
+   "h_d_3_b2": [
+    {
+     "unit_id": "h_d_3_b3",
+     "building_id": "infernal_spire_3_b",
+     "label": "Infernal Spire III B",
+     "label_ru": "Инфернальный шпиль III B"
+    }
+   ],
+   "h_d_3_a3": [
+    {
+     "unit_id": "h_d_3_a41",
+     "building_id": "infernal_spire_4_a",
+     "label": "Infernal Spire IV A",
+     "label_ru": "Инфернальный шпиль IV A"
+    },
+    {
+     "unit_id": "h_d_3_a42",
+     "building_id": "infernal_spire_4_a_alt",
+     "label": "Infernal Spire IV A Alt",
+     "label_ru": "Инфернальный шпиль IV A Alt"
+    }
+   ],
+   "h_d_3_b3": [
+    {
+     "unit_id": "h_d_3_b41",
+     "building_id": "infernal_spire_4_b",
+     "label": "Infernal Spire IV B",
+     "label_ru": "Инфернальный шпиль IV B"
+    },
+    {
+     "unit_id": "h_d_3_b42",
+     "building_id": "infernal_spire_4_b_alt",
+     "label": "Infernal Spire IV B Alt",
+     "label_ru": "Инфернальный шпиль IV B Alt"
+    }
+   ],
+   "d61": [
+    {
+     "unit_id": "d611",
+     "building_id": "nether_lord_hall",
+     "label": "Nether Lord Hall",
+     "label_ru": "Зал владык Преисподней"
+    }
+   ],
+   "d611": [
+    {
+     "unit_id": "d6111",
+     "building_id": "nether_sovereign_hall",
+     "label": "Nether Sovereign Hall",
+     "label_ru": "Зал государей Преисподней"
+    }
+   ],
+   "d71": [
+    {
+     "unit_id": "d711",
+     "building_id": "inferno_spawn_pit",
+     "label": "Inferno Spawn Pit",
+     "label_ru": "Яма порождений инферно"
+    }
+   ],
+   "d711": [
+    {
+     "unit_id": "d7111",
+     "building_id": "inferno_scion_crucible",
+     "label": "Inferno Scion Crucible",
+     "label_ru": "Горнило отпрысков инферно"
+    }
+   ],
+   "d51": [
+    {
+     "unit_id": "d511",
+     "building_id": "choir_ascendant_shrine",
+     "label": "Choir Ascendant Shrine",
+     "label_ru": "Святилище вознесённых Хора"
+    }
+   ],
+   "d511": [
+    {
+     "unit_id": "d5111",
+     "building_id": "choir_exalted_shrine",
+     "label": "Choir Exalted Shrine",
+     "label_ru": "Святилище превознесённых Хора"
+    }
+   ]
+  },
+  "grail_of_sorrow": {
+   "gs1": [
+    {
+     "unit_id": "gs11",
+     "building_id": "ghoul_pit",
+     "label": "Ghoul Pit",
+     "label_ru": "Яма упырей"
+    },
+    {
+     "unit_id": "gs12",
+     "building_id": "cannibal_pit",
+     "label": "Cannibal Pit",
+     "label_ru": "Яма людоедов"
+    },
+    {
+     "unit_id": "gs13",
+     "building_id": "cesswalker_mire",
+     "label": "Stitcher Mire",
+     "label_ru": "Топь сшивателей"
+    }
+   ],
+   "gs11": [
+    {
+     "unit_id": "gs111",
+     "building_id": "plague_knight_barrow",
+     "label": "Plague Knight Barrow",
+     "label_ru": "Курган чумных рыцарей"
+    }
+   ],
+   "gs12": [
+    {
+     "unit_id": "gs121",
+     "building_id": "abomination_vat",
+     "label": "Abomination Vat",
+     "label_ru": "Чан мерзости"
+    }
+   ],
+   "gs13": [
+    {
+     "unit_id": "gs131",
+     "building_id": "blightwalker_mire",
+     "label": "Flesh Mender Mire",
+     "label_ru": "Топь ткачей плоти"
+    }
+   ],
+   "gs2": [
+    {
+     "unit_id": "gs21",
+     "building_id": "crimson_communicant_chapel",
+     "label": "Crimson Communicant Chapel",
+     "label_ru": "Часовня багровых причастников"
+    }
+   ],
+   "gs3": [
+    {
+     "unit_id": "gs31",
+     "building_id": "blood_adept_chamber",
+     "label": "Blood Adept Chamber",
+     "label_ru": "Палата адептов крови"
+    },
+    {
+     "unit_id": "gs32",
+     "building_id": "necromancer_crypt",
+     "label": "Necromancer Crypt",
+     "label_ru": "Склеп некромантов"
+    },
+    {
+     "unit_id": "gs33",
+     "building_id": "plague_scholar_lab",
+     "label": "Plague Scholar Lab",
+     "label_ru": "Лаборатория чумных учёных"
+    }
+   ],
+   "gs31": [
+    {
+     "unit_id": "gs312",
+     "building_id": "crimson_mage_tower",
+     "label": "Crimson Mage Tower",
+     "label_ru": "Башня багровых магов"
+    },
+    {
+     "unit_id": "gs311",
+     "building_id": "blood_knight_crypt",
+     "label": "Blood Knight Crypt",
+     "label_ru": "Склеп рыцарей крови"
+    }
+   ],
+   "gs312": [
+    {
+     "unit_id": "gs3121",
+     "building_id": "crimson_archon_tower",
+     "label": "Crimson Archon Tower",
+     "label_ru": "Башня багровых архонтов"
+    }
+   ],
+   "gs311": [
+    {
+     "unit_id": "gs3111",
+     "building_id": "sanguine_lord_crypt",
+     "label": "Sanguine Lord Crypt",
+     "label_ru": "Склеп кровавых владык"
+    }
+   ],
+   "gs33": [
+    {
+     "unit_id": "gs331",
+     "building_id": "plague_lord_lab",
+     "label": "Plague Lord Lab",
+     "label_ru": "Лаборатория владык чумы"
+    }
+   ],
+   "gs331": [
+    {
+     "unit_id": "gs3311",
+     "building_id": "plague_archon_lab",
+     "label": "Plague Archon Lab",
+     "label_ru": "Лаборатория архонтов чумы"
+    }
+   ],
+   "gs4": [
+    {
+     "unit_id": "gs41",
+     "building_id": "seraph_shrine",
+     "label": "Seraph Shrine",
+     "label_ru": "Святилище серафимов"
+    },
+    {
+     "unit_id": "gs42",
+     "building_id": "chalice_vault",
+     "label": "Chalice Vault",
+     "label_ru": "Хранилище чаши"
+    }
+   ],
+   "gs5": [
+    {
+     "unit_id": "gs51",
+     "building_id": "grail_tender_chamber",
+     "label": "Grail Tender Chamber",
+     "label_ru": "Палата смотрителей Грааля"
+    },
+    {
+     "unit_id": "gs52",
+     "building_id": "grieving_servant_chamber",
+     "label": "Grieving Servant Chamber",
+     "label_ru": "Палата скорбящих слуг"
+    }
+   ],
+   "gs6": [
+    {
+     "unit_id": "gs61",
+     "building_id": "specter_hall",
+     "label": "Specter Hall",
+     "label_ru": "Зал спектров"
+    },
+    {
+     "unit_id": "gs62",
+     "building_id": "apparition_mist",
+     "label": "Apparition Mist",
+     "label_ru": "Туман привидений"
+    }
+   ],
+   "h_g_1": [
+    {
+     "unit_id": "h_g_1_a2",
+     "building_id": "prophet_sepulchre_2_a",
+     "label": "Prophet Sepulchre II A",
+     "label_ru": "Гробница пророков II A"
+    },
+    {
+     "unit_id": "h_g_1_b2",
+     "building_id": "prophet_sepulchre_2_b",
+     "label": "Prophet Sepulchre II B",
+     "label_ru": "Гробница пророков II B"
+    }
+   ],
+   "h_g_1_a2": [
+    {
+     "unit_id": "h_g_1_a3",
+     "building_id": "prophet_sepulchre_3_a",
+     "label": "Prophet Sepulchre III A",
+     "label_ru": "Гробница пророков III A"
+    }
+   ],
+   "h_g_1_b2": [
+    {
+     "unit_id": "h_g_1_b3",
+     "building_id": "prophet_sepulchre_3_b",
+     "label": "Prophet Sepulchre III B",
+     "label_ru": "Гробница пророков III B"
+    }
+   ],
+   "h_g_1_a3": [
+    {
+     "unit_id": "h_g_1_a41",
+     "building_id": "prophet_sepulchre_4_a",
+     "label": "Prophet Sepulchre IV A",
+     "label_ru": "Гробница пророков IV A"
+    },
+    {
+     "unit_id": "h_g_1_a42",
+     "building_id": "prophet_sepulchre_4_a_alt",
+     "label": "Prophet Sepulchre IV A Alt",
+     "label_ru": "Гробница пророков IV A Alt"
+    }
+   ],
+   "h_g_1_b3": [
+    {
+     "unit_id": "h_g_1_b41",
+     "building_id": "prophet_sepulchre_4_b",
+     "label": "Prophet Sepulchre IV B",
+     "label_ru": "Гробница пророков IV B"
+    },
+    {
+     "unit_id": "h_g_1_b42",
+     "building_id": "prophet_sepulchre_4_b_alt",
+     "label": "Prophet Sepulchre IV B Alt",
+     "label_ru": "Гробница пророков IV B Alt"
+    }
+   ],
+   "h_g_2": [
+    {
+     "unit_id": "h_g_2_a2",
+     "building_id": "warden_crypt_2_a",
+     "label": "Warden Crypt II A",
+     "label_ru": "Склеп стражей II A"
+    },
+    {
+     "unit_id": "h_g_2_b2",
+     "building_id": "warden_crypt_2_b",
+     "label": "Warden Crypt II B",
+     "label_ru": "Склеп стражей II B"
+    }
+   ],
+   "h_g_2_a2": [
+    {
+     "unit_id": "h_g_2_a3",
+     "building_id": "warden_crypt_3_a",
+     "label": "Warden Crypt III A",
+     "label_ru": "Склеп стражей III A"
+    }
+   ],
+   "h_g_2_b2": [
+    {
+     "unit_id": "h_g_2_b3",
+     "building_id": "warden_crypt_3_b",
+     "label": "Warden Crypt III B",
+     "label_ru": "Склеп стражей III B"
+    }
+   ],
+   "h_g_2_a3": [
+    {
+     "unit_id": "h_g_2_a41",
+     "building_id": "warden_crypt_4_a",
+     "label": "Warden Crypt IV A",
+     "label_ru": "Склеп стражей IV A"
+    },
+    {
+     "unit_id": "h_g_2_a42",
+     "building_id": "warden_crypt_4_a_alt",
+     "label": "Warden Crypt IV A Alt",
+     "label_ru": "Склеп стражей IV A Alt"
+    }
+   ],
+   "h_g_2_b3": [
+    {
+     "unit_id": "h_g_2_b41",
+     "building_id": "warden_crypt_4_b",
+     "label": "Warden Crypt IV B",
+     "label_ru": "Склеп стражей IV B"
+    },
+    {
+     "unit_id": "h_g_2_b42",
+     "building_id": "warden_crypt_4_b_alt",
+     "label": "Warden Crypt IV B Alt",
+     "label_ru": "Склеп стражей IV B Alt"
+    }
+   ],
+   "h_g_3": [
+    {
+     "unit_id": "h_g_3_a2",
+     "building_id": "voice_chapel_2_a",
+     "label": "Voice Chapel II A",
+     "label_ru": "Часовня Голоса II A"
+    },
+    {
+     "unit_id": "h_g_3_b2",
+     "building_id": "voice_chapel_2_b",
+     "label": "Voice Chapel II B",
+     "label_ru": "Часовня Голоса II B"
+    }
+   ],
+   "h_g_3_a2": [
+    {
+     "unit_id": "h_g_3_a3",
+     "building_id": "voice_chapel_3_a",
+     "label": "Voice Chapel III A",
+     "label_ru": "Часовня Голоса III A"
+    }
+   ],
+   "h_g_3_b2": [
+    {
+     "unit_id": "h_g_3_b3",
+     "building_id": "voice_chapel_3_b",
+     "label": "Voice Chapel III B",
+     "label_ru": "Часовня Голоса III B"
+    }
+   ],
+   "h_g_3_a3": [
+    {
+     "unit_id": "h_g_3_a41",
+     "building_id": "voice_chapel_4_a",
+     "label": "Voice Chapel IV A",
+     "label_ru": "Часовня Голоса IV A"
+    },
+    {
+     "unit_id": "h_g_3_a42",
+     "building_id": "voice_chapel_4_a_alt",
+     "label": "Voice Chapel IV A Alt",
+     "label_ru": "Часовня Голоса IV A Alt"
+    }
+   ],
+   "h_g_3_b3": [
+    {
+     "unit_id": "h_g_3_b41",
+     "building_id": "voice_chapel_4_b",
+     "label": "Voice Chapel IV B",
+     "label_ru": "Часовня Голоса IV B"
+    },
+    {
+     "unit_id": "h_g_3_b42",
+     "building_id": "voice_chapel_4_b_alt",
+     "label": "Voice Chapel IV B Alt",
+     "label_ru": "Часовня Голоса IV B Alt"
+    }
+   ],
+   "gs32": [
+    {
+     "unit_id": "gs321",
+     "building_id": "death_lord_crypt",
+     "label": "Death Lord Crypt",
+     "label_ru": "Склеп владык смерти"
+    }
+   ],
+   "gs321": [
+    {
+     "unit_id": "gs3211",
+     "building_id": "mothers_hand_ossuary",
+     "label": "Mother's Hand Ossuary",
+     "label_ru": "Оссуарий Длани Матери"
+    }
+   ],
+   "gs111": [
+    {
+     "unit_id": "gs1111",
+     "building_id": "plague_knight_mausoleum",
+     "label": "Plague Champion Mausoleum",
+     "label_ru": "Мавзолей чумных поборников"
+    }
+   ],
+   "gs121": [
+    {
+     "unit_id": "gs1211",
+     "building_id": "abomination_crucible",
+     "label": "Abomination Crucible",
+     "label_ru": "Горнило мерзости"
+    }
+   ],
+   "gs131": [
+    {
+     "unit_id": "gs1311",
+     "building_id": "blightwalker_fen",
+     "label": "Blight Surgeon Fen",
+     "label_ru": "Трясина врачевателей порчи"
+    }
+   ],
+   "gs21": [
+    {
+     "unit_id": "gs211",
+     "building_id": "chosen_chapel",
+     "label": "Chosen Chapel",
+     "label_ru": "Часовня избранных"
+    }
+   ],
+   "gs211": [
+    {
+     "unit_id": "gs2111",
+     "building_id": "anointed_altar",
+     "label": "Anointed Altar",
+     "label_ru": "Алтарь помазания"
+    },
+    {
+     "unit_id": "gs2112",
+     "building_id": "consecrated_sanctum",
+     "label": "Consecrated Sanctum",
+     "label_ru": "Святилище освящённых"
+    }
+   ],
+   "gs41": [
+    {
+     "unit_id": "gs411",
+     "building_id": "grail_angel_shrine",
+     "label": "Grail Angel Shrine",
+     "label_ru": "Святилище ангелов Грааля"
+    }
+   ],
+   "gs411": [
+    {
+     "unit_id": "gs4111",
+     "building_id": "grail_archangel_shrine",
+     "label": "Grail Archangel Shrine",
+     "label_ru": "Святилище архангелов Грааля"
+    }
+   ],
+   "gs42": [
+    {
+     "unit_id": "gs421",
+     "building_id": "sorrow_vessel_vault",
+     "label": "Sorrow Vessel Vault",
+     "label_ru": "Хранилище сосудов скорби"
+    }
+   ],
+   "gs421": [
+    {
+     "unit_id": "gs4211",
+     "building_id": "sorrow_reliquary_vault",
+     "label": "Sorrow Reliquary Vault",
+     "label_ru": "Хранилище реликвариев скорби"
+    }
+   ],
+   "gs51": [
+    {
+     "unit_id": "gs511",
+     "building_id": "grail_keeper_chamber",
+     "label": "Grail Keeper Chamber",
+     "label_ru": "Палата хранителей Грааля"
+    }
+   ],
+   "gs511": [
+    {
+     "unit_id": "gs5111",
+     "building_id": "grail_custodian_chamber",
+     "label": "Grail Custodian Chamber",
+     "label_ru": "Палата блюстителей Грааля"
+    }
+   ],
+   "gs52": [
+    {
+     "unit_id": "gs521",
+     "building_id": "grieving_custodian_chamber",
+     "label": "Grieving Custodian Chamber",
+     "label_ru": "Палата скорбящих блюстителей"
+    }
+   ],
+   "gs521": [
+    {
+     "unit_id": "gs5211",
+     "building_id": "grieving_warden_chamber",
+     "label": "Grieving Warden Chamber",
+     "label_ru": "Палата скорбящих стражей"
+    }
+   ],
+   "gs61": [
+    {
+     "unit_id": "gs611",
+     "building_id": "wraith_hall",
+     "label": "Wraith Hall",
+     "label_ru": "Зал духов"
+    }
+   ],
+   "gs611": [
+    {
+     "unit_id": "gs6111",
+     "building_id": "revenant_hall",
+     "label": "Revenant Hall",
+     "label_ru": "Зал ревенантов"
+    }
+   ],
+   "gs62": [
+    {
+     "unit_id": "gs621",
+     "building_id": "phantom_mist",
+     "label": "Phantom Mist",
+     "label_ru": "Туман фантомов"
+    }
+   ],
+   "gs621": [
+    {
+     "unit_id": "gs6211",
+     "building_id": "nightmare_mist",
+     "label": "Nightmare Mist",
+     "label_ru": "Туман кошмаров"
+    }
+   ],
+   "gs7": [
+    {
+     "unit_id": "gs71",
+     "building_id": "pale_dame_barrow",
+     "label": "Pale Dame Barrow",
+     "label_ru": "Курган бледных госпож"
+    },
+    {
+     "unit_id": "gs72",
+     "building_id": "pale_votaress_chantry",
+     "label": "Pale Votaress Chantry",
+     "label_ru": "Часовня бледных послушниц"
+    },
+    {
+     "unit_id": "gs73",
+     "building_id": "pale_mourner_shrine",
+     "label": "Pale Mourner Shrine",
+     "label_ru": "Святилище бледных плакальщиц"
+    }
+   ],
+   "gs71": [
+    {
+     "unit_id": "gs711",
+     "building_id": "pale_matriarch_barrow",
+     "label": "Pale Matriarch Barrow",
+     "label_ru": "Курган бледных праматерей"
+    }
+   ],
+   "gs711": [
+    {
+     "unit_id": "gs7111",
+     "building_id": "pale_sovereign_barrow",
+     "label": "Pale Sovereign Barrow",
+     "label_ru": "Курган бледных владычиц"
+    }
+   ],
+   "gs72": [
+    {
+     "unit_id": "gs721",
+     "building_id": "pale_abbess_chantry",
+     "label": "Pale Abbess Chantry",
+     "label_ru": "Часовня бледных аббатис"
+    }
+   ],
+   "gs721": [
+    {
+     "unit_id": "gs7211",
+     "building_id": "pale_prioress_chantry",
+     "label": "Pale Prioress Chantry",
+     "label_ru": "Часовня бледных приоресс"
+    }
+   ],
+   "gs73": [
+    {
+     "unit_id": "gs731",
+     "building_id": "pale_lamenter_shrine",
+     "label": "Pale Lamenter Shrine",
+     "label_ru": "Святилище бледных скорбниц"
+    }
+   ],
+   "gs731": [
+    {
+     "unit_id": "gs7311",
+     "building_id": "pale_dirge_shrine",
+     "label": "Pale Dirge Shrine",
+     "label_ru": "Святилище бледных панихид"
+    }
+   ],
+   "gs8": [
+    {
+     "unit_id": "gs81",
+     "building_id": "mothers_sorrow_font",
+     "label": "Mother's Sorrow Font",
+     "label_ru": "Купель Скорби Матери"
+    },
+    {
+     "unit_id": "gs82",
+     "building_id": "mothers_vigil_reliquary",
+     "label": "Mother's Vigil Reliquary",
+     "label_ru": "Реликварий Бдения Матери"
+    },
+    {
+     "unit_id": "gs83",
+     "building_id": "mothers_chalice_altar",
+     "label": "Mother's Chalice Altar",
+     "label_ru": "Алтарь Чаши Матери"
+    }
+   ],
+   "gs81": [
+    {
+     "unit_id": "gs811",
+     "building_id": "mothers_grief_font",
+     "label": "Mother's Grief Font",
+     "label_ru": "Купель Горя Матери"
+    }
+   ],
+   "gs811": [
+    {
+     "unit_id": "gs8111",
+     "building_id": "mothers_anguish_font",
+     "label": "Mother's Anguish Font",
+     "label_ru": "Купель Муки Матери"
+    }
+   ],
+   "gs82": [
+    {
+     "unit_id": "gs821",
+     "building_id": "mothers_shroud_reliquary",
+     "label": "Mother's Shroud Reliquary",
+     "label_ru": "Реликварий Покрова Матери"
+    }
+   ],
+   "gs821": [
+    {
+     "unit_id": "gs8211",
+     "building_id": "mothers_mantle_reliquary",
+     "label": "Mother's Mantle Reliquary",
+     "label_ru": "Реликварий Мантии Матери"
+    }
+   ],
+   "gs83": [
+    {
+     "unit_id": "gs831",
+     "building_id": "mothers_vessel_altar",
+     "label": "Mother's Vessel Altar",
+     "label_ru": "Алтарь Сосуда Матери"
+    }
+   ],
+   "gs831": [
+    {
+     "unit_id": "gs8311",
+     "building_id": "mothers_font_altar",
+     "label": "Mother's Font Altar",
+     "label_ru": "Алтарь Купели Матери"
+    }
+   ]
+  },
+  "crimson_basilica": {
+   "opb_e1": [
+    {
+     "unit_id": "opb_e11",
+     "building_id": "cb_exalted_herald",
+     "label": "Exalted Herald",
+     "label_ru": "Возвышенный Вестник"
+    }
+   ],
+   "opb_e11": [
+    {
+     "unit_id": "opb_e111",
+     "building_id": "cb_exalted_evangelist",
+     "label": "Exalted Evangelist",
+     "label_ru": "Возвышенный Евангелист"
+    }
+   ],
+   "opb_e2": [
+    {
+     "unit_id": "opb_e21",
+     "building_id": "cb_aggrails_devoted",
+     "label": "Aggrails Devoted",
+     "label_ru": "Преданный Агграилу"
+    },
+    {
+     "unit_id": "opb_e22",
+     "building_id": "cb_aggrails_exorcist",
+     "label": "Aggrails Exorcist",
+     "label_ru": "Экзорцист Агграила"
+    }
+   ],
+   "opb_e21": [
+    {
+     "unit_id": "opb_e211",
+     "building_id": "cb_aggrails_champion",
+     "label": "Aggrails Champion",
+     "label_ru": "Поборник Агграила"
+    },
+    {
+     "unit_id": "opb_e212",
+     "building_id": "cb_aggrails_desecrator",
+     "label": "Aggrails Desecrator",
+     "label_ru": "Осквернитель Агграила"
+    }
+   ],
+   "opb_e3": [
+    {
+     "unit_id": "opb_e31",
+     "building_id": "cb_keeper_of_purity",
+     "label": "Keeper of Purity",
+     "label_ru": "Хранитель Чистоты"
+    }
+   ],
+   "opb_e31": [
+    {
+     "unit_id": "opb_e311",
+     "building_id": "cb_high_keeper",
+     "label": "High Keeper",
+     "label_ru": "Верховный Хранитель"
+    }
+   ],
+   "opb_e311": [
+    {
+     "unit_id": "opb_e3111",
+     "building_id": "cb_grand_keeper",
+     "label": "Grand Keeper",
+     "label_ru": "Великий Хранитель"
+    },
+    {
+     "unit_id": "opb_e3112",
+     "building_id": "cb_bloodied_veil",
+     "label": "Keeper of the Bloodied Veil",
+     "label_ru": "Хранитель Окровавленной Завесы"
+    }
+   ],
+   "opb_e4": [
+    {
+     "unit_id": "opb_e41",
+     "building_id": "cb_crimson_hunter_2",
+     "label": "Crimson Hunter",
+     "label_ru": "Багровый охотник"
+    }
+   ],
+   "opb_e41": [
+    {
+     "unit_id": "opb_e411",
+     "building_id": "cb_crimson_stalker",
+     "label": "Crimson Stalker",
+     "label_ru": "Багровый преследователь"
+    }
+   ]
+  },
+  "glittering_abyss": {
+   "mv_e1": [
+    {
+     "unit_id": "mv_e11",
+     "building_id": "ga_geode_mender",
+     "label": "Geode Mender",
+     "label_ru": "Жеодный целитель"
+    }
+   ],
+   "mv_e11": [
+    {
+     "unit_id": "mv_e111",
+     "building_id": "ga_radiant_geode",
+     "label": "Radiant Geode",
+     "label_ru": "Сияющая жеода"
+    }
+   ],
+   "mv_e2": [
+    {
+     "unit_id": "mv_e21",
+     "building_id": "ga_rime_splinter",
+     "label": "Rime Splinter",
+     "label_ru": "Инеевый осколок"
+    }
+   ],
+   "mv_e21": [
+    {
+     "unit_id": "mv_e211",
+     "building_id": "ga_glacial_prism",
+     "label": "Glacial Prism",
+     "label_ru": "Ледниковая призма"
+    }
+   ],
+   "mv_e3": [
+    {
+     "unit_id": "mv_e31",
+     "building_id": "ga_rimewarden",
+     "label": "Rimewarden",
+     "label_ru": "Инеевый страж"
+    }
+   ],
+   "mv_e31": [
+    {
+     "unit_id": "mv_e311",
+     "building_id": "ga_bulwark_geode",
+     "label": "Bulwark Geode",
+     "label_ru": "Оплотная жеода"
+    }
+   ]
+  },
+  "chamber_of_unrest": {
+   "dm_e1": [
+    {
+     "unit_id": "dm_e11",
+     "building_id": "cu_dread_knight",
+     "label": "Dread Knight",
+     "label_ru": "Рыцарь ужаса"
+    }
+   ],
+   "dm_e11": [
+    {
+     "unit_id": "dm_e111",
+     "building_id": "cu_death_knight",
+     "label": "Death Knight",
+     "label_ru": "Рыцарь смерти"
+    }
+   ],
+   "dm_2": [
+    {
+     "unit_id": "dm_21",
+     "building_id": "cu_oathsworn_martyr",
+     "label": "Oathsworn Martyr",
+     "label_ru": "Присягнувший мученик"
+    }
+   ],
+   "dm_21": [
+    {
+     "unit_id": "dm_211",
+     "building_id": "cu_martyr_of_the_vow",
+     "label": "Martyr of the Vow",
+     "label_ru": "Мученик обета"
+    }
+   ],
+   "dm_e3": [
+    {
+     "unit_id": "dm_e31",
+     "building_id": "cu_revenant",
+     "label": "Revenant",
+     "label_ru": "Ревенант"
+    }
+   ],
+   "dm_e31": [
+    {
+     "unit_id": "dm_e311",
+     "building_id": "cu_soul_harvester",
+     "label": "Soul Harvester",
+     "label_ru": "Жнец душ"
+    }
+   ]
+  }
+ }
+}
