@@ -6,7 +6,7 @@ const { columnAdjacentCells } = require('../data/formation_synergies.js');
 const { SPELLS } = require('../data/spells');
 const { aiDoctrineFor } = require('../data/ai_profiles.js');
 const { COMBAT_BARKS, BARK_CHANCES, HEAL_BARK_THRESHOLD_PCT } = require('../data/combat_barks');
-const { LITANIES } = require('../data/litanies');
+const { LITANIES, LITANY_TARGETS } = require('../data/litanies');
 
 // Anti-stalemate / anti-heal-abuse pressure. Environmental — applies to BOTH
 // sides equally, so it also works for PvP later. All tunable here.
@@ -4161,10 +4161,14 @@ class BattleEngine {
     // Not yet drilled. The blow still lands — it is simply an ordinary kill,
     // with the ordinary kill and death barks the litany would have replaced.
     if (actor.side === 'player' && !this.litaniesUnlocked) return null;
+    // Only a CHAMPION is worth the rite, and the list of them is ONE list shared
+    // by all eighteen litanies (LITANY_TARGETS in data/litanies.js) — no litany
+    // carries a target of its own, so this is checked once, ahead of the loop,
+    // and an ordinary trooper's death never reaches it.
+    if (!LITANY_TARGETS.includes(this.litanyUnitId(target))) return null;
     for (const def of LITANIES) {
       if (def.once_per === 'battle' && this.litaniesFired.includes(`${def.id}:${actor.side}`)) continue;
       if (!def.lead.ids.includes(this.litanyUnitId(actor))) continue;
-      if (!def.target.ids.includes(this.litanyUnitId(target))) continue;
       const speakers = this.litanySpeakers(def, actor);
       if (!speakers) continue;
       this.litaniesFired.push(`${def.id}:${actor.side}`);

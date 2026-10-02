@@ -187,9 +187,10 @@ reward — so it teaches positioning instead of only decorating it.
 Each of the nine heroes has exactly two, all of them pure data in
 [data/litanies.js](../data/litanies.js) — the engine and the tome page carry no
 per-litany code, and each hero's pair is mutually exclusive by formation. **One
-litany is one whole object**: its lead ids, every cell, its
-target ids, its verses and its reward are written out inside it and shared with nothing,
-so editing one cannot affect another. Everything but the original `profane_chorus`
+litany is one whole object**: its lead ids, every cell, its verses and its reward are
+written out inside it and shared with nothing, so editing one cannot affect another.
+The **target is the one exception** — `LITANY_TARGETS`, a single list shared by all
+eighteen. Everything but the original `profane_chorus`
 carries placeholder verses; the lines are written separately.
 
 Three things the first three litanies got wrong, fixed by the shape below:
@@ -224,7 +225,11 @@ which is why the Blessed Soul line (`e7...`, `action: 'none'`), the Grail Acolyt
 (`gs5...`) and the Mother's Chalice line (`gs83...`) appear in no litany.
 
 The tome shows a player only the litanies their own faction can LEAD, so each faction
-sees six cards.
+sees six cards. The **target is drawn once** for the page, between the header and the
+cards, because it is one list for all of them - a Target section on each card was the
+same twelve faces six times over, and read as if each litany had a quarrel of its own.
+The ninety ids come out as twelve portraits: the page dedupes by name, so a reader sees
+the nine hero lines and the three bosses rather than every tier of each.
 
 **Each faction calls the rite by its own name.** A litany is the Empire's word; the
 Grail of Sorrow sings **dirges** (Панихиды) and the Choir of the Cursed **chants**
@@ -240,22 +245,25 @@ as two separate speakers. This is why `taken_breath` is sung by the Choir Servan
 Ash Cantor lines rather than by the Chorister branch (`d12`, `d121`, `d1211`, `d1212`),
 which is the obvious chorus by name and is column-sized.
 
-**A target list is FIVE SLOTS**, each one a whole unit line, every tier of it:
+**The target is ONE list, `LITANY_TARGETS`, shared by every litany**: an **enemy
+champion**. No litany names a target of its own and none may - `fireLitany` reads that
+list and nothing else, once, before it looks at a single litany.
 
-| slot | who |
-|---|---|
-| 1-3 | the three hero lines of the faction the litany is staged against |
-| 4 | the PvE boss of the same quarrel - Sister Aldra for the living, Malgrath the Undying for the Grail |
-| 5 | another region's boss, or empty and reserved for one |
+It holds every **hero** line of all three playable factions (every tier, both branches)
+and every **regional boss** line - Sister Aldra, Malgrath the Undying, Cryodrox. The
+heroes are the point; the bosses are in it because a list of enemy heroes alone makes a
+litany a drill that can only ever fire in a PvP match, and most hosts would never see
+it. A new region's boss belongs in the list, as a whole line, the day it ships. The
+Reliquary Titan is deliberately out: the Colossus is its own daily activity rather than
+a region's boss.
 
-Slot 4 exists because a list of enemy heroes alone makes the litany a drill that can
-only ever fire in a PvP match, and most hosts would never see it.
+**Own-faction heroes are in the list on purpose.** A mirror match is two hosts of one
+faction, and a Paladin who cuts down another Paladin has still felled a champion.
 
-Slot 5 carries **Cryodrox** (the Glittering Abyss) on nine of the eighteen - one of each
-hero's two - and is **reserved** on the other nine, waiting for the next embark region's
-boss. Filling one is adding that line's ids to the list; nothing else about the litany
-changes. The Reliquary Titan is deliberately not in any of them: the Colossus is its own
-daily activity rather than a region's boss.
+This replaced a five-slot target list written out on each of the eighteen, which was
+one answer - *who is worth the rite* - copied into eighteen places that could drift
+apart, and which made a mirror match silently litany-free for no reason a player could
+see.
 
 **Unlocked by the Proving Grounds' third level** (`litaniesUnlocked` in
 [data/buildings.js](../data/buildings.js)). Levels 1 and 2 of that building raise the
@@ -284,22 +292,14 @@ const LITANY_CHORUS_IDS = ['e21', 'e211', 'e2111', 'e212', 'e2121'];
 const LITANY_LEAD_IDS = ['h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
                          'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212'];
 
-// Whose death triggers it — every Choir hero, all three lines, both paths.
-// Black Castellan, Choir Regent and Infernal Ascendant: heretics, tags irrelevant.
-const LITANY_TARGET_IDS = [
-  'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
-           'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42',
-  'h_d_2', 'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42',
-           'h_d_2_b2', 'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42',
-  'h_d_3', 'h_d_3_a2', 'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42',
-           'h_d_3_b2', 'h_d_3_b3', 'h_d_3_b41', 'h_d_3_b42',
-];
+// Whose death triggers it is NOT written here: it is LITANY_TARGETS, one list at the
+// top of the file, the same for all eighteen - every hero line of every faction and
+// every regional boss line.
 
 {
   id: 'profane_chorus',
   trigger: 'lethal',                 // the lead's attack is ABOUT to kill (§5.2)
   lead:    { ids: LITANY_LEAD_IDS },
-  target:  { ids: LITANY_TARGET_IDS },
   // The formation IS the condition: named CELLS, each with its own letter, row and
   // column. Hardcoded cells, not a count. A verse names its speaker by letter.
   formation: {
@@ -374,8 +374,8 @@ Notes on the shape:
   cannot hold two different units, so the board decides which is spoken. Where their
   cells do not overlap at all, a rich enough board can satisfy both, and `fireLitany`
   takes the earlier one in the array. That is true today of the First Sorrow and the
-  Pale Procession, but only on a Sister Aldra kill - she is the one target both lists
-  carry.
+  Pale Procession - and now on any champion's death, since the two no longer differ in
+  who they are staged over.
 
 ### 5.2 Firing — the lethal pre-empt
 
@@ -391,7 +391,8 @@ if (lethal && litanyApplies(actor, target)) → emit litany (§5.3)
 `litanyApplies` is a pure check, in order:
 
 1. `once_per: 'battle'` not yet spent for this litany on this side.
-2. Actor's unit id ∈ `lead.ids`; target's unit id ∈ `target.ids`.
+2. Target's unit id ∈ `LITANY_TARGETS` (checked once, for all litanies); actor's unit
+   id ∈ this litany's `lead.ids`.
 3. Actor stands in the cell the litany marks `role: 'lead'` - that cell's own footprint,
    read against the acting side, matched against the actor's own whole footprint.
 4. Every other cell the litany names holds an **alive** unit of its own side whose id is
@@ -520,8 +521,10 @@ Target: **~3.5–4 s** from the first verse to the corpse. Client
 
 `scripts/validate-barks.js`, run in CI and before a content commit. Errors:
 
-- An id in `ids`, or in a litany's `lead`, `target` or `formation` cells, that does not
-  exist in units.js.
+- An id in `ids`, in `LITANY_TARGETS`, or in a litany's `lead` or `formation` cells,
+  that does not exist in units.js.
+- A litany carrying a `target` of its own - the target is `LITANY_TARGETS` and nothing
+  else.
 - A key that does not parse against §1.2 — unknown trigger, tag or faction.
 - A pair that is not exactly `[en, ru]` with both non-empty.
 - Two sets with the same id count both defining one key for one unit.
@@ -582,8 +585,8 @@ coverage per faction and trigger.
 | Question | Ruling |
 |---|---|
 | What does a litany do besides speak? | It **stages the kill** — chorus strikes for show, lead lands the real blow — and grants a reward (§5) |
-| Trigger | The lead's **attack** is about to kill a unit on the hardcoded target list (§5.2). Spell kills are out of scope — no actor is attached to spell damage |
-| Filters | **None. Every role is a hardcoded id list** — lead, target and chorus. Tags do not describe roles reliably (the Choir Regent has no `Demon` tag and is still a heretic) |
+| Trigger | The lead's **attack** is about to kill an **enemy champion** — `LITANY_TARGETS`, one list for all eighteen (§5.2). Spell kills are out of scope — no actor is attached to spell damage |
+| Filters | **None. Every role is a hardcoded id list** — lead and chorus per litany, target shared. Tags do not describe roles reliably (the Choir Regent has no `Demon` tag and is still a heretic) |
 | Chorus strikes out of range | **Play anyway** — cosmetic flavour, no reach check |
 | Formation | Hardcoded front column: chorus id top, lead middle, chorus id bottom (§5.1) |
 | Verse order | Chorus, chorus, **lead last** with the killing blow |

@@ -9,11 +9,16 @@
 // tagged Demon and is still a heretic to be purged). Adding a unit to a role is
 // editing one of these arrays.
 //
-// ONE LITANY IS ONE OBJECT, whole. Nothing is shared between them and nothing is
-// built for them: the lead ids, every cell, the target ids, the verses and the
+// ONE LITANY IS ONE OBJECT, whole. The lead ids, every cell, the verses and the
 // reward are written out inside the object, so editing a litany is editing that
 // object and nothing else can be affected by it. The ids repeat between litanies
 // on purpose - that is the price of each one standing alone.
+//
+// THE ONE EXCEPTION IS THE TARGET, which is LITANY_TARGETS below and is the same
+// for all eighteen. A litany is staged over the death of the other side's CHAMPION,
+// and that is the whole of the condition: who is worth the rite does not change
+// from one litany to the next, so writing a per-litany list eighteen times only
+// gave eighteen places for the same answer to drift.
 //
 // EIGHTEEN litanies: two for each of the nine heroes, six per faction.
 //
@@ -44,19 +49,23 @@
 //
 // ── The target ────────────────────────────────────────────────────────────────
 //
-// FIVE SLOTS, and a slot is a whole unit LINE, every tier of it:
+// LITANY_TARGETS, one list, shared by every litany: an ENEMY CHAMPION. No litany
+// names a target of its own and none may - fireLitany reads this list and nothing
+// else.
 //
-//   1-3  the three hero lines of the faction this litany is staged against
-//   4    the PvE boss of the same quarrel - Sister Aldra for the living, Malgrath
-//        the Undying for the Grail
-//   5    another region's boss, or left empty for one
+// It holds every HERO line of all three playable factions, every tier and both
+// branches, and every REGIONAL BOSS line. The heroes are the point; the bosses
+// are there because a list of enemy heroes alone makes a litany a drill that can
+// only fire in a PvP match, which most hosts never see.
 //
-// Slot 5 carries Cryodrox (the Glittering Abyss) on nine of the eighteen - one of
-// each hero's two - and is RESERVED on the other nine: the next embark region's
-// boss goes in those, and nothing else about the litany changes.
+// Own-faction heroes are in the list on purpose. A mirror match is two hosts of
+// one faction, and a Paladin who cuts down another Paladin has still felled a
+// champion - the old per-litany lists made that single case silent for no reason
+// a player could see.
 //
-// Slot 4 exists because a list of enemy heroes alone makes a litany a drill that
-// can only fire in a PvP match, which most hosts never see.
+// A new region's boss belongs here, as a whole line, the day it ships. The
+// Reliquary Titan is deliberately out: the Colossus is its own daily activity
+// rather than a region's boss.
 //
 // ── The lead ──────────────────────────────────────────────────────────────────
 //
@@ -131,6 +140,46 @@
 // different places, or they demand different units in a square they share, so the
 // board decides which one is spoken and never both.
 
+// Every champion a litany may be staged over. ONE list, read by fireLitany for
+// all eighteen - see "The target" above.
+const LITANY_TARGETS = [
+
+  // ── The heroes ──────────────────────────────────────────────────────────────
+  // All nine lines, every tier, both branches. Own faction included: a mirror
+  // match is still a champion felled.
+
+  // Empire: Paladin, Inquisitor, Artificer.
+  'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
+  'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212',
+  'h_e_2', 'h_e_2_a2', 'h_e_2_a3', 'h_e_2_a41', 'h_e_2_a42',
+  'h_e_2_b2', 'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42',
+  'h_e_3', 'h_e_3_a2', 'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42',
+  'h_e_3_b2', 'h_e_3_b3', 'h_e_3_b41', 'h_e_3_b42',
+
+  // Choir of the Cursed: Black Castellan, Choir Regent, Infernal Ascendant.
+  'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
+  'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42',
+  'h_d_2', 'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42',
+  'h_d_2_b2', 'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42',
+  'h_d_3', 'h_d_3_a2', 'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42',
+  'h_d_3_b2', 'h_d_3_b3', 'h_d_3_b41', 'h_d_3_b42',
+
+  // Grail of Sorrow: Mourning Prophet, Grail Warden, Mother's Voice.
+  'h_g_1', 'h_g_1_a2', 'h_g_1_a3', 'h_g_1_a41', 'h_g_1_a42',
+  'h_g_1_b2', 'h_g_1_b3', 'h_g_1_b41', 'h_g_1_b42',
+  'h_g_2', 'h_g_2_a2', 'h_g_2_a3', 'h_g_2_a41', 'h_g_2_a42',
+  'h_g_2_b2', 'h_g_2_b3', 'h_g_2_b41', 'h_g_2_b42',
+  'h_g_3', 'h_g_3_a2', 'h_g_3_a3', 'h_g_3_a41', 'h_g_3_a42',
+  'h_g_3_b2', 'h_g_3_b3', 'h_g_3_b41', 'h_g_3_b42',
+
+  // ── The regional bosses ─────────────────────────────────────────────────────
+  // So a litany is not a PvP-only drill. (data/units.js, enemies)
+
+  'opb_e5', 'opb_e51', 'opb_e511',   // Sister Aldra, the Crimson Basilica
+  'dm_e4', 'dm_e41', 'dm_e411',      // Malgrath the Undying
+  'mv_e4', 'mv_e41', 'mv_e411',      // Cryodrox, the Glittering Abyss
+];
+
 const LITANIES = [
 
   // ── Empire: the Paladin's litanies ────────────────────────────────────────────────
@@ -159,19 +208,6 @@ const LITANIES = [
       { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', ids: [
         'e21', 'e211', 'e2111', 'e212', 'e2121',
       ] },
-    ] },
-    // Target - five slots:
-    //   1-3  Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant.
-    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
-    //   5    RESERVED - empty until the next embark region brings a boss worth
-    //        staging this over. Add that line's ids here and nothing else changes.
-    target: { ids: [
-      'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
-      'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42', 'h_d_2',
-      'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42', 'h_d_2_b2',
-      'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42', 'h_d_3', 'h_d_3_a2',
-      'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42', 'h_d_3_b2', 'h_d_3_b3',
-      'h_d_3_b41', 'h_d_3_b42', 'opb_e5', 'opb_e51', 'opb_e511',
     ] },
     verses: [
       { speaker: 'A', strike: 'visual',
@@ -219,19 +255,6 @@ const LITANIES = [
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
     ] },
-    // Target - five slots:
-    //   1-3  Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant.
-    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
-    //   5    Cryodrox, the Glittering Abyss.
-    target: { ids: [
-      'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
-      'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42', 'h_d_2',
-      'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42', 'h_d_2_b2',
-      'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42', 'h_d_3', 'h_d_3_a2',
-      'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42', 'h_d_3_b2', 'h_d_3_b3',
-      'h_d_3_b41', 'h_d_3_b42', 'opb_e5', 'opb_e51', 'opb_e511',
-      'mv_e4', 'mv_e41', 'mv_e411',
-    ] },
     verses: [
       { speaker: 'A', strike: 'support',
         line: ['placeholder', 'текст'] },
@@ -278,19 +301,6 @@ const LITANIES = [
         'e412', 'e4121',
       ] },
     ] },
-    // Target - five slots:
-    //   1-3  Every Grail hero — Mourning Prophet, Grail Warden, Mother's Voice.
-    //   4    Malgrath the Undying, the Chamber of Unrest. (data/units.js, enemies)
-    //   5    Cryodrox, the Glittering Abyss.
-    target: { ids: [
-      'h_g_1', 'h_g_1_a2', 'h_g_1_a3', 'h_g_1_a41', 'h_g_1_a42',
-      'h_g_1_b2', 'h_g_1_b3', 'h_g_1_b41', 'h_g_1_b42', 'h_g_2',
-      'h_g_2_a2', 'h_g_2_a3', 'h_g_2_a41', 'h_g_2_a42', 'h_g_2_b2',
-      'h_g_2_b3', 'h_g_2_b41', 'h_g_2_b42', 'h_g_3', 'h_g_3_a2',
-      'h_g_3_a3', 'h_g_3_a41', 'h_g_3_a42', 'h_g_3_b2', 'h_g_3_b3',
-      'h_g_3_b41', 'h_g_3_b42', 'dm_e4', 'dm_e41', 'dm_e411',
-      'mv_e4', 'mv_e41', 'mv_e411',
-    ] },
     verses: [
       { speaker: 'A', strike: 'visual',
         line: ['placeholder', 'текст'] },
@@ -333,19 +343,6 @@ const LITANIES = [
       { key: 'C', row: 1, col: 'front', size: 'column', role: 'chorus', ids: [
         'e3', 'e31', 'e311', 'e3111',
       ] },
-    ] },
-    // Target - five slots:
-    //   1-3  Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant.
-    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
-    //   5    RESERVED - empty until the next embark region brings a boss worth
-    //        staging this over. Add that line's ids here and nothing else changes.
-    target: { ids: [
-      'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
-      'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42', 'h_d_2',
-      'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42', 'h_d_2_b2',
-      'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42', 'h_d_3', 'h_d_3_a2',
-      'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42', 'h_d_3_b2', 'h_d_3_b3',
-      'h_d_3_b41', 'h_d_3_b42', 'opb_e5', 'opb_e51', 'opb_e511',
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
@@ -393,19 +390,6 @@ const LITANIES = [
         'e62', 'e621', 'e6211',
       ] },
     ] },
-    // Target - five slots:
-    //   1-3  Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant.
-    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
-    //   5    RESERVED - empty until the next embark region brings a boss worth
-    //        staging this over. Add that line's ids here and nothing else changes.
-    target: { ids: [
-      'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
-      'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42', 'h_d_2',
-      'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42', 'h_d_2_b2',
-      'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42', 'h_d_3', 'h_d_3_a2',
-      'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42', 'h_d_3_b2', 'h_d_3_b3',
-      'h_d_3_b41', 'h_d_3_b42', 'opb_e5', 'opb_e51', 'opb_e511',
-    ] },
     verses: [
       { speaker: 'A', strike: 'support',
         line: ['placeholder', 'текст'] },
@@ -451,19 +435,6 @@ const LITANIES = [
         'e432', 'e4321',
       ] },
     ] },
-    // Target - five slots:
-    //   1-3  Every Grail hero — Mourning Prophet, Grail Warden, Mother's Voice.
-    //   4    Malgrath the Undying, the Chamber of Unrest. (data/units.js, enemies)
-    //   5    Cryodrox, the Glittering Abyss.
-    target: { ids: [
-      'h_g_1', 'h_g_1_a2', 'h_g_1_a3', 'h_g_1_a41', 'h_g_1_a42',
-      'h_g_1_b2', 'h_g_1_b3', 'h_g_1_b41', 'h_g_1_b42', 'h_g_2',
-      'h_g_2_a2', 'h_g_2_a3', 'h_g_2_a41', 'h_g_2_a42', 'h_g_2_b2',
-      'h_g_2_b3', 'h_g_2_b41', 'h_g_2_b42', 'h_g_3', 'h_g_3_a2',
-      'h_g_3_a3', 'h_g_3_a41', 'h_g_3_a42', 'h_g_3_b2', 'h_g_3_b3',
-      'h_g_3_b41', 'h_g_3_b42', 'dm_e4', 'dm_e41', 'dm_e411',
-      'mv_e4', 'mv_e41', 'mv_e411',
-    ] },
     verses: [
       { speaker: 'A', strike: 'support',
         line: ['placeholder', 'текст'] },
@@ -508,19 +479,6 @@ const LITANIES = [
         'gs1', 'gs11', 'gs111', 'gs1111',
       ] },
     ] },
-    // Target - five slots:
-    //   1-3  Every Empire hero — Paladin, Inquisitor, Artificer.
-    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
-    //   5    RESERVED - empty until the next embark region brings a boss worth
-    //        staging this over. Add that line's ids here and nothing else changes.
-    target: { ids: [
-      'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
-      'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212', 'h_e_2',
-      'h_e_2_a2', 'h_e_2_a3', 'h_e_2_a41', 'h_e_2_a42', 'h_e_2_b2',
-      'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42', 'h_e_3', 'h_e_3_a2',
-      'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42', 'h_e_3_b2', 'h_e_3_b3',
-      'h_e_3_b41', 'h_e_3_b42', 'opb_e5', 'opb_e51', 'opb_e511',
-    ] },
     verses: [
       { speaker: 'A', strike: 'visual',
         line: ['placeholder', 'текст'] },
@@ -561,19 +519,6 @@ const LITANIES = [
       ] },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
-    ] },
-    // Target - five slots:
-    //   1-3  Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant.
-    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
-    //   5    Cryodrox, the Glittering Abyss.
-    target: { ids: [
-      'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
-      'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42', 'h_d_2',
-      'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42', 'h_d_2_b2',
-      'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42', 'h_d_3', 'h_d_3_a2',
-      'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42', 'h_d_3_b2', 'h_d_3_b3',
-      'h_d_3_b41', 'h_d_3_b42', 'opb_e5', 'opb_e51', 'opb_e511',
-      'mv_e4', 'mv_e41', 'mv_e411',
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
@@ -620,19 +565,6 @@ const LITANIES = [
         'gs31', 'gs312', 'gs3121',
       ] },
     ] },
-    // Target - five slots:
-    //   1-3  Every Empire hero — Paladin, Inquisitor, Artificer.
-    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
-    //   5    RESERVED - empty until the next embark region brings a boss worth
-    //        staging this over. Add that line's ids here and nothing else changes.
-    target: { ids: [
-      'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
-      'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212', 'h_e_2',
-      'h_e_2_a2', 'h_e_2_a3', 'h_e_2_a41', 'h_e_2_a42', 'h_e_2_b2',
-      'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42', 'h_e_3', 'h_e_3_a2',
-      'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42', 'h_e_3_b2', 'h_e_3_b3',
-      'h_e_3_b41', 'h_e_3_b42', 'opb_e5', 'opb_e51', 'opb_e511',
-    ] },
     verses: [
       { speaker: 'A', strike: 'visual',
         line: ['placeholder', 'текст'] },
@@ -676,19 +608,6 @@ const LITANIES = [
       { key: 'C', row: 2, col: 'both', size: 'row', role: 'chorus', ids: [
         'gs4', 'gs41', 'gs411', 'gs4111',
       ] },
-    ] },
-    // Target - five slots:
-    //   1-3  Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant.
-    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
-    //   5    Cryodrox, the Glittering Abyss.
-    target: { ids: [
-      'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
-      'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42', 'h_d_2',
-      'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42', 'h_d_2_b2',
-      'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42', 'h_d_3', 'h_d_3_a2',
-      'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42', 'h_d_3_b2', 'h_d_3_b3',
-      'h_d_3_b41', 'h_d_3_b42', 'opb_e5', 'opb_e51', 'opb_e511',
-      'mv_e4', 'mv_e41', 'mv_e411',
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
@@ -735,19 +654,6 @@ const LITANIES = [
         'gs73', 'gs731', 'gs7311',
       ] },
     ] },
-    // Target - five slots:
-    //   1-3  Every Choir hero — Black Castellan, Choir Regent, Infernal Ascendant.
-    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
-    //   5    RESERVED - empty until the next embark region brings a boss worth
-    //        staging this over. Add that line's ids here and nothing else changes.
-    target: { ids: [
-      'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
-      'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42', 'h_d_2',
-      'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42', 'h_d_2_b2',
-      'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42', 'h_d_3', 'h_d_3_a2',
-      'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42', 'h_d_3_b2', 'h_d_3_b3',
-      'h_d_3_b41', 'h_d_3_b42', 'opb_e5', 'opb_e51', 'opb_e511',
-    ] },
     verses: [
       { speaker: 'A', strike: 'visual',
         line: ['placeholder', 'текст'] },
@@ -790,19 +696,6 @@ const LITANIES = [
       { key: 'C', row: 1, col: 'front', size: 'column', role: 'chorus', ids: [
         'gs2', 'gs21', 'gs211', 'gs2111',
       ] },
-    ] },
-    // Target - five slots:
-    //   1-3  Every Empire hero — Paladin, Inquisitor, Artificer.
-    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
-    //   5    Cryodrox, the Glittering Abyss.
-    target: { ids: [
-      'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
-      'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212', 'h_e_2',
-      'h_e_2_a2', 'h_e_2_a3', 'h_e_2_a41', 'h_e_2_a42', 'h_e_2_b2',
-      'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42', 'h_e_3', 'h_e_3_a2',
-      'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42', 'h_e_3_b2', 'h_e_3_b3',
-      'h_e_3_b41', 'h_e_3_b42', 'opb_e5', 'opb_e51', 'opb_e511',
-      'mv_e4', 'mv_e41', 'mv_e411',
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
@@ -852,19 +745,6 @@ const LITANIES = [
         'd4', 'd41', 'd411', 'd4111',
       ] },
     ] },
-    // Target - five slots:
-    //   1-3  Every Grail hero — Mourning Prophet, Grail Warden, Mother's Voice.
-    //   4    Malgrath the Undying, the Chamber of Unrest. (data/units.js, enemies)
-    //   5    Cryodrox, the Glittering Abyss.
-    target: { ids: [
-      'h_g_1', 'h_g_1_a2', 'h_g_1_a3', 'h_g_1_a41', 'h_g_1_a42',
-      'h_g_1_b2', 'h_g_1_b3', 'h_g_1_b41', 'h_g_1_b42', 'h_g_2',
-      'h_g_2_a2', 'h_g_2_a3', 'h_g_2_a41', 'h_g_2_a42', 'h_g_2_b2',
-      'h_g_2_b3', 'h_g_2_b41', 'h_g_2_b42', 'h_g_3', 'h_g_3_a2',
-      'h_g_3_a3', 'h_g_3_a41', 'h_g_3_a42', 'h_g_3_b2', 'h_g_3_b3',
-      'h_g_3_b41', 'h_g_3_b42', 'dm_e4', 'dm_e41', 'dm_e411',
-      'mv_e4', 'mv_e41', 'mv_e411',
-    ] },
     verses: [
       { speaker: 'A', strike: 'support',
         line: ['placeholder', 'текст'] },
@@ -907,19 +787,6 @@ const LITANIES = [
       ] },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'column', role: 'lead' },
-    ] },
-    // Target - five slots:
-    //   1-3  Every Empire hero — Paladin, Inquisitor, Artificer.
-    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
-    //   5    RESERVED - empty until the next embark region brings a boss worth
-    //        staging this over. Add that line's ids here and nothing else changes.
-    target: { ids: [
-      'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
-      'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212', 'h_e_2',
-      'h_e_2_a2', 'h_e_2_a3', 'h_e_2_a41', 'h_e_2_a42', 'h_e_2_b2',
-      'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42', 'h_e_3', 'h_e_3_a2',
-      'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42', 'h_e_3_b2', 'h_e_3_b3',
-      'h_e_3_b41', 'h_e_3_b42', 'opb_e5', 'opb_e51', 'opb_e511',
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
@@ -968,19 +835,6 @@ const LITANIES = [
         'd52', 'd521', 'd5211',
       ] },
     ] },
-    // Target - five slots:
-    //   1-3  Every Empire hero — Paladin, Inquisitor, Artificer.
-    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
-    //   5    RESERVED - empty until the next embark region brings a boss worth
-    //        staging this over. Add that line's ids here and nothing else changes.
-    target: { ids: [
-      'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
-      'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212', 'h_e_2',
-      'h_e_2_a2', 'h_e_2_a3', 'h_e_2_a41', 'h_e_2_a42', 'h_e_2_b2',
-      'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42', 'h_e_3', 'h_e_3_a2',
-      'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42', 'h_e_3_b2', 'h_e_3_b3',
-      'h_e_3_b41', 'h_e_3_b42', 'opb_e5', 'opb_e51', 'opb_e511',
-    ] },
     verses: [
       { speaker: 'A', strike: 'visual',
         line: ['placeholder', 'текст'] },
@@ -1026,19 +880,6 @@ const LITANIES = [
         'd7', 'd71', 'd711', 'd7111',
       ] },
     ] },
-    // Target - five slots:
-    //   1-3  Every Grail hero — Mourning Prophet, Grail Warden, Mother's Voice.
-    //   4    Malgrath the Undying, the Chamber of Unrest. (data/units.js, enemies)
-    //   5    Cryodrox, the Glittering Abyss.
-    target: { ids: [
-      'h_g_1', 'h_g_1_a2', 'h_g_1_a3', 'h_g_1_a41', 'h_g_1_a42',
-      'h_g_1_b2', 'h_g_1_b3', 'h_g_1_b41', 'h_g_1_b42', 'h_g_2',
-      'h_g_2_a2', 'h_g_2_a3', 'h_g_2_a41', 'h_g_2_a42', 'h_g_2_b2',
-      'h_g_2_b3', 'h_g_2_b41', 'h_g_2_b42', 'h_g_3', 'h_g_3_a2',
-      'h_g_3_a3', 'h_g_3_a41', 'h_g_3_a42', 'h_g_3_b2', 'h_g_3_b3',
-      'h_g_3_b41', 'h_g_3_b42', 'dm_e4', 'dm_e41', 'dm_e411',
-      'mv_e4', 'mv_e41', 'mv_e411',
-    ] },
     verses: [
       { speaker: 'A', strike: 'visual',
         line: ['placeholder', 'текст'] },
@@ -1082,19 +923,6 @@ const LITANIES = [
       { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', ids: [
         'd7', 'd71', 'd711', 'd7111',
       ] },
-    ] },
-    // Target - five slots:
-    //   1-3  Every Empire hero — Paladin, Inquisitor, Artificer.
-    //   4    Sister Aldra, the Crimson Basilica. (data/units.js, enemies)
-    //   5    Cryodrox, the Glittering Abyss.
-    target: { ids: [
-      'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
-      'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212', 'h_e_2',
-      'h_e_2_a2', 'h_e_2_a3', 'h_e_2_a41', 'h_e_2_a42', 'h_e_2_b2',
-      'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42', 'h_e_3', 'h_e_3_a2',
-      'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42', 'h_e_3_b2', 'h_e_3_b3',
-      'h_e_3_b41', 'h_e_3_b42', 'opb_e5', 'opb_e51', 'opb_e511',
-      'mv_e4', 'mv_e41', 'mv_e411',
     ] },
     verses: [
       { speaker: 'A', strike: 'visual',
@@ -1142,19 +970,6 @@ const LITANIES = [
         'd321', 'd3211',
       ] },
     ] },
-    // Target - five slots:
-    //   1-3  Every Grail hero — Mourning Prophet, Grail Warden, Mother's Voice.
-    //   4    Malgrath the Undying, the Chamber of Unrest. (data/units.js, enemies)
-    //   5    RESERVED - empty until the next embark region brings a boss worth
-    //        staging this over. Add that line's ids here and nothing else changes.
-    target: { ids: [
-      'h_g_1', 'h_g_1_a2', 'h_g_1_a3', 'h_g_1_a41', 'h_g_1_a42',
-      'h_g_1_b2', 'h_g_1_b3', 'h_g_1_b41', 'h_g_1_b42', 'h_g_2',
-      'h_g_2_a2', 'h_g_2_a3', 'h_g_2_a41', 'h_g_2_a42', 'h_g_2_b2',
-      'h_g_2_b3', 'h_g_2_b41', 'h_g_2_b42', 'h_g_3', 'h_g_3_a2',
-      'h_g_3_a3', 'h_g_3_a41', 'h_g_3_a42', 'h_g_3_b2', 'h_g_3_b3',
-      'h_g_3_b41', 'h_g_3_b42', 'dm_e4', 'dm_e41', 'dm_e411',
-    ] },
     verses: [
       { speaker: 'A', strike: 'support',
         line: ['placeholder', 'текст'] },
@@ -1173,4 +988,4 @@ const LITANIES = [
   },
 ];
 
-export { LITANIES };
+export { LITANIES, LITANY_TARGETS };

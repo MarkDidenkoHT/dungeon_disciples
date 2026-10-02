@@ -3,7 +3,7 @@ import { api, refreshResourceBar, resourceCache, structuresCache, bootstrapCache
 import { showCostBar, hideCostBar, primeCostBar } from '../cost-bar.js';
 import { SPELLS, SPELL_TIERS } from '../../data/spells.js';
 import { UNITS } from '../../data/units.js';
-import { LITANIES } from '../../data/litanies.js';
+import { LITANIES, LITANY_TARGETS } from '../../data/litanies.js';
 
 // Mirrors litaniesUnlocked / LITANY_BUILDING_LEVEL in data/buildings.js — that
 // file is CommonJS (server-side only) and cannot be imported here, so the value
@@ -222,6 +222,14 @@ const TOME_TEXT = {
   },
   litanyFormation: { en: 'Formation',   ru: 'Построение' },
   litanyTarget:    { en: 'Target',      ru: 'Цель' },
+  // The target is ONE list shared by every litany (LITANY_TARGETS in
+  // data/litanies.js), so it is said once for the page instead of being repeated
+  // on all six cards. The note has to say that out loud — a Target section
+  // sitting above the list would otherwise read as belonging to the first card.
+  litanyTargetNote: {
+    en: w => `Every ${w.one} below is staged over the same death — an enemy champion. No other kill will do:`,
+    ru: w => `Все ${w.manyLower} ниже обставляются одной и той же смертью — гибелью вражеского чемпиона. Другая жертва не подойдёт:`,
+  },
   // A row of faces reads as "all of these stand here" unless it says otherwise,
   // and every role in a litany is a CHOICE of exactly ONE. The count of the
   // choice is spelled out because a bare "any 5" reads as "take any five".
@@ -890,14 +898,6 @@ export function renderSpellTome(root, { player }) {
               <span class="litany-grid-cell" style="${gridArea(sq)}"></span>`).join('')}
         </div>`;
 
-      // Whose death the litany is staged around. An enemy, so it sits in its own
-      // section rather than among the formation's rows — those are cells the
-      // player fills, this is one they have to find on the other side.
-      const targetIds = def.target?.ids || [];
-      // No band label: the section heading above it already says Target, and
-      // saying it twice in two lines reads as two different things.
-      const targetHtml = targetIds.length ? bandHtml('target', '', targetIds) : '';
-
       // The verses are deliberately NOT listed here. They are the moment itself,
       // and reading them off a page before the battle spends them — the card
       // teaches the formation and the payout, and the fight delivers the words.
@@ -928,12 +928,6 @@ export function renderSpellTome(root, { player }) {
             <div class="litany-formation">${rows}</div>
           </section>
 
-          ${targetHtml ? `
-            <section class="litany-section">
-              <h4 class="litany-section-title">${escapeHtml(t('litanyTarget'))}</h4>
-              <div class="litany-formation">${targetHtml}</div>
-            </section>` : ''}
-
           ${reward ? `
             <section class="litany-section">
               <h4 class="litany-section-title">${escapeHtml(t('litanyReward'))}</h4>
@@ -941,6 +935,15 @@ export function renderSpellTome(root, { player }) {
             </section>` : ''}
         </details>`;
     }).join('');
+
+    // Whose death a litany is staged around — the same answer for all eighteen
+    // (LITANY_TARGETS in data/litanies.js), so it is drawn ONCE for the page.
+    // It used to be a section on every card, which was the same twelve faces
+    // repeated six times and read as if each litany had a quarrel of its own.
+    //
+    // Deduped by name, so the ninety ids behind it come out as the nine hero
+    // lines and the three bosses — a reader recognises a face, not a tier.
+    const targetHtml = performable.length ? bandHtml('target', '', LITANY_TARGETS) : '';
 
     // The lock only has something to say when this faction HAS a litany to
     // unlock. Telling a host with none to go raise the Proving Grounds would
@@ -958,6 +961,12 @@ export function renderSpellTome(root, { player }) {
               <span class="litany-lock-hint">${escapeHtml(t('litanyLockedHint'))}</span>
             </p>` : ''}
         </header>
+        ${targetHtml ? `
+          <section class="litany-page-target">
+            <h3 class="litany-section-title">${escapeHtml(t('litanyTarget'))}</h3>
+            <p class="litany-section-note">${escapeHtml(t('litanyTargetNote'))}</p>
+            ${targetHtml}
+          </section>` : ''}
         <div class="litany-list">${cards || `<p class="spells-empty">${escapeHtml(t('litanyNone'))}</p>`}</div>
       </div>`;
   }

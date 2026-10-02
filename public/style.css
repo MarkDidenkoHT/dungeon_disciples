@@ -10228,6 +10228,18 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   line-height: 1.4;
 }
 
+/* The target is ONE list for every litany, so it is drawn once between the
+   header and the cards rather than inside each of them. Same backing as the
+   header and the cards, because the tome's parchment art sits directly behind
+   this page and pale text on it is unreadable. */
+.litany-page-target {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 120px), var(--surface);
+}
+
 .litany-list {
   display: flex;
   flex-direction: column;
