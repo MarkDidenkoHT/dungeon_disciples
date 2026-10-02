@@ -239,11 +239,93 @@ holds the term per faction, in both languages and in the Russian forms the sente
 need, and the Proving Grounds' own description says the faction's word too
 ([data/buildings.js](../data/buildings.js), one copy per faction pool).
 
-**A chorus id must be a `size: 'tile'` unit.** A chorus cell holds one unit, and a
-`column` unit fills rows 0, 1 and 2 as a single body — it can never man row 0 and row 2
-as two separate speakers. This is why `taken_breath` is sung by the Choir Servant and
-Ash Cantor lines rather than by the Chorister branch (`d12`, `d121`, `d1211`, `d1212`),
-which is the obvious chorus by name and is column-sized.
+### A chorus cell names a CALLING, not units
+
+**Only the id list goes.** Everything else about a cell is untouched: `key`, `row`,
+`col`, `size`, `role`. A formation is still a list of PLACES on the acting side's own
+half of the board, still matched against an occupant's whole footprint, and a hero's two
+litanies are still kept apart by where their cells sit. The `ids` array is replaced by
+one word.
+
+```js
+// before — five ids, hand-picked, repeated across up to six litanies
+{ key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus',
+  ids: ['e21', 'e211', 'e2111', 'e212', 'e2121'] },
+
+// after
+{ key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'crusade' },
+```
+
+Why:
+
+- **298 id references** across the eighteen (157 chorus, 141 lead) become nine hero
+  lines and 36 calling words. `data/litanies.js` goes from 991 lines to ~300.
+- **A new unit is eligible the day it ships.** Today adding one means finding every
+  chorus array it belongs in and editing each.
+- **The verses become writable.** A chorus line currently has to sound right out of a
+  Templar *and* a Mithrail Knight *and* a Paragon, in two languages. That five-way
+  compromise is why seventeen of the eighteen still carry placeholder verses. "A
+  Crusade" is one voice — three characters per faction (the hero and its two callings)
+  instead of a negotiation with an id list.
+- **Filling a litany becomes a decision instead of a recruitment lottery.** A calling is
+  assigned per unit and costs 500 gold to change
+  ([unit-identity-design.md](unit-identity-design.md) §2), so the cell asks the player to
+  commit a unit rather than to happen to own a particular one.
+
+**A calling is not a tag.** §5.1 argues against filtering by tag and that argument
+stands — a tag is an authored property the player cannot touch, which is why the Choir
+Regent carries no `Demon` and is still a heretic. A calling is the opposite: the first
+per-unit decision the game hands the player, paid for, resettable, already recorded. A
+cell naming one is an instruction *to the player*, which is what a formation is for.
+
+**The callings, per faction** — from [unit-identity-design.md](unit-identity-design.md) §2:
+
+| Faction | callings | ids |
+|---|---|---|
+| Empire | Vigil · Crusade | `vigil` `crusade` |
+| Grail of Sorrow | Acceptance · Denial | `acceptance` `denial` |
+| Choir of the Cursed | Descant · Hunger | `descant` `hunger` |
+
+A litany only ever names a calling of the faction that leads it, so a cell's calling and
+its litany's hero line cannot disagree — one validator rule, replacing the per-id checks.
+
+**Where the calling comes from.** `roster.calling` jsonb, shaped `{"id": "vigil"}` — the
+same flat shape `engraving` uses, with room for the rungs and counters
+[unit-identity-design.md](unit-identity-design.md) adds later. Bot templates carry one
+per slot (`{ unit, cell, item_id, hero, calling }` in
+[data/bot_templates.js](../data/bot_templates.js)), so the enemy side stages litanies
+exactly as the player's does. **A unit with no calling fills no chorus cell** — that is
+the whole rule for mercenaries and for anything the Chronicle has not reached.
+
+**What does not change:**
+
+- **The lead.** `lead.ids` is still the line that lands the blow, and it is still not
+  always the hero: the Artificer repairs and the Choir Regent's song is a heal, so four
+  of the eighteen put the hero in a *chorus* cell and give the lead to a construct or a
+  chorister. A calling says nothing about whether a unit can kill; the lead list does.
+- **The target.** `LITANY_TARGETS`, one list, an enemy champion.
+- **The positions.** Cells keep their row, column and size, and the board still decides
+  which of a hero's two is spoken.
+- **Size matching.** A cell is still as big as the unit standing in it, matched against
+  the whole footprint. The live consequence is worth saying out loud: a `tile` chorus
+  cell cannot be filled by a `column`-sized Vigil, so a player whose only Vigil is a
+  Chorister has that cell empty. Today the author hand-picks ids of the right size;
+  under callings the engine's footprint match does it at run time and the player feels
+  it instead.
+
+**Exclusivity is the same check on a shorter list.** Every hero's pair shares at least
+one square — verified across all nine. Today you check that the shared square's two id
+lists do not overlap; now you check that it names a different calling in each. Where a
+pair's squares do not overlap at all, a rich board can satisfy both and `fireLitany`
+takes the earlier one in the array, unchanged.
+
+**The reward follows the chorus's callings.** "The reward is what the chorus did"
+becomes "what the chorus *is*": a Vigil cell pays the ally side (`ally_heal_flat`,
+`ally_shield_flat`), a Crusade cell the enemy side (`enemy_damage_flat`,
+`enemy_initiative_flat`), and the Grail's Acceptance pays its own side's HP for a larger
+effect. Ten of the eighteen rewards today are mixed ally+enemy grab-bags precisely
+because the chorus was an ad-hoc unit list; keyed to a calling, the field set falls out
+of the cells and `message` stops being prose that can disagree with them.
 
 **The target is ONE list, `LITANY_TARGETS`, shared by every litany**: an **enemy
 champion**. No litany names a target of its own and none may - `fireLitany` reads that
@@ -279,13 +361,17 @@ same condition to decide whether it draws the litany locked.
 
 ### 5.1 `profane_chorus`
 
-**Everything is a hardcoded id list.** No tags, no factions, no filters. Tags do not
-describe roles well enough to drive a scripted moment — the Choir Regent carries
-`Caster, Court` and no `Demon` tag, and is still a heretic to be purged. Which unit may
-fill which role is an authoring decision, made by name, here.
+**The lead is a hardcoded id list; the chorus is a calling.** No tags, no factions, no
+filters — tags do not describe roles well enough to drive a scripted moment, and the
+Choir Regent carries `Caster, Court` and no `Demon` tag while still being a heretic to
+be purged. Who may *lead* is an authoring decision made by name, here. Who may *sing* is
+the player's decision, made by calling (see "A chorus cell names a CALLING" above). The
+sample below is the original, pre-calling shape, kept because it is what the engine
+reads today.
 
 ```js
 // Who may stand in the chorus cells — Templar and both Mithrail branches.
+// Under callings this list is deleted and the cells read `calling: 'crusade'`.
 const LITANY_CHORUS_IDS = ['e21', 'e211', 'e2111', 'e212', 'e2121'];
 
 // Who may lead — Paladin, every tier of both paths.
@@ -521,10 +607,14 @@ Target: **~3.5–4 s** from the first verse to the corpse. Client
 
 `scripts/validate-barks.js`, run in CI and before a content commit. Errors:
 
-- An id in `ids`, in `LITANY_TARGETS`, or in a litany's `lead` or `formation` cells,
-  that does not exist in units.js.
+- An id in `ids`, in `LITANY_TARGETS`, or in a litany's `lead` cells, that does not
+  exist in units.js.
 - A litany carrying a `target` of its own - the target is `LITANY_TARGETS` and nothing
   else.
+- A chorus cell carrying `ids` instead of a `calling`, or a `calling` that is not one of
+  the two belonging to the faction that leads the litany.
+- A hero's two litanies whose shared square names the same calling in both - the board
+  could then satisfy either and `fireLitany` would silently take the earlier.
 - A key that does not parse against §1.2 — unknown trigger, tag or faction.
 - A pair that is not exactly `[en, ru]` with both non-empty.
 - Two sets with the same id count both defining one key for one unit.
@@ -534,13 +624,13 @@ Target: **~3.5–4 s** from the first verse to the corpse. Client
   `speaker` names a cell letter the formation does not define.
 - A litany verse whose `strike` disagrees with what its unit does: `'support'` for an
   enemy-targeted attacker, `'visual'` for an ally-targeted healer or shielder.
-- A chorus id with no `action_animation` - its verse would be a silent beat.
-- A chorus cell whose `col` contradicts its units' `pref_position`.
 - A litany with no verse marked `strike: 'lethal'`, or with more than one, or whose
   lethal verse is not the last.
 - A hero with anything other than exactly two litanies, or a hero's two litanies that one
   board could satisfy at once.
-- A litany `lead` or `formation` id whose unit's `size` is not the size its cell declares.
+- A litany `lead` id whose unit's `size` is not the size its cell declares. Chorus
+  cells are no longer checked this way: the cell declares a size and the engine matches
+  it against whoever is standing there.
 - A litany whose cells overlap on the board, or a `column` cell starting at row 2.
 - A litany whose `lead` ids cannot land a kill (an ally-targeted action).
 - A litany naming no hero, or more than one, across its lead and cells.

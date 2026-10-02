@@ -78,9 +78,22 @@ faction's two answers to the same question, so the names are the faction's own:
 
 Every unit in a faction sees the same two, so there is no profile detection and no unit
 left with a track it cannot fill. The calling is the first decision in the game that is
-the player's about a unit rather than the tree's, and it decides three things: which deeds
-rungs 1, 3 and 5 ask for, which stats the unit may raise, and which passive the capstone
-can hand it.
+the player's about a unit rather than the tree's, and it decides four things: which deeds
+rungs 1, 3 and 5 ask for, which stats the unit may raise, which passive the capstone
+can hand it, and **which litany cells the unit can stand in**.
+
+**Litanies read the calling.** A litany's chorus cells no longer name unit ids - they
+name a calling, and the unit standing there has to have it
+([combat-barks-design.md](combat-barks-design.md) §5, "A chorus cell names a CALLING").
+That is the calling's first visible, in-battle payoff and the reason it is a tactical
+choice rather than only a stat track: a *Vigil* and a *Crusade* in the right squares are
+what stages the execution. It also cuts 298 hardcoded ids out of
+[data/litanies.js](../data/litanies.js).
+
+The calling ids are `vigil` / `crusade`, `acceptance` / `denial`, `descant` / `hunger`,
+stored as `roster.calling` jsonb - `{"id": "vigil"}`, the flat shape `engraving` already
+uses, with room for rungs and counters. Bot templates carry a `calling` per slot, so the
+enemy side stages litanies the same way.
 
 Changing a calling costs 500 gold and **resets every rung**. The reset is what makes the
 first choice a choice.
@@ -214,3 +227,15 @@ never competes for Valor or tokens; it cannot touch a passive, so it cannot brea
   deploy — the templates are written against ⚔ bands.
 - **i18n.** Callings, deed text, given names and epithets all need `_ru`; the epithet barks
   need the style guide's RU rules, not a translation.
+
+## Open questions
+
+- **Is the oath point too strong?** Ten points is a tier's worth of stats. Options: every
+  second oath pays only an epithet step; or points are granted in pairs and count half; or
+  the ladder steepens to 1.4×.
+- **Do mercenaries get a record?** They are bought rather than raised, and rebuyable.
+- **Calling versus a changing profile.** A unit's action can change on evolution. Both
+  callings are open to every unit, so nothing breaks — but a *Crusade* medic is a player
+  mistake the system will happily let them pay 500 gold to undo. Fine, or warn?
+- **How many epithets, and who writes them?** Start at ~20 and let the counters that
+  already exist name them.
