@@ -572,6 +572,9 @@ const SPELLS = {
       tier: 1,
       type: 'enemy',
       effect_icon: 'death_mark',
+      telegraph: true,
+      telegraph_text: 'the bells have chosen',
+      telegraph_text_ru: 'колокола выбрали жертву',
       description: 'Death itself passes sentence on one enemy.',
       description_ru: 'Сама смерть выносит приговор одному врагу.',
       power_cost: 4,
@@ -620,6 +623,140 @@ const SPELLS = {
       class: 'enemy',
       target_scope: 'all_enemies',
       params: { damage_flat: 18, damage_type: 'cold' },
+    },
+
+    // ── The Faction Colossus ────────────────────────────────────────────────
+    // One kit per phase, written as a ROTATION rather than a pile the AI picks
+    // the dearest affordable item from — see `spell_cycle` on reliquary_titan in
+    // data/units.js and aiPickCycledSpell in utils/battle-engine.js. Greedy
+    // selection cannot reach an expensive spell that shares a kit with a cheap
+    // one: it buys the cheap one the moment it can afford it and the bank never
+    // climbs. The rotation is also what makes the boss READABLE — the player
+    // learns the order and plays against it.
+    //
+    // `telegraph: true` means the boss ANNOUNCES the spell on one turn and casts
+    // it on the next, attacking as normal in between. The warning costs the boss
+    // nothing and buys the player a round to answer it, which is the difference
+    // between a fight and a dice roll. Only the heavy hits carry it; the chip
+    // spells land the turn they are chosen.
+    //
+    // Nothing here defends the boss. Its HP IS the faction's weekly progress, so
+    // a boss self-buff that cut incoming damage would literally subtract from
+    // what the week's attempts are worth — every spell in this kit is a threat
+    // to the player instead.
+    {
+      id: 'boss_sundering_stone',
+      effect_name: 'sundering_stone',
+      name: 'Sundering Stone',
+      name_ru: 'Раскол камня',
+      category: 'debuff',
+      tier: 1,
+      type: 'enemy',
+      effect_icon: 'impale',
+      description: 'Slabs of reliquary stone shear off and scatter across the line.',
+      description_ru: 'Плиты камня-реликвария срываются и осыпают весь строй.',
+      power_cost: 2,
+      scaling: { damage_flat: 5 },
+      effect_type: 'damage',
+      class: 'enemy',
+      target_scope: 'all_enemies',
+      params: { damage_flat: 12, damage_type: 'physical' },
+    },
+    {
+      id: 'boss_reliquary_grasp',
+      effect_name: 'reliquary_grasp',
+      name: 'Reliquary Grasp',
+      name_ru: 'Хватка реликвария',
+      category: 'debuff',
+      tier: 1,
+      type: 'enemy',
+      effect_icon: 'impale',
+      description: 'A stone hand closes on one of them and squeezes.',
+      description_ru: 'Каменная длань сжимается на одном из них.',
+      power_cost: 3,
+      scaling: { damage_flat: 8 },
+      effect_type: 'damage',
+      class: 'enemy',
+      target_scope: 'single_enemy',
+      params: { damage_flat: 26, damage_type: 'physical' },
+    },
+    {
+      id: 'boss_strangling_roots',
+      effect_name: 'strangling_roots',
+      name: 'Strangling Roots',
+      name_ru: 'Душащие корни',
+      category: 'debuff',
+      tier: 1,
+      type: 'enemy',
+      effect_icon: 'thorns',
+      telegraph: true,
+      telegraph_text: 'the ground splits as roots coil for the whole line',
+      telegraph_text_ru: 'земля трескается — корни свиваются над всем строем',
+      description: 'Roots burst through the line and squeeze until bones give.',
+      description_ru: 'Корни пробивают строй и сжимают, пока не хрустнут кости.',
+      power_cost: 4,
+      scaling: { damage_flat: 7 },
+      effect_type: 'damage',
+      class: 'enemy',
+      target_scope: 'all_enemies',
+      params: { damage_flat: 24, damage_type: 'nature' },
+    },
+    {
+      id: 'boss_toll_of_bells',
+      effect_name: 'toll_of_bells',
+      name: 'Toll of Bells',
+      name_ru: 'Звон колоколов',
+      category: 'debuff',
+      tier: 1,
+      type: 'enemy',
+      effect_icon: 'sorrow',
+      description: 'The reliquary bells sound, and the sound is a wound.',
+      description_ru: 'Колокола реликвария звучат, и этот звук — рана.',
+      power_cost: 2,
+      scaling: { damage_flat: 5 },
+      effect_type: 'damage',
+      class: 'enemy',
+      target_scope: 'all_enemies',
+      params: { damage_flat: 14, damage_type: 'death' },
+    },
+    {
+      id: 'boss_ember_spit',
+      effect_name: 'ember_spit',
+      name: 'Ember Spit',
+      name_ru: 'Плевок углями',
+      category: 'debuff',
+      tier: 1,
+      type: 'enemy',
+      effect_icon: 'burn',
+      description: 'Embers spray from every crack in the stone.',
+      description_ru: 'Из каждой трещины в камне брызжут угли.',
+      power_cost: 2,
+      scaling: { damage_flat: 6 },
+      effect_type: 'damage',
+      class: 'enemy',
+      target_scope: 'all_enemies',
+      params: { damage_flat: 16, damage_type: 'fire' },
+    },
+    {
+      id: 'boss_cinder_cascade',
+      effect_name: 'cinder_cascade',
+      name: 'Cinder Cascade',
+      name_ru: 'Каскад пепла',
+      category: 'debuff',
+      tier: 1,
+      type: 'enemy',
+      effect_icon: 'conflagration',
+      telegraph: true,
+      telegraph_text: 'light pours from the cracks — the stone is about to burst',
+      telegraph_text_ru: 'из трещин бьёт свет — камень вот-вот лопнет',
+      description: 'The cracked stone opens and pours fire over everything.',
+      description_ru: 'Треснувший камень раскрывается и заливает всё огнём.',
+      power_cost: 4,
+      scaling: { damage_flat: 8 },
+      effect_type: 'damage',
+      class: 'enemy',
+      target_scope: 'all_enemies',
+      params: { damage_flat: 28, damage_type: 'fire' },
     },
   ],};
 

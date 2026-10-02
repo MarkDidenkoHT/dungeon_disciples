@@ -65,7 +65,11 @@ const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_bl
   // hands an effect both the caster and the victim AND the `value` off the
   // entry, which is the power the cast paid — Purgation draws one torn-off
   // blessing per point. The list simply has one entry.
-  'chorus_of_wrath', 'last_rites', 'purgation', 'grave_rot', 'rime_ward']);
+  'chorus_of_wrath', 'last_rites', 'purgation', 'grave_rot', 'rime_ward',
+  // Cinder Cascade borrows Fellfire (see the alias block in battle-fx.js), so it
+  // needs Fellfire's placement: one picture fanning from the caster to everyone
+  // the cast named.
+  'cinder_cascade']);
 
 // Effects on the actor's whole side whose log names nobody (Lion's Roar logs
 // "all allies" with no ids), so the cells are read off the board instead —
@@ -82,7 +86,9 @@ const SIDE_WIDE_FX = new Set(['lions_roar', 'prayer_of_healing',
 // The same idea aimed the other way: the cells are every living unit on the side
 // OPPOSITE the actor. Sorrow logs "all enemies" with no ids, and it is the only
 // effect that has to reach across the board like this.
-const FOE_WIDE_FX = new Set(['sorrow']);
+// Toll of Bells is Sorrow under another name (the alias block in battle-fx.js) and
+// reaches the whole enemy line the same way.
+const FOE_WIDE_FX = new Set(['sorrow', 'toll_of_bells']);
 
 // Effects that TRAVEL from the actor to the target — EFFECTS[name](actorCell,
 // { targetCell }). An ordinary attack already routes these correctly (see the
@@ -93,7 +99,8 @@ const FOE_WIDE_FX = new Set(['sorrow']);
 // Conflagration is here for the same reason: the heat line has to leave the
 // caster and land on the victim, so it needs both cells rather than being
 // anchored on whoever it happened to.
-const DIRECTIONAL_FX = new Set(['arrow_shot', 'impale', 'conflagration']);
+// reliquary_grasp borrows impale, so it aims the same way.
+const DIRECTIONAL_FX = new Set(['arrow_shot', 'impale', 'conflagration', 'reliquary_grasp']);
 
 // Effects that RIDE an attack rather than being an event of their own —
 // EFFECTS[name](anchorCell, { actorCell, targetCell }), never awaited.
@@ -1700,6 +1707,15 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const lang = player?.settings?.language;
       const msg  = (lang && lang !== 'en' && entry.message_ru) ? entry.message_ru : entry.message;
       return `<div class="log-entry log-entry--notice">${msg}</div>`;
+    }
+    // A boss crossing into a new phase, and a boss ANNOUNCING a cast a round
+    // before it lands (utils/battle-engine.js: applyPhase / declareTelegraph).
+    // Both carry their own sentence in both languages, like a litany notice, so
+    // there is no template to keep in step with the engine.
+    if (entry.type === 'phase' || entry.type === 'telegraph') {
+      const lang = player?.settings?.language;
+      const msg  = (lang && lang !== 'en' && entry.message_ru) ? entry.message_ru : entry.message;
+      return `<div class="log-entry log-entry--${entry.type}">${msg}</div>`;
     }
     return '';
   }

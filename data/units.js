@@ -3977,6 +3977,10 @@ const UNITS = {
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
         damage_source: 'physical', action_power: 14, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
         xp: 0, passive: ['unbreakable 2', 'stoicism 1'], ability: null,
+        // Its spells are an ordered ROTATION, not a pile to pick the dearest
+        // affordable item from. data/colossus.js writes one per phase; the
+        // reasoning is in the kit comment there and in aiPickCycledSpell.
+        spell_cycle: true,
       },
     },
   },

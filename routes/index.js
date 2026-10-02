@@ -4647,6 +4647,10 @@ async function settleColossusAttempt(record) {
   const boss  = (bd.units || []).find(u => u.side === 'enemy');
   const endHp = Math.max(0, Number(boss?.battle_hp ?? col.start_hp));
   const dealt = Math.max(0, col.start_hp - endHp);
+  // The phase the attempt ENDED in. Phases move mid-battle now (see
+  // maybeAdvancePhases), so `col.phase` is only where the fight opened — a player
+  // who pushed the pool across a threshold deserves to be told they did.
+  const endPhase = Number(boss?._phase) || col.phase;
 
   const [row] = await rpc('colossus_apply_damage', {
     p_instance_id: col.instance_id, p_chat_id: chat_id, p_damage: dealt,
@@ -4674,6 +4678,7 @@ async function settleColossusAttempt(record) {
     killed:     row.killed,
     kill_rank:  row.kill_rank,
     phase:      col.phase,
+    end_phase:  endPhase,
     week_total: row.damage_after,
     milestones,
   };

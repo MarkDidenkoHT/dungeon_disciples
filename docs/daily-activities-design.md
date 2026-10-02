@@ -205,7 +205,10 @@ the band), then faction rotation, then random.
    **Done** for every ally/self ability that used to fire on sight: Stone Form, Ember Shroud,
    Prayer of Healing, Mother's Blessing, Shared Suffering, Verse of Cataclysm (a self-kill),
    Blessing of Protection. Lion's Roar, Blood Craze and Infernal Mandate still fire early,
-   which is when they are worth most.
+   which is when they are worth most. Libation and Verse of Cataclysm were revisited after:
+   both pay HP (Libation a slice of max HP, Cataclysm the unit's life), so both are now spent
+   to finish an enemy off, and otherwise held — Libation also grows with the Sacrament stack
+   it is paired with, so waiting makes the blow bigger.
 
 ---
 
@@ -225,18 +228,48 @@ Decisions taken while building (change in `data/colossus.js`):
   `embark/colossus.jpg` (page and card).
 - **Reset:** Monday 18:00 UTC (21:00 Moscow). Unit rest follows each player's local day,
   the same as daily tasks.
-- **Phases** are fixed for a whole attempt, from the pool's HP when it starts. Phase 1 is
-  deliberately easy; from phase 2 the sweep stops being physical and cuts healing, because
-  tester feedback showed a flat 14-physical sweep is outhealed by any t2.5+ army:
+- **Phases are LIVE** (2026-10-02). They used to be picked from the pool's HP when an
+  attempt started and frozen for the whole battle, which meant the transitions — the most
+  dramatic thing here — happened between attempts, where nobody could watch them. The boss
+  now changes phase the moment damage takes the pool across a threshold, mid-fight: new
+  damage school, new passives, new spell kit, announced in the log. Phases only ever go
+  forward. Phase 1 is deliberately easy; from phase 2 the sweep stops being physical and
+  cuts healing, because tester feedback showed a flat 14-physical sweep is outhealed by any
+  t2.5+ army:
   1 Awakened (14 physical to all) ·
-  2 Roots Take Hold (22 nature, Infect 1, Thorns 1, Grave Rot) ·
-  3 The Bells Toll (28 death, Infect 2, Death's Verdict) ·
-  4 Last Light (34 fire, faster, less armor, Infect 2, Decay 2, Thorns 2, Death's Verdict).
-  One spell per phase, so the boss saves power for it.
+  2 Roots Take Hold (22 nature, Infect 1, Thorns 1) ·
+  3 The Bells Toll (28 death, Infect 2) ·
+  4 Last Light (34 fire, faster, less armor, Infect 2, Decay 2, Thorns 2).
+- **The spell kit is a rotation, and the heavy hits are telegraphed** (2026-10-02). The
+  complaint this answers: the fight had one action in it and nothing changed for fourteen
+  rounds. Each phase now carries two spells cast in ORDER rather than "the dearest one it
+  can afford" — greedy selection can never reach an expensive spell that shares a kit with a
+  cheap one, which is why each phase used to hold exactly one. A rotation banks for the next
+  entry instead, and the player can learn the order.
+  The heavy hit in each kit (Strangling Roots, Death's Verdict, Cinder Cascade) is
+  **telegraphed**: announced on one turn, landing on the next, with the boss still attacking
+  in between — so the warning costs the boss nothing and buys the player a round to answer
+  it. Death's Verdict names and MARKS its victim when it is announced, and that mark is
+  locked: mend them, shield them, or lose them.
+  Keep the kits at two entries. Power is +1 per boss turn capped at 5 and a cast empties the
+  bank, so a third entry pushes the telegraphed spell past the ~14 rounds an attempt lasts.
+- **Three of the six new cast animations are missing.** Toll of Bells, Cinder Cascade and
+  Reliquary Grasp alias existing pictures (Sorrow, Fellfire, Impale). Sundering Stone,
+  Strangling Roots and Ember Spit draw no cast picture yet — their damage animates per
+  victim through the ordinary path. Authoring those three is a job of its own.
 - **The hero never rests.** A hero is required, so resting it would make one attempt per
   day the whole allowance. Only followers rest.
 - **Units enter at full HP** and the attempt never writes roster HP.
 - **Abandoning** an attempt still counts the damage dealt.
+- **What is still flat about the fight** (2026-10-02, for whoever picks this up next). The
+  boss fights ALONE, so every player unit has exactly one legal target for the whole battle
+  and there is no target decision in it — while enemy cells 0, 1, 4 and 5 sit empty, since
+  the Titan is a row unit on cells 2-3. Pre-placed adds per phase need no engine work at all
+  (mid-battle summons do: there is no spawn path in the engine); `settleColossusAttempt`
+  takes the FIRST enemy's HP, so it has to find the boss explicitly before any add exists,
+  and add damage probably should not count toward the pool. There is also no burst window —
+  nothing to break, no vulnerability to set up — so the damage race has no rhythm, and
+  nothing pays per attempt, only weekly cumulative damage.
 - **Currency:** "Valor" (name still open), banked as a resource.
 - **Season score:** kill order is stored with 3 / 2 / 1 points on the weekly boss row.
   Nothing sums it yet; that waits for a season system.

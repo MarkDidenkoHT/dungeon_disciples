@@ -3917,6 +3917,18 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .log-entry--bark  { color: var(--accent); font-style: italic; }
 .log-entry--litany { color: #e0bb62; font-style: italic; font-weight: 600; }
 .log-entry--notice { color: var(--accent); text-align: center; font-style: italic; font-size: 0.7rem; }
+/* A boss changing phase is the loudest thing in the log: the fight it belongs to
+   is not the fight the player started. A telegraph is the second loudest — it is
+   the one line the player has to read, because it names what lands next round. */
+.log-entry--phase {
+  color: #f0d070; text-align: center; font-weight: 700; font-size: 0.74rem;
+  letter-spacing: 0.02em; padding: 4px 0; margin: 3px 0;
+  border-top: 1px solid rgba(240, 208, 112, 0.35);
+  border-bottom: 1px solid rgba(240, 208, 112, 0.35);
+}
+.log-entry--telegraph {
+  color: #ff9d5c; font-weight: 600; font-size: 0.7rem;
+}
 .log-entry--error { color: #c84a3a; font-style: italic; }
 .log-actor  { color: var(--text); }
 .log-target { color: var(--accent); }

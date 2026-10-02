@@ -157,6 +157,38 @@ function unmetAbilityGates(army) {
 // Synergies the authored squad forms and the adapted one does not. A dropped
 // partner breaks the bond silently — the surviving unit keeps its cell and loses
 // the reason it was standing there.
+// Guardian-bond carriers (Unity, Blood Bond) standing with no partner to bond to.
+//
+// A carrier is not a weak unit without its bond, it is a NON-UNIT: its action is
+// 'none', so an orphan takes a slot in a six-cell grid, does nothing all battle,
+// hands over no stats and dies for free. Worse than any lost synergy, which is why
+// this is fatal rather than a soft note — and it is exactly what subtraction
+// produces, since the partner is matched on a TAG (Holy, Vampire) and a tag ban
+// can take the host while leaving the carrier standing.
+//
+// Read off the live ability definitions rather than naming 'unity 1' and
+// 'blood_bond 1', so a third bond ability is caught without touching this.
+const BOND_ABILITY_KEYS = Object.entries(UNIT_ABILITIES)
+  .filter(([, def]) => def?.params?.bond_synergy || def?.params?.unity_bond === true)
+  .map(([key]) => key);
+
+function orphanedBonds(army) {
+  const carriers = army.filter(u => abilityKeysOf(u).some(k => BOND_ABILITY_KEYS.includes(k)));
+  if (!carriers.length) return [];
+  // resolveSynergies is the same resolver the battle engine bonds through, so a
+  // carrier it does not pair here is one formGuardianBond will not pair either.
+  const units = army.map((u, i) => ({
+    id: String(i), side: 'enemy', cells: footprint(u.cell, u.size ?? 'tile'),
+    tags: u.tags ?? [], abilityKeys: abilityKeysOf(u), type: u.type, unitId: u.id,
+  }));
+  const bonded = new Set(resolveSynergies(units)
+    .filter(b => b.defId === 'unity_bond' || b.defId === 'blood_bond')
+    .map(b => b.sourceId));
+  return carriers
+    .filter(u => !bonded.has(String(army.indexOf(u))))
+    .map(u => `${u.name} has no bond partner and cannot act — a wasted slot`);
+}
+
 function synergyIds(army) {
   const units = army.map((u, i) => ({
     id: String(i),
@@ -237,14 +269,18 @@ function auditCase(template, bandId, rules) {
   if (!adapted.some(u => u.is_hero)) fatal.push('no hero — the AI has no build to play');
   if (adapted.length && adapted.length < MIN_UNITS) fatal.push(`${adapted.length} units, fewer than ${MIN_UNITS}`);
   if (adapted.length && !holdsFrontLine(adapted)) fatal.push('nothing in the front line');
-  fatal.push(...unreachableActions(adapted), ...unmetAbilityGates(adapted));
+  fatal.push(...unreachableActions(adapted), ...unmetAbilityGates(adapted), ...orphanedBonds(adapted));
 
   // Degradations, measured against what these rules ALLOW rather than against
   // the geared squad. Power stays measured against the band, because that is
   // the question the player's opponent has to answer.
   const soft = [];
-  const dropped = stripped.length - result.units;
-  if (dropped > 0) soft.push(`${dropped} of ${stripped.length} units dropped`);
+  // Measured in FIGHTING bodies. An orphaned bond carrier is not a unit — it
+  // cannot act — so a lineup that drops one and keeps the rest has not lost a
+  // body, and counting it as one reported a defect for fixing a defect.
+  const strippedBodies = stripped.length - orphanedBonds(stripped).length;
+  const dropped = strippedBodies - result.units;
+  if (dropped > 0) soft.push(`${dropped} of ${strippedBodies} units dropped`);
   // Gear coming off is the rule doing its job when the rule is `no_items`; it
   // is a defect only when the rule merely CAPPED rarity and the adapter took
   // the item away instead of finding a legal one.

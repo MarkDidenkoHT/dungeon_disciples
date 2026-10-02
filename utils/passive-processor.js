@@ -307,6 +307,19 @@ const BOND_STATS = {
   action_power: o => o.unit_data?.action_power ?? o.unit_data?.action?.value ?? 0,
 };
 
+// Which of a unit's passives forms a GUARDIAN bond, if any — the def and the
+// synergy id formGuardianBond needs. Resolved from the live passive list rather
+// than hardcoding 'unity 1' / 'blood_bond 1', so a third bond ability needs
+// nothing here. Mirrors the test dispatchPassive makes (see `bondSynergyId`).
+function bondAbilityFor(unit, UNIT_ABILITIES) {
+  for (const def of resolvePassiveDefs(unit, UNIT_ABILITIES)) {
+    const p = def.params || {};
+    const synergyId = p.bond_synergy || (p.unity_bond === true ? 'unity_bond' : null);
+    if (synergyId) return { def, synergyId };
+  }
+  return null;
+}
+
 function formGuardianBond(owner, def, synergyId, engine) {
   // The host rule lives in data/formation_synergies.js, resolved by the same
   // function the prep preview calls — so what the player was shown while placing
@@ -1737,6 +1750,9 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     target.alive = true;
     target.battle_hp = Math.floor(target.max_hp * p.resurrect_hp_pct / 100);
     engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — resurrected at ${target.battle_hp} HP` });
+    // Raising either half of a guardian bond raises both and re-forms it. One
+    // resurrection, one Vow charge (spent above) — see restoreBondOnRevive.
+    engine.restoreBondOnRevive?.(target, p.resurrect_hp_pct);
   }
   // Same per-tag-only gate hole again: Shared Suffering declares nothing but
   // ally_drain_pct_per_tag. Exsanguinate declares the flat key and was fine.
@@ -2223,5 +2239,5 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   return true;
 }
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { MITIGATION_CAP_PCT, effectiveArmor, effectiveResist, addArmor, addResist, clampDefenses, runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, resolveAbilityDef, resolvePassiveDefs, stackPassiveKeys };
+  module.exports = { MITIGATION_CAP_PCT, effectiveArmor, effectiveResist, addArmor, addResist, clampDefenses, runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, resolveAbilityDef, resolvePassiveDefs, stackPassiveKeys, formGuardianBond, bondAbilityFor };
 }
