@@ -1948,6 +1948,20 @@ class BattleEngine {
     const spend = Math.max(min, Math.min(POWER_MAX, Number(power) || min));
     const have  = this.powerFor(actor.side);
     if (have < spend) return { error: `Not enough power (need ${spend}, have ${have})` };
+    // A NAMED target has to be a legal one. getSpellTargets now filters out a unit
+    // that cannot be targeted (a Unity / Blood Bond passenger), so without this a
+    // cast aimed at one would resolve to nobody and still cost the power and the
+    // turn — and /battle/cast takes `target_id` straight from the client, which is
+    // trusted for nothing else. Checked BEFORE anything is spent.
+    if (targetId != null && String(targetId) !== '') {
+      const named = this.combatants.find(c =>
+        String(c.id) === String(targetId) ||
+        String(c._sourceId) === String(targetId) ||
+        String(c._rosterId) === String(targetId));
+      if (named && (named._untargetable || !named.alive)) {
+        return { error: `${named.unit_name} cannot be targeted` };
+      }
+    }
 
     this.power[actor.side] = have - spend;
     // Resolved BEFORE the cast so the announcement can say how wide it lands.
@@ -2929,8 +2943,11 @@ class BattleEngine {
     const scope = def?.target_scope;
     if (scope === 'single_enemy') return this.aiSpellVictim(actor)?.id ?? null;
     if (scope === 'single_ally') {
+      // Skips `_untargetable` for the same reason the enemy pick does: a bonded
+      // passenger is deliberately the lowest-HP unit on its side, so a heal or a
+      // ward aimed by this sort would land on it every single time.
       return this.combatants
-        .filter(c => c.side === actor.side && c.alive)
+        .filter(c => c.side === actor.side && c.alive && !c._untargetable)
         .sort((a, b) => (a.battle_hp / a.max_hp) - (b.battle_hp / b.max_hp))[0]?.id ?? null;
     }
     return null;
@@ -3582,26 +3599,47 @@ class BattleEngine {
     const allySide   = casterSide;
     const enemySide  = casterSide === 'player' ? 'enemy' : 'player';
 
-    if (scope === 'all_allies')   return this.combatants.filter(c => c.side === allySide  && c.alive);
-    if (scope === 'all_enemies')  return this.combatants.filter(c => c.side === enemySide && c.alive);
-    if (scope === 'single_ally')  return this.combatants.filter(c => c.side === allySide  && c.alive && (String(c._rosterId) === String(targetId) || String(c._sourceId) === String(targetId) || String(c.id) === String(targetId)));
-    if (scope === 'single_enemy') return this.combatants.filter(c => c.side === enemySide && c.alive && (String(c.id) === String(targetId) || String(c._sourceId) === String(targetId)));
+    // A unit that CANNOT BE TARGETED is out of every scope below.
+    //
+    // Unity and Blood Bond (data/unit_abilities.js) each turn their carrier into a
+    // passenger: half its stats go to the host, and it becomes invulnerable,
+    // untargetable, does not act, and dies with the host. `_untargetable` is the
+    // engine's word for "not selectable", and every other targeting path honours
+    // it — getValidTargets for attacks, getAbilityTargets for actives, the splash
+    // and on-hit fan-outs in passive-processor.js. Spells did not. So a side-wide
+    // spell swept the passenger up with everyone else, a rot landed on it, and an
+    // aimed single-target spell KILLED a unit that is invulnerable by definition —
+    // which also severed the bond and revoked the stats it had handed its host.
+    //
+    // Enforced here rather than at each scope's call sites because this is the one
+    // function every cast resolves through: the player's, an encounter boss's, and
+    // every deferred effect a cast schedules.
+    const targetable = c => !c._untargetable;
+    if (scope === 'all_allies')   return this.combatants.filter(c => c.side === allySide  && c.alive && targetable(c));
+    if (scope === 'all_enemies')  return this.combatants.filter(c => c.side === enemySide && c.alive && targetable(c));
+    if (scope === 'single_ally')  return this.combatants.filter(c => c.side === allySide  && c.alive && targetable(c) && (String(c._rosterId) === String(targetId) || String(c._sourceId) === String(targetId) || String(c.id) === String(targetId)));
+    if (scope === 'single_enemy') return this.combatants.filter(c => c.side === enemySide && c.alive && targetable(c) && (String(c.id) === String(targetId) || String(c._sourceId) === String(targetId)));
     // The only scope that looks for the DEAD — a boss resurrect picks its own
     // corpse (the first to fall), so it needs no target from the caller.
+    //
+    // Deliberately NOT filtered by `_untargetable`: a bonded passenger keeps the
+    // flag after it dies with its host, and whether a resurrect should be able to
+    // raise one is a separate question from whether a spell may touch a LIVING
+    // one. Left as it was rather than changed in passing.
     if (scope === 'single_dead_ally') {
       const fallen = this.combatants.filter(c => c.side === allySide && !c.alive);
       return fallen.length ? [fallen[0]] : [];
     }
     if (scope === 'tag_allies') {
       const tag = params.tag_required;
-      return this.combatants.filter(c => c.side === allySide && c.alive && (c.unit_data?.tags ?? []).includes(tag));
+      return this.combatants.filter(c => c.side === allySide && c.alive && targetable(c) && (c.unit_data?.tags ?? []).includes(tag));
     }
     if (scope === 'tag_enemies') {
       const tag = params.tag_required;
-      return this.combatants.filter(c => c.side === enemySide && c.alive && (c.unit_data?.tags ?? []).includes(tag));
+      return this.combatants.filter(c => c.side === enemySide && c.alive && targetable(c) && (c.unit_data?.tags ?? []).includes(tag));
     }
     if (scope === 'random_enemy') {
-      const pool = this.combatants.filter(c => c.side === enemySide && c.alive);
+      const pool = this.combatants.filter(c => c.side === enemySide && c.alive && targetable(c));
       if (!pool.length) return [];
       return [pool[Math.floor(Math.random() * pool.length)]];
     }
@@ -3682,7 +3720,13 @@ class BattleEngine {
       // calcDamageWithPassives); typed damage obeys the matching resistance.
       // Both are read through the shared helpers, so the MITIGATION_CAP_PCT
       // ceiling applies to a spell exactly as it does to an attack.
-      if (params.damage_flat) {
+      // An invulnerable unit takes nothing from a spell, the same way it takes
+      // nothing from an attack (hurt), from a damage-over-time tick
+      // (applyTurnStartTicks) or from a deferred round_damage — all three already
+      // say so. This immediate path was the one that did not, so a side-wide spell
+      // could kill the one unit on the board that cannot be hurt. Skipped rather
+      // than logged as zero: damage that cannot land is not an event.
+      if (params.damage_flat && !c._invulnerable) {
         const type = params.damage_type || 'physical';
         let dmg;
         if (type === 'physical') {
