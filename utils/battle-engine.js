@@ -441,6 +441,15 @@ class BattleEngine {
       // row; an enemy is a "hero" when the encounter gave it spells to cast.
       _is_hero: !!(unit.is_hero || data.is_hero || (Array.isArray(data.spells) && data.spells.length > 0)),
       _spells:  Array.isArray(data.spells) ? data.spells : [],
+      // Boss phases (data/colossus.js). `_phase` is the band the unit is CURRENTLY
+      // in: the def arrives with the entry phase's overrides already baked in, so
+      // this records which one that was and maybeAdvancePhases moves it down from
+      // there. Null for everything that has no ladder.
+      _phase:   data.phase ?? (Array.isArray(data.phases) && data.phases.length ? data.phases[0].id : null),
+      // Where a `spell_cycle` boss is in its rotation, and the spell it has
+      // ANNOUNCED for its next turn ({ spell_id, power, round, targetId }).
+      _spell_cycle_idx: 0,
+      _telegraph:       null,
       // Frozen copy of the stats a buff/debuff can move, taken before anything
       // has been applied. Armor, initiative and resistances are all mutated in
       // place during a battle, so without this there is nothing left to compare
@@ -2033,6 +2042,9 @@ class BattleEngine {
     if (!actor?._skip_power_gain) this.gainPower(actor);
     actor._skip_power_gain = false;
     actor._taunted_by_id = null;
+    // Before the win check: a boss that has just been pushed into a new phase
+    // should announce it, and one that died is skipped by maybeAdvancePhases.
+    this.maybeAdvancePhases();
     const win = this.checkWin();
     if (win) { this.done = true; this.winner = win; return true; }
     if (this.getActingOrder().length === 0) this.advanceRound();
@@ -2748,32 +2760,355 @@ class BattleEngine {
     return hasHealer && hasOtherDamage;
   }
 
+  // Any spell in the game by id. The log and every boss kit carry ids rather
+  // than definitions, so this is the one place that turns one back into a spell.
+  findSpellDef(id) {
+    if (!id) return null;
+    return Object.values(SPELLS).flat().find(x => x.id === id) || null;
+  }
+
+  // What one entry of a boss kit costs to cast. `power` in the entry is what the
+  // boss SPENDS, which can be more than the spell's floor — spellParamsAtPower
+  // scales the effect by the difference, so an encounter can buy a bigger version
+  // of the same spell.
+  spellEntryCost(def, entry) {
+    return Math.max(def.power_cost ?? 1, Number(entry?.power) || def.power_cost || 1);
+  }
+
+  // Would casting this actually do anything? An active is a turn and a bankful of
+  // power, and the AI used to spend both on spells with nothing to land: a
+  // resurrect with no corpse, a heal on a full-HP boss, a rot on a line already
+  // rotted. The zero-target test covers most of it (getSpellTargets answers [] for
+  // a resurrect with nobody fallen); the rest are effects that are already fully
+  // in place on everyone they could reach.
+  spellHasWork(actor, def, targetId = null) {
+    if (!def) return false;
+    // getSpellTargets answers [] for a single-target scope with no target named,
+    // so the id has to be resolved first or every single-target spell in a kit
+    // looks like it has nothing to do — which is exactly how the rotation came to
+    // skip Death's Verdict and Reliquary Grasp every time it reached them.
+    const targets = this.getSpellTargets(def, actor.side, targetId ?? this.aiSpellTarget(actor, def));
+    if (!targets.length) return false;
+    const p = def.params || {};
+    if (p.decay_amount && targets.every(c => (c._decay ?? 0) > 0)) return false;
+    if (p.heal_pct && !p.resurrect_hp_pct && targets.every(c => c.battle_hp >= c.max_hp)) return false;
+    if (p.armor_boost && targets.every(c => (c.armor ?? 0) >= MITIGATION_CAP_PCT)) return false;
+    return true;
+  }
+
   // A boss spending its banked power. Encounter units carry `spells` in
   // data/embark.js as [{ spell_id, power }] — the cheap one it will cast
   // repeatedly, the expensive one it can only reach by surviving.
   //
-  // Greedy on purpose: it casts the most expensive spell it can currently pay
+  // Greedy by default: it casts the most expensive spell it can currently pay
   // for. That makes the enemy power strip a clock the player can read and race,
-  // rather than a hidden roll.
+  // rather than a hidden roll. A boss whose def sets `spell_cycle` reads its kit
+  // as a rotation instead — see below.
   aiPickSpell(actor) {
     if (!actor?._is_hero || !actor._spells?.length) return null;
     const have = this.powerFor(actor.side);
+    if (actor.unit_data?.spell_cycle) return this.aiPickCycledSpell(actor, have);
     const options = actor._spells
-      .map(s => {
-        const def = Object.values(SPELLS).flat().find(x => x.id === s.spell_id);
+      .map((entry, index) => {
+        const def = this.findSpellDef(entry.spell_id);
         if (!def) return null;
-        const cost = Math.max(def.power_cost ?? 1, Number(s.power) || def.power_cost || 1);
-        return cost <= have ? { def, cost } : null;
+        const cost = this.spellEntryCost(def, entry);
+        if (cost > have) return null;
+        if (!this.spellHasWork(actor, def)) return null;
+        return { def, cost, index };
       })
       .filter(Boolean)
       .sort((a, b) => b.cost - a.cost);
     return options[0] || null;
   }
 
+  // The same kit read as an ORDERED ROTATION, for a boss whose def sets
+  // `spell_cycle` (the Faction Colossus).
+  //
+  // Greedy selection cannot reach an expensive spell that shares a kit with a
+  // cheap one: it buys the cheap one the moment it can afford it, so the bank
+  // never climbs and the big spell is unreachable however long the fight runs —
+  // the note in data/colossus.js records the Colossus losing Death's Verdict to
+  // exactly that, which is why its phases used to hold a single spell each.
+  //
+  // A rotation cannot be starved that way. The next entry is the next entry: if
+  // the boss cannot afford it yet it banks and casts nothing, and the big hit
+  // always lands eventually. It also makes the boss legible — the player learns
+  // the order, which is what turns a damage race into a fight.
+  //
+  // An entry with nothing to do is stepped over rather than waited on, so a rot
+  // that is already on everyone does not stall the rotation behind it.
+  aiPickCycledSpell(actor, have) {
+    const cycle = actor._spells;
+    const from  = ((Number(actor._spell_cycle_idx) || 0) % cycle.length + cycle.length) % cycle.length;
+    for (let step = 0; step < cycle.length; step++) {
+      const index = (from + step) % cycle.length;
+      const entry = cycle[index];
+      const def   = this.findSpellDef(entry?.spell_id);
+      if (!def) continue;
+      if (!this.spellHasWork(actor, def)) continue;
+      const cost = this.spellEntryCost(def, entry);
+      // Banking toward it. Nothing cheaper jumps the queue — that is the whole
+      // point of a rotation — so the boss simply fights on this turn.
+      actor._spell_cycle_idx = index;
+      if (cost > have) return null;
+      return { def, cost, index };
+    }
+    return null;
+  }
+
+  // ── Telegraphed casts ─────────────────────────────────────────────────────
+  // A spell marked `telegraph` in data/spells.js is ANNOUNCED on one turn and
+  // cast on the next. The boss still attacks on the announcing turn, so the
+  // warning costs it nothing — what it buys is a round for the player to answer:
+  // brace, mend the named victim, spend a cleanse, get a shield up. A boss that
+  // resolves its heaviest spell the instant it can afford it is not a fight, it
+  // is a dice roll, and the player cannot play against a roll.
+  //
+  // A single-target spell LOCKS its victim when it is announced, and the mark
+  // rides on that unit's portrait. Re-picking at cast time would make the warning
+  // a lie and the answer pointless — the whole move is "this one is going to die
+  // unless you do something about it".
+  declareTelegraph(actor, pick) {
+    if (!actor || !pick?.def) return null;
+    let targetId = null;
+    if (pick.def.target_scope === 'single_enemy' || pick.def.target_scope === 'single_ally') {
+      targetId = this.aiSpellTarget(actor, pick.def);
+      // Nobody to sentence: let the rotation move on rather than announcing a
+      // spell that would land on nothing.
+      if (!targetId) return null;
+    }
+    actor._telegraph = {
+      spell_id: pick.def.id,
+      power:    pick.cost,
+      round:    this.round,
+      targetId,
+    };
+    // The rotation has committed to this entry; the next decision starts after it.
+    if (actor.unit_data?.spell_cycle && pick.index != null) actor._spell_cycle_idx = pick.index + 1;
+
+    const victim = targetId ? this.combatants.find(c => c.id === targetId) : null;
+    // Portrait markers, so the warning is on the board and not only in the log.
+    // `dispellable: false` — a telegraph is not a ward to be stripped.
+    this.registerEffect(actor, {
+      key: 'telegraph', name: `${pick.def.name} (next turn)`,
+      icon: pick.def.effect_icon || null, polarity: 'positive', dispellable: false,
+    });
+    if (victim) {
+      this.registerEffect(victim, {
+        key: 'telegraph_mark', name: `Marked — ${pick.def.name}`,
+        icon: pick.def.effect_icon || null, polarity: 'negative', dispellable: false,
+      });
+    }
+    const flavour    = pick.def.telegraph_text || 'it gathers itself';
+    const flavourRu  = pick.def.telegraph_text_ru || 'оно собирается с силами';
+    const at   = victim ? ` → ${victim.unit_name}` : '';
+    this.pushLog({
+      type: 'telegraph', spell_id: pick.def.id, spell: pick.def.name,
+      actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+      targetId, targetName: victim?.unit_name ?? null, targetCell: victim?.cellIndex,
+      message:    `${actor.unit_name}: ${flavour}${at} — ${pick.def.name} lands next turn`,
+      message_ru: `${actor.unit_name}: ${flavourRu}${at} — ${pick.def.name} ударит на следующем ходу`,
+    });
+    return actor._telegraph;
+  }
+
+  // The unit a single-target enemy spell aims at: the weakest thing it can
+  // actually reach. Skips `_untargetable`, or every spell lands on a bonded
+  // guardian — deliberately the lowest-HP unit on the field and unhittable.
+  aiSpellVictim(actor) {
+    return this.combatants
+      .filter(c => c.side !== actor.side && c.alive && !c._untargetable)
+      .sort((a, b) => a.battle_hp - b.battle_hp)[0] || null;
+  }
+
+  // Who the AI would aim a spell at, by scope — the one answer used by the work
+  // test, by a telegraph's lock and by the cast, so all three agree. Null for the
+  // scopes that resolve themselves (every ally, every enemy, a corpse).
+  aiSpellTarget(actor, def) {
+    const scope = def?.target_scope;
+    if (scope === 'single_enemy') return this.aiSpellVictim(actor)?.id ?? null;
+    if (scope === 'single_ally') {
+      return this.combatants
+        .filter(c => c.side === actor.side && c.alive)
+        .sort((a, b) => (a.battle_hp / a.max_hp) - (b.battle_hp / b.max_hp))[0]?.id ?? null;
+    }
+    return null;
+  }
+
+  // An announced cast that has come due, resolved into the same shape
+  // aiPickSpell returns. Null while it is still only announced, and the
+  // announcement is dropped if it can no longer be honoured.
+  telegraphDue(actor) {
+    const t = actor?._telegraph;
+    if (!t) return null;
+    if (this.round <= t.round) return null;            // announced this round; it lands on the next
+    const def = this.findSpellDef(t.spell_id);
+    // Power cannot normally fall between the announcement and the cast — this
+    // boss is the only thing that spends its side's bank, and it is not casting
+    // while it waits — but a dropped announcement beats a silent no-op.
+    if (!def || this.powerFor(actor.side) < t.power) {
+      this.clearTelegraph(actor);
+      return null;
+    }
+    let targetId = t.targetId;
+    if (targetId) {
+      const locked = this.combatants.find(c => c.id === targetId);
+      // The marked unit died in the round it was given. The sentence still falls,
+      // on whoever is weakest now.
+      if (!locked?.alive || locked._untargetable) targetId = this.aiSpellVictim(actor)?.id ?? null;
+      if (!targetId) { this.clearTelegraph(actor); return null; }
+    }
+    return { def, cost: t.power, targetId };
+  }
+
+  clearTelegraph(actor) {
+    if (!actor) return;
+    const marked = actor._telegraph?.targetId
+      ? this.combatants.find(c => c.id === actor._telegraph.targetId)
+      : null;
+    actor._telegraph = null;
+    this.clearEffect(actor, 'telegraph');
+    if (marked) this.clearEffect(marked, 'telegraph_mark');
+  }
+
+  // ── Boss phases ───────────────────────────────────────────────────────────
+  // A unit def may carry `phases`: the ordered ladder data/colossus.js writes, as
+  // [{ id, below_pct, name, overrides, spells }]. The band is read from the
+  // unit's own HP fraction, so for the Colossus — whose battle HP IS the faction
+  // pool — it is the pool percentage the thresholds are written against.
+  phaseListFor(unit) {
+    const phases = unit?.unit_data?.phases;
+    return Array.isArray(phases) ? phases : [];
+  }
+
+  phaseForHp(unit) {
+    const phases = this.phaseListFor(unit);
+    if (!phases.length) return null;
+    const pct = unit.max_hp > 0 ? (unit.battle_hp / unit.max_hp) * 100 : 0;
+    return [...phases].reverse().find(p => pct <= p.below_pct) ?? phases[0];
+  }
+
+  // Writes a phase onto a living boss. `overrides` is total, not partial — every
+  // phase in a ladder declares the same fields (see the note in data/colossus.js),
+  // so this never has to undo what an earlier phase set.
+  //
+  // Two kinds of field, and the difference matters:
+  //
+  //   * LIVE NUMBERS a battle moves — armor, initiative, action_power,
+  //     resistances. These are applied as a DELTA from the phase being left, not
+  //     as an absolute. A player who shredded the boss's armor keeps that shred
+  //     across the transition, and — the real reason — an effect holding an undo
+  //     ledger for that shred does not get to hand back armor the boss never
+  //     lost. Setting them absolutely would quietly launder every debuff on the
+  //     boss into a buff the moment it changed phase.
+  //   * DEFINITION FIELDS read live off unit_data and never persisted —
+  //     damage_source, passive, the spell kit. The phase owns these outright.
+  //
+  // `stats: false` applies only the second group: it is the rehydrate path, where
+  // the saved combatant already carries the live numbers (armor, initiative,
+  // action_power and resistances are all persisted) and re-deriving them would
+  // double-apply the transition.
+  applyPhase(unit, phase, { announce = true, stats = true } = {}) {
+    if (!unit || !phase) return;
+    const from  = this.phaseListFor(unit).find(p => p.id === unit._phase)?.overrides || {};
+    const to    = phase.overrides || {};
+    unit._phase = phase.id;
+
+    if (stats) {
+      // A field the phase being left did not declare has no delta to take, so it
+      // is set outright — which is also the first-apply case.
+      const shift = (now, key) => (from[key] == null ? to[key] : (now ?? 0) + (to[key] - from[key]));
+      if (to.armor      != null) unit.armor      = Math.max(0, shift(unit.armor, 'armor'));
+      if (to.initiative != null) unit.initiative = Math.max(1, shift(unit.initiative, 'initiative'));
+      if (to.action_power != null) {
+        unit.unit_data.action_power = Math.max(0, shift(unit.unit_data.action_power, 'action_power'));
+      }
+      if (to.resistances) {
+        const res = unit.unit_data.resistances || (unit.unit_data.resistances = {});
+        for (const [school, value] of Object.entries(to.resistances)) {
+          const was = from.resistances?.[school];
+          res[school] = Math.max(0, was == null ? value : (res[school] ?? 0) + (value - was));
+        }
+      }
+      clampDefenses(unit);
+    }
+
+    if (to.damage_source != null) unit.unit_data.damage_source = to.damage_source;
+    // A COPY of any array — the ladder is shared module data (cloneArmy is a
+    // shallow spread), and writing through to it would edit the game's own
+    // definitions for every player in the process.
+    if (Array.isArray(to.passive)) unit.unit_data.passive = [...to.passive];
+    // Anything else a phase declares is a plain definition field: written live,
+    // so a new override key works without this function changing. The four keys
+    // handled above are the ones a battle also moves on its own.
+    const handled = new Set(['armor', 'initiative', 'action_power', 'resistances', 'damage_source', 'passive']);
+    for (const [key, value] of Object.entries(to)) {
+      if (handled.has(key)) continue;
+      unit.unit_data[key] = Array.isArray(value) ? [...value] : value;
+    }
+
+    const spells = Array.isArray(phase.spells) ? phase.spells.map(e => ({ ...e })) : [];
+    unit.unit_data.spells = spells;
+    unit._spells          = spells;
+    // The new kit opens on its own first entry rather than wherever the last
+    // phase's rotation had got to.
+    unit._spell_cycle_idx = 0;
+    // A kit makes the unit a hero for the power economy's purposes (the same test
+    // createCombatant makes). Never taken away again: power already banked would
+    // have nothing to spend it on.
+    if (spells.length) unit._is_hero = true;
+
+    if (announce) {
+      this.pushLog({
+        type: 'phase', phase: phase.id,
+        actorId: unit.id, actorName: unit.unit_name, actorCell: unit.cellIndex,
+        message:    `${unit.unit_name} — ${phase.name}: ${phase.description}`,
+        message_ru: `${unit.unit_name} — ${phase.name_ru}: ${phase.description_ru}`,
+      });
+    }
+  }
+
+  // Called from afterAction, so a phase turns over on the blow that crossed the
+  // threshold rather than a round later. Damage is applied in a dozen places and
+  // none of them is a choke point; the end of a turn is.
+  //
+  // Phases only ever go FORWARD. A heal, a shield or a pool that another player's
+  // attempt pushed back up must not hand the boss its gentler phase back — and a
+  // boss that could oscillate across a threshold would re-announce itself every
+  // time it did.
+  maybeAdvancePhases() {
+    for (const unit of this.combatants) {
+      if (!unit.alive) continue;
+      const phases = this.phaseListFor(unit);
+      if (!phases.length) continue;
+      const next = this.phaseForHp(unit);
+      if (!next || next.id === unit._phase) continue;
+      const atIdx   = phases.findIndex(p => p.id === unit._phase);
+      const nextIdx = phases.findIndex(p => p.id === next.id);
+      if (nextIdx <= atIdx) continue;
+      this.applyPhase(unit, next);
+    }
+  }
+
   // Chooses this enemy's whole turn: ability / defend / attack / skip.
   chooseAiAction(actor) {
-    const spell = this.aiPickSpell(actor);
-    if (spell) return { type: 'spell', spell: spell.def, power: spell.cost, target: null };
+    // An announced cast comes first and is not reconsidered: the player was told
+    // this was coming and played a round against it.
+    const due = this.telegraphDue(actor);
+    if (due) return { type: 'spell', spell: due.def, power: due.cost, target: null, targetId: due.targetId, telegraphed: true };
+    // While one is still pending the boss fights normally — the warning round is
+    // a warning, not a turn off.
+    if (!actor._telegraph) {
+      const spell = this.aiPickSpell(actor);
+      if (spell?.def?.telegraph) {
+        // Announced now, cast next turn, and the boss still takes its swing below.
+        this.declareTelegraph(actor, spell);
+      } else if (spell) {
+        if (actor.unit_data?.spell_cycle && spell.index != null) actor._spell_cycle_idx = spell.index + 1;
+        return { type: 'spell', spell: spell.def, power: spell.cost, target: null };
+      }
+    }
     // Heroes (which on the enemy side means bosses) cast instead of using an
     // ability. With no spell affordable this turn they fall through to defend or
     // attack like anyone else, rather than reaching for an ability they no
@@ -2897,21 +3232,12 @@ class BattleEngine {
       if (decision.type === 'spell') {
         // Single-target enemy spells aim at the weakest of whatever they can
         // reach; everything else resolves on its own scope.
-        const scope = decision.spell.target_scope;
-        let targetId = null;
-        if (scope === 'single_ally') {
-          targetId = this.combatants
-            .filter(c => c.side === actor.side && c.alive)
-            .sort((a, b) => (a.battle_hp / a.max_hp) - (b.battle_hp / b.max_hp))[0]?.id ?? null;
-        } else if (scope === 'single_enemy') {
-          // Skips `_untargetable`, or the AI aims every spell at a bonded
-          // guardian: it is deliberately the lowest-HP unit on the field and it
-          // cannot be hurt, so this sort handed it the spell every single time.
-          targetId = this.combatants
-            .filter(c => c.side !== actor.side && c.alive && !c._untargetable)
-            .sort((a, b) => a.battle_hp - b.battle_hp)[0]?.id ?? null;
-        }
+        // A telegraphed cast already named its victim when it was announced; any
+        // other single-target spell aims at the weakest thing it can reach, which
+        // aiSpellTarget decides for the work test and the cast alike.
+        const targetId = decision.targetId ?? this.aiSpellTarget(actor, decision.spell);
         this.doCast(actor, decision.spell, { power: decision.power, targetId });
+        if (decision.telegraphed) this.clearTelegraph(actor);
       } else if (decision.type === 'ability') {
         this.doAbility(actor, decision.target);
       } else if (decision.type === 'defend') {
@@ -3000,6 +3326,15 @@ class BattleEngine {
         intercept_bonus_pct: c.intercept_bonus_pct ?? 0,
         _base_max_hp:     c._base_max_hp ?? c.max_hp,
         _fanaticism_bonus: c._fanaticism_bonus ?? 0,
+        // Boss phase state. rehydrate() rebuilds the unit from the saved DEF,
+        // which carries the phase the attempt STARTED in — so without these a
+        // reload handed a cracked, burning Colossus back as the stone it was an
+        // hour ago, with the earlier phase's passives, damage school and kit.
+        _phase:           c._phase ?? null,
+        _spell_cycle_idx: c._spell_cycle_idx ?? 0,
+        // An announcement is a promise: a reload must not cancel the spell the
+        // player just spent a round preparing for.
+        _telegraph:       c._telegraph ?? null,
         acted_this_round: c.acted_this_round,
         used_active:      c.used_active ?? false,
         _rosterId:        c._rosterId ?? null,
@@ -3126,6 +3461,16 @@ class BattleEngine {
       c.intercept_bonus_pct = s.intercept_bonus_pct ?? 0;
       c._base_max_hp        = s._base_max_hp ?? c.max_hp;
       c._fanaticism_bonus   = s._fanaticism_bonus ?? 0;
+      // Re-apply the phase the fight had actually reached, silently — the player
+      // already watched it happen. applyPhase rewrites the live passives, damage
+      // school, kit and body, which is everything the saved def has wrong.
+      // BEFORE the rotation index below, because applying a phase resets it.
+      if (s._phase != null && s._phase !== c._phase) {
+        const phase = engine.phaseListFor(c).find(ph => ph.id === s._phase);
+        if (phase) engine.applyPhase(c, phase, { announce: false, stats: false });
+      }
+      c._spell_cycle_idx    = s._spell_cycle_idx ?? 0;
+      c._telegraph          = s._telegraph ?? null;
       if (s._base_stats) c._base_stats = s._base_stats;
       if (s._resistances) {
         c.unit_data = c.unit_data || {};

@@ -7104,6 +7104,19 @@ export const EFFECTS = {
   purgation,
   grave_rot,
   rime_ward,
+  // ── The Faction Colossus ──────────────────────────────────────────────────
+  // Three of its casts are pictures this file already draws, so they are ALIASED
+  // rather than copied — the arrangement pale_embrace and song_of_ash already
+  // use, and for the same reason: two near-identical effects drift apart.
+  //   Toll of Bells is grief reaching the whole enemy line, which is Sorrow.
+  //   Cinder Cascade is fire fanning out from the caster, which is Fellfire.
+  //   Reliquary Grasp is one body crushed, which is Impale.
+  // Sundering Stone, Strangling Roots and Ember Spit have no match and draw no
+  // cast picture yet; their damage still animates per victim through the ordinary
+  // spell-damage path. Authoring those three is a job of its own.
+  toll_of_bells: sorrow,
+  cinder_cascade: fellfire,
+  reliquary_grasp: impale,
 };
 // ── Formation bonds ───────────────────────────────────────────────────────────
 //
