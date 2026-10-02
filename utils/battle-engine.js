@@ -1,4 +1,4 @@
-const { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, stackPassiveKeys, effectiveArmor, effectiveResist, MITIGATION_CAP_PCT, addArmor, addResist, clampDefenses } = require('./passive-processor');
+const { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, stackPassiveKeys, effectiveArmor, effectiveResist, MITIGATION_CAP_PCT, addArmor, addResist, clampDefenses, formGuardianBond, bondAbilityFor } = require('./passive-processor');
 const { filterByTagRules } = require('./tag-rules.js');
 // Inspiration's reach is also the 'column_adjacent' relation a battle-prep
 // preview draws from, so the rule is defined once, there.
@@ -787,6 +787,84 @@ class BattleEngine {
       }
     }
   }
+  // ── Guardian bonds and the grave ──────────────────────────────────────────
+  // Unity and Blood Bond make a PAIR: the carrier hands half its stats to the
+  // host and becomes an invulnerable, untargetable passenger that dies with it.
+  // So the pair dies together — and a resurrect has to put a pair back, not half
+  // of one.
+  //
+  // Raising one alone is not a lesser version of raising both, it is broken in two
+  // different directions. A lone passenger keeps `_invulnerable` and
+  // `_untargetable` with no host: nothing can attack it (getValidTargets), no
+  // spell can touch it (getSpellTargets), the Withering skips it
+  // (applyTurnStartTicks) and its action is 'none', so it is an immortal unit that
+  // cannot act and cannot be removed — and checkWin only ends a battle when a side
+  // has nobody left alive. The fight becomes unwinnable. A lone host, meanwhile,
+  // is simply robbed: it comes back without the half of its body the bond was
+  // paying for.
+  //
+  // Both are therefore raised together, as one resurrection — one Vow of the Grave
+  // charge, already spent by the caller for the unit that was named — and the bond
+  // is formed again from what came back.
+
+  // The other half of `unit`'s bond, by whichever end of it `unit` holds.
+  bondPartnerOf(unit) {
+    const id = unit?._unity_host_id ?? unit?._unity_bonded_id;
+    return id != null ? (this.combatants.find(c => c.id === id) || null) : null;
+  }
+
+  // Strips a bond's state off both ends. Not an undo of the stats — those are the
+  // granted-buff ledger's business (revokeGrantedBuffs) — just the flags, so a
+  // passenger whose bond cannot be restored is left an ordinary unit rather than
+  // an untouchable one.
+  clearBondState(passenger, host) {
+    if (passenger) {
+      passenger._unity_host_id = null;
+      passenger._invulnerable  = false;
+      passenger._untargetable  = false;
+    }
+    if (host) host._unity_bonded_id = null;
+  }
+
+  // Puts a resurrected unit's bond back together: raises the partner if it is
+  // still down, then re-forms the bond so the host gets its half again.
+  // `hpPct` is the percentage the resurrection granted — the partner comes back on
+  // the same terms. Returns the partner when one was also raised, for the log.
+  restoreBondOnRevive(revived, hpPct) {
+    if (!revived?.alive) return null;
+    const partner = this.bondPartnerOf(revived);
+    const passenger = revived._unity_host_id != null ? revived : partner;
+    const host      = revived._unity_host_id != null ? partner : revived;
+    // A bond whose other end is not on the board at all. Only the passenger
+    // carries the dangerous flags, so clearing them is what matters.
+    if (!partner) { this.clearBondState(passenger, host); return null; }
+
+    const raised = !partner.alive ? partner : null;
+    if (raised) {
+      raised.alive     = true;
+      raised.battle_hp = Math.max(1, Math.floor(raised.max_hp * (Number(hpPct) || 0) / 100));
+    }
+
+    // Cleared and re-formed rather than patched, which also makes the attempt
+    // self-checking: formGuardianBond sets these again only if the bond actually
+    // re-forms, so if the formation no longer supports it the flags stay off and
+    // nobody is left untouchable.
+    this.clearBondState(passenger, host);
+    const bond = passenger ? bondAbilityFor(passenger, this.ABILITIES) : null;
+    if (bond) formGuardianBond(passenger, bond.def, bond.synergyId, this);
+
+    if (raised) {
+      this.pushLog({
+        type: 'passive', passive: bond?.def?.name || 'Unity',
+        actorId: raised.id, actorName: raised.unit_name, actorCell: raised.cellIndex,
+        targetName: raised.unit_name, targetCell: raised.cellIndex,
+        value: raised.battle_hp, heal: true,
+        message: `${raised.unit_name} returns with their bonded partner at ${raised.battle_hp} HP`,
+      });
+    }
+    return raised;
+  }
+
   applyOnDeathPassives(dying) {
     this.tallyKill(dying);
     this.revokeGrantedBuffs(dying);
@@ -3693,6 +3771,8 @@ class BattleEngine {
           value: c.battle_hp, heal: true,
           message: `${c.unit_name} rises again`,
         });
+        // A bonded pair comes back as a pair — see restoreBondOnRevive.
+        this.restoreBondOnRevive(c, params.resurrect_hp_pct);
       }
       if (params.heal_pct)             { const heal = this.absorbWithDecay(c, Math.floor(c.max_hp * params.heal_pct * this.fatigueHealMult())); c.battle_hp = Math.min(c.max_hp, (c.battle_hp || 0) + heal); }
       // Reverted by what LANDED, not by what the spell offered — a target

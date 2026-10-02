@@ -94,6 +94,18 @@ const BOT_TEMPLATES = [
       // cheapest bodies, at 75% of what the cap allows. The column IS the build,
       // so it stays and the Chalice is what goes.
       lean_squad: {
+        // band_500 wants the same answer and had no lineup, so subtraction gave
+        // the opposite one: it dropped the Anointed's column as the dearest body
+        // and KEPT the Chalice — whose bond partner was that column. A Blood Bond
+        // carrier with no Vampire in its row does not act at all (action 'none'),
+        // so the cap was buying a corpse. Same three Loyalty, spent the way the
+        // note above says: column plus the Warden, no carrier.
+        band_500: [
+          { unit: 'gs2111', cell: 0, item_id: 'dark_determination' },
+          { unit: 'gs5211', cell: 1, item_id: 'shroud_of_the_fallen' },
+          { unit: 'h_g_2_a41', cell: 4, item_id: 'gift_of_eternity', hero: true,
+            spells: [{ spell_id: 'g_spell_7', power: 3 }, { spell_id: 'g_spell_9', power: 5 }] },
+        ],
         band_300: [
           { unit: 'gs211',  cell: 0, item_id: 'dark_determination' },
           { unit: 'gs5211', cell: 1, item_id: 'shroud_of_the_fallen' },
@@ -106,6 +118,17 @@ const BOT_TEMPLATES = [
       // cap allows. Spending the 3 deliberately keeps the Chosen's column and
       // the one body that is natively BOTH Zombie and Vampire.
       'bare_steel+lean_squad': {
+        // band_500 had no lineup, so the gearless one won the pair day and the cap
+        // trimmed it — taking the Anointed's column, which is what Mother's Font
+        // bonds to. The carrier was left unable to act. Same three Loyalty as
+        // band_300 and spent the same way: the column, plus the body that is
+        // natively both Zombie and Vampire, and no carrier.
+        band_500: [
+          { unit: 'gs2111', cell: 0 },
+          { unit: 'gs8111', cell: 1 },
+          { unit: 'h_g_2_a41', cell: 4, hero: true,
+            spells: [{ spell_id: 'g_spell_7', power: 3 }, { spell_id: 'g_spell_9', power: 5 }] },
+        ],
         band_300: [
           { unit: 'gs211', cell: 0 },
           { unit: 'gs811', cell: 1 },
@@ -146,6 +169,27 @@ const BOT_TEMPLATES = [
           { unit: 'gs8211', cell: 3 },
           { unit: 'gs1111', cell: 4 },
           { unit: 'gs3311', cell: 5 },
+        ],
+      },
+      // Nothing above Rare. The Vessel is a Blood Bond carrier and the only
+      // Vampire it can bond to in this squad is the HERO standing beside it,
+      // whose Vampire comes from `gift_of_eternity` — a rarity the cap takes
+      // away. Downgraded, the bond cannot form and the Vessel does not act at
+      // all (action 'none'), so the squad fields five units and a passenger.
+      //
+      // The whole Vampire half of this lineup is item-granted, so there is no
+      // body to bond to at any price. The Vessel's own sibling is the answer, the
+      // same swap `bare_steel` above makes for the same reason: Mother's Grief is
+      // the tier and the cell, natively BOTH Zombie and Vampire, and it acts.
+      plain_gear: {
+        band_500: [
+          { unit: 'gs611',     cell: 5, item_id: 'shroud_of_the_fallen' },
+          { unit: 'gs1111',    cell: 4, item_id: 'iron_armor' },
+          { unit: 'gs811',     cell: 3, item_id: 'dark_determination' },
+          { unit: 'h_g_2_a41', cell: 2, item_id: 'gift_of_eternity', hero: true,
+            spells: [{ spell_id: 'g_spell_7', power: 3 }, { spell_id: 'g_spell_9', power: 5 }] },
+          { unit: 'gs321',     cell: 1, item_id: 'veil_of_discord' },
+          { unit: 'gs1111',    cell: 0, item_id: 'might_of_the_pure' },
         ],
       },
     },
@@ -267,9 +311,16 @@ const BOT_TEMPLATES = [
         band_500: [
           { unit: 'e3111', cell: 0 },
           { unit: 'e621',  cell: 1 },
-          { unit: 'e7111', cell: 3 },
+          // Cell 5, not 3: Mithrails Verdict carries `unity 1`, and a Unity
+          // carrier with no Holy in its ROW bonds to nobody and then does not act
+          // at all (action 'none'). The Golden Lion's Holy is `sanctified_bulwark`,
+          // which this gearless lineup does not have — the Warden below is the
+          // only native Holy here, so the carrier has to stand in ITS row. Both
+          // cells are back-column, so this is a row trade with the hero and
+          // nothing more.
+          { unit: 'e7111', cell: 5 },
           { unit: 'e212',  cell: 4 },
-          { unit: 'h_e_3_a41', cell: 5, hero: true,
+          { unit: 'h_e_3_a41', cell: 3, hero: true,
             spells: [{ spell_id: 'e_spell_3', power: 3 }, { spell_id: 'e_spell_9', power: 5 }] },
         ],
         band_300: [
@@ -280,10 +331,17 @@ const BOT_TEMPLATES = [
           { unit: 'h_e_3_a3', cell: 5, hero: true,
             spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_9', power: 4 }] },
         ],
+        // Four slots, and three of them are already spoken for: the Rifleman whose
+        // `sanctified_ordnance` needs the Holy, a Construct for the hero to
+        // `repair`, and the hero. There is no fourth body to be the Holy's bond
+        // partner — so the Holy cannot be the Mithrails line here. A Unity carrier
+        // that cannot bond does not act at all, which is a quarter of this squad
+        // standing still. The Priest is the same tier, the same Loyalty, the same
+        // back-column cell and natively Caster/Holy, and it fights.
         band_200: [
           { unit: 'e6112', cell: 0 },
           { unit: 'e62',   cell: 1 },
-          { unit: 'e71',   cell: 3 },
+          { unit: 'e22',   cell: 3 },
           { unit: 'h_e_3_a2', cell: 5, hero: true,
             spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_9', power: 3 }] },
         ],
@@ -293,6 +351,23 @@ const BOT_TEMPLATES = [
       // front line — and took away the only Construct the Artificer hero can
       // `repair`. It stays; the Devastator is what goes.
       lean_squad: {
+        // band_500 had no lineup and subtraction dropped the Automaton's column as
+        // the dearest body — which is the Mithrails carrier's bond partner, so the
+        // cap took the front line AND left a passenger that cannot act.
+        //
+        // Three Loyalty as TILES rather than on a column, which buys all of it at
+        // once: the Armsmaster is the Construct the hero `repair`s and a front-line
+        // body, and the Warden is a native Holy standing in the carrier's own row,
+        // so the bond holds without leaning on `sanctified_bulwark`. Being
+        // tile-only it also survives a tiles-only day landing on the same evening,
+        // which a column lineup cannot.
+        band_500: [
+          { unit: 'e6112', cell: 0, item_id: 'everliving_stalk' },
+          { unit: 'e212',  cell: 2, item_id: 'sanctified_bulwark' },
+          { unit: 'e71',   cell: 3, item_id: 'codex_aeternum' },
+          { unit: 'h_e_3_a41', cell: 5, item_id: 'might_of_the_pure', hero: true,
+            spells: [{ spell_id: 'e_spell_3', power: 3 }, { spell_id: 'e_spell_9', power: 5 }] },
+        ],
         band_300: [
           { unit: 'e311', cell: 0, item_id: 'sanctified_bulwark' },
           { unit: 'e71',  cell: 3, item_id: 'codex_aeternum' },
@@ -306,19 +381,43 @@ const BOT_TEMPLATES = [
       // hero could `repair`. So the Construct here is a TILE, cheap enough to
       // keep, and the Holy that `sanctified_ordnance` counts comes off the
       // Mithrails line rather than an item.
+      // The Holy is a PRIEST here and not the Mithrails line, for the same reason
+      // as bare_steel/band_200 above: the cap pays for three bodies, all three are
+      // needed, and a Unity carrier with no Holy to bond to is a body that never
+      // acts. Same tier, same Loyalty, same cell, natively Holy, and it fights.
       'bare_steel+lean_squad': {
         band_500: [
           { unit: 'e6112', cell: 0 },
           { unit: 'e621',  cell: 1 },
-          { unit: 'e7111', cell: 3 },
+          { unit: 'e2211', cell: 3 },
           { unit: 'h_e_3_a41', cell: 5, hero: true,
             spells: [{ spell_id: 'e_spell_3', power: 3 }, { spell_id: 'e_spell_9', power: 5 }] },
         ],
         band_300: [
           { unit: 'e6112', cell: 0 },
           { unit: 'e621',  cell: 1 },
-          { unit: 'e711',  cell: 3 },
+          { unit: 'e221',  cell: 3 },
           { unit: 'h_e_3_a3', cell: 5, hero: true,
+            spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_9', power: 4 }] },
+        ],
+      },
+      // Loyalty 3 AND nothing above Rare. plain_gear outranks lean_squad, and it
+      // spends 4 Loyalty — so on a pair day the cap trimmed its dearest body, the
+      // Automaton's column, leaving the squad with no front line and the Artificer
+      // hero with no Construct to `repair`. Three Loyalty spent deliberately: the
+      // column is both the front line and the Construct, and the Holy is the
+      // Priest, because the rarity cap takes `sanctified_bulwark` away and a Unity
+      // carrier would have nothing to bond to.
+      'lean_squad+plain_gear': {
+        // The Holy is the TEMPLAR here and not the Priest the other lineups use:
+        // `heal` cannot touch a Construct, and at three Loyalty the only bodies
+        // beside it are the Automaton and a Construct hero, so a Priest would have
+        // nobody in the squad to mend. A Knight has no such gate — and cell 4 is a
+        // front cell, which is where a melee body belongs.
+        band_300: [
+          { unit: 'e311', cell: 0, item_id: 'sanctified_bulwark' },
+          { unit: 'e21',  cell: 4, item_id: 'codex_aeternum' },
+          { unit: 'h_e_3_a3', cell: 5, item_id: 'might_of_the_pure', hero: true,
             spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_9', power: 4 }] },
         ],
       },
@@ -330,11 +429,37 @@ const BOT_TEMPLATES = [
       // The Holy therefore has to be a BODY: Mithrails Light is natively
       // Spirit/Holy. Its slot is paid for by trading the Automaton's column for
       // the Armsmaster, who is Construct enough for the hero to `repair`.
+      // The Holy is the Priest rather than the Mithrails line, and band_300 and
+      // band_500 need the lineup too.
+      //
+      // Every band of this template bonds its Mithrails carrier to the Automaton's
+      // column, and the Automaton's Holy is `sanctified_bulwark` — an item, and
+      // the one thing this rule takes away. Downgraded, the partner stops being
+      // Holy, the bond cannot form, and the carrier (action 'none') stops acting:
+      // the squads fielded four and five bodies with a passenger among them. No
+      // Rare grants Holy and no Holy unit in the game is a column, so there is no
+      // way to keep that bond under this rule — the Holy has to be a body that
+      // needs no partner.
       plain_gear: {
+        band_500: [
+          { unit: 'e621',  cell: 1, item_id: 'crystal_exoskeleton' },
+          { unit: 'e3111', cell: 0, item_id: 'sanctified_bulwark' },
+          { unit: 'e22',   cell: 3, item_id: 'codex_aeternum' },
+          { unit: 'h_e_3_a41', cell: 5, item_id: 'might_of_the_pure', hero: true,
+            spells: [{ spell_id: 'e_spell_3', power: 3 }, { spell_id: 'e_spell_9', power: 5 }] },
+          { unit: 'e6112', cell: 4, item_id: 'everliving_stalk' },
+        ],
+        band_300: [
+          { unit: 'e621',  cell: 1, item_id: 'crystal_exoskeleton' },
+          { unit: 'e311',  cell: 0, item_id: 'sanctified_bulwark' },
+          { unit: 'e22',   cell: 3, item_id: 'codex_aeternum' },
+          { unit: 'h_e_3_a3', cell: 5, item_id: 'might_of_the_pure', hero: true,
+            spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_9', power: 4 }] },
+        ],
         band_200: [
           { unit: 'e6112', cell: 0, item_id: 'iron_shield' },
           { unit: 'e62',   cell: 1, item_id: 'lion_signet' },
-          { unit: 'e71',   cell: 3, item_id: 'codex_aeternum' },
+          { unit: 'e22',   cell: 3, item_id: 'codex_aeternum' },
           { unit: 'h_e_3_a2', cell: 5, item_id: 'lion_signet', hero: true,
             spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_9', power: 3 }] },
         ],
