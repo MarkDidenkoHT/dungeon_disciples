@@ -7,6 +7,7 @@ const { SPELLS } = require('../data/spells');
 const { aiDoctrineFor } = require('../data/ai_profiles.js');
 const { COMBAT_BARKS, BARK_CHANCES, HEAL_BARK_THRESHOLD_PCT } = require('../data/combat_barks');
 const { LITANIES, LITANY_TARGETS } = require('../data/litanies');
+const { callingIdOf } = require('../data/callings');
 
 // Anti-stalemate / anti-heal-abuse pressure. Environmental — applies to BOTH
 // sides equally, so it also works for PvP later. All tunable here.
@@ -440,6 +441,14 @@ class BattleEngine {
       // Drives the power economy. The player's hero is flagged on the roster
       // row; an enemy is a "hero" when the encounter gave it spells to cast.
       _is_hero: !!(unit.is_hero || data.is_hero || (Array.isArray(data.spells) && data.spells.length > 0)),
+      // The player's own decision about this unit (data/callings.js), read by a
+      // litany's chorus cells and by nothing else in a fight. It rides on the
+      // ROSTER ROW rather than in unit_data, because makeUnitData rebuilds
+      // unit_data from the definition on every level-up and would drop it; a bot
+      // carries it on the slot instead (data/bot_templates.js). Null is a unit
+      // the Chronicle has not reached - a mercenary, an encounter's own troops -
+      // and null fills no chorus cell.
+      _calling: callingIdOf(unit) ?? callingIdOf(data),
       _spells:  Array.isArray(data.spells) ? data.spells : [],
       // Boss phases (data/colossus.js). `_phase` is the band the unit is CURRENTLY
       // in: the def arrives with the entry phase's overrides already baked in, so
@@ -4097,6 +4106,19 @@ class BattleEngine {
   // ({ A, B, C }), or null if a single cell of it is wrong. All-or-nothing: no
   // substitutes, no shorter version.
   //
+  // THREE KINDS OF CELL, and what each one demands of its occupant:
+  //
+  //   'lead'    the acting unit itself, and its id must be in `def.lead.ids`.
+  //             The only cell that kills.
+  //   'hero'    the litany's own hero line (`def.hero.ids`). Exists only on the
+  //             four whose hero is a healer and so cannot lead: the hero sings
+  //             from here while something of its own lands the blow.
+  //   'chorus'  any unit the PLAYER gave this cell's `calling` to
+  //             (data/callings.js). No id list - that is the whole change: a
+  //             chorus cell asks who you committed, not who you recruited. A
+  //             unit with no calling (a mercenary, an encounter's own troops)
+  //             fills no chorus cell.
+  //
   // A formation is a list of CELLS, each naming its row AND its column, so a
   // litany can put its lead on the line and its singers behind it — a priest
   // does not belong in the front rank, and saying "the front column" for all
@@ -4138,7 +4160,9 @@ class BattleEngine {
       if (taken.has(occ.id)) return null;
       if (cell.role === 'lead') {
         if (occ !== actor) return null;
-      } else if (!cell.ids.includes(this.litanyUnitId(occ))) {
+      } else if (cell.role === 'hero') {
+        if (!(def.hero?.ids || []).includes(this.litanyUnitId(occ))) return null;
+      } else if (!cell.calling || occ._calling !== cell.calling) {
         return null;
       }
       taken.add(occ.id);
@@ -4175,8 +4199,18 @@ class BattleEngine {
       def.verses.forEach((v, i) => {
         const sp = speakers[v.speaker];
         if (!sp) return;
+        // DERIVED, not authored, for every verse but the lethal one. A chorus
+        // cell no longer knows which unit will stand in it — a Vigil may be a
+        // priest or a shield-bearer — so the author cannot say in advance
+        // whether the verse is a blow or a rite. A unit whose action targets an
+        // ally performs over its own side ('support'); everything else swings at
+        // the victim ('visual'). The authored `strike` is kept as the fallback
+        // and is what the lethal verse always uses.
+        const strike = v.strike === 'lethal'
+          ? 'lethal'
+          : (this.isHealer(sp) ? 'support' : 'visual');
         this.pushLog({
-          type: 'litany', litany: def.id, i, n: def.verses.length, strike: v.strike,
+          type: 'litany', litany: def.id, i, n: def.verses.length, strike,
           actorId: sp.id, actorName: sp.unit_name, actorCell: sp.cellIndex,
           targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
           text: v.line[0], text_ru: v.line[1],

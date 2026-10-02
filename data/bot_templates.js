@@ -4,6 +4,7 @@ import { SPELLS } from './spells.js';
 import { TOURNEY_RULES_BY_ID, RARITY_ORDER } from './tourney.js';
 import { getEquipBlock } from './item_rules.js';
 import { UNIT_ABILITIES } from './unit_abilities.js';
+import { callingsForFaction } from './callings.js';
 
 // Hand-made PvP bot armies: one faction's build, with a version per power band.
 // Slots follow embark encounters. Cells:
@@ -875,6 +876,32 @@ function adaptSlotsToRules(slots, rules) {
 // Flat units, the same shape getEncounter returns. `rules` is a tourney's rule
 // list when the battle is one of its own, so the bot is built under the same
 // restrictions the player queued under.
+// A bot's units have callings like a player's, because a litany's chorus cells
+// read one (data/litanies.js) and a bot that had none could never stage a rite
+// the player can. A slot may name its own - that is how a template is written
+// to field a particular litany - and anything that does not gets one DERIVED
+// from its unit id.
+//
+// Derived, not random: a template must field the same army every time it is
+// drawn, or checkBotTemplate and the ⚔ bands would be measuring something
+// different from what the player meets. The hash is small and even enough
+// across a faction's two callings; which one a given unit lands on carries no
+// meaning and is not worth any.
+function botCalling(template, slot) {
+  const pair = callingsForFaction(template?.faction);
+  if (!pair.length) return null;
+  if (slot?.calling) {
+    // An authored calling has to be one of the two this faction actually has.
+    // Silently honouring a foreign one would field a unit no chorus cell of
+    // this faction can ever accept.
+    return pair.some(c => c.id === slot.calling) ? slot.calling : null;
+  }
+  const key = String(slot?.unit || '');
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+  return pair[h % pair.length].id;
+}
+
 function buildBotArmy(template, bandId, rules = null) {
   let slots = template?.bands?.[bandId];
   if (!Array.isArray(slots)) return [];
@@ -892,7 +919,14 @@ function buildBotArmy(template, bandId, rules = null) {
       if (!unit) return null;
       const itemDef = slot.item_id ? ITEM_DEFS[slot.item_id] : null;
       if (itemDef) unit = applyItemModifiers(unit, itemDef);
-      return { ...unit, cell: slot.cell, item_id: slot.item_id || null, is_hero: !!slot.hero, spells: slot.spells || [] };
+      return {
+        ...unit,
+        cell: slot.cell,
+        item_id: slot.item_id || null,
+        is_hero: !!slot.hero,
+        spells: slot.spells || [],
+        calling: botCalling(template, slot),
+      };
     })
     .filter(Boolean);
 }
@@ -969,6 +1003,15 @@ function checkBotTemplate(template) {
         if (def.pref_position === 'back'  && col === 0) at(`${label}: back-line unit stands in the front line (cell ${cell})`);
       }
 
+      // An authored calling has to be one of the two this faction has
+      // (data/callings.js). botCalling drops a foreign one and derives instead,
+      // so the slot would quietly field a unit that no chorus cell of this
+      // faction can ever accept — which is a litany that never fires, with
+      // nothing at run time to say why.
+      if (slot.calling && !callingsForFaction(template?.faction).some(c => c.id === slot.calling)) {
+        at(`${label}: calling "${slot.calling}" is not one of ${template?.faction}'s two`);
+      }
+
       const spells = slot.spells || [];
       if (spells.length && !slot.hero) at(`${label}: has spells but is not the hero`);
       if (slot.hero && !spells.length) at(`${label}: hero has no spells yet`);
@@ -993,5 +1036,5 @@ function checkBotTemplates(templates = BOT_TEMPLATES) {
   return out;
 }
 
-export { BOT_BANDS, BOT_FACTIONS, BOT_TEMPLATES, VARIANT_PRECEDENCE, variantSlotsFor, findBotUnit, findBotSpell, botBandFor, pickBotTemplate, buildBotArmy, botArmyAsSquad, checkBotTemplate, checkBotTemplates };
-if (typeof module !== 'undefined') module.exports = { BOT_BANDS, BOT_FACTIONS, BOT_TEMPLATES, VARIANT_PRECEDENCE, variantSlotsFor, findBotUnit, findBotSpell, botBandFor, pickBotTemplate, buildBotArmy, botArmyAsSquad, checkBotTemplate, checkBotTemplates };
+export { BOT_BANDS, BOT_FACTIONS, BOT_TEMPLATES, VARIANT_PRECEDENCE, variantSlotsFor, findBotUnit, findBotSpell, botBandFor, pickBotTemplate, buildBotArmy, botArmyAsSquad, botCalling, checkBotTemplate, checkBotTemplates };
+if (typeof module !== 'undefined') module.exports = { BOT_BANDS, BOT_FACTIONS, BOT_TEMPLATES, VARIANT_PRECEDENCE, variantSlotsFor, findBotUnit, findBotSpell, botBandFor, pickBotTemplate, buildBotArmy, botArmyAsSquad, botCalling, checkBotTemplate, checkBotTemplates };

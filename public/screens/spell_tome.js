@@ -4,6 +4,7 @@ import { showCostBar, hideCostBar, primeCostBar } from '../cost-bar.js';
 import { SPELLS, SPELL_TIERS } from '../../data/spells.js';
 import { UNITS } from '../../data/units.js';
 import { LITANIES, LITANY_TARGETS } from '../../data/litanies.js';
+import { getCalling } from '../../data/callings.js';
 
 // Mirrors litaniesUnlocked / LITANY_BUILDING_LEVEL in data/buildings.js — that
 // file is CommonJS (server-side only) and cannot be imported here, so the value
@@ -264,6 +265,18 @@ const TOME_TEXT = {
     en: (key, col, row) => `${key}: ${col} column, row ${row}`,
     ru: (key, col, row) => `${key}: ${col === 'Фронт' ? 'передняя' : col === 'Тыл' ? 'задняя' : 'обе'} колонна, ряд ${row}`,
   },
+  // A chorus cell names a CALLING, so the band says the calling rather than
+  // drawing the five faces that used to be allowed to fill it. The sentence has
+  // to carry what a calling IS, because the Chronicle is a different screen and
+  // a player meeting the word here for the first time otherwise sees a label.
+  litanyCallingHint: {
+    en: name => `any unit sworn to ${name}`,
+    ru: name => `любой боец, принявший призвание «${name}»`,
+  },
+  litanyHeroHint: {
+    en: 'your hero, in person',
+    ru: 'ваш герой, лично',
+  },
   litanyRoles: {
     // The Russian is NOT a translation of the English here. "Хор" is the faction
     // and the ability of that name, and "Вождь" is a chieftain — both read as
@@ -271,6 +284,9 @@ const TOME_TEXT = {
     // eight of the eighteen litanies have a chorus that swings rather than sings.
     chorus: { en: 'Chorus', ru: 'Свита' },
     lead:   { en: 'Lead',   ru: 'Инициатор' },
+    // Only on the four whose hero is a healer and so cannot land the blow: the
+    // hero sings from a cell of its own while something of its own leads.
+    hero:   { en: 'Hero',   ru: 'Герой' },
   },
   litanyNone: {
     en: w => `Your host knows no ${w.manyLower}.`,
@@ -816,6 +832,23 @@ export function renderSpellTome(root, { player }) {
         </div>`;
     };
 
+    // A calling band. Same frame as a unit band so the cells read as one list,
+    // but a WORD where the faces would be: a calling is not a roster of units,
+    // it is the one the player picked for whichever unit they want standing
+    // here, and drawing every unit that currently carries it would be a list
+    // that changes every time they spend 500 gold.
+    const callingBandHtml = (key, label, name, hint) => `
+      <div class="litany-row litany-row--chorus litany-row--calling">
+        <div class="litany-row-head">
+          ${key ? `<span class="litany-row-key">${escapeHtml(key)}</span>` : ''}
+          ${label ? `<span class="litany-row-role">${escapeHtml(label)}</span>` : ''}
+        </div>
+        <div class="litany-calling">
+          <span class="litany-calling-name">${escapeHtml(name)}</span>
+          <span class="litany-calling-hint">${escapeHtml(hint)}</span>
+        </div>
+      </div>`;
+
     const cards = performable.map((def, i) => {
       // A formation is a list of CELLS, each carrying its own letter, its grid
       // row and its column — the litany decides where its singers stand, and two
@@ -844,9 +877,19 @@ export function renderSpellTome(root, { player }) {
 
       const rows = cells.map(cell => {
         const roleLabel = TOME_TEXT.litanyRoles[cell.role]?.[lang] || cap(cell.role || '');
-        // A 'lead' cell names no ids of its own — the litany's own lead list is
-        // what may stand there, and it must be the unit landing the blow.
-        const ids = cell.role === 'lead' ? (def.lead?.ids || []) : (cell.ids || []);
+        // A CHORUS cell names a calling and no ids at all, so there are no faces
+        // to draw — the whole point of the change is that the player decides who
+        // may stand there. The band says the calling and what it means.
+        if (cell.role === 'chorus') {
+          const calling = getCalling(cell.calling);
+          if (!calling) return '';
+          const name = lang === 'ru' ? calling.name_ru : calling.name;
+          return callingBandHtml(cell.key || '', roleLabel, name,
+            TOME_TEXT.litanyCallingHint[lang](name));
+        }
+        // 'hero' is the litany's own hero line; 'lead' is whoever lands the
+        // blow, which on fourteen of the eighteen is that same hero.
+        const ids = cell.role === 'hero' ? (def.hero?.ids || []) : (def.lead?.ids || []);
         return bandHtml(cell.role, roleLabel, ids, cell.key || '');
       }).join('');
 

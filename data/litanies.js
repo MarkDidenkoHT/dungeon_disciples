@@ -4,15 +4,19 @@
 // chorus performs first, for show only) and pays a mechanical reward. It fires
 // only when the exact formation below is standing on the board.
 //
-// EVERY ROLE IS A HARDCODED ID LIST. No tags, no factions, no filters: tags do
-// not describe roles well enough for a scripted moment (the Choir Regent is not
-// tagged Demon and is still a heretic to be purged). Adding a unit to a role is
-// editing one of these arrays.
+// A CHORUS CELL NAMES A CALLING; A LEAD CELL NAMES UNITS. Still no tags and no
+// filters: a tag does not describe a role well enough for a scripted moment, and
+// the Choir Regent is not tagged Demon and is still a heretic to be purged. But a
+// CALLING is not a tag - it is the one decision about a unit that belongs to the
+// player (data/callings.js), bought with 500 gold and resettable - so a cell
+// naming one is an instruction to the player, which is what a formation is for.
+//
+// That is what replaced 298 hardcoded ids. Who may LAND THE BLOW is still an
+// authoring decision, made by name; who may SING is the player's.
 //
 // ONE LITANY IS ONE OBJECT, whole. The lead ids, every cell, the verses and the
 // reward are written out inside the object, so editing a litany is editing that
-// object and nothing else can be affected by it. The ids repeat between litanies
-// on purpose - that is the price of each one standing alone.
+// object and nothing else can be affected by it.
 //
 // THE ONE EXCEPTION IS THE TARGET, which is LITANY_TARGETS below and is the same
 // for all eighteen. A litany is staged over the death of the other side's CHAMPION,
@@ -67,6 +71,22 @@
 // Reliquary Titan is deliberately out: the Colossus is its own daily activity
 // rather than a region's boss.
 //
+// ── The three kinds of cell ───────────────────────────────────────────────────
+//
+//   role: 'lead'    the unit that lands the real blow. `def.lead.ids`, a unit
+//                   LINE written out by name. The only cell that kills.
+//   role: 'hero'    this litany's own hero, `def.hero.ids`. Only on the four
+//                   whose hero is a healer and so cannot lead - it sings from
+//                   here while something of its own takes the blow.
+//   role: 'chorus'  `calling`, one id from data/callings.js. Whoever the player
+//                   gave that calling to may stand here - there is no unit list
+//                   and there is not meant to be one. A unit with no calling (a
+//                   mercenary, an encounter's own troops) fills no chorus cell.
+//
+// A cell's calling must be one of the TWO its faction has. A litany led by the
+// Empire naming `hunger` is a litany that can never fire, and nothing at run
+// time would say why.
+//
 // ── The lead ──────────────────────────────────────────────────────────────────
 //
 // The lead is whoever LANDS THE BLOW, and that is not always the hero. A unit
@@ -113,15 +133,19 @@
 //   ally_resist_flat       { school: amount }, added to every living ally
 //   ally_all_resist_flat   the same amount added to every school
 //
-// THE REWARD IS WHAT THE CHORUS DID, one field per singing cell:
+// THE REWARD IS WHAT THE CHORUS IS, one side per singing cell. Each calling has
+// a `pays` in data/callings.js:
 //
-//   a heal action    (priest, mender, ash singer, embrace)  ally_heal_flat
-//   a shield action  (Standart Bearer, Warder, Aegis)       ally_shield_flat
-//   a decay action   (Pale Mourner)                         enemy_decay_flat
-//   an attack        (everyone else)                        enemy_damage_flat,
-//                                                           or the stagger fields
+//   pays: 'ally'   (Vigil, Denial, Descant)       ally_heal_flat / ally_shield_flat
+//   pays: 'enemy'  (Crusade, Acceptance, Hunger)  enemy_damage_flat / enemy_decay_flat
+//                                                 / the stagger fields
 //
-// Nothing in the engine enforces that - a reward that does not match its singers
+// Two cells of one calling put the whole reward on that side; one of each pays
+// both. A 'hero' cell is one of the four healer heroes, so it pays the ally side
+// like any other rite. This replaced "the reward is what the chorus DID", which
+// could not survive a cell that no longer knows which unit will fill it.
+//
+// Nothing in the engine enforces it - a reward that does not match its callings
 // is a bug here.
 //
 // Armor and resistances are capped at MITIGATION_CAP_PCT and a shield or decay
@@ -136,9 +160,20 @@
 // ── Which one fires ──────────────────────────────────────────────────────────
 //
 // fireLitany takes the FIRST match in this array. Each hero's two litanies are
-// mutually exclusive by their formations: either their lead cells are in
-// different places, or they demand different units in a square they share, so the
-// board decides which one is spoken and never both.
+// mutually exclusive, and for each pair it is one of three things that does it:
+//
+//   the LEAD is in a different place        (iron_sentence / last_volley,
+//                                            taken_breath / ash_antiphon)
+//   a shared square wants different SIZES   a tile cell and half of a row or
+//                                           column unit cannot both be filled
+//   a shared square wants different CALLINGS
+//                                           (profane_chorus / unbroken_banner,
+//                                            clean_passage / carried_cup,
+//                                            long_wailing / mothers_answer)
+//
+// The third is the one to keep in mind when editing: two chorus cells on the
+// same square of a hero's two litanies MUST name different callings, or a rich
+// board satisfies both and the player only ever sees the earlier one.
 
 // Every champion a litany may be staged over. ONE list, read by fireLitany for
 // all eighteen - see "The target" above.
@@ -198,16 +233,12 @@ const LITANIES = [
       'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212',
     ] },
     formation: { cells: [
-      // A: Templar to Paragon, both branches: front-rank mace and holy_shock.
-      { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', ids: [
-        'e21', 'e211', 'e2111', 'e212', 'e2121',
-      ] },
+      // A: a Crusade - like the other, so the whole reward lands on the enemy side.
+      { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'crusade' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
-      // C: Templar to Paragon, both branches: front-rank mace and holy_shock.
-      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', ids: [
-        'e21', 'e211', 'e2111', 'e212', 'e2121',
-      ] },
+      // C: a Crusade - like the other, so the whole reward lands on the enemy side.
+      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'crusade' },
     ] },
     verses: [
       { speaker: 'A', strike: 'visual',
@@ -242,16 +273,10 @@ const LITANIES = [
       'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212',
     ] },
     formation: { cells: [
-      // A: Priest to Seraph, both branches: back-rank heal (holy_heal).
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', ids: [
-        'e22', 'e221', 'e2211', 'e222', 'e2221',
-      ] },
-      // C: Standart Bearer to Gonfalonier: shields the WHOLE line (shield_ward,
-      // targets: 6). The one support line placed in the FRONT column, deliberately:
-      // a banner stands on the line, whatever pref_position says.
-      { key: 'C', row: 0, col: 'front', size: 'tile', role: 'chorus', ids: [
-        'e13', 'e131', 'e1311',
-      ] },
+      // A: a Vigil - like the other, so the whole reward lands on the ally side.
+      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'vigil' },
+      // C: a Vigil - like the other, so the whole reward lands on the ally side.
+      { key: 'C', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'vigil' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
     ] },
@@ -288,18 +313,12 @@ const LITANIES = [
       'h_e_2_b2', 'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42',
     ] },
     formation: { cells: [
-      // A: Cinder Knight and Dragon Knight: the mage line that fights in the FRONT
-      // rank, fire claws.
-      { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', ids: [
-        'e412', 'e4121',
-      ] },
+      // A: a Crusade - like the other, so the whole reward lands on the enemy side.
+      { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'crusade' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'back', size: 'tile', role: 'lead' },
-      // C: Cinder Knight and Dragon Knight: the mage line that fights in the FRONT
-      // rank, fire claws.
-      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', ids: [
-        'e412', 'e4121',
-      ] },
+      // C: a Crusade - like the other, so the whole reward lands on the enemy side.
+      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'crusade' },
     ] },
     verses: [
       { speaker: 'A', strike: 'visual',
@@ -332,17 +351,12 @@ const LITANIES = [
       'h_e_2_b2', 'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42',
     ] },
     formation: { cells: [
-      // A: Warder Adept to Bulwark Archon: back-rank shield (shield_ward).
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', ids: [
-        'e43', 'e431', 'e4311',
-      ] },
+      // A: a Vigil - the ally half of the reward.
+      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'vigil' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'back', size: 'tile', role: 'lead' },
-      // C: Sentinel to Golden Lion: a TWO-CELL construct in the front column,
-      // shield_bash. The Artificer keeps it standing; it does the killing.
-      { key: 'C', row: 1, col: 'front', size: 'column', role: 'chorus', ids: [
-        'e3', 'e31', 'e311', 'e3111',
-      ] },
+      // C: a Crusade - the enemy half of the reward.
+      { key: 'C', row: 1, col: 'front', size: 'column', role: 'chorus', calling: 'crusade' },
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
@@ -373,22 +387,23 @@ const LITANIES = [
     //
     // Lead: Sentinel to Golden Lion: a TWO-CELL construct in the front column,
     // shield_bash. The Artificer keeps it standing; it does the killing.
+    // The hero of this litany, for the cell marked role: 'hero'. The Artificer
+    // cannot be the lead - a healer lands no blows - so the hero line is named
+    // here, apart from the lead, and sings from a cell of its own.
+    hero: { ids: [
+      'h_e_3', 'h_e_3_a2', 'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42',
+      'h_e_3_b2', 'h_e_3_b3', 'h_e_3_b41', 'h_e_3_b42',
+    ] },
     lead: { ids: [
       'e3', 'e31', 'e311', 'e3111',
     ] },
     formation: { cells: [
-      // A: Artificer, every tier of both paths. It repairs - it cannot kill, so it
-      // sings here and its own construct leads.
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', ids: [
-        'h_e_3', 'h_e_3_a2', 'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42',
-        'h_e_3_b2', 'h_e_3_b3', 'h_e_3_b41', 'h_e_3_b42',
-      ] },
+      // A: the Artificer. She repairs, so she cannot land the blow - B does.
+      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'hero' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'column', role: 'lead' },
-      // C: Rifleman to Annihilator: back-rank cannon shot.
-      { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', ids: [
-        'e62', 'e621', 'e6211',
-      ] },
+      // C: a Crusade - the enemy half of the reward.
+      { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', calling: 'crusade' },
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
@@ -417,23 +432,23 @@ const LITANIES = [
     //
     // Lead: Siege Engine to Siege Leviathan: a TWO-CELL gun carriage in the back
     // column, cannon shot.
+    // The hero of this litany, for the cell marked role: 'hero'. The Artificer
+    // cannot be the lead - a healer lands no blows - so the hero line is named
+    // here, apart from the lead, and sings from a cell of its own.
+    hero: { ids: [
+      'h_e_3', 'h_e_3_a2', 'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42',
+      'h_e_3_b2', 'h_e_3_b3', 'h_e_3_b41', 'h_e_3_b42',
+    ] },
     lead: { ids: [
       'e32', 'e321', 'e3211',
     ] },
     formation: { cells: [
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 0, col: 'back', size: 'column', role: 'lead' },
-      // A: Artificer, every tier of both paths. It repairs - it cannot kill, so it
-      // sings here and its own construct leads.
-      { key: 'A', row: 2, col: 'back', size: 'tile', role: 'chorus', ids: [
-        'h_e_3', 'h_e_3_a2', 'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42',
-        'h_e_3_b2', 'h_e_3_b3', 'h_e_3_b41', 'h_e_3_b42',
-      ] },
-      // C: Aegis Warden and Sentinel: the shield line that stands in the FRONT
-      // rank (shield_ward).
-      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', ids: [
-        'e432', 'e4321',
-      ] },
+      // A: the Artificer. She repairs, so she cannot land the blow - B does.
+      { key: 'A', row: 2, col: 'back', size: 'tile', role: 'hero' },
+      // C: a Vigil - the ally half of the reward.
+      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'vigil' },
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
@@ -468,16 +483,12 @@ const LITANIES = [
       'h_g_2_b2', 'h_g_2_b3', 'h_g_2_b41', 'h_g_2_b42',
     ] },
     formation: { cells: [
-      // A: Risen to Plague Champion: front-rank claws.
-      { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', ids: [
-        'gs1', 'gs11', 'gs111', 'gs1111',
-      ] },
+      // A: a Acceptance - like the other, so the whole reward lands on the enemy side.
+      { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'acceptance' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
-      // C: Risen to Plague Champion: front-rank claws.
-      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', ids: [
-        'gs1', 'gs11', 'gs111', 'gs1111',
-      ] },
+      // C: a Acceptance - like the other, so the whole reward lands on the enemy side.
+      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'acceptance' },
     ] },
     verses: [
       { speaker: 'A', strike: 'visual',
@@ -509,14 +520,10 @@ const LITANIES = [
       'h_g_2_b2', 'h_g_2_b3', 'h_g_2_b41', 'h_g_2_b42',
     ] },
     formation: { cells: [
-      // A: Stitcher to Blight Surgeon: back-rank mend_flesh.
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', ids: [
-        'gs13', 'gs131', 'gs1311',
-      ] },
-      // C: Pale Maiden to Pale Sovereign: front-rank sword.
-      { key: 'C', row: 0, col: 'front', size: 'tile', role: 'chorus', ids: [
-        'gs7', 'gs71', 'gs711', 'gs7111',
-      ] },
+      // A: a Acceptance - the enemy half of the reward.
+      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'acceptance' },
+      // C: a Denial - the ally half of the reward.
+      { key: 'C', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'denial' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
     ] },
@@ -553,17 +560,12 @@ const LITANIES = [
       'h_g_1_b2', 'h_g_1_b3', 'h_g_1_b41', 'h_g_1_b42',
     ] },
     formation: { cells: [
-      // A: Blood Knight and Sanguine Lord: front-rank sword.
-      { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', ids: [
-        'gs311', 'gs3111',
-      ] },
+      // A: a Acceptance - like the other, so the whole reward lands on the enemy side.
+      { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'acceptance' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
-      // C: Blood Adept to Crimson Archon: back-rank blood bolts. The tier-1 Adept is
-      // left out - it throws an arcane bolt, not blood.
-      { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', ids: [
-        'gs31', 'gs312', 'gs3121',
-      ] },
+      // C: a Acceptance - like the other, so the whole reward lands on the enemy side.
+      { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', calling: 'acceptance' },
     ] },
     verses: [
       { speaker: 'A', strike: 'visual',
@@ -596,18 +598,12 @@ const LITANIES = [
       'h_g_1_b2', 'h_g_1_b3', 'h_g_1_b41', 'h_g_1_b42',
     ] },
     formation: { cells: [
-      // A: Pale Votaress to Pale Prioress: pale_embrace, a heal over every Spirit
-      // ally (targets: 6).
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', ids: [
-        'gs72', 'gs721', 'gs7211',
-      ] },
+      // A: a Denial - the ally half of the reward.
+      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'denial' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
-      // C: Husk Colossus to Grail Archangel: a unit that fills BOTH columns of its
-      // row, claws. The Sorrow Bearer branch is left out - it mends instead.
-      { key: 'C', row: 2, col: 'both', size: 'row', role: 'chorus', ids: [
-        'gs4', 'gs41', 'gs411', 'gs4111',
-      ] },
+      // C: a Acceptance - the enemy half of the reward.
+      { key: 'C', row: 2, col: 'both', size: 'row', role: 'chorus', calling: 'acceptance' },
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
@@ -642,17 +638,12 @@ const LITANIES = [
       'h_g_3_b2', 'h_g_3_b3', 'h_g_3_b41', 'h_g_3_b42',
     ] },
     formation: { cells: [
-      // A: Ghost to Revenant: back-rank haunt, the whole field from tier 2.
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', ids: [
-        'gs6', 'gs61', 'gs611', 'gs6111',
-      ] },
+      // A: a Acceptance - like the other, so the whole reward lands on the enemy side.
+      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'acceptance' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'back', size: 'tile', role: 'lead' },
-      // C: Pale Mourner to Pale Dirge: front-rank decay_touch, which lays a decay
-      // pool on an enemy rather than damaging it.
-      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', ids: [
-        'gs73', 'gs731', 'gs7311',
-      ] },
+      // C: a Acceptance - like the other, so the whole reward lands on the enemy side.
+      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'acceptance' },
     ] },
     verses: [
       { speaker: 'A', strike: 'visual',
@@ -685,17 +676,12 @@ const LITANIES = [
       'h_g_3_b2', 'h_g_3_b3', 'h_g_3_b41', 'h_g_3_b42',
     ] },
     formation: { cells: [
-      // A: Necromancer to Mother's Hand: back-rank mend_flesh.
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', ids: [
-        'gs32', 'gs321', 'gs3211',
-      ] },
+      // A: a Denial - the ally half of the reward.
+      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'denial' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'back', size: 'tile', role: 'lead' },
-      // C: Communicant to Anointed: a TWO-CELL vampire knight in the front column,
-      // claws. The Consecrated branch is left out - it stands in the BACK.
-      { key: 'C', row: 1, col: 'front', size: 'column', role: 'chorus', ids: [
-        'gs2', 'gs21', 'gs211', 'gs2111',
-      ] },
+      // C: a Acceptance - the enemy half of the reward.
+      { key: 'C', row: 1, col: 'front', size: 'column', role: 'chorus', calling: 'acceptance' },
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
@@ -726,24 +712,23 @@ const LITANIES = [
     //
     // Lead: Chorister to Doomchanter: a TWO-CELL singer in the back column that
     // throws fire and, at Doomchanter, haunts. The Regent sings; this kills.
+    // The hero of this litany, for the cell marked role: 'hero'. The Choir Regent
+    // cannot be the lead - a healer lands no blows - so the hero line is named
+    // here, apart from the lead, and sings from a cell of its own.
+    hero: { ids: [
+      'h_d_2', 'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42',
+      'h_d_2_b2', 'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42',
+    ] },
     lead: { ids: [
       'd12', 'd121', 'd1211', 'd1212',
     ] },
     formation: { cells: [
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 0, col: 'back', size: 'column', role: 'lead' },
-      // A: Choir Regent, every tier of both paths. Its song is a heal - it cannot
-      // kill, so it sings here and a Chorister leads.
-      { key: 'A', row: 2, col: 'back', size: 'tile', role: 'chorus', ids: [
-        'h_d_2', 'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42',
-        'h_d_2_b2', 'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42',
-      ] },
-      // C: Heretic to Broken Vessel: front-rank mace. The Pain Projector branch is
-      // left out - `sacrifice` is a two-cell animation aimed at an ALLY, which a
-      // chorus verse has no target for.
-      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', ids: [
-        'd4', 'd41', 'd411', 'd4111',
-      ] },
+      // A: the Choir Regent. His song is a heal, so he cannot land the blow - B does.
+      { key: 'A', row: 2, col: 'back', size: 'tile', role: 'hero' },
+      // C: a Hunger - the enemy half of the reward.
+      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'hunger' },
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
@@ -771,20 +756,21 @@ const LITANIES = [
     //   . B
     //
     // Lead: Imp to Conqueror: a TWO-CELL demon in the front column, claws.
+    // The hero of this litany, for the cell marked role: 'hero'. The Choir Regent
+    // cannot be the lead - a healer lands no blows - so the hero line is named
+    // here, apart from the lead, and sings from a cell of its own.
+    hero: { ids: [
+      'h_d_2', 'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42',
+      'h_d_2_b2', 'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42',
+    ] },
     lead: { ids: [
       'd1', 'd11', 'd111', 'd1111',
     ] },
     formation: { cells: [
-      // A: Choir Regent, every tier of both paths. Its song is a heal - it cannot
-      // kill, so it sings here and a Chorister leads.
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', ids: [
-        'h_d_2', 'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42',
-        'h_d_2_b2', 'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42',
-      ] },
-      // C: Cultist to Choir Exalted: back-rank fire bolts.
-      { key: 'C', row: 1, col: 'back', size: 'tile', role: 'chorus', ids: [
-        'd5', 'd51', 'd511', 'd5111',
-      ] },
+      // A: the Choir Regent. His song is a heal, so he cannot land the blow - B does.
+      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'hero' },
+      // C: a Hunger - the enemy half of the reward.
+      { key: 'C', row: 1, col: 'back', size: 'tile', role: 'chorus', calling: 'hunger' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'column', role: 'lead' },
     ] },
@@ -821,19 +807,12 @@ const LITANIES = [
       'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42',
     ] },
     formation: { cells: [
-      // A: Heretic to Broken Vessel: front-rank mace. The Pain Projector branch is
-      // left out - `sacrifice` is a two-cell animation aimed at an ALLY, which a
-      // chorus verse has no target for.
-      { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', ids: [
-        'd4', 'd41', 'd411', 'd4111',
-      ] },
+      // A: a Hunger - the enemy half of the reward.
+      { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'hunger' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
-      // C: Ash Cantor to Ash Liturgist: song_of_ash, which is a HEAL on a Demon
-      // ally (isHealer in utils/battle-engine.js).
-      { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', ids: [
-        'd52', 'd521', 'd5211',
-      ] },
+      // C: a Descant - the ally half of the reward.
+      { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', calling: 'descant' },
     ] },
     verses: [
       { speaker: 'A', strike: 'visual',
@@ -866,19 +845,12 @@ const LITANIES = [
       'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42',
     ] },
     formation: { cells: [
-      // A: Clay Gargoyle to Malachite: a unit that fills BOTH columns of its row and
-      // throws stone at the whole field. The Alabaster branch is left out - it
-      // sings instead of throwing.
-      { key: 'A', row: 0, col: 'both', size: 'row', role: 'chorus', ids: [
-        'd3', 'd31', 'd311', 'd3111', 'd32',
-        'd321', 'd3211',
-      ] },
+      // A: a Hunger - like the other, so the whole reward lands on the enemy side.
+      { key: 'A', row: 0, col: 'both', size: 'row', role: 'chorus', calling: 'hunger' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
-      // C: Flame Spawn to Inferno Scion: front-rank fire claws.
-      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', ids: [
-        'd7', 'd71', 'd711', 'd7111',
-      ] },
+      // C: a Hunger - like the other, so the whole reward lands on the enemy side.
+      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'hunger' },
     ] },
     verses: [
       { speaker: 'A', strike: 'visual',
@@ -913,16 +885,12 @@ const LITANIES = [
       'h_d_3_b2', 'h_d_3_b3', 'h_d_3_b41', 'h_d_3_b42',
     ] },
     formation: { cells: [
-      // A: Flame Spawn to Inferno Scion: front-rank fire claws.
-      { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', ids: [
-        'd7', 'd71', 'd711', 'd7111',
-      ] },
+      // A: a Hunger - like the other, so the whole reward lands on the enemy side.
+      { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'hunger' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'back', size: 'tile', role: 'lead' },
-      // C: Flame Spawn to Inferno Scion: front-rank fire claws.
-      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', ids: [
-        'd7', 'd71', 'd711', 'd7111',
-      ] },
+      // C: a Hunger - like the other, so the whole reward lands on the enemy side.
+      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'hunger' },
     ] },
     verses: [
       { speaker: 'A', strike: 'visual',
@@ -955,20 +923,12 @@ const LITANIES = [
       'h_d_3_b2', 'h_d_3_b3', 'h_d_3_b41', 'h_d_3_b42',
     ] },
     formation: { cells: [
-      // A: Ash Acolyte to Pyre Choir: song_of_ash, and at tier 4 over the whole
-      // line (targets: 6).
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', ids: [
-        'd2', 'd21', 'd211', 'd2111', 'd2112',
-      ] },
+      // A: a Descant - the ally half of the reward.
+      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'descant' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'back', size: 'tile', role: 'lead' },
-      // C: Clay Gargoyle to Malachite: a unit that fills BOTH columns of its row and
-      // throws stone at the whole field. The Alabaster branch is left out - it
-      // sings instead of throwing.
-      { key: 'C', row: 2, col: 'both', size: 'row', role: 'chorus', ids: [
-        'd3', 'd31', 'd311', 'd3111', 'd32',
-        'd321', 'd3211',
-      ] },
+      // C: a Hunger - the enemy half of the reward.
+      { key: 'C', row: 2, col: 'both', size: 'row', role: 'chorus', calling: 'hunger' },
     ] },
     verses: [
       { speaker: 'A', strike: 'support',

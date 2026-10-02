@@ -10382,6 +10382,40 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   background: rgba(var(--accent-rgb), 0.22);
 }
 
+/* The hero's own cell, on the four litanies whose hero is a healer and so sings
+   instead of leading. Accented like the lead because it is still the hero, but
+   outlined rather than filled: the blow lands somewhere else. */
+.litany-grid-cell--hero {
+  border-color: var(--accent);
+  border-style: dashed;
+  background: rgba(var(--accent-rgb), 0.12);
+}
+
+/* A chorus cell names a CALLING, so its band holds a word instead of faces.
+   The frame is the same as a unit band's — these are cells in one list — and
+   only what fills it differs. */
+.litany-row--calling .litany-calling {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.litany-calling-name {
+  color: var(--accent-bright);
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+/* Says what a calling IS. The Chronicle is a different screen, so a player
+   meeting the word here for the first time needs the sentence or the band is
+   a label with nothing behind it. */
+.litany-calling-hint {
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
 /* The band's letter, tying it back to a cell in the diagram above. */
 .litany-row-key {
   display: inline-flex;

@@ -241,6 +241,11 @@ need, and the Proving Grounds' own description says the faction's word too
 
 ### A chorus cell names a CALLING, not units
 
+**Built 2026-10-02.** [data/callings.js](../data/callings.js) holds the six;
+`litanySpeakers` in [utils/battle-engine.js](../utils/battle-engine.js) matches them;
+`roster.calling` carries them, seeded by
+[sql/backfill_callings.sql](../sql/backfill_callings.sql).
+
 **Only the id list goes.** Everything else about a cell is untouched: `key`, `row`,
 `col`, `size`, `role`. A formation is still a list of PLACES on the acting side's own
 half of the board, still matched against an occupant's whole footprint, and a hero's two
@@ -291,18 +296,35 @@ its litany's hero line cannot disagree — one validator rule, replacing the per
 
 **Where the calling comes from.** `roster.calling` jsonb, shaped `{"id": "vigil"}` — the
 same flat shape `engraving` uses, with room for the rungs and counters
-[unit-identity-design.md](unit-identity-design.md) adds later. Bot templates carry one
-per slot (`{ unit, cell, item_id, hero, calling }` in
-[data/bot_templates.js](../data/bot_templates.js)), so the enemy side stages litanies
-exactly as the player's does. **A unit with no calling fills no chorus cell** — that is
-the whole rule for mercenaries and for anything the Chronicle has not reached.
+[unit-identity-design.md](unit-identity-design.md) adds later. It rides on the roster
+ROW rather than inside `unit_data`, because `makeUnitData` rebuilds `unit_data` from the
+definition on every level-up and would drop it. `buildPlayerUnitFromRosterEntry` passes
+it through and `createCombatant` reads it into `_calling`. PvP needs nothing extra — the
+other side is built from its owner's roster by the same function.
+
+**Bots have callings too.** A slot may name its own (`{ unit, cell, item_id, hero,
+calling }` in [data/bot_templates.js](../data/bot_templates.js)) — that is how a
+template is written to field a particular litany — and anything that does not gets one
+**derived from its unit id**. Derived rather than rolled, because a template has to
+field the same army every time it is drawn, or `checkBotTemplate` and the ⚔ bands would
+be measuring something the player never meets. An authored calling that is not one of
+its faction's two is a template error, caught by the audit.
+
+**A unit with no calling fills no chorus cell** — that is the whole rule for mercenaries
+and for anything the Chronicle has not reached.
 
 **What does not change:**
 
 - **The lead.** `lead.ids` is still the line that lands the blow, and it is still not
   always the hero: the Artificer repairs and the Choir Regent's song is a heal, so four
-  of the eighteen put the hero in a *chorus* cell and give the lead to a construct or a
-  chorister. A calling says nothing about whether a unit can kill; the lead list does.
+  of the eighteen give the lead to a construct or a chorister. A calling says nothing
+  about whether a unit can kill; the lead list does.
+
+  Those four gained a **third kind of cell**, `role: 'hero'`, matched against the
+  litany's own `hero.ids`. Before, the hero sat in a chorus cell with its line written
+  into `ids` — which under callings would have let *any* unit with the right calling
+  stand where the Artificer is supposed to be singing. Three roles now: `lead` (the
+  actor, from `lead.ids`), `hero` (that hero's line), `chorus` (a calling).
 - **The target.** `LITANY_TARGETS`, one list, an enemy champion.
 - **The positions.** Cells keep their row, column and size, and the board still decides
   which of a hero's two is spoken.
@@ -313,19 +335,39 @@ the whole rule for mercenaries and for anything the Chronicle has not reached.
   under callings the engine's footprint match does it at run time and the player feels
   it instead.
 
-**Exclusivity is the same check on a shorter list.** Every hero's pair shares at least
-one square — verified across all nine. Today you check that the shared square's two id
-lists do not overlap; now you check that it names a different calling in each. Where a
-pair's squares do not overlap at all, a rich board can satisfy both and `fireLitany`
-takes the earlier one in the array, unchanged.
+**Exclusivity, pair by pair.** Every hero's pair shares at least one square, and one of
+three things keeps them apart:
+
+| what separates them | pairs |
+|---|---|
+| the **lead** stands somewhere else | `iron_sentence`/`last_volley`, `taken_breath`/`ash_antiphon` |
+| the shared square wants different **sizes** — a `tile` cell and half of a `row` or `column` unit cannot both be filled | `cinder_verdict`/`winter_sermon`, `first_sorrow`/`pale_procession`, `iron_homily`/`shut_gate`, `kindling_creed`/`seventh_ember` |
+| the shared square wants different **callings** | `profane_chorus`/`unbroken_banner`, `clean_passage`/`carried_cup`, `long_wailing`/`mothers_answer` |
+
+Only the third is new, and it is the one to watch when editing: two chorus cells on the
+same square of a hero's two litanies must name different callings, or a rich board
+satisfies both and `fireLitany` silently takes the earlier one.
 
 **The reward follows the chorus's callings.** "The reward is what the chorus did"
-becomes "what the chorus *is*": a Vigil cell pays the ally side (`ally_heal_flat`,
-`ally_shield_flat`), a Crusade cell the enemy side (`enemy_damage_flat`,
-`enemy_initiative_flat`), and the Grail's Acceptance pays its own side's HP for a larger
-effect. Ten of the eighteen rewards today are mixed ally+enemy grab-bags precisely
-because the chorus was an ad-hoc unit list; keyed to a calling, the field set falls out
-of the cells and `message` stops being prose that can disagree with them.
+becomes "what the chorus *is*". Each calling carries a `pays` in
+[data/callings.js](../data/callings.js):
+
+| pays | callings | fields |
+|---|---|---|
+| `ally` | Vigil · Denial · Descant | `ally_heal_flat`, `ally_shield_flat` |
+| `enemy` | Crusade · Acceptance · Hunger | `enemy_damage_flat`, `enemy_decay_flat`, the stagger fields |
+
+Two cells of one calling put the whole reward on that side; one of each pays both; a
+`hero` cell is one of the four healer heroes and pays the ally side like any other rite.
+**No reward numbers changed** — the eighteen were assigned callings that match the
+rewards they already had, which is why ten of them are one ally cell and one enemy cell
+rather than a pair.
+
+The old rule could not survive the change on its own: `strike` and the reward were both
+authored against *which unit* would sing, and a chorus cell no longer knows. `strike` is
+now **derived at run time** from the occupant — a unit whose action targets an ally
+performs its own rite over its own side (`'support'`), everything else swings at the
+victim (`'visual'`), and the lethal verse is always the lead's.
 
 **The target is ONE list, `LITANY_TARGETS`, shared by every litany**: an **enemy
 champion**. No litany names a target of its own and none may - `fireLitany` reads that

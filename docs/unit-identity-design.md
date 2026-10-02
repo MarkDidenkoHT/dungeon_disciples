@@ -90,10 +90,30 @@ choice rather than only a stat track: a *Vigil* and a *Crusade* in the right squ
 what stages the execution. It also cuts 298 hardcoded ids out of
 [data/litanies.js](../data/litanies.js).
 
-The calling ids are `vigil` / `crusade`, `acceptance` / `denial`, `descant` / `hunger`,
-stored as `roster.calling` jsonb - `{"id": "vigil"}`, the flat shape `engraving` already
-uses, with room for rungs and counters. Bot templates carry a `calling` per slot, so the
-enemy side stages litanies the same way.
+**Partly built already.** The callings themselves, the storage and the litany half are
+in: [data/callings.js](../data/callings.js), `roster.calling` jsonb, and
+[sql/backfill_callings.sql](../sql/backfill_callings.sql) to seed every existing unit.
+The Chronicle screen, the rungs, the deeds and everything in §3 and §4 below are not.
+
+| Faction | callings | ids | `pays` in a litany |
+|---|---|---|---|
+| Empire | Vigil · Бдение / Crusade · Поход | `vigil` `crusade` | ally / enemy |
+| Grail of Sorrow | Denial · Отрицание / Acceptance · Смирение | `denial` `acceptance` | ally / enemy |
+| Choir of the Cursed | Descant · Дискант / Hunger · Голод | `descant` `hunger` | ally / enemy |
+
+The Russian is not a translation where a translation reads wrong, the same rule
+`RITE_TERMS` follows: "Крестовый поход" is the literal Crusade and is too long for a
+chip on a phone, so the calling is "Поход" - the march, the thing carried forward.
+
+`pays` is which side of a litany's reward that calling's cell accounts for. The Grail's
+**Acceptance** is the enemy-facing one of its pair, which reads backwards until you hold
+the fiction: the Grail's violence is bought with its own blood, so *paying the price* is
+the aggressive calling and *Denial* - refusing that the loss happened - is the one that
+heals and wards.
+
+Bot templates carry a `calling` per slot, so the enemy side stages litanies the same
+way; a slot that names none gets one derived from its unit id, stably, so a template
+fields the same army every time it is drawn.
 
 Changing a calling costs 500 gold and **resets every rung**. The reset is what makes the
 first choice a choice.
