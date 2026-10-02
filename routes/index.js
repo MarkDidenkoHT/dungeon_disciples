@@ -2079,7 +2079,14 @@ router.post('/roster/engrave', requireAuth, async (req, res) => {
 // `mode` is what the castle's two buttons ask for:
 //   'resurrect'      raise every fallen unit (to 1 HP, exactly as the spell does)
 //   'resurrect_heal' raise them AND heal everyone hurt, in one bill
-//   'heal'           heal every wounded unit
+//   'heal'           heal every wounded unit, paid in crystals
+//   'heal_potions'   heal every wounded unit to FULL, paid one Health Potion each
+//
+// Potions are offered ahead of crystals and only when there are enough for the
+// whole party: one potion heals to full where the spell heals heal_pct, so a
+// mixed bill would charge crystals for a worse result on some units than the
+// potions gave others. Short of a potion per wounded unit, the crystal 'heal' is
+// what the client offers instead.
 //
 // All or nothing. The client never offers a button it cannot pay for in full
 // (see castleRestorePlan), so a shortfall here means the state moved underneath
@@ -2088,7 +2095,7 @@ router.post('/roster/engrave', requireAuth, async (req, res) => {
 // any roster row is touched.
 router.post('/roster/restore', requireAuth, async (req, res) => {
   const { chat_id, mode } = req.body;
-  if (!chat_id || !['resurrect', 'resurrect_heal', 'heal'].includes(mode)) {
+  if (!chat_id || !['resurrect', 'resurrect_heal', 'heal', 'heal_potions'].includes(mode)) {
     return res.status(400).json({ error: 'chat_id and a valid mode required' });
   }
 
@@ -2103,8 +2110,11 @@ router.post('/roster/restore', requireAuth, async (req, res) => {
     const resSpell  = factionSpells.find(s => s.usage === 'roster' && s.target_scope === 'single_ally');
     const healSpell = factionSpells.find(s => s.effect_type === 'heal' && s.target_scope === 'single_ally');
 
-    const needRes  = mode !== 'heal';
-    const needHeal = mode !== 'resurrect';
+    // Potions need no spell: the per-unit potion button does not ask for one
+    // either, and a token the player already holds should not be gated behind
+    // a spellbook entry.
+    const needRes  = mode !== 'heal' && mode !== 'heal_potions';
+    const needHeal = mode !== 'resurrect' && mode !== 'heal_potions';
     if (needRes  && !(resSpell  && learnedSpells.includes(resSpell.id)))  return res.status(403).json({ error: 'Spell not learned' });
     if (needHeal && !(healSpell && learnedSpells.includes(healSpell.id))) return res.status(403).json({ error: 'Spell not learned' });
 
@@ -2121,6 +2131,31 @@ router.post('/roster/restore', requireAuth, async (req, res) => {
       const curHp = Number(d.current_hp ?? maxHp);
       return maxHp > 0 && curHp < maxHp;
     });
+
+    // Paid in potions, one per wounded unit, and healed to full — the same
+    // effect the single-unit /roster/potion gives. The spend is atomic, so a
+    // player who is short pays nothing and no roster row is touched.
+    if (mode === 'heal_potions') {
+      if (!wounded.length) return res.status(400).json({ error: 'Nobody needs restoring' });
+      try {
+        await spendResources(chat_id, { health_potion: wounded.length });
+      } catch (err) {
+        if (shortfallItem(err)) {
+          return res.status(400).json({ error: 'Not enough Health Potions', code: 'no_potion' });
+        }
+        throw err;
+      }
+      await Promise.all(wounded.map(r => supabase(`/roster?id=eq.${encodeURIComponent(r.id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ unit_data: { ...r.unit_data, current_hp: Number(r.unit_data.max_hp ?? 0) } }),
+      })));
+
+      const [healed, resourcesAfter] = await Promise.all([
+        supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,chat_id,unit_data,is_hero,engraving`),
+        supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
+      ]);
+      return res.json({ success: true, count: wounded.length, spent: { health_potion: wounded.length }, roster: healed, resources: resourcesAfter });
+    }
 
     const resCount  = needRes  ? dead.length : 0;
     const healCount = needHeal ? (mode === 'resurrect_heal' ? dead.length + wounded.length : wounded.length) : 0;
