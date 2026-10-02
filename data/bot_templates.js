@@ -113,6 +113,25 @@ const BOT_TEMPLATES = [
             spells: [{ spell_id: 'g_spell_7', power: 2 }, { spell_id: 'g_spell_9', power: 4 }] },
         ],
       },
+      // Loyalty 3 AND tiles only. Every other lineup of this template leans on a
+      // Communicant column, and `lean_squad` says in as many words that the column
+      // IS the build — but a tiles-only evening takes it away, and the squad left
+      // behind broke the Loyalty rule, so the template simply was not offered.
+      //
+      // Three Loyalty as tiles buys the build anyway: Mother's Anguish is natively
+      // BOTH Zombie and Vampire, which is what `horde` and `banquet` count and what
+      // the column was being kept for, and standing at cell 2 it is also the Vampire
+      // in Mother's Vessel's own row — so the Blood Bond still forms without a
+      // column and without leaning on an item for the tag.
+      'lean_squad+tiles_only': {
+        band_500: [
+          { unit: 'gs8111',    cell: 2, item_id: 'iron_armor' },
+          { unit: 'gs831',     cell: 3, item_id: 'mothers_gift' },
+          { unit: 'gs5211',    cell: 1, item_id: 'shroud_of_the_fallen' },
+          { unit: 'h_g_2_a41', cell: 4, item_id: 'gift_of_eternity', hero: true,
+            spells: [{ spell_id: 'g_spell_7', power: 3 }, { spell_id: 'g_spell_9', power: 5 }] },
+        ],
+      },
       // Gearless AND Loyalty 3. The gearless lineup spends 4 Loyalty, and the
       // cap then trims a tile off it at random among equals — 77% of what the
       // cap allows. Spending the 3 deliberately keeps the Chosen's column and
