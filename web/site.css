@@ -11,6 +11,15 @@
   --radius: 10px;
   --maxw: 1080px;
   --cdn: https://assets.markdidenkowork.workers.dev;
+
+  --ls1: url('https://assets.markdidenkowork.workers.dev/loading_screens/loading1.jpg');
+  --ls2: url('https://assets.markdidenkowork.workers.dev/loading_screens/loading2.jpg');
+  --ls3: url('https://assets.markdidenkowork.workers.dev/loading_screens/loading3.jpg');
+  --ls4: url('https://assets.markdidenkowork.workers.dev/loading_screens/loading4.jpg');
+  --ls5: url('https://assets.markdidenkowork.workers.dev/loading_screens/loading5.jpg');
+  --ls6: url('https://assets.markdidenkowork.workers.dev/loading_screens/loading6.jpg');
+  --ls7: url('https://assets.markdidenkowork.workers.dev/loading_screens/loading7.jpg');
+  --ls8: url('https://assets.markdidenkowork.workers.dev/loading_screens/loading8.jpg');
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -18,6 +27,7 @@
 html { scroll-behavior: smooth; }
 
 body {
+  position: relative;
   background: var(--bg);
   color: var(--text);
   font-family: Georgia, 'Times New Roman', serif;
@@ -35,6 +45,51 @@ a { color: var(--accent-bright); }
   max-width: var(--maxw);
   margin: 0 auto;
   padding: 0 20px;
+}
+
+
+/* ── Backdrop ─────────────────────────────────────────────────────────────── */
+/* The eight loading screens, greyed back almost to texture, as columns that
+   repeat down the whole page. They are 400x850 portraits, which is why the
+   column width is tied to the count rather than to a fixed pixel size: at four
+   across on a 1600px desktop each one lands at its native size.
+
+   Absolute rather than fixed, so it scrolls with the page and the art changes
+   as you read. `height: 100%` resolves against body, which has no height of its
+   own and is therefore as tall as the document.
+
+   The vertical offsets are the whole trick. Without them all four columns wrap
+   at the same line and the repeat reads as wallpaper; staggered, the seams
+   never line up and it reads as one quasi-pattern. */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  height: 100%;
+  pointer-events: none;
+  background-repeat: repeat-y;
+  background-image: var(--ls1), var(--ls4), var(--ls6), var(--ls3);
+  background-size: 25% auto;
+  background-position: 0 -90px, 25% -430px, 50% -210px, 75% -620px;
+  filter: grayscale(0.85) brightness(0.7) contrast(1);
+  opacity: 0.42;
+}
+
+/* Keeps the body copy off the art: the page is dark at the top and bottom of
+   every viewport-height, so a paragraph never sits on a bright patch. */
+.backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(12,13,17,0.55), rgba(12,13,17,0.1) 30%, rgba(12,13,17,0.1) 70%, rgba(12,13,17,0.55));
+  background-size: 100% 850px;
+}
+
+.topbar,
+main,
+footer {
+  position: relative;
+  z-index: 1;
 }
 
 /* ── Top bar ──────────────────────────────────────────────────────────────── */
@@ -177,7 +232,10 @@ a { color: var(--accent-bright); }
 }
 
 /* ── Sections ─────────────────────────────────────────────────────────────── */
-section { padding: 64px 0; }
+section {
+  padding: 64px 0;
+  scroll-margin-top: 70px;
+}
 
 .section-label {
   font-size: 13px;
@@ -283,7 +341,7 @@ h3 {
 .loop-step {
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface);
+  background: rgba(23, 26, 34, 0.84);
   padding: 18px;
 }
 
@@ -426,4 +484,21 @@ footer {
   body { font-size: 16px; }
   section { padding: 48px 0; }
   .phone iframe { height: 620px; }
+}
+
+@media (max-width: 1199px) {
+  .backdrop {
+    background-image: var(--ls2), var(--ls5), var(--ls7);
+    background-size: 33.34% auto;
+    background-position: 0 -140px, 50% -520px, 100% -260px;
+  }
+}
+
+@media (max-width: 767px) {
+  .backdrop {
+    background-image: var(--ls6);
+    background-size: 100% auto;
+    background-position: 0 -80px;
+    opacity: 0.3;
+  }
 }
