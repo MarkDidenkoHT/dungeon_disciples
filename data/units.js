@@ -3906,7 +3906,7 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
         damage_source: 'cold', action_power: 8, action_icon: 'haunt.jpg', action_animation: 'frost_bolt', action_sfx: 'haunt',
-        xp: 348, passive: ['chill 1', 'sorrow 1', 'vow_of_the_grave 1'], ability: 'frost_armor 1',
+        xp: 348, passive: ['chill 1', 'sorrow 1', 'vow_of_silence 1'], ability: 'frost_armor 1',
       },
       soul_harvester: {
         id: 'dm_e311', f: 'dm', t: 3,
@@ -3919,7 +3919,7 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
         damage_source: 'cold', action_power: 10, action_icon: 'haunt.jpg', action_animation: 'frost_bolt', action_sfx: 'haunt',
-        xp: 930, passive: ['chill 2', 'sorrow 1', 'vow_of_the_grave 1'], ability: 'frost_armor 2',
+        xp: 930, passive: ['chill 2', 'sorrow 1', 'vow_of_silence 1'], ability: 'frost_armor 2',
       },
       malgrath_the_undying_1: {
         id: 'dm_e4', f: 'dm', t: 2,

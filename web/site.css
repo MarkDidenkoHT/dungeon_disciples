@@ -12,14 +12,6 @@
   --maxw: 1080px;
   --cdn: https://assets.markdidenkowork.workers.dev;
 
-  --ls1: url('https://assets.markdidenkowork.workers.dev/loading_screens/loading1.jpg');
-  --ls2: url('https://assets.markdidenkowork.workers.dev/loading_screens/loading2.jpg');
-  --ls3: url('https://assets.markdidenkowork.workers.dev/loading_screens/loading3.jpg');
-  --ls4: url('https://assets.markdidenkowork.workers.dev/loading_screens/loading4.jpg');
-  --ls5: url('https://assets.markdidenkowork.workers.dev/loading_screens/loading5.jpg');
-  --ls6: url('https://assets.markdidenkowork.workers.dev/loading_screens/loading6.jpg');
-  --ls7: url('https://assets.markdidenkowork.workers.dev/loading_screens/loading7.jpg');
-  --ls8: url('https://assets.markdidenkowork.workers.dev/loading_screens/loading8.jpg');
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -49,25 +41,36 @@ a { color: var(--accent-bright); }
 
 
 /* ── Backdrop ─────────────────────────────────────────────────────────────── */
-/* Four of the loading screens as columns repeating down the whole page, greyed
-   back to texture. They are 400x850 portraits, so at four across a 1600px
-   desktop each lands at its native size.
+/* A grid of the loading screens, greyed back to texture, covering the whole
+   page. They are 400x850 portraits, so at four across a 1600px desktop each
+   tile lands at its native size.
+
+   Tiles rather than CSS background layers, because a repeating background
+   cannot vary: `repeat-y` paints the SAME image down its whole column, so the
+   page was four images over and over. The tiles are built in landing.js, which
+   deals the eight images out in a shuffled order.
 
    Absolute rather than fixed, so it scrolls with the page. `height: 100%`
    resolves against body, which has no height of its own and is therefore as
-   tall as the document. */
+   tall as the document; `overflow: hidden` clips the last row of tiles to it. */
 .backdrop {
   position: absolute;
   inset: 0;
   z-index: 0;
   height: 100%;
+  overflow: hidden;
   pointer-events: none;
-  background-repeat: repeat-y;
-  background-image: var(--ls1), var(--ls3), var(--ls5), var(--ls7);
-  background-size: 25% auto;
-  background-position: 0 0, 25% 0, 50% 0, 75% 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-content: start;
   filter: grayscale(0.85) brightness(0.7) contrast(1);
   opacity: 0.42;
+}
+
+.backdrop-tile {
+  aspect-ratio: 400 / 850;
+  background-size: cover;
+  background-position: center;
 }
 
 /* Keeps the body copy off the art: dark at the top and bottom of every tile,
@@ -483,8 +486,6 @@ footer {
 
 @media (max-width: 767px) {
   .backdrop {
-    background-image: var(--ls1);
-    background-size: 100% auto;
-    background-position: 0 0;
+    grid-template-columns: 1fr;
   }
 }

@@ -38,6 +38,69 @@ document.getElementById('lang').addEventListener('click', e => {
 // ── Art ─────────────────────────────────────────────────────────────────────
 document.querySelector('.hero').style.setProperty('--hero-img', `url('${CDN}/screens/embark.jpg')`);
 
+// ── Backdrop ───────────────────────────────────────────────────────────────
+// The eight loading screens dealt out over the page behind the content.
+//
+// This is built here rather than in CSS because a CSS background cannot vary
+// down a column: `repeat-y` paints one image over and over, so the page was the
+// same four pictures to the bottom. Tiles can each hold a different one.
+//
+// The order is a shuffled bag rather than straight random: reshuffling 1..8 and
+// dealing from it guarantees all eight appear before any repeats, which keeps
+// the spread even. On top of that a tile never takes the image to its left or
+// the one directly above, so two of the same are never touching.
+const LOADING_SCREENS = Array.from({ length: 8 }, (_, i) => `${CDN}/loading_screens/loading${i + 1}.jpg`);
+
+function shuffled(list) {
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+function buildBackdrop() {
+  const el = document.querySelector('.backdrop');
+  if (!el) return;
+
+  const cols    = getComputedStyle(el).gridTemplateColumns.split(' ').length;
+  const tileH   = (el.clientWidth / cols) * (850 / 400);
+  // One row of slack, because the page grows as the demo frames finish loading
+  // and a backdrop that stops short is more obvious than one that is clipped.
+  const rows    = Math.ceil(document.body.scrollHeight / tileH) + 1;
+  const total   = cols * rows;
+
+  let bag = [];
+  const draw = (banned) => {
+    if (!bag.length) bag = shuffled(LOADING_SCREENS);
+    let i = bag.findIndex(url => !banned.includes(url));
+    if (i === -1) i = 0;
+    return bag.splice(i, 1)[0];
+  };
+
+  const picks = [];
+  for (let n = 0; n < total; n++) {
+    const left  = n % cols ? picks[n - 1] : null;
+    const above = n >= cols ? picks[n - cols] : null;
+    picks.push(draw([left, above].filter(Boolean)));
+  }
+
+  el.innerHTML = picks
+    .map(url => `<div class="backdrop-tile" style="background-image:url('${url}')"></div>`)
+    .join('');
+}
+
+buildBackdrop();
+// The page gets taller as the frames load, and the column count changes with
+// the breakpoint. Both want a rebuild; neither is worth debouncing hard.
+window.addEventListener('load', buildBackdrop);
+let backdropTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(backdropTimer);
+  backdropTimer = setTimeout(buildBackdrop, 200);
+});
+
 for (const el of document.querySelectorAll('[data-bg]')) {
   el.style.backgroundImage = `url('${CDN}/${el.dataset.bg}')`;
 }
