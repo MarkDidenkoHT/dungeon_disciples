@@ -49,18 +49,13 @@ a { color: var(--accent-bright); }
 
 
 /* ── Backdrop ─────────────────────────────────────────────────────────────── */
-/* The eight loading screens, greyed back almost to texture, as columns that
-   repeat down the whole page. They are 400x850 portraits, which is why the
-   column width is tied to the count rather than to a fixed pixel size: at four
-   across on a 1600px desktop each one lands at its native size.
+/* Four of the loading screens as columns repeating down the whole page, greyed
+   back to texture. They are 400x850 portraits, so at four across a 1600px
+   desktop each lands at its native size.
 
-   Absolute rather than fixed, so it scrolls with the page and the art changes
-   as you read. `height: 100%` resolves against body, which has no height of its
-   own and is therefore as tall as the document.
-
-   The vertical offsets are the whole trick. Without them all four columns wrap
-   at the same line and the repeat reads as wallpaper; staggered, the seams
-   never line up and it reads as one quasi-pattern. */
+   Absolute rather than fixed, so it scrolls with the page. `height: 100%`
+   resolves against body, which has no height of its own and is therefore as
+   tall as the document. */
 .backdrop {
   position: absolute;
   inset: 0;
@@ -68,15 +63,15 @@ a { color: var(--accent-bright); }
   height: 100%;
   pointer-events: none;
   background-repeat: repeat-y;
-  background-image: var(--ls1), var(--ls4), var(--ls6), var(--ls3);
+  background-image: var(--ls1), var(--ls3), var(--ls5), var(--ls7);
   background-size: 25% auto;
-  background-position: 0 -90px, 25% -430px, 50% -210px, 75% -620px;
+  background-position: 0 0, 25% 0, 50% 0, 75% 0;
   filter: grayscale(0.85) brightness(0.7) contrast(1);
   opacity: 0.42;
 }
 
-/* Keeps the body copy off the art: the page is dark at the top and bottom of
-   every viewport-height, so a paragraph never sits on a bright patch. */
+/* Keeps the body copy off the art: dark at the top and bottom of every tile,
+   so a paragraph never sits on a bright patch. */
 .backdrop::after {
   content: '';
   position: absolute;
@@ -486,19 +481,10 @@ footer {
   .phone iframe { height: 620px; }
 }
 
-@media (max-width: 1199px) {
-  .backdrop {
-    background-image: var(--ls2), var(--ls5), var(--ls7);
-    background-size: 33.34% auto;
-    background-position: 0 -140px, 50% -520px, 100% -260px;
-  }
-}
-
 @media (max-width: 767px) {
   .backdrop {
-    background-image: var(--ls6);
+    background-image: var(--ls1);
     background-size: 100% auto;
-    background-position: 0 -80px;
-    opacity: 0.3;
+    background-position: 0 0;
   }
 }
