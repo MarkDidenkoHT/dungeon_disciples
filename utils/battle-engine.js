@@ -139,6 +139,13 @@ class BattleEngine {
     // What each side has dealt and slain, for quests (data/quests.js). Keyed by
     // the quest counter names so the route can hand it straight over.
     this.tally = { player: {}, enemy: {}, ...(state?.tally || {}) };
+    // Block 3 of the Temple's page (data/callings.js): damage dealt and HP
+    // restored, pooled into one number per ROSTER unit rather than per side.
+    // Keyed by `_rosterId`, so a combatant without one - every bot and every
+    // encounter unit - simply never appears here. In a duel both armies have
+    // roster ids, so the route credits only the side it is paying out and the
+    // database refuses a row the caller does not own.
+    this.deeds = { ...(state?.deeds || {}) };
     // Litanies already spent this battle, as `<litany id>:<side>` (see
     // data/litanies.js). Carried through getBattleData/rehydrate so a reload
     // cannot replay one — and with it, hand out its reward a second time.
@@ -186,6 +193,16 @@ class BattleEngine {
     const key  = (!type || type === 'physical') ? 'damage_physical' : 'damage_elemental';
     const t    = this.tally[side] || (this.tally[side] = {});
     t[key] = (t[key] || 0) + amount;
+  }
+
+  // Damage and healing count the same: a priest fills this block by healing
+  // and a swordsman by swinging, and neither is handed a track it cannot
+  // walk. Rounded, because a resisted hit can land on a fraction.
+  creditDeed(actor, amount) {
+    const id = actor?._rosterId;
+    if (id == null || !(amount > 0)) return;
+    const key = String(id);
+    this.deeds[key] = (this.deeds[key] || 0) + Math.round(amount);
   }
 
   tallyKill(dying) {
@@ -1357,6 +1374,7 @@ class BattleEngine {
               ? this.fireLitany(actor, target) : null;
             target.battle_hp = Math.max(0, target.battle_hp - remaining);
             this.tallyDamage(target, remaining, actor.unit_data?.damage_source);
+            this.creditDeed(actor, remaining);
             const dead = target.battle_hp <= 0;
             if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
             this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - remaining, killed: !target.alive });
@@ -1404,8 +1422,7 @@ class BattleEngine {
     const heal   = Math.max(0, Math.min(afterDecay, target.max_hp - target.battle_hp));
     const preHealRatio = target.max_hp > 0 ? target.battle_hp / target.max_hp : 1;
     target.battle_hp += heal;
-    this.fireTrigger('on_heal',   { actor, target, dmg: heal, dying: null });
-    this.fireTrigger('on_healed', { actor, target, dmg: heal, dying: null });
+    this.fireHealTriggers(actor, target, heal);
     this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: heal, heal: true });
     this.checkBark('heal_low_hp', actor, { target, preHealRatio });
     return heal;
@@ -1452,6 +1469,7 @@ class BattleEngine {
         ? this.fireLitany(actor, target) : null;
       target.battle_hp = Math.max(0, target.battle_hp - remaining);
       this.tallyDamage(target, remaining, actor.unit_data?.damage_source);
+      this.creditDeed(actor, remaining);
       const dead = target.battle_hp <= 0;
       if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
       this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - remaining, killed: !target.alive });
@@ -1971,8 +1989,7 @@ class BattleEngine {
     const afterDecay = this.absorbWithDecay(target, Math.floor(raw * factor));
     const heal   = Math.max(0, Math.min(afterDecay, target.max_hp - target.battle_hp));
     target.battle_hp += heal;
-    this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });
-    this.fireTrigger('on_healed', { actor, target, dmg: heal, dying: null });
+    this.fireHealTriggers(actor, target, heal);
     this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: heal, heal: true });
     // Cost is fifth the channelled heal, not half of what actually landed — the
     // sacrifice is paid even when the ally couldn't absorb the full amount.
@@ -2013,7 +2030,10 @@ class BattleEngine {
     actor.acted_this_round = true;
     return this.afterAction(actor);
   }
+  // Every heal that lands goes through here, which is why the deed credit
+  // sits here rather than at each caller.
   fireHealTriggers(healer, target, amount) {
+    this.creditDeed(healer, amount);
     this.fireTrigger('on_heal', { actor: healer, target, dmg: amount, dying: null });
     this.fireTrigger('on_healed', { actor: healer, target, dmg: amount, dying: null });
   }
@@ -3409,6 +3429,7 @@ class BattleEngine {
       // would silently refund every charge the battle had already burned.
       vows: this.vows,
       tally: this.tally,
+      deeds: this.deeds,
       // Once per battle means once per battle, reload or not.
       litaniesFired: this.litaniesFired,
       // Carried so a mid-battle reload cannot re-read a castle that has changed
@@ -3543,6 +3564,7 @@ class BattleEngine {
     // keep the re-declared totals, which for them are zero.
     if (battleData.vows) engine.vows = { grave: 0, silence: 0, ...battleData.vows };
     engine.tally = { player: {}, enemy: {}, ...(battleData.tally || {}) };
+    engine.deeds = { ...(battleData.deeds || {}) };
     engine.litaniesFired = [...(battleData.litaniesFired || [])];
     engine.litaniesUnlocked = battleData.litaniesUnlocked !== false;
     const stateById = {};

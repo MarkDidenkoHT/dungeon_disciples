@@ -122,10 +122,24 @@ a unit *is*. The Temple is the castle's **left page** — a grid of one row per 
 column per Temple level, every column drawn from the first visit and the ones the Temple
 has not reached yet disabled.
 
-| Temple level | Opens |
+| Temple level | Block |
 |---|---|
-| **1** | changing a calling. No stats — what it buys is the choice |
-| **2–5** | one tier a level, stats, not built |
+| **1** | the portrait — tap to change the calling, and its border carries the calling's colour. No stats; what it buys is the choice |
+| **2** | finish 3 errands |
+| **3** | deal or restore 500 — damage and healing pooled, so a priest and a swordsman fill it the same way |
+| **4** | stand in 3 litanies |
+| **5** | **the oath** — gold for a permanent point of HP, for a unit at the end of its branch. 1000, then 1500, then 2000, with no ceiling |
+
+Blocks 2–4 pay nothing yet; they count. Only the oath grants a stat, and the stat
+is stored (`devotion.bonus`) rather than recomputed from the count, so raising the
+reward later never rewrites what earlier oaths bought.
+
+Counters live in `roster.devotion` jsonb ([sql/010_temple_devotion.sql](../sql/010_temple_devotion.sql)),
+are added inside the database, and are lifetime — nothing resets them. The deed
+counter is credited per unit by the battle engine (`creditDeed`); the errand
+counter is credited when the player is shown a finished errand, because the edge
+function that *finishes* one lives outside this repo and that acknowledgement is
+the only moment this service owns exactly once.
 
 A unit is **born with a calling**, assigned at random from its faction's two at each of the
 three roster insert sites (`newCallingFor`, [data/callings.js](../data/callings.js)), so no

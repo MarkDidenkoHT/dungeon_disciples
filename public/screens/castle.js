@@ -9,7 +9,11 @@ import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone, 
 import { UNIT_ABILITIES }    from '../../data/unit_abilities.js';
 import { UNITS }             from '../../data/units.js';
 import { SPELLS }            from '../../data/spells.js';
-import { callingsForFaction, callingName } from '../../data/callings.js';
+import {
+  callingsForFaction, callingName, callingTint,
+  DEVOTION_BLOCKS, oathPrice, devotionCount, oathsSworn, devotionBonusHp,
+  blockName, blockShort,
+} from '../../data/callings.js';
 import { DEATH_ENABLED }    from '../../data/game_flags.js';
 // Which regions drop a material — the castle's cost bar uses it to answer
 // "where do I get this?" for a cost the player cannot meet.
@@ -254,8 +258,18 @@ const CASTLE_TEXT = {
                      ru: n => `Постройте ${n}, чтобы менять призвание` },
   callingsEmpty:{ en: 'No units yet',                         ru: 'Пока нет юнитов' },
   callingColLock:{ en: l => `Opens at level ${l}`,            ru: l => `Откроется на уровне ${l}` },
+  devBlockLock: { en: l => `Temple level ${l}`,               ru: l => `Храм, уровень ${l}` },
+  oathSheet:    { en: 'Oath',                                 ru: 'Обет' },
+  oathBlurb:    { en: 'A unit at the end of its branch has nothing left to become. An oath is what its gold buys instead, and the next one always costs more.',
+                  ru: 'Юнит в конце ветки больше некем становиться. Обет — вот что покупает его золото, и каждый следующий дороже.' },
+  oathSworn:    { en: n => `${n} sworn`,                      ru: n => `Принесено: ${n}` },
+  oathBonus:    { en: n => `+${n} HP`,                        ru: n => `+${n} ЗД` },
+  oathNext:     { en: n => `The next oath grants +${n} HP, for ever.`,
+                  ru: n => `Следующий обет даёт +${n} ЗД навсегда.` },
+  oathSwear:    { en: 'Swear',                                ru: 'Принести' },
+  oathWorking:  { en: 'Swearing…',                            ru: 'Приносим…' },
+  oathNeedsBranch:{ en: 'Finish this unit\u2019s branch first',  ru: 'Сначала завершите ветку юнита' },
   callingColOpen:{ en: l => `Level ${l}`,                     ru: l => `Уровень ${l}` },
-  callingSoon:  { en: 'Nothing here yet',                     ru: 'Здесь пока ничего нет' },
   callingSheet: { en: 'Calling',                              ru: 'Призвание' },
   callingNoStats:{ en: 'Level 1 grants no stats. What it buys is the choice.',
                    ru: 'Уровень 1 не даёт характеристик. Он покупает сам выбор.' },
@@ -352,9 +366,13 @@ export function renderCastle(root, params = {}) {
   // whatever the Temple's level is - a locked column is a promise, the same way
   // a locked castle slot is - so it needs the count and the price, not just the
   // gate.
-  let callingTiers       = 5;
   let callingGateLevel   = 1;
   let callingChangeCost  = { gold: 100 };
+  // The five blocks, in Temple-level order. From /bootstrap so the server owns
+  // the targets, with the bundled data as the fallback for a cached shell that
+  // loaded before the field existed.
+  let devotionBlocks     = DEVOTION_BLOCKS;
+  let oathBonusHp        = 1;
   const castleLang = player?.settings?.language === 'ru' ? 'ru' : 'en';
   // Whether the player is actually looking at the castle. Hidden screens keep
   // every node they ever had (see the screen stack in main.js), so no question
@@ -441,9 +459,10 @@ export function renderCastle(root, params = {}) {
     throneMaxLevel     = buildingsResp.throne_max_level || 4;
     mercenaryBuildings  = buildingsResp.mercenary_buildings || {};
     respecCostPct       = buildingsResp.respec_cost_pct ?? 25;
-    callingTiers        = buildingsResp.calling_tiers ?? callingTiers;
     callingGateLevel    = buildingsResp.calling_building_level ?? callingGateLevel;
     callingChangeCost   = buildingsResp.calling_change_cost || callingChangeCost;
+    devotionBlocks      = buildingsResp.devotion_blocks?.length ? buildingsResp.devotion_blocks : DEVOTION_BLOCKS;
+    oathBonusHp         = buildingsResp.oath_bonus?.hp ?? oathBonusHp;
     trophyInventory     = trophies || [];
     tokenInventory      = boot.tokens || [];
     resourceInventory   = inventory || [];
@@ -1407,21 +1426,28 @@ export function renderCastle(root, params = {}) {
     });
 
     refreshLayerControls();
-    renderCallings();
+    renderDevotion();
 
     runOnboarding();
   }
 
-  // -- Callings, the castle's left page --------------------------------------
-  // The Temple's ladder, drawn as a grid: one row per unit, one column per
-  // Temple level, every column visible from the first visit and the ones the
-  // Temple has not reached yet disabled. Column 1 is the calling itself and
-  // grants no stats - what the Temple's first level sells is the right to
-  // change it. Columns 2-5 are the tiers that will carry stats and hold
-  // nothing yet.
+  // -- The Temple's page, the castle's left page -----------------------------
+  // One row per unit, five blocks per row, one block per Temple level:
   //
-  // Not the Chronicle. That is the Training Grounds' system (litanies, rungs,
-  // epithets) and shares only the `calling` field with this one.
+  //   1  the portrait      tap to change the calling; its border carries the
+  //                        calling's own colour, so the grid reads at a glance
+  //   2  3 errands         counters, lifetime, never reset
+  //   3  deal/restore 500
+  //   4  3 litanies
+  //   5  the oath          gold for a permanent point of HP, and the price
+  //                        climbs for ever
+  //
+  // Every block is drawn from the first visit; the ones the Temple has not
+  // reached are disabled. Counters live in `roster.devotion`
+  // (sql/010_temple_devotion.sql) and are moved only by the server.
+  //
+  // Not the Chronicle - that is the Training Grounds' system, and shares only
+  // the `calling` field with this one.
 
   function templeLevel() {
     const data = structuresRecord?.buildings_data || {};
@@ -1439,7 +1465,7 @@ export function renderCastle(root, params = {}) {
 
   // The hero first, then the order the roster already arrives in, so the grid
   // reads the same way twice running.
-  function callingRows() {
+  function devotionRows() {
     const rows = rosterCache.filter(u => u && u.unit_data);
     return [...rows.filter(u => u.is_hero === true), ...rows.filter(u => u.is_hero !== true)];
   }
@@ -1450,72 +1476,108 @@ export function renderCastle(root, params = {}) {
     return id || null;
   }
 
-  function renderCallings() {
+  // The same test the server makes before selling an oath: nowhere left to
+  // evolve into. Read off the upgrade paths /bootstrap already sent.
+  function atEndOfBranch(row) {
+    const unitId = row?.unit_data?.unit_id;
+    if (!unitId) return false;
+    const paths = (upgradePaths?.[player.faction] || {})[unitId];
+    return !paths || !paths.length;
+  }
+
+  function renderDevotion() {
     const host = root.querySelector('#calling-page');
     if (!host) return;
 
-    const level = templeLevel();
-    const rows  = callingRows();
-    const tiers = Array.from({ length: callingTiers }, (_, i) => i + 1);
-    const label = escapeHtml(templeLabel());
+    const level  = templeLevel();
+    const rows   = devotionRows();
+    const blocks = devotionBlocks;
+    const label  = escapeHtml(templeLabel());
 
     const head = `
-      <div class="calling-row calling-row--head">
-        <div class="calling-gutter calling-gutter--head">
-          <span class="calling-head-name">${label}</span>
-          <span class="calling-head-sub">${level
+      <div class="dev-row dev-row--head">
+        ${blocks.map(b => {
+          const open = level >= b.tier;
+          return `
+            <div class="dev-head ${open ? 'dev-head--open' : ''}"
+                 title="${open ? blockName(b, castleLang) : CASTLE_TEXT.devBlockLock[castleLang](b.tier)}">
+              <span class="dev-head-tier">${b.tier}</span>
+              <span class="dev-head-name">${escapeHtml(blockShort(b, castleLang))}</span>
+            </div>`;
+        }).join('')}
+      </div>`;
+
+    const body = rows.length ? rows.map(row => `
+      <div class="dev-row" data-roster-id="${row.id}">
+        ${blocks.map(b => devotionCell(row, b, level)).join('')}
+      </div>`).join('')
+      : `<div class="calling-empty">${CASTLE_TEXT.callingsEmpty[castleLang]}</div>`;
+
+    host.innerHTML = `
+      <div class="dev-grid">
+        <div class="dev-title">
+          <span class="dev-title-name">${label}</span>
+          <span class="dev-title-sub">${level
             ? CASTLE_TEXT.callingColOpen[castleLang](level)
             : CASTLE_TEXT.callingsNoTemple[castleLang](label)}</span>
         </div>
-        ${tiers.map(t => `
-          <div class="calling-col-head ${level >= t ? 'calling-col-head--open' : ''}"
-               title="${level >= t ? CASTLE_TEXT.callingColOpen[castleLang](t) : CASTLE_TEXT.callingColLock[castleLang](t)}">
-            <span>${t}</span>
-          </div>`).join('')}
-      </div>`;
-
-    const body = rows.length ? rows.map(row => {
-      const def      = resolveUnitDef(row);
-      const art      = def ? branchPortraitUrl(def) : '';
-      const name     = unitName(def || row, player);
-      const callId   = callingOf(row);
-      const callText = callId ? callingName(callId, castleLang) : '-';
-      const cells = tiers.map(t => {
-        const open = level >= t;
-        const lockTitle = CASTLE_TEXT.callingColLock[castleLang](t);
-        if (t === 1) {
-          return `
-            <div class="calling-cell calling-cell--calling ${open ? 'calling-cell--live' : 'calling-cell--locked'}"
-                 ${open ? `data-calling-for="${row.id}"` : ''}
-                 title="${open ? CASTLE_TEXT.callingSheet[castleLang] : lockTitle}">
-              <span class="calling-chip">${open ? escapeHtml(callText) : '\u{1F512}'}</span>
-            </div>`;
-        }
-        return `
-          <div class="calling-cell ${open ? 'calling-cell--empty' : 'calling-cell--locked'}"
-               title="${open ? CASTLE_TEXT.callingSoon[castleLang] : lockTitle}">
-            <span class="calling-chip">${open ? '-' : '\u{1F512}'}</span>
-          </div>`;
-      }).join('');
-      return `
-        <div class="calling-row" data-roster-id="${row.id}">
-          <div class="calling-gutter">
-            <div class="calling-portrait"${art ? ` style="background-image:url('${art}')"` : ''}></div>
-            <span class="calling-unit-name">${escapeHtml(name)}</span>
-          </div>
-          ${cells}
-        </div>`;
-    }).join('') : `<div class="calling-empty">${CASTLE_TEXT.callingsEmpty[castleLang]}</div>`;
-
-    host.innerHTML = `
-      <div class="calling-grid">
         ${head}
-        <div class="calling-body">${body}</div>
+        <div class="dev-body">${body}</div>
       </div>`;
 
     host.querySelectorAll('[data-calling-for]').forEach(cell => {
       cell.addEventListener('click', () => openCallingSheet(cell.dataset.callingFor));
     });
+    host.querySelectorAll('[data-oath-for]').forEach(cell => {
+      cell.addEventListener('click', () => openOathSheet(cell.dataset.oathFor));
+    });
+  }
+
+  function devotionCell(row, block, level) {
+    const open = level >= block.tier;
+    const lock = CASTLE_TEXT.devBlockLock[castleLang](block.tier);
+
+    if (block.kind === 'calling') {
+      const def    = resolveUnitDef(row);
+      const art    = def ? branchPortraitUrl(def) : '';
+      const callId = callingOf(row);
+      const tint   = callingTint(callId);
+      return `
+        <div class="dev-cell dev-cell--portrait ${open ? 'dev-cell--live' : 'dev-cell--locked'}"
+             ${tint ? `style="--calling-tint:${tint}"` : ''}
+             ${open ? `data-calling-for="${row.id}"` : ''}
+             title="${open ? CASTLE_TEXT.callingSheet[castleLang] : lock}">
+          <div class="dev-portrait"${art ? ` style="background-image:url('${art}')"` : ''}></div>
+          <span class="dev-portrait-name">${escapeHtml(unitName(def || row, player))}</span>
+          <span class="dev-portrait-calling">${callId ? escapeHtml(callingName(callId, castleLang)) : '-'}</span>
+        </div>`;
+    }
+
+    if (block.kind === 'oath') {
+      const sworn  = oathsSworn(row);
+      const bonus  = devotionBonusHp(row);
+      const maxed  = atEndOfBranch(row);
+      const why    = !open ? lock
+                   : (!maxed ? CASTLE_TEXT.oathNeedsBranch[castleLang] : blockName(block, castleLang));
+      const live   = open && maxed;
+      return `
+        <div class="dev-cell dev-cell--oath ${live ? 'dev-cell--live' : 'dev-cell--locked'}"
+             ${live ? `data-oath-for="${row.id}"` : ''} title="${why}">
+          <span class="dev-count">${open ? (maxed ? `×${sworn}` : '↑') : '\u{1F512}'}</span>
+          ${open && bonus > 0 ? `<span class="dev-sub">${CASTLE_TEXT.oathBonus[castleLang](bonus)}</span>` : ''}
+          ${live ? `<span class="dev-price">${oathPrice(sworn)}</span>` : ''}
+        </div>`;
+    }
+
+    const have = Math.min(devotionCount(row, block.counter), block.target);
+    const done = have >= block.target;
+    const pct  = Math.round((have / block.target) * 100);
+    return `
+      <div class="dev-cell dev-cell--deed ${open ? (done ? 'dev-cell--done' : '') : 'dev-cell--locked'}"
+           title="${open ? blockName(block, castleLang) : lock}">
+        <span class="dev-count">${open ? (done ? '✔' : `${have}/${block.target}`) : '\u{1F512}'}</span>
+        ${open ? `<div class="dev-bar"><div class="dev-bar-fill" style="width:${pct}%"></div></div>` : ''}
+      </div>`;
   }
 
   // The picker. Both of the faction's callings, the one the unit has marked as
@@ -1538,7 +1600,7 @@ export function renderCastle(root, params = {}) {
         </button>
         ${canPay ? '' : `<p class="calling-opt-warn">${CASTLE_TEXT.callingNoGold[castleLang]}</p>`}`;
       return `
-        <div class="calling-opt ${mine ? 'calling-opt--mine' : ''}">
+        <div class="calling-opt ${mine ? 'calling-opt--mine' : ''}" ${c.tint ? `style="--calling-tint:${c.tint}"` : ''}>
           <div class="calling-opt-head">
             <span class="calling-opt-name">${escapeHtml(callingName(c.id, castleLang))}</span>
             ${mine ? `<span class="calling-opt-tag">${CASTLE_TEXT.callingCurrent[castleLang]}</span>` : ''}
@@ -1565,20 +1627,72 @@ export function renderCastle(root, params = {}) {
       const res = await api('/roster/calling', {
         chat_id: player.chat_id, roster_id: rosterId, calling: callingId,
       });
-      // The write returns the whole roster and the resources, so the grid and
-      // the resource bar are correct without a second round-trip.
-      patchFromWrite(res);
-      if (res.roster)    { rosterCache = res.roster; rosterCount = rosterCache.length; }
-      if (res.resources) resourceInventory = res.resources;
+      applyRosterWrite(res);
       closeModal();
-      renderCallings();
-      refreshResourceBar(player).catch(() => {});
     } catch (err) {
       if (btn) { btn.disabled = false; btn.textContent = CASTLE_TEXT.callingTake[castleLang]; }
-      openAbilityModal(CASTLE_TEXT.callingSheet[castleLang],
-        `<p class="ability-modal-desc">${escapeHtml(err?.message || 'Failed')}</p>`);
+      showDevotionError(err);
     }
   }
+
+  // The oath. One button, and the price on it is the NEXT one's - the server
+  // works it out again from the stored count, so a stale screen cannot buy at
+  // yesterday's price.
+  function openOathSheet(rosterId) {
+    const row = rosterCache.find(u => String(u.id) === String(rosterId));
+    if (!row) return;
+    const def    = resolveUnitDef(row);
+    const sworn  = oathsSworn(row);
+    const bonus  = devotionBonusHp(row);
+    const price  = oathPrice(sworn);
+    const canPay = amountOf('gold') >= price;
+
+    openModal(`${unitName(def || row, player)} — ${CASTLE_TEXT.oathSheet[castleLang]}`, `
+      <div class="calling-sheet">
+        <p class="ability-modal-desc">${CASTLE_TEXT.oathBlurb[castleLang]}</p>
+        <div class="calling-opt">
+          <div class="calling-opt-head">
+            <span class="calling-opt-name">${CASTLE_TEXT.oathSworn[castleLang](sworn)}</span>
+            ${bonus > 0 ? `<span class="calling-opt-tag">${CASTLE_TEXT.oathBonus[castleLang](bonus)}</span>` : ''}
+          </div>
+          <p class="calling-opt-desc">${CASTLE_TEXT.oathNext[castleLang](oathBonusHp)}</p>
+          <button type="button" class="calling-opt-btn" id="oath-swear" ${canPay ? '' : 'disabled'}>
+            ${CASTLE_TEXT.oathSwear[castleLang]} · ${price} ${GOLD_ICON}
+          </button>
+          ${canPay ? '' : `<p class="calling-opt-warn">${CASTLE_TEXT.callingNoGold[castleLang]}</p>`}
+        </div>
+      </div>`);
+
+    getSheetBody()?.querySelector('#oath-swear')?.addEventListener('click', ev => swearOath(rosterId, ev.currentTarget));
+  }
+
+  async function swearOath(rosterId, btn) {
+    if (btn) { btn.disabled = true; btn.textContent = CASTLE_TEXT.oathWorking[castleLang]; }
+    try {
+      const res = await api('/roster/oath', { chat_id: player.chat_id, roster_id: rosterId });
+      applyRosterWrite(res);
+      closeModal();
+    } catch (err) {
+      if (btn) { btn.disabled = false; btn.textContent = CASTLE_TEXT.oathSwear[castleLang]; }
+      showDevotionError(err);
+    }
+  }
+
+  // Both writes return the whole roster and the resources, so the grid and the
+  // resource bar are correct without a second round-trip.
+  function applyRosterWrite(res) {
+    patchFromWrite(res);
+    if (res?.roster)    { rosterCache = res.roster; rosterCount = rosterCache.length; }
+    if (res?.resources) resourceInventory = res.resources;
+    renderDevotion();
+    refreshResourceBar(player).catch(() => {});
+  }
+
+  function showDevotionError(err) {
+    openAbilityModal(CASTLE_TEXT.callingSheet[castleLang],
+      `<p class="ability-modal-desc">${escapeHtml(err?.message || 'Failed')}</p>`);
+  }
+
 
   // ── Onboarding, after the second building ─────────────────────────────────
   // These steps used to run on the roster screen, which handed the player a

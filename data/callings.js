@@ -34,23 +34,23 @@ const CALLINGS = {
   empire: [
     // Holding the line. The Empire's patience: the shield that is still there
     // in the morning.
-    { id: 'vigil',   name: 'Vigil',   name_ru: 'Бдение', pays: 'ally'  },
+    { id: 'vigil',   name: 'Vigil',   name_ru: 'Бдение', pays: 'ally',  tint: '#6f8fbf' },
     // Carrying it forward.
-    { id: 'crusade', name: 'Crusade', name_ru: 'Поход',  pays: 'enemy' },
+    { id: 'crusade', name: 'Crusade', name_ru: 'Поход',  pays: 'enemy', tint: '#c8803a' },
   ],
   grail_of_sorrow: [
     // Refusing the price - the Grail's healing and warding, which is a refusal
     // that the loss has happened at all.
-    { id: 'denial',     name: 'Denial',     name_ru: 'Отрицание', pays: 'ally'  },
+    { id: 'denial',     name: 'Denial',     name_ru: 'Отрицание', pays: 'ally',  tint: '#9b8fd0' },
     // Paying it. The Grail's violence is bought with its own blood, which is
     // why this is the enemy-facing one and not the gentler of the two.
-    { id: 'acceptance', name: 'Acceptance', name_ru: 'Смирение',  pays: 'enemy' },
+    { id: 'acceptance', name: 'Acceptance', name_ru: 'Смирение',  pays: 'enemy', tint: '#b5556a' },
   ],
   choir_of_the_cursed: [
     // Your own voice above the song.
-    { id: 'descant', name: 'Descant', name_ru: 'Дискант', pays: 'ally'  },
+    { id: 'descant', name: 'Descant', name_ru: 'Дискант', pays: 'ally',  tint: '#5fa89b' },
     // Power taken from others.
-    { id: 'hunger',  name: 'Hunger',  name_ru: 'Голод',   pays: 'enemy' },
+    { id: 'hunger',  name: 'Hunger',  name_ru: 'Голод',   pays: 'enemy', tint: '#8aa83f' },
   ],
 };
 
@@ -83,6 +83,94 @@ function randomCallingFor(faction) {
 function newCallingFor(faction) {
   const id = randomCallingFor(faction);
   return id ? { id } : null;
+}
+
+// -- Devotion: the Temple's five blocks -------------------------------------
+// One block per Temple level, in order, and the level is the block's own index.
+// Stored in `roster.devotion` jsonb (sql/010_temple_devotion.sql).
+//
+//   kind 'calling'  the portrait itself - tap to change the calling
+//   kind 'deed'     a counter against a target
+//   kind 'oath'     the unending one: gold for a permanent stat, and the price
+//                   climbs with every oath the unit has already sworn
+//
+// The deeds are deliberately NOT split by calling yet. "Deal or restore 500"
+// pools damage and healing into one number, so a priest and a swordsman fill
+// the same block by doing their own job, and no unit is handed a track it
+// cannot walk.
+const DEVOTION_BLOCKS = [
+  { tier: 1, id: 'calling',  kind: 'calling',
+    short: 'Calling',  short_ru: 'Призвание' },
+  { tier: 2, id: 'errands',  kind: 'deed', counter: 'errands',  target: 3,
+    name: 'Finish 3 errands',        name_ru: 'Завершить 3 поручения',
+    short: 'Errands',  short_ru: 'Поручения' },
+  { tier: 3, id: 'deeds',    kind: 'deed', counter: 'deeds',    target: 500,
+    name: 'Deal or restore 500',     name_ru: 'Нанести или восстановить 500',
+    short: 'Deeds',    short_ru: 'Деяния' },
+  { tier: 4, id: 'litanies', kind: 'deed', counter: 'litanies', target: 3,
+    name: 'Stand in 3 litanies',     name_ru: 'Выстоять в 3 литаниях',
+    short: 'Litanies', short_ru: 'Литании' },
+  { tier: 5, id: 'oath',     kind: 'oath',
+    name: 'Swear an oath',           name_ru: 'Принести обет',
+    short: 'Oath',     short_ru: 'Обет' },
+];
+
+// The oath's price, and what it pays. First 1000 gold, then 1500, 2000, and on
+// with no ceiling - this is the endgame gold sink, so it must never stop
+// asking. The reward starts at a single point of HP; it is stored as a bonus
+// rather than recomputed from the count, so raising it later never rewrites
+// what the oaths already bought (see sql/010_temple_devotion.sql).
+const OATH_BASE_GOLD = 1000;
+const OATH_STEP_GOLD = 500;
+const OATH_BONUS     = { hp: 1 };
+
+function oathPrice(sworn) {
+  return OATH_BASE_GOLD + OATH_STEP_GOLD * Math.max(0, Number(sworn) || 0);
+}
+
+// What the roster column holds, unwrapped, the way callingIdOf unwraps the
+// other one. Always an object, so no caller has to guard.
+function devotionOf(row) {
+  const d = row?.devotion;
+  return (d && typeof d === 'object' && !Array.isArray(d)) ? d : {};
+}
+
+function devotionCount(row, counter) {
+  return Math.max(0, Number(devotionOf(row)[counter]) || 0);
+}
+
+function oathsSworn(row) {
+  return devotionCount(row, 'oaths');
+}
+
+// The permanent HP the oaths have paid for. Read at the same moment the
+// Temple's flat HP is - never written into unit_data, which every battle
+// rewrites from the unit's definition.
+function devotionBonusHp(row) {
+  return Math.max(0, Number(devotionOf(row).bonus?.hp) || 0);
+}
+
+// Done is done: a counter past its target stays past it. Counters are lifetime
+// and nothing resets them.
+function blockDone(row, block) {
+  if (!block || block.kind !== 'deed') return false;
+  return devotionCount(row, block.counter) >= block.target;
+}
+
+function blockName(block, lang = 'en') {
+  if (!block) return '';
+  return lang === 'ru' ? (block.name_ru || block.name || '') : (block.name || '');
+}
+
+function blockShort(block, lang = 'en') {
+  if (!block) return '';
+  return lang === 'ru' ? (block.short_ru || block.short || '') : (block.short || '');
+}
+
+// The colour the portrait's border carries. Null for a unit with no calling,
+// which the screen draws in its ordinary border.
+function callingTint(id) {
+  return CALLING_BY_ID[id]?.tint || null;
 }
 
 function getCalling(id) {
@@ -121,11 +209,17 @@ export {
   CALLINGS, CALLING_BY_ID, CALLING_IDS, CALLING_CHANGE_COST,
   getCalling, callingsForFaction, factionOfCalling, callingIdOf, callingName,
   randomCallingFor, newCallingFor,
+  DEVOTION_BLOCKS, OATH_BASE_GOLD, OATH_STEP_GOLD, OATH_BONUS, oathPrice,
+  devotionOf, devotionCount, oathsSworn, devotionBonusHp, blockDone, blockName,
+  blockShort, callingTint,
 };
 if (typeof module !== 'undefined') {
   module.exports = {
     CALLINGS, CALLING_BY_ID, CALLING_IDS, CALLING_CHANGE_COST,
     getCalling, callingsForFaction, factionOfCalling, callingIdOf, callingName,
     randomCallingFor, newCallingFor,
+    DEVOTION_BLOCKS, OATH_BASE_GOLD, OATH_STEP_GOLD, OATH_BONUS, oathPrice,
+    devotionOf, devotionCount, oathsSworn, devotionBonusHp, blockDone, blockName,
+    blockShort, callingTint,
   };
 }
