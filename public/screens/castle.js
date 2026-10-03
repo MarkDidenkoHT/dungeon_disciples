@@ -12,7 +12,7 @@ import { SPELLS }            from '../../data/spells.js';
 import {
   callingsForFaction, callingName, callingTint,
   DEVOTION_BLOCKS, oathPrice, devotionCount, oathsSworn, devotionBonusHp,
-  blockName, blockShort,
+  blockName,
 } from '../../data/callings.js';
 import { DEATH_ENABLED }    from '../../data/game_flags.js';
 // Which regions drop a material — the castle's cost bar uses it to answer
@@ -1494,35 +1494,26 @@ export function renderCastle(root, params = {}) {
     const blocks = devotionBlocks;
     const label  = escapeHtml(templeLabel());
 
-    const head = `
-      <div class="dev-row dev-row--head">
-        ${blocks.map(b => {
-          const open = level >= b.tier;
-          return `
-            <div class="dev-head ${open ? 'dev-head--open' : ''}"
-                 title="${open ? blockName(b, castleLang) : CASTLE_TEXT.devBlockLock[castleLang](b.tier)}">
-              <span class="dev-head-tier">${b.tier}</span>
-              <span class="dev-head-name">${escapeHtml(blockShort(b, castleLang))}</span>
-            </div>`;
-        }).join('')}
-      </div>`;
-
-    const body = rows.length ? rows.map(row => `
-      <div class="dev-row" data-roster-id="${row.id}">
-        ${blocks.map(b => devotionCell(row, b, level)).join('')}
-      </div>`).join('')
-      : `<div class="calling-empty">${CASTLE_TEXT.callingsEmpty[castleLang]}</div>`;
+    // One track per unit: five blocks on a line, joined by the links between
+    // them. No column heads and no names - the portrait says which unit it is,
+    // and a block says what it is by what is drawn in it.
+    const body = rows.length ? rows.map(row => {
+      const cells = blocks.map(b => devotionBlock(row, b, level));
+      return `
+        <div class="dev-track" data-roster-id="${row.id}">
+          ${cells.join('<span class="dev-link"></span>')}
+        </div>`;
+    }).join('') : `<div class="calling-empty">${CASTLE_TEXT.callingsEmpty[castleLang]}</div>`;
 
     host.innerHTML = `
-      <div class="dev-grid">
+      <div class="dev-scroll">
         <div class="dev-title">
           <span class="dev-title-name">${label}</span>
           <span class="dev-title-sub">${level
             ? CASTLE_TEXT.callingColOpen[castleLang](level)
             : CASTLE_TEXT.callingsNoTemple[castleLang](label)}</span>
         </div>
-        ${head}
-        <div class="dev-body">${body}</div>
+        ${body}
       </div>`;
 
     host.querySelectorAll('[data-calling-for]').forEach(cell => {
@@ -1533,7 +1524,7 @@ export function renderCastle(root, params = {}) {
     });
   }
 
-  function devotionCell(row, block, level) {
+  function devotionBlock(row, block, level) {
     const open = level >= block.tier;
     const lock = CASTLE_TEXT.devBlockLock[castleLang](block.tier);
 
@@ -1542,30 +1533,35 @@ export function renderCastle(root, params = {}) {
       const art    = def ? branchPortraitUrl(def) : '';
       const callId = callingOf(row);
       const tint   = callingTint(callId);
+      // The portrait IS the block, and the border is the only thing that has to
+      // say which calling the unit keeps.
       return `
-        <div class="dev-cell dev-cell--portrait ${open ? 'dev-cell--live' : 'dev-cell--locked'}"
+        <div class="dev-block dev-block--portrait ${open ? 'dev-block--live' : 'dev-block--locked'}"
              ${tint ? `style="--calling-tint:${tint}"` : ''}
              ${open ? `data-calling-for="${row.id}"` : ''}
-             title="${open ? CASTLE_TEXT.callingSheet[castleLang] : lock}">
-          <div class="dev-portrait"${art ? ` style="background-image:url('${art}')"` : ''}></div>
-          <span class="dev-portrait-name">${escapeHtml(unitName(def || row, player))}</span>
-          <span class="dev-portrait-calling">${callId ? escapeHtml(callingName(callId, castleLang)) : '-'}</span>
+             title="${escapeHtml(unitName(def || row, player))}${open ? '' : ` — ${lock}`}">
+          <div class="dev-art"${art ? ` style="background-image:url('${art}')"` : ''}></div>
+          ${callId ? `<span class="dev-tag">${escapeHtml(callingName(callId, castleLang))}</span>` : ''}
+          ${open ? '' : '<span class="dev-lock">\u{1F512}</span>'}
         </div>`;
     }
 
     if (block.kind === 'oath') {
-      const sworn  = oathsSworn(row);
-      const bonus  = devotionBonusHp(row);
-      const maxed  = atEndOfBranch(row);
-      const why    = !open ? lock
-                   : (!maxed ? CASTLE_TEXT.oathNeedsBranch[castleLang] : blockName(block, castleLang));
-      const live   = open && maxed;
+      const sworn = oathsSworn(row);
+      const bonus = devotionBonusHp(row);
+      const maxed = atEndOfBranch(row);
+      const live  = open && maxed;
+      const why   = !open ? lock
+                  : (!maxed ? CASTLE_TEXT.oathNeedsBranch[castleLang] : blockName(block, castleLang));
       return `
-        <div class="dev-cell dev-cell--oath ${live ? 'dev-cell--live' : 'dev-cell--locked'}"
+        <div class="dev-block dev-block--oath ${live ? 'dev-block--live' : 'dev-block--locked'}"
              ${live ? `data-oath-for="${row.id}"` : ''} title="${why}">
-          <span class="dev-count">${open ? (maxed ? `×${sworn}` : '↑') : '\u{1F512}'}</span>
-          ${open && bonus > 0 ? `<span class="dev-sub">${CASTLE_TEXT.oathBonus[castleLang](bonus)}</span>` : ''}
-          ${live ? `<span class="dev-price">${oathPrice(sworn)}</span>` : ''}
+          ${!open ? '<span class="dev-lock">\u{1F512}</span>'
+                  : (maxed
+                      ? `<span class="dev-big">×${sworn}</span>
+                         <span class="dev-small">${oathPrice(sworn)}</span>`
+                      : '<span class="dev-big dev-big--muted">↑</span>')}
+          ${open && bonus > 0 ? `<span class="dev-tag dev-tag--bonus">${CASTLE_TEXT.oathBonus[castleLang](bonus)}</span>` : ''}
         </div>`;
     }
 
@@ -1573,12 +1569,15 @@ export function renderCastle(root, params = {}) {
     const done = have >= block.target;
     const pct  = Math.round((have / block.target) * 100);
     return `
-      <div class="dev-cell dev-cell--deed ${open ? (done ? 'dev-cell--done' : '') : 'dev-cell--locked'}"
+      <div class="dev-block dev-block--deed ${open ? (done ? 'dev-block--done' : '') : 'dev-block--locked'}"
            title="${open ? blockName(block, castleLang) : lock}">
-        <span class="dev-count">${open ? (done ? '✔' : `${have}/${block.target}`) : '\u{1F512}'}</span>
-        ${open ? `<div class="dev-bar"><div class="dev-bar-fill" style="width:${pct}%"></div></div>` : ''}
+        ${!open ? '<span class="dev-lock">\u{1F512}</span>'
+                : (done ? '<span class="dev-big dev-big--done">✔</span>'
+                        : `<span class="dev-big">${have}</span><span class="dev-small">/ ${block.target}</span>`)}
+        ${open && !done ? `<div class="dev-bar"><div class="dev-bar-fill" style="width:${pct}%"></div></div>` : ''}
       </div>`;
   }
+
 
   // The picker. Both of the faction's callings, the one the unit has marked as
   // its own, and a priced button on the other - there are only ever two, so the
