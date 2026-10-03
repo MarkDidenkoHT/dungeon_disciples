@@ -12,7 +12,7 @@ import { SPELLS }            from '../../data/spells.js';
 import {
   callingsForFaction, callingName, callingTint,
   DEVOTION_BLOCKS, oathPrice, devotionCount, oathsSworn, devotionBonusHp,
-  blockName,
+  blockFor, blockName,
 } from '../../data/callings.js';
 import { DEATH_ENABLED }    from '../../data/game_flags.js';
 // Which regions drop a material — the castle's cost bar uses it to answer
@@ -1562,7 +1562,10 @@ export function renderCastle(root, params = {}) {
     });
   }
 
-  function devotionBlock(row, block, level) {
+  function devotionBlock(row, unitBlock, level) {
+    // The hero's block 2 is not the errand one (data/callings.js): resolve the
+    // block against the unit before reading a counter off it.
+    const block = blockFor(row, unitBlock);
     const open = level >= block.tier;
     const lock = CASTLE_TEXT.devBlockLock[castleLang](block.tier);
 

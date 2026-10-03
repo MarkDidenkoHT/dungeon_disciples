@@ -4581,6 +4581,16 @@ router.post('/battle/cast', requireAuth, async (req, res) => {
     // investment qualifies. Not awaited — see bumpDailyTask.
     if (Number(power) >= 3) bumpDailyTask(chat_id, 'spells');
 
+    // Block 2 of the Temple's page, the hero's version of it (data/callings.js).
+    // ANY power counts here: the block asks for ten spells, not ten good ones,
+    // and the daily task above is what rewards the investment. Battle casts
+    // only - the roster's out-of-combat heal and raise go through their own
+    // routes, and a bulk restore would otherwise bank the whole party as casts.
+    if (hero._rosterId != null) {
+      bumpDevotion(chat_id, { [String(hero._rosterId)]: { spells: 1 } })
+        .catch(err => console.error('spell devotion bump failed:', err.message));
+    }
+
     // The enemy answers immediately, exactly as after any other hero action —
     // unless the enemy is a player, who answers in their own time. Either way,
     // turns nobody can take are spent rather than waited on.

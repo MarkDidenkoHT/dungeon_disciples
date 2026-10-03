@@ -101,9 +101,16 @@ function newCallingFor(faction) {
 const DEVOTION_BLOCKS = [
   { tier: 1, id: 'calling',  kind: 'calling',
     short: 'Calling',  short_ru: 'Призвание' },
+  // `hero` is what this block asks of the HERO instead. A hero never leaves
+  // on an errand - freeRosterRows in routes/index.js skips them - so the
+  // ordinary block is a rung it could never reach. Casting is the thing only
+  // the hero does, so that is what its block counts.
   { tier: 2, id: 'errands',  kind: 'deed', counter: 'errands',  target: 3,
     name: 'Finish 3 errands',        name_ru: 'Завершить 3 поручения',
-    short: 'Errands',  short_ru: 'Поручения' },
+    short: 'Errands',  short_ru: 'Поручения',
+    hero: { id: 'spells', counter: 'spells', target: 10,
+            name: 'Cast 10 spells',      name_ru: 'Сотворить 10 заклинаний',
+            short: 'Spells',             short_ru: 'Заклинания' } },
   { tier: 3, id: 'deeds',    kind: 'deed', counter: 'deeds',    target: 500,
     name: 'Deal or restore 500',     name_ru: 'Нанести или восстановить 500',
     short: 'Deeds',    short_ru: 'Деяния' },
@@ -150,11 +157,21 @@ function devotionBonusHp(row) {
   return Math.max(0, Number(devotionOf(row).bonus?.hp) || 0);
 }
 
+// The block as it applies to THIS unit. Everything but block 2 is the same for
+// everyone; block 2 asks the hero for something else. Resolved in one place so
+// the screen, the server and anything counting agree on which counter a unit's
+// block is keyed to.
+function blockFor(row, block) {
+  if (!block) return block;
+  return (row?.is_hero === true && block.hero) ? { ...block, ...block.hero } : block;
+}
+
 // Done is done: a counter past its target stays past it. Counters are lifetime
 // and nothing resets them.
 function blockDone(row, block) {
-  if (!block || block.kind !== 'deed') return false;
-  return devotionCount(row, block.counter) >= block.target;
+  const b = blockFor(row, block);
+  if (!b || b.kind !== 'deed') return false;
+  return devotionCount(row, b.counter) >= b.target;
 }
 
 function blockName(block, lang = 'en') {
@@ -210,7 +227,7 @@ export {
   getCalling, callingsForFaction, factionOfCalling, callingIdOf, callingName,
   randomCallingFor, newCallingFor,
   DEVOTION_BLOCKS, OATH_BASE_GOLD, OATH_STEP_GOLD, OATH_BONUS, oathPrice,
-  devotionOf, devotionCount, oathsSworn, devotionBonusHp, blockDone, blockName,
+  devotionOf, devotionCount, oathsSworn, devotionBonusHp, blockFor, blockDone, blockName,
   blockShort, callingTint,
 };
 if (typeof module !== 'undefined') {
@@ -219,7 +236,7 @@ if (typeof module !== 'undefined') {
     getCalling, callingsForFaction, factionOfCalling, callingIdOf, callingName,
     randomCallingFor, newCallingFor,
     DEVOTION_BLOCKS, OATH_BASE_GOLD, OATH_STEP_GOLD, OATH_BONUS, oathPrice,
-    devotionOf, devotionCount, oathsSworn, devotionBonusHp, blockDone, blockName,
+    devotionOf, devotionCount, oathsSworn, devotionBonusHp, blockFor, blockDone, blockName,
     blockShort, callingTint,
   };
 }
