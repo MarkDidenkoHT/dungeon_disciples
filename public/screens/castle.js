@@ -1264,9 +1264,23 @@ export function renderCastle(root, params = {}) {
     }
   }
 
+  // BOUND ONCE, ever. load() runs again on every visit (onShow below), and this
+  // used to add another pair of listeners each time - so after a second visit
+  // one tap on an arrow ran setLayer twice and stepped two pages. With only two
+  // pages the second step clamped and the bug was invisible; the third page is
+  // what made it show. The flag lives on the button, the way enableTrackSwipe
+  // marks its own, because the buttons outlive every call.
   function attachLayerControls() {
-    root.querySelector('#layer-prev')?.addEventListener('click', () => setLayer(currentLayer - 1));
-    root.querySelector('#layer-next')?.addEventListener('click', () => setLayer(currentLayer + 1));
+    const prev = root.querySelector('#layer-prev');
+    const next = root.querySelector('#layer-next');
+    if (prev && !prev.dataset.layerBound) {
+      prev.dataset.layerBound = '1';
+      prev.addEventListener('click', () => setLayer(currentLayer - 1));
+    }
+    if (next && !next.dataset.layerBound) {
+      next.dataset.layerBound = '1';
+      next.addEventListener('click', () => setLayer(currentLayer + 1));
+    }
     applyLayer();
   }
 
