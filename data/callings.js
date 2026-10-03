@@ -174,6 +174,45 @@ function blockDone(row, block) {
   return devotionCount(row, b.counter) >= b.target;
 }
 
+// A CHAIN, not four open tabs. A block is only workable once every deed block
+// before it is finished, so a unit walks 2 -> 3 -> 4 -> 5 in order and the page
+// always shows exactly one thing to be getting on with.
+//
+//   'temple'   the Temple has not reached this block's level
+//   'waiting'  an earlier block in the chain is unfinished
+//   'open'     this is the one to work on
+//   'done'     finished, and it stays finished
+//
+// Counters themselves are still lifetime and credited whenever they are earned
+// (sql/010_temple_devotion.sql) - a deed done is done, and a unit that arrives
+// here with a battle record already behind it keeps it. The chain decides what
+// the page OFFERS, not what the world counts.
+function devotionState(row, block, templeLevel) {
+  const b = blockFor(row, block);
+  if (!b) return 'temple';
+  if ((templeLevel || 0) < b.tier) return 'temple';
+  for (const prev of DEVOTION_BLOCKS) {
+    if (prev.tier >= b.tier) break;
+    if (prev.kind !== 'deed') continue;
+    if (!blockDone(row, prev)) return 'waiting';
+  }
+  if (b.kind === 'deed' && blockDone(row, b)) return 'done';
+  return 'open';
+}
+
+// The block the unit is working on, or null when the chain is finished or has
+// not opened. Used for the "finish X first" line on a waiting block.
+function previousUnfinished(row, block) {
+  const b = blockFor(row, block);
+  if (!b) return null;
+  for (const prev of DEVOTION_BLOCKS) {
+    if (prev.tier >= b.tier) break;
+    if (prev.kind !== 'deed') continue;
+    if (!blockDone(row, prev)) return blockFor(row, prev);
+  }
+  return null;
+}
+
 function blockName(block, lang = 'en') {
   if (!block) return '';
   return lang === 'ru' ? (block.name_ru || block.name || '') : (block.name || '');
@@ -228,6 +267,7 @@ export {
   randomCallingFor, newCallingFor,
   DEVOTION_BLOCKS, OATH_BASE_GOLD, OATH_STEP_GOLD, OATH_BONUS, oathPrice,
   devotionOf, devotionCount, oathsSworn, devotionBonusHp, blockFor, blockDone, blockName,
+  devotionState, previousUnfinished,
   blockShort, callingTint,
 };
 if (typeof module !== 'undefined') {
@@ -237,6 +277,7 @@ if (typeof module !== 'undefined') {
     randomCallingFor, newCallingFor,
     DEVOTION_BLOCKS, OATH_BASE_GOLD, OATH_STEP_GOLD, OATH_BONUS, oathPrice,
     devotionOf, devotionCount, oathsSworn, devotionBonusHp, blockFor, blockDone, blockName,
+    devotionState, previousUnfinished,
     blockShort, callingTint,
   };
 }

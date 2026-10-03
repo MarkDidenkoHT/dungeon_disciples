@@ -130,6 +130,12 @@ has not reached yet disabled.
 | **4** | stand in 3 litanies |
 | **5** | **the oath** — gold for a permanent point of HP, for a unit at the end of its branch. 1000, then 1500, then 2000, with no ceiling |
 
+**The blocks are a chain, not four open tasks.** A block only becomes workable once
+every deed block before it is finished, so a unit walks 2 → 3 → 4 → 5 in order and the
+page always shows exactly one thing to get on with. The counters themselves stay
+lifetime and are credited whenever they are earned — the chain decides what the page
+*offers*, not what the world counts.
+
 Blocks 2–4 pay nothing yet; they count. Only the oath grants a stat, and the stat
 is stored (`devotion.bonus`) rather than recomputed from the count, so raising the
 reward later never rewrites what earlier oaths bought.

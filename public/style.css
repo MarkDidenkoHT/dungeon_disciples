@@ -9098,6 +9098,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .dev-big--muted { color: var(--muted); font-size: 1.2rem; }
 .dev-big--done  { color: var(--accent); }
 
+
 .dev-small {
   margin-top: 1px;
   font-size: 0.54rem;
@@ -9126,9 +9127,36 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background: var(--accent);
 }
 
+/* SOLID. A finished block is the one thing on the page that should need no
+   reading, and a 12%-accent wash over the castle backdrop was not it. */
 .dev-block--done {
-  border-color: var(--accent);
-  background: rgba(var(--accent-rgb), 0.12);
+  border-color: var(--accent-bright, var(--accent));
+  background: var(--accent);
+  box-shadow: 0 0 10px -3px rgba(var(--accent-rgb), 0.8);
+}
+
+.dev-block--done .dev-big--done {
+  color: #15110a;
+  font-size: 1.4rem;
+}
+
+/* Reached, but not its turn: the chain runs 2 -> 3 -> 4 -> 5 and only one
+   block is ever the one to work on. Readable, so the player can see what is
+   coming, and plainly inert. */
+.dev-block--waiting {
+  background: rgba(0, 0, 0, 0.24);
+  border-style: dashed;
+}
+
+.dev-block--waiting .dev-big,
+.dev-block--waiting .dev-small {
+  opacity: 0.5;
+}
+
+/* The one to work on. */
+.dev-block--open {
+  border-color: rgba(var(--accent-rgb), 0.55);
+  background: rgba(var(--accent-rgb), 0.10);
 }
 
 .dev-block--live {

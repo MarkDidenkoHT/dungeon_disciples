@@ -12,7 +12,7 @@ import { SPELLS }            from '../../data/spells.js';
 import {
   callingsForFaction, callingName, callingTint,
   DEVOTION_BLOCKS, oathPrice, devotionCount, oathsSworn, devotionBonusHp,
-  blockFor, blockName,
+  blockFor, blockName, devotionState, previousUnfinished,
 } from '../../data/callings.js';
 import { DEATH_ENABLED }    from '../../data/game_flags.js';
 // Which regions drop a material — the castle's cost bar uses it to answer
@@ -268,6 +268,7 @@ const CASTLE_TEXT = {
                   ru: n => `Следующий обет даёт +${n} ЗД навсегда.` },
   oathSwear:    { en: 'Swear',                                ru: 'Принести' },
   oathWorking:  { en: 'Swearing…',                            ru: 'Приносим…' },
+  devNeedsPrev: { en: n => `Finish “${n}” first`,             ru: n => `Сначала завершите: «${n}»` },
   oathNeedsBranch:{ en: 'Finish this unit\u2019s branch first',  ru: 'Сначала завершите ветку юнита' },
   callingColOpen:{ en: l => `Level ${l}`,                     ru: l => `Уровень ${l}` },
   callingSheet: { en: 'Calling',                              ru: 'Призвание' },
@@ -1566,56 +1567,98 @@ export function renderCastle(root, params = {}) {
     // The hero's block 2 is not the errand one (data/callings.js): resolve the
     // block against the unit before reading a counter off it.
     const block = blockFor(row, unitBlock);
-    const open = level >= block.tier;
-    const lock = CASTLE_TEXT.devBlockLock[castleLang](block.tier);
+    // A CHAIN. One block is open at a time; the ones after it wait their turn
+    // and say whose. See devotionState.
+    const state = devotionState(row, unitBlock, level);
 
     if (block.kind === 'calling') {
+      const open   = state !== 'temple';
       const def    = resolveUnitDef(row);
       const art    = def ? branchPortraitUrl(def) : '';
       const callId = callingOf(row);
       const tint   = callingTint(callId);
-      // The portrait IS the block, and the border is the only thing that has to
-      // say which calling the unit keeps.
       return `
         <div class="dev-block dev-block--portrait ${open ? 'dev-block--live' : 'dev-block--locked'}"
              ${tint ? `style="--calling-tint:${tint}"` : ''}
              ${open ? `data-calling-for="${row.id}"` : ''}
-             title="${escapeHtml(unitName(def || row, player))}${open ? '' : ` — ${lock}`}">
+             title="${escapeHtml(unitName(def || row, player))}${open ? '' : ` — ${CASTLE_TEXT.devBlockLock[castleLang](block.tier)}`}">
           <div class="dev-art"${art ? ` style="background-image:url('${art}')"` : ''}></div>
           ${callId ? `<span class="dev-tag">${escapeHtml(callingName(callId, castleLang))}</span>` : ''}
           ${open ? '' : '<span class="dev-lock">\u{1F512}</span>'}
         </div>`;
     }
 
+    // What a block that is not yet its turn says, and why.
+    const waitingTitle = () => {
+      const prev = previousUnfinished(row, unitBlock);
+      return prev
+        ? CASTLE_TEXT.devNeedsPrev[castleLang](blockName(prev, castleLang))
+        : blockName(block, castleLang);
+    };
+
     if (block.kind === 'oath') {
       const sworn = oathsSworn(row);
       const bonus = devotionBonusHp(row);
       const maxed = atEndOfBranch(row);
-      const live  = open && maxed;
-      const why   = !open ? lock
-                  : (!maxed ? CASTLE_TEXT.oathNeedsBranch[castleLang] : blockName(block, castleLang));
+      const live  = state === 'open' && maxed;
+      // Locked is "the Temple has not got here"; waiting is "not your turn yet",
+      // and a unit still mid-branch is waiting on itself rather than on the
+      // castle - so it reads the same as the deeds queued behind it.
+      const cls   = state === 'temple' ? 'dev-block--locked'
+                  : (state === 'waiting' || !maxed) ? 'dev-block--waiting'
+                  : 'dev-block--live';
+      const why   = state === 'temple'  ? CASTLE_TEXT.devBlockLock[castleLang](block.tier)
+                  : state === 'waiting' ? waitingTitle()
+                  : !maxed              ? CASTLE_TEXT.oathNeedsBranch[castleLang]
+                                        : blockName(block, castleLang);
+      const face  = state === 'temple'  ? '<span class="dev-lock">\u{1F512}</span>'
+                  : state === 'waiting' ? '<span class="dev-big dev-big--muted">⋯</span>'
+                  : !maxed              ? '<span class="dev-big dev-big--muted">↑</span>'
+                  : `<span class="dev-big">×${sworn}</span>
+                     <span class="dev-small">${oathPrice(sworn)}</span>`;
       return `
-        <div class="dev-block dev-block--oath ${live ? 'dev-block--live' : 'dev-block--locked'}"
-             ${live ? `data-oath-for="${row.id}"` : ''} title="${why}">
-          ${!open ? '<span class="dev-lock">\u{1F512}</span>'
-                  : (maxed
-                      ? `<span class="dev-big">×${sworn}</span>
-                         <span class="dev-small">${oathPrice(sworn)}</span>`
-                      : '<span class="dev-big dev-big--muted">↑</span>')}
-          ${open && bonus > 0 ? `<span class="dev-tag dev-tag--bonus">${CASTLE_TEXT.oathBonus[castleLang](bonus)}</span>` : ''}
+        <div class="dev-block dev-block--oath ${cls}"
+             ${live ? `data-oath-for="${row.id}"` : ''} title="${escapeHtml(why)}">
+          ${face}
+          ${state === 'open' && bonus > 0 ? `<span class="dev-sub">${CASTLE_TEXT.oathBonus[castleLang](bonus)}</span>` : ''}
         </div>`;
     }
 
     const have = Math.min(devotionCount(row, block.counter), block.target);
-    const done = have >= block.target;
     const pct  = Math.round((have / block.target) * 100);
+
+    if (state === 'done') {
+      // SOLID. A finished block is the one thing on the page that should need
+      // no reading at all, and a translucent tint over the backdrop was not it.
+      return `
+        <div class="dev-block dev-block--deed dev-block--done"
+             title="${escapeHtml(blockName(block, castleLang))}">
+          <span class="dev-big dev-big--done">✔</span>
+        </div>`;
+    }
+
+    if (state === 'temple') {
+      return `
+        <div class="dev-block dev-block--deed dev-block--locked"
+             title="${escapeHtml(CASTLE_TEXT.devBlockLock[castleLang](block.tier))}">
+          <span class="dev-lock">\u{1F512}</span>
+        </div>`;
+    }
+
+    if (state === 'waiting') {
+      return `
+        <div class="dev-block dev-block--deed dev-block--waiting" title="${escapeHtml(waitingTitle())}">
+          <span class="dev-big dev-big--muted">${have}</span>
+          <span class="dev-small">/ ${block.target}</span>
+        </div>`;
+    }
+
     return `
-      <div class="dev-block dev-block--deed ${open ? (done ? 'dev-block--done' : '') : 'dev-block--locked'}"
-           title="${open ? blockName(block, castleLang) : lock}">
-        ${!open ? '<span class="dev-lock">\u{1F512}</span>'
-                : (done ? '<span class="dev-big dev-big--done">✔</span>'
-                        : `<span class="dev-big">${have}</span><span class="dev-small">/ ${block.target}</span>`)}
-        ${open && !done ? `<div class="dev-bar"><div class="dev-bar-fill" style="width:${pct}%"></div></div>` : ''}
+      <div class="dev-block dev-block--deed dev-block--open"
+           title="${escapeHtml(blockName(block, castleLang))}">
+        <span class="dev-big">${have}</span>
+        <span class="dev-small">/ ${block.target}</span>
+        <div class="dev-bar"><div class="dev-bar-fill" style="width:${pct}%"></div></div>
       </div>`;
   }
 

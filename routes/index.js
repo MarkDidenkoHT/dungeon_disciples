@@ -35,7 +35,7 @@ const { engravingBill, checkEngravingForUnit, applyEngraving, getEngravingCombo,
 const { SPELLS } = require('../data/spells');
 const { CALLINGS, CALLING_CHANGE_COST, callingsForFaction, newCallingFor,
         DEVOTION_BLOCKS, OATH_BASE_GOLD, OATH_STEP_GOLD, OATH_BONUS, oathPrice,
-        devotionOf, oathsSworn, devotionBonusHp } = require('../data/callings');
+        devotionOf, oathsSworn, devotionBonusHp, blockDone } = require('../data/callings');
 const { telegramWebhookHandler, notifyAdminNewPlayer, getBotUsername, takePendingInvite } = require('../utils/telegram');
 const {
   generateInviteCode, normalizeInviteCode, INVITEE_WELCOME, INVITER_REWARDS,
@@ -2203,6 +2203,16 @@ router.post('/roster/oath', requireAuth, async (req, res) => {
     const row = rosterRows[0];
     if (!atEndOfBranch(faction, row.unit_data)) {
       return res.status(400).json({ error: 'That unit still has a branch to finish', code: 'oath_not_maxed' });
+    }
+    // The blocks are a chain: the oath is the last of them and only opens once
+    // the three deeds before it are done (devotionState in data/callings.js).
+    // Checked here as well as drawn there - the client cannot be the thing that
+    // decides whether a sink is open.
+    const unfinished = DEVOTION_BLOCKS.find(b => b.kind === 'deed' && !blockDone(row, b));
+    if (unfinished) {
+      return res.status(400).json({
+        error: `That unit has not finished: ${unfinished.name}`, code: 'oath_chain',
+      });
     }
 
     let updatedRow = null;
