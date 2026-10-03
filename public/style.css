@@ -511,7 +511,12 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  /* 100% of the overlay, which is fixed inset:0 - so it is always the LIVE
+     viewport. 100vh is the expanded height, and Telegram opens a Mini App
+     compact and expands it (tg.expand in main.js boot), so a 100vh loading
+     screen was laid out for a window it did not have yet and everything on it
+     moved when the sheet grew. */
+  height: 100%;
   width: 100%;
 
   gap: 20px;
@@ -554,6 +559,10 @@ button:active:not(:disabled) { opacity: 0.75; }
   align-items: center;
   gap: 12px;
   width: 100%;
+  /* The same column the app uses, so the tip and the bar do not stretch across
+     a desktop window the game itself never fills. */
+  max-width: 480px;
+  margin: 0 auto;
   padding: 0 24px;
   box-sizing: border-box;
 }
@@ -594,14 +603,23 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .loading-title {
   position: absolute;
-  top: max(6vh, 28px);
+  /* Was max(6vh, 28px): the expand grows the viewport, 6vh grows with it, and
+     the title slid 21px down mid-launch on a 375x420 -> 375x812 sheet. A fixed
+     offset cannot move. */
+  top: calc(28px + env(safe-area-inset-top, 0px));
   left: 0;
   right: 0;
   z-index: 1;
   text-align: center;
   font-family: Georgia, 'Times New Roman', serif;
   font-weight: 700;
-  font-size: clamp(1.5rem, 7vw, 2.4rem);
+  /* The upper bound is 7% of 480px - the width #shell caps at - so the title
+     scales on a narrow phone and then STOPS at the width the rest of the app
+     lives in. The loading screen is the one thing drawn over the whole window
+     rather than inside that column, so without the cap it was sized off the
+     window: 26px at 375, 34px at 480, 38px at 700, resizing as the sheet
+     expanded. */
+  font-size: clamp(1.5rem, 7vw, 2.1rem);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   background: linear-gradient(180deg, #fff2c4 0%, #ecc766 46%, #b17d26 100%);
@@ -624,8 +642,8 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 
 .loading-bar-track {
-  width: 84vw;
-  max-width: 460px;
+  width: 100%;
+  max-width: 420px;
   height: 16px;
   border-radius: 5px;
   background: var(--surface);
@@ -10600,10 +10618,14 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
    the letters the bands below are keyed to. */
 .litany-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(34px, 1fr));
-  grid-template-rows: auto repeat(3, 34px);
+  /* Two board columns at a fixed square, then the requirement column taking
+     whatever is left. */
+  grid-template-columns: 38px 38px minmax(0, 1fr);
+  /* The rows GROW: a board row holding two cells has two requirement blocks
+     stacked beside it, and a fixed track drew them on top of each other. */
+  grid-template-rows: auto repeat(3, minmax(36px, auto));
   gap: 4px;
-  width: max-content;
+  width: 100%;
   max-width: 100%;
   margin: 0 0 10px;
   padding: 7px;
@@ -10685,17 +10707,43 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   align-self: center;
 }
 
-.litany-row--lead .litany-row-key {
-  border-color: var(--accent);
-  background: rgba(var(--accent-rgb), 0.24);
-}
-
-/* The formation reads as the column it describes: one band per row, stacked in
-   the order the units actually stand in. */
-.litany-formation {
+/* One per board row, holding that row's requirement blocks. */
+.litany-grid-reqs {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* The block beside a lettered square: what has to stand there, and nothing
+   else. */
+.litany-grid-req {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
   gap: 6px;
+  min-width: 0;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.26);
+}
+
+/* The lead lands the real blow, so its block carries the accent its square
+   already does. */
+.litany-grid-req--lead,
+.litany-grid-req--hero {
+  border-left-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.08);
+}
+
+.litany-grid-req .litany-calling-name {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .litany-row {
@@ -10709,12 +10757,6 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   border-left: 3px solid var(--border);
   border-radius: 7px;
   background: rgba(0, 0, 0, 0.22);
-}
-
-/* The lead lands the real blow, so its band carries the accent. */
-.litany-row--lead {
-  border-left-color: var(--accent);
-  background: rgba(var(--accent-rgb), 0.08);
 }
 
 /* Pushed to the far end of the line: the letter and what fills it are what
@@ -10789,7 +10831,8 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 
 /* The lead is the one face that matters most in the column, so its frame is
    the accent the row's left edge already uses. */
-.litany-row--lead .litany-unit-chip {
+.litany-grid-req--lead .litany-unit-chip,
+.litany-grid-req--hero .litany-unit-chip {
   box-shadow: 0 0 0 2px var(--accent);
 }
 
