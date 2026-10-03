@@ -1213,6 +1213,26 @@ export function renderCastle(root, params = {}) {
     if (structuresRecord) runOnboarding();
   }
 
+  // Each page is its own height. The three sub-screens are nothing like each
+  // other - the castle grid is four rows of nodes, the Temple's page is one
+  // track per unit - and forcing all three to the tallest left whichever is
+  // showing floating in dead space. The viewport is sized to the page in front
+  // of it, and the arrows beside it follow, so the whole strip is as tall as
+  // what it holds and no taller. The cap is the room available; past that the
+  // page scrolls inside itself.
+  function sizeToLayer() {
+    const vp     = root.querySelector('#castle-layer-viewport');
+    const active = root.querySelector(`.castle-layer[data-layer="${currentLayer}"]`);
+    // The page itself, not the layer: the layer fills the viewport we are about
+    // to size, so measuring it would measure our own last answer.
+    const inner  = active?.firstElementChild;
+    if (!vp || !inner) return;
+    const h = Math.ceil(inner.scrollHeight);
+    if (!h) return;
+    vp.style.height = `${h}px`;
+    root.querySelectorAll('.castle-layer-arrow').forEach(a => { a.style.height = `${h}px`; });
+  }
+
   function applyLayer() {
     const track = root.querySelector('#castle-layer-track');
     if (track) track.style.transform = `translateX(-${currentLayer * 100}%)`;
@@ -1224,6 +1244,7 @@ export function renderCastle(root, params = {}) {
       el.setAttribute('aria-hidden', String(!isCurrent));
     });
     refreshLayerControls();
+    sizeToLayer();
   }
 
   // An arrow that leads nowhere is disabled, not hidden: a control that vanishes
@@ -1427,6 +1448,9 @@ export function renderCastle(root, params = {}) {
 
     refreshLayerControls();
     renderDevotion();
+    // After both pages have their content: a page that just gained a row is a
+    // page whose height changed.
+    sizeToLayer();
 
     runOnboarding();
   }
