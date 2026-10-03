@@ -132,9 +132,21 @@ has not reached yet disabled.
 
 **The blocks are a chain, not four open tasks.** A block only becomes workable once
 every deed block before it is finished, so a unit walks 2 → 3 → 4 → 5 in order and the
-page always shows exactly one thing to get on with. The counters themselves stay
-lifetime and are credited whenever they are earned — the chain decides what the page
-*offers*, not what the world counts.
+page always shows exactly one thing to get on with.
+
+**A deed only counts while its block is the live one.** Damage dealt by a unit still
+working on its errands is not banked against a block that has not opened — it is
+dropped. Without that, a unit with a battle record behind it clears three blocks the
+instant the first one lands and the Temple stops being a reason to go and do the
+thing it is asking for. Enforced in `bumpDevotion` ([routes/index.js](../routes/index.js)),
+which resolves the live block before it writes.
+
+**Levelling up wipes the deeds and the unit walks the chain again.** That is the
+point of the whole system: the deeds are errands, then fighting, then litanies, so a
+unit that keeps advancing keeps being sent back round every corner of the game. What
+survives a reset is what was *bought* — `oaths` (it sets the next price) and `bonus`
+(HP that gold already paid for). Applied on both the manual endpoint and
+`applyAutoLevelUps`, which is where most level-ups actually happen.
 
 Blocks 2–4 pay nothing yet; they count. Only the oath grants a stat, and the stat
 is stored (`devotion.bonus`) rather than recomputed from the count, so raising the

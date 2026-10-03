@@ -35,7 +35,8 @@ const { engravingBill, checkEngravingForUnit, applyEngraving, getEngravingCombo,
 const { SPELLS } = require('../data/spells');
 const { CALLINGS, CALLING_CHANGE_COST, callingsForFaction, newCallingFor,
         DEVOTION_BLOCKS, OATH_BASE_GOLD, OATH_STEP_GOLD, OATH_BONUS, oathPrice,
-        devotionOf, oathsSworn, devotionBonusHp, blockDone } = require('../data/callings');
+        devotionOf, oathsSworn, devotionBonusHp, blockDone, blockFor,
+        devotionState, resetDevotionDeeds } = require('../data/callings');
 const { telegramWebhookHandler, notifyAdminNewPlayer, getBotUsername, takePendingInvite } = require('../utils/telegram');
 const {
   generateInviteCode, normalizeInviteCode, INVITEE_WELCOME, INVITER_REWARDS,
@@ -1018,8 +1019,19 @@ async function applyAutoLevelUps(rows, buildingsData) {
   await Promise.all((rows || []).map(async row => {
     const result = resolveAutoLevelUp(row, buildingsData);
     if (!result) return;
+    // Most level-ups come through here rather than the manual endpoint, so the
+    // Temple's reset belongs here too: a unit that advances walks the chain
+    // again from the first block.
+    //
+    // Only when the row actually carries `devotion`. Some callers select a
+    // narrower set of columns, and writing a reset computed from a field that
+    // was never read would wipe the oaths and the HP they bought.
+    const patch = { unit_data: result.unitData };
+    if (Object.prototype.hasOwnProperty.call(row, 'devotion')) {
+      patch.devotion = resetDevotionDeeds(row);
+    }
     await supabase(`/roster?id=eq.${encodeURIComponent(row.id)}`, {
-      method: 'PATCH', body: JSON.stringify({ unit_data: result.unitData }),
+      method: 'PATCH', body: JSON.stringify(patch),
     });
     upgraded.push({ roster_id: String(row.id), from: result.from, to: result.to });
   }));
@@ -2792,17 +2804,42 @@ function withBonusHp(rosterRows, hpBonus) {
 //   litanies  every player unit that was on the board when one fired. The deed
 //             is standing there, not performing a role - most units can never
 //             be a lead or a chorister (data/litanies.js).
-function bumpDevotion(chat_id, bumps) {
+// ONLY THE LIVE BLOCK COUNTS. A deed earned for a block that is not this unit's
+// turn is dropped on the floor - it is not banked and not remembered. That is
+// the whole point of the chain: without it a unit with a battle record behind it
+// clears three blocks the instant the first one lands, and the Temple stops
+// being a reason to go and do the thing it is asking for.
+//
+// Decided HERE rather than in the database so there is one implementation of the
+// chain (devotionState, data/callings.js) and the rpc stays a dumb atomic adder.
+// The cost is two small reads per credit; the alternative is the same rules
+// written twice in two languages.
+async function bumpDevotion(chat_id, bumps) {
+  const ids = Object.keys(bumps || {}).filter(id => /^\d+$/.test(String(id)));
+  if (!ids.length) return null;
+
+  const [structRows, rows] = await Promise.all([
+    supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1&select=buildings_data`),
+    supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&id=in.(${ids.join(',')})&select=id,is_hero,devotion`),
+  ]);
+  const temple = callingTiersOpen(structRows[0]?.buildings_data);
+  if (!temple) return null;
+
+  const byId = new Map(rows.map(r => [String(r.id), r]));
   const payload = {};
-  for (const [rosterId, add] of Object.entries(bumps || {})) {
-    const clean = {};
-    for (const [k, v] of Object.entries(add || {})) {
-      const n = Math.floor(Number(v) || 0);
-      if (n > 0) clean[k] = n;
-    }
-    if (Object.keys(clean).length) payload[String(rosterId)] = clean;
+  for (const rosterId of ids) {
+    const row = byId.get(rosterId);
+    if (!row) continue;
+    // At most one deed block is ever 'open' for a unit (devotionState walks the
+    // chain in order), so this is the one counter that may move.
+    const live = DEVOTION_BLOCKS.find(
+      b => b.kind === 'deed' && devotionState(row, b, temple) === 'open');
+    if (!live) continue;
+    const counter = blockFor(row, live).counter;
+    const n = Math.floor(Number(bumps[rosterId]?.[counter]) || 0);
+    if (n > 0) payload[rosterId] = { [counter]: n };
   }
-  if (!Object.keys(payload).length) return Promise.resolve(null);
+  if (!Object.keys(payload).length) return null;
   return rpc('roster_devotion_bump', { p_chat_id: String(chat_id), p_bumps: payload });
 }
 
@@ -3967,8 +4004,20 @@ router.post('/roster/levelup', requireAuth, async (req, res) => {
       newUnitData.current_hp = Math.min(newUnitData.max_hp, oldHp);
     }
     newUnitData.alive = unitData.alive !== false;
+    // LEVELLING UP WIPES THE TEMPLE'S DEEDS. The unit that comes out the other
+    // side is a new unit as far as the Temple is concerned, and it walks the
+    // chain again from the first block — which is the point: the deeds are
+    // errands, then fighting, then litanies, and a unit that keeps advancing
+    // keeps being sent back round every corner of the game.
+    //
+    // What survives is what was BOUGHT: `oaths` (it sets the next price) and
+    // `bonus` (the HP that gold already paid for). Only an oath may move a stat,
+    // and nothing may take one back.
     const updatePromises = [
-      supabase(`/roster?id=eq.${roster_id}`, { method: 'PATCH', body: JSON.stringify({ unit_data: newUnitData }) }),
+      supabase(`/roster?id=eq.${roster_id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ unit_data: newUnitData, devotion: resetDevotionDeeds(entry) }),
+      }),
     ];
     if (!entry.is_hero && buildingSlot) {
       const buildings = structRows[0].buildings_data;
@@ -6333,7 +6382,9 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
 
         // Kept regardless of `changed` — a unit may already have been over the
         // threshold and merely waiting on a building.
-        postXpRows.push({ id: row.id, unit_data: unitData, is_hero: row.is_hero });
+        // `devotion` rides along so applyAutoLevelUps can reset it — this is the
+        // commonest level-up of all, and without the field the reset is skipped.
+        postXpRows.push({ id: row.id, unit_data: unitData, is_hero: row.is_hero, devotion: row.devotion });
         if (!changed) return;
         await supabase(`/roster?id=eq.${encodeURIComponent(rosterId)}`, { method: 'PATCH', body: JSON.stringify({ unit_data: unitData }) });
       }));

@@ -511,11 +511,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  /* 100% of the overlay, which is fixed inset:0 - so it is always the LIVE
-     viewport. 100vh is the expanded height, and Telegram opens a Mini App
-     compact and expands it (tg.expand in main.js boot), so a 100vh loading
-     screen was laid out for a window it did not have yet and everything on it
-     moved when the sheet grew. */
   height: 100%;
   width: 100%;
 
@@ -559,8 +554,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   align-items: center;
   gap: 12px;
   width: 100%;
-  /* The same column the app uses, so the tip and the bar do not stretch across
-     a desktop window the game itself never fills. */
   max-width: 480px;
   margin: 0 auto;
   padding: 0 24px;
@@ -603,9 +596,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .loading-title {
   position: absolute;
-  /* Was max(6vh, 28px): the expand grows the viewport, 6vh grows with it, and
-     the title slid 21px down mid-launch on a 375x420 -> 375x812 sheet. A fixed
-     offset cannot move. */
   top: calc(28px + env(safe-area-inset-top, 0px));
   left: 0;
   right: 0;
@@ -613,12 +603,6 @@ button:active:not(:disabled) { opacity: 0.75; }
   text-align: center;
   font-family: Georgia, 'Times New Roman', serif;
   font-weight: 700;
-  /* The upper bound is 7% of 480px - the width #shell caps at - so the title
-     scales on a narrow phone and then STOPS at the width the rest of the app
-     lives in. The loading screen is the one thing drawn over the whole window
-     rather than inside that column, so without the cap it was sized off the
-     window: 26px at 375, 34px at 480, 38px at 700, resizing as the sheet
-     expanded. */
   font-size: clamp(1.5rem, 7vw, 2.1rem);
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -9127,8 +9111,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background: var(--accent);
 }
 
-/* SOLID. A finished block is the one thing on the page that should need no
-   reading, and a 12%-accent wash over the castle backdrop was not it. */
 .dev-block--done {
   border-color: var(--accent-bright, var(--accent));
   background: var(--accent);
@@ -9140,11 +9122,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
   font-size: 1.4rem;
 }
 
-/* Reached, but not its turn: the chain runs 2 -> 3 -> 4 -> 5 and only one
-   block is ever the one to work on. Readable, so the player can see what is
-   coming, and plainly inert. */
 .dev-block--waiting {
-  background: rgba(0, 0, 0, 0.24);
+  background: #15171d;
   border-style: dashed;
 }
 
@@ -9153,10 +9132,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
   opacity: 0.5;
 }
 
-/* The one to work on. */
 .dev-block--open {
-  border-color: rgba(var(--accent-rgb), 0.55);
-  background: rgba(var(--accent-rgb), 0.10);
+  border-color: var(--accent);
 }
 
 .dev-block--live {
@@ -9165,7 +9142,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .dev-block--oath.dev-block--live {
   border-color: var(--accent);
-  background: rgba(var(--accent-rgb), 0.12);
 }
 
 .dev-block--live:active {
@@ -9173,7 +9149,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .dev-block--locked {
-  background: rgba(0, 0, 0, 0.42);
+  background: #101217;
   cursor: not-allowed;
 }
 
@@ -10646,11 +10622,7 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
    the letters the bands below are keyed to. */
 .litany-grid {
   display: grid;
-  /* Two board columns at a fixed square, then the requirement column taking
-     whatever is left. */
   grid-template-columns: 38px 38px minmax(0, 1fr);
-  /* The rows GROW: a board row holding two cells has two requirement blocks
-     stacked beside it, and a fixed track drew them on top of each other. */
   grid-template-rows: auto repeat(3, minmax(36px, auto));
   gap: 4px;
   width: 100%;
@@ -10735,7 +10707,6 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   align-self: center;
 }
 
-/* One per board row, holding that row's requirement blocks. */
 .litany-grid-reqs {
   display: flex;
   flex-direction: column;
@@ -10744,8 +10715,6 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   min-width: 0;
 }
 
-/* The block beside a lettered square: what has to stand there, and nothing
-   else. */
 .litany-grid-req {
   flex: 1 1 auto;
   display: flex;
@@ -10759,8 +10728,6 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   background: rgba(0, 0, 0, 0.26);
 }
 
-/* The lead lands the real blow, so its block carries the accent its square
-   already does. */
 .litany-grid-req--lead,
 .litany-grid-req--hero {
   border-left-color: var(--accent);
@@ -10787,8 +10754,6 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   background: rgba(0, 0, 0, 0.22);
 }
 
-/* Pushed to the far end of the line: the letter and what fills it are what
-   the reader is matching against the diagram, and the role is the footnote. */
 .litany-row-role {
   margin-left: auto;
   color: var(--muted);

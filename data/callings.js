@@ -213,6 +213,22 @@ function previousUnfinished(row, block) {
   return null;
 }
 
+// What a unit's devotion looks like after it levels up: every deed counter
+// gone, and it walks the chain again from the first block. That is deliberate -
+// the chain runs errands, then fighting, then litanies, so a unit that keeps
+// advancing keeps being sent back round every corner of the game.
+//
+// `oaths` and `bonus` survive, because they were BOUGHT. The count sets the
+// next oath's price and the bonus is HP already paid for; a reset that took
+// either back would be taking gold back.
+function resetDevotionDeeds(row) {
+  const d = devotionOf(row);
+  const kept = {};
+  if (Number(d.oaths) > 0) kept.oaths = Number(d.oaths);
+  if (d.bonus && typeof d.bonus === 'object') kept.bonus = d.bonus;
+  return kept;
+}
+
 function blockName(block, lang = 'en') {
   if (!block) return '';
   return lang === 'ru' ? (block.name_ru || block.name || '') : (block.name || '');
@@ -267,7 +283,7 @@ export {
   randomCallingFor, newCallingFor,
   DEVOTION_BLOCKS, OATH_BASE_GOLD, OATH_STEP_GOLD, OATH_BONUS, oathPrice,
   devotionOf, devotionCount, oathsSworn, devotionBonusHp, blockFor, blockDone, blockName,
-  devotionState, previousUnfinished,
+  devotionState, previousUnfinished, resetDevotionDeeds,
   blockShort, callingTint,
 };
 if (typeof module !== 'undefined') {
@@ -277,7 +293,7 @@ if (typeof module !== 'undefined') {
     randomCallingFor, newCallingFor,
     DEVOTION_BLOCKS, OATH_BASE_GOLD, OATH_STEP_GOLD, OATH_BONUS, oathPrice,
     devotionOf, devotionCount, oathsSworn, devotionBonusHp, blockFor, blockDone, blockName,
-    devotionState, previousUnfinished,
+    devotionState, previousUnfinished, resetDevotionDeeds,
     blockShort, callingTint,
   };
 }
