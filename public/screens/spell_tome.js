@@ -811,9 +811,12 @@ export function renderSpellTome(root, { player }) {
     // heroes, at that.
     const performable = LITANIES.filter(canPerform);
 
-    // One band: a role label, how many of the faces beside it are needed, and
-    // the faces. Used for the formation's rows and for the target alike — they
-    // are the same question ("which unit?") asked of a different side.
+    // One band, ONE LINE: the letter, then what fills that cell, then the role.
+    // It used to be a stacked card - a head row above a row of faces - which was
+    // the right shape when a cell named a list of units. A cell names a calling
+    // or a single line now, so the card was mostly air: the letter and the thing
+    // it points at sit side by side instead, and a formation of three reads in
+    // three lines rather than a page of scrolling.
     const bandHtml = (role, label, ids, key = '') => {
       const defs = dedupeByName(ids.map(id => unitById.get(id)).filter(Boolean));
       // A row of five faces reads as "stand all five here" unless something says
@@ -822,13 +825,10 @@ export function renderSpellTome(root, { player }) {
       const hint = defs.length > 1 ? TOME_TEXT.litanyAnyOf[lang](defs.length) : '';
       return `
         <div class="litany-row litany-row--${role}">
-          ${key || label || hint ? `
-            <div class="litany-row-head">
-              ${key ? `<span class="litany-row-key">${escapeHtml(key)}</span>` : ''}
-              ${label ? `<span class="litany-row-role">${escapeHtml(label)}</span>` : ''}
-              ${hint ? `<span class="litany-row-any">${escapeHtml(hint)}</span>` : ''}
-            </div>` : ''}
+          ${key ? `<span class="litany-row-key">${escapeHtml(key)}</span>` : ''}
           ${litanyUnitChips(defs)}
+          ${hint ? `<span class="litany-row-any">${escapeHtml(hint)}</span>` : ''}
+          ${label ? `<span class="litany-row-role">${escapeHtml(label)}</span>` : ''}
         </div>`;
     };
 
@@ -836,17 +836,16 @@ export function renderSpellTome(root, { player }) {
     // but a WORD where the faces would be: a calling is not a roster of units,
     // it is the one the player picked for whichever unit they want standing
     // here, and drawing every unit that currently carries it would be a list
-    // that changes every time they spend 500 gold.
+    // that changes every time they pay to change one.
+    //
+    // "any unit sworn to X" rides on `title` rather than under the name. Once
+    // the letter and the calling are on one line the sentence is restating the
+    // line, and three of them stacked were most of the card's height.
     const callingBandHtml = (key, label, name, hint) => `
-      <div class="litany-row litany-row--chorus litany-row--calling">
-        <div class="litany-row-head">
-          ${key ? `<span class="litany-row-key">${escapeHtml(key)}</span>` : ''}
-          ${label ? `<span class="litany-row-role">${escapeHtml(label)}</span>` : ''}
-        </div>
-        <div class="litany-calling">
-          <span class="litany-calling-name">${escapeHtml(name)}</span>
-          <span class="litany-calling-hint">${escapeHtml(hint)}</span>
-        </div>
+      <div class="litany-row litany-row--chorus litany-row--calling" title="${escapeHtml(hint)}">
+        ${key ? `<span class="litany-row-key">${escapeHtml(key)}</span>` : ''}
+        <span class="litany-calling-name">${escapeHtml(name)}</span>
+        ${label ? `<span class="litany-row-role">${escapeHtml(label)}</span>` : ''}
       </div>`;
 
     const cards = performable.map((def, i) => {
