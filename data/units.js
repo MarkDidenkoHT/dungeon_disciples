@@ -666,10 +666,10 @@ const UNITS = {
       damage_source: 'physical', action_power: 12, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 1250, passive: ['unbreakable 2', 'aegis 1', 'shatter 1'], ability: 'stone_form 1',
     },
-    cinderstone_gargoyle: {
+    slagstone_gargoyle: {
       id: 'd331', f: 'd', t: 3,
-      name: 'Cinderstone Gargoyle',
-      name_ru: 'Угольная Горгулья',
+      name: 'Slagstone Gargoyle',
+      name_ru: 'Шлаковая Горгулья',
       tags: ['Demon', 'Caster'],
       pref_position: 'none',
       size: 'row',
@@ -679,10 +679,10 @@ const UNITS = {
       damage_source: 'physical', action_power: 16, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 4055, passive: ['unbreakable 2', 'aegis 2', 'shatter 1'], ability: 'stone_form 2',
     },
-    slagstone_gargoyle: {
+    cinderstone_gargoyle: {
       id: 'd3311', f: 'd', t: 4,
-      name: 'Slagstone Gargoyle',
-      name_ru: 'Шлаковая Горгулья',
+      name: 'Magma Gargoyle',
+      name_ru: 'Магомавая Горгулья',
       tags: ['Demon', 'Caster'],
       pref_position: 'none',
       size: 'row',
