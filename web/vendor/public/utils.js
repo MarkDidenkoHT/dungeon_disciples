@@ -83,11 +83,61 @@ export function setUiLanguage(language) {
 }
 export function uiText(en, ru) { return _uiLang === 'ru' ? ru : en; }
 
+// Unit tags are authored in English in data/units.js and data/items.js, because
+// they are also lookup keys — an ability that counts Vampire allies matches on
+// the string. Printing that key straight onto a card left the Russian UI saying
+// "Требует: Vampire". The key stays English; only the label is translated.
+//
+// The Russian words are the ones the ability descriptions in
+// data/unit_abilities.js already use, so an item that requires a Vampire and a
+// passive that counts Vampires say the same word.
+export const TAG_LABELS = {
+  Archer:    { en: 'Archer',    ru: 'Лучник' },
+  Boss:      { en: 'Boss',      ru: 'Босс' },
+  Caster:    { en: 'Caster',    ru: 'Заклинатель' },
+  Construct: { en: 'Construct', ru: 'Конструкт' },
+  Court:     { en: 'Court',     ru: 'Придворный' },
+  Demon:     { en: 'Demon',     ru: 'Демон' },
+  Dragon:    { en: 'Dragon',    ru: 'Дракон' },
+  Engineer:  { en: 'Engineer',  ru: 'Инженер' },
+  Holy:      { en: 'Holy',      ru: 'Святой' },
+  Knight:    { en: 'Knight',    ru: 'Рыцарь' },
+  Skeleton:  { en: 'Skeleton',  ru: 'Скелет' },
+  Spirit:    { en: 'Spirit',    ru: 'Дух' },
+  Treefolk:  { en: 'Treefolk',  ru: 'Древолюд' },
+  Vampire:   { en: 'Vampire',   ru: 'Вампир' },
+  Warrior:   { en: 'Warrior',   ru: 'Воин' },
+  Zombie:    { en: 'Zombie',    ru: 'Зомби' },
+};
+
+// An unknown tag prints as authored rather than as a blank — a tag added to the
+// data before it is added here should look untranslated, not missing.
+export function tagLabel(tag) {
+  if (!tag) return '';
+  const entry = TAG_LABELS[tag];
+  return entry ? uiText(entry.en, entry.ru) : String(tag);
+}
+
+// The three banners, by their data ids. Same reason as the tags: the id is a
+// key, the label is text. These match the names on the Colossus page.
+export const FACTION_LABELS = {
+  empire:              { en: 'Empire of Aurex',      ru: 'Империя Аурекс' },
+  choir_of_the_cursed: { en: 'Choir of the Cursed',  ru: 'Хор Проклятых' },
+  grail_of_sorrow:     { en: 'Grail of Sorrow',      ru: 'Грааль Скорби' },
+};
+
+export function factionLabel(faction) {
+  if (!faction) return '';
+  const entry = FACTION_LABELS[faction];
+  if (entry) return uiText(entry.en, entry.ru);
+  return cap(String(faction).replace(/_/g, ' '));
+}
+
 // `removes_tag` (and anything else tag-shaped) may be authored as one tag or as
 // a list. One label rule, so the item card, the castle equip sheet and the item
 // screen all print the same thing.
 export function tagListLabel(spec) {
-  return (Array.isArray(spec) ? spec : [spec]).filter(Boolean).join(', ');
+  return (Array.isArray(spec) ? spec : [spec]).filter(Boolean).map(tagLabel).join(', ');
 }
 
 // The faction's accent palette is a set of CSS variables hung off the BODY (see
@@ -427,7 +477,7 @@ export function renderUnitPortrait(unit, opts = {}) {
   // sides. Empty everywhere else, so no other card changes shape.
   const { badge = '', overlayHtml = '' } = opts;
   const tags     = (unit.tags || []).filter(Boolean);
-  const tagsHtml = tags.map(t => `<span class="unit-tag">${t}</span>`).join('');
+  const tagsHtml = tags.map(t => `<span class="unit-tag">${tagLabel(t)}</span>`).join('');
   const portraitId = unit.id.match(/^(h_[a-z]_\d)/)?.[1] ?? unit.id;
   const portrait = assetUrl(`/assets/character_art/${portraitId}.png`);
 
@@ -1030,10 +1080,10 @@ export function buildItemCard(item, player) {
     : '';
 
   const tagsHtml = [
-    stats.tag_required ? `<span class="item-card-tag">${uiText('Requires', 'Требует')}: ${stats.tag_required}</span>` : '',
-    stats.adds_tag     ? `<span class="item-card-tag item-card-tag--adds">${uiText('Grants tag', 'Даёт метку')}: ${stats.adds_tag}</span>` : '',
+    stats.tag_required ? `<span class="item-card-tag">${uiText('Requires', 'Требует')}: ${tagLabel(stats.tag_required)}</span>` : '',
+    stats.adds_tag     ? `<span class="item-card-tag item-card-tag--adds">${uiText('Grants tag', 'Даёт метку')}: ${tagLabel(stats.adds_tag)}</span>` : '',
     stats.removes_tag  ? `<span class="item-card-tag item-card-tag--removes">${uiText('Strips tag', 'Снимает метку')}: ${tagListLabel(stats.removes_tag)}</span>` : '',
-    stats.faction      ? `<span class="item-card-tag">${uiText('Faction', 'Фракция')}: ${cap(String(stats.faction).replace(/_/g, ' '))}</span>` : '',
+    stats.faction      ? `<span class="item-card-tag">${uiText('Faction', 'Фракция')}: ${factionLabel(stats.faction)}</span>` : '',
   ].join('');
 
   return `

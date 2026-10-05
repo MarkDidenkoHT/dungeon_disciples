@@ -3,8 +3,8 @@
 // data/buildings.js is CommonJS — the server owns it, and the game's own castle
 // screen mirrors the parts it needs rather than importing it. The demo takes a
 // third route: build-web.js requires the module and writes the tables out as
-// JSON, so the slot layout, the building names and the prices here are the
-// game's own rather than a copy that can drift.
+// JSON, so the slot layout and the building names here are the game's own
+// rather than a copy that can drift.
 //
 // The grid itself is style.css doing the work. Every class below is the game's,
 // including the [data-slot] rules that decide where each square sits.
@@ -13,10 +13,10 @@ import { UNITS } from '../vendor/data/units.js';
 import { assetUrl } from '../vendor/public/asset_base.js';
 import {
   openSheet, openSubSheet, handleUnitInspect, buildUnitCard,
-  CRYSTAL_ICONS, GOLD_ICON, unitName, escapeHtml,
+  unitName, escapeHtml,
 } from '../vendor/public/utils.js';
 import {
-  player, faction, L, t, seedResources, renderResourceBar, mountFactionTabs,
+  player, faction, L, t, seedResources,
 } from './demo-boot.js';
 
 const { BUILDING_POOLS, SLOT_CATEGORIES, SLOT_FIXED_BUILDING, BUILDING_MAX_LEVELS } = BUILDINGS;
@@ -52,6 +52,29 @@ function buildingArt(def) {
 function label(def) {
   if (!def) return '';
   return (L === 'ru' ? def.label_ru : def.label) || def.label || def.id;
+}
+
+// What a plot is FOR, which is the only thing a visitor with no castle of their
+// own can use. A level read-out ("1 / 1") tells them nothing: they have nothing
+// to level and no sense of what levelling would buy.
+//
+// The twelve layer-2 halls carry a real description in the data, so that is
+// what they show. The layer-1 plots carry none, because a barracks IS its unit
+// and the unit card below the sheet already says everything about it — those
+// get a line naming who comes out of the plot instead.
+function purpose(def) {
+  if (!def) return '';
+  const desc = (L === 'ru' ? def.desc_ru : def.desc) || def.desc;
+  if (desc) return escapeHtml(desc);
+
+  const unit = def.unit_id ? unitById(def.unit_id) : null;
+  if (!unit) return '';
+  const who = escapeHtml(unitName(unit, player));
+  return def.category === 'throne'
+    ? t(`The seat of your hero. ${who} commands this castle.`,
+        `Престол вашего героя. Отсюда командует ${who}.`)
+    : t(`Recruits ${who}, and every unit the line branches into from there.`,
+        `Набирает: ${who} — и всех, во что эта линия ветвится дальше.`);
 }
 
 const slotNumber = slot => Number(slot.slice(5));
@@ -124,15 +147,6 @@ function render() {
   col('barracks-col', 'barracks_up');
 }
 
-function costHtml(cost) {
-  const parts = Object.entries(cost || {}).map(([item, amount]) => {
-    if (item.toLowerCase() === 'gold') return `${GOLD_ICON}${amount}`;
-    if (CRYSTAL_ICONS[item]) return `${CRYSTAL_ICONS[item]}${amount}`;
-    return `${amount} × ${item.replace(/_/g, ' ')}`;
-  });
-  return parts.length ? parts.join(' · ') : t('No cost', 'Бесплатно');
-}
-
 function openSlot(slot) {
   const state = data[slot] || {};
   const def   = state.building_id ? byId.get(state.building_id) : null;
@@ -140,26 +154,21 @@ function openSlot(slot) {
   if (!def) {
     const fixed = SLOT_FIXED_BUILDING[slot] ? byId.get(SLOT_FIXED_BUILDING[slot]) : null;
     openSheet(t('Empty plot', 'Пустая площадка'), `<div class="demo-note">${fixed
-      ? `${t('This plot takes one building only', 'Эта площадка принимает лишь одно строение')}: <b>${escapeHtml(label(fixed))}</b> — ${costHtml(fixed.cost)}`
+      ? `${t('This plot takes one building only', 'Эта площадка принимает лишь одно строение')}: <b>${escapeHtml(label(fixed))}</b>${
+          purpose(fixed) ? ` — ${purpose(fixed)}` : ''}`
       : t('Nothing stands here yet. In the game you choose what goes up, from the buildings your faction knows.',
           'Здесь пока ничего не стоит. В игре вы сами выбираете, что здесь поднять, из доступных вашей фракции строений.')}</div>`);
     return;
   }
 
-  const unit  = def.unit_id ? unitById(def.unit_id) : null;
-  const maxLv = BUILDING_MAX_LEVELS[def.id] ?? 1;
-  const rows  = [
-    [t('Level', 'Уровень'), `${state.level} / ${maxLv}`],
-    [t('Cost', 'Цена'),     costHtml(def.cost)],
-  ];
+  const unit = def.unit_id ? unitById(def.unit_id) : null;
+  const what = purpose(def);
 
   // A barracks IS its unit — what the plot is for is who comes out of it — so
   // the sheet leads with the game's own unit card rather than describing it.
   // Halls recruit nobody and keep the plain building sheet.
   const body = `
-    <div class="demo-note">
-      ${rows.map(([k, v]) => `<div><span style="color:var(--muted)">${k}:</span> ${v}</div>`).join('')}
-    </div>
+    ${what ? `<div class="demo-note">${what}</div>` : ''}
     ${unit ? buildUnitCard(unit) : ''}`;
 
   openSheet(label(def), body);
@@ -193,11 +202,6 @@ function applyLayer() {
   next.disabled = layer === 2;
   prev.classList.toggle('castle-layer-arrow--live', layer > 1);
   next.classList.toggle('castle-layer-arrow--live', layer < 2);
-  document.getElementById('note').textContent = layer === 1
-    ? t('Page 1 — the throne and the barracks that recruit your units. Tap a square.',
-        'Страница 1 — трон и казармы, где набираются юниты. Нажмите на клетку.')
-    : t('Page 2 — the halls: forge, infirmary, mage guild, temple. Each has its own ladder of levels.',
-        'Страница 2 — залы: кузница, лазарет, гильдия магов, храм. У каждого своя лестница уровней.');
 }
 
 prev.addEventListener('click', () => { layer = 1; applyLayer(); });
@@ -212,8 +216,6 @@ seedResources({
   Crystals_Nature: 64,
   Crystals_Air:    71,
 });
-renderResourceBar(document.getElementById('resource-bar'));
-mountFactionTabs(document.getElementById('factions'));
 
 render();
 applyLayer();

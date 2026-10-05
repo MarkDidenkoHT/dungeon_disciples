@@ -18,36 +18,59 @@ body {
   flex-direction: column;
 }
 
+/* The scrollbar is hidden, not the scrolling. These panes sit inside a framed
+   phone on the landing page, where a desktop scrollbar down the right-hand edge
+   reads as chrome the game does not have. */
 .demo-scroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
+.demo-scroll::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+/* Wraps rather than overflowing. The faction rows are three tabs wide, but the
+   items row is six — "Shattered" cannot be squeezed into a sixth of a phone and
+   was running out past its own button. A second line is cheaper than a clipped
+   word. */
 .demo-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   padding: 6px;
   flex: 0 0 auto;
 }
 
+/* The tabs carry the factions' full names — "Choir of the Cursed" rather than
+   "Choir" — which no longer fit on one line three across. They wrap instead of
+   being clipped, and every tab is as tall as the tallest. */
 .demo-tab {
-  flex: 1;
-  padding: 7px 4px;
+  /* A 28% basis means three to a row: the faction rows are three tabs and fill
+     one line, the items row is six and fills two even ones, rather than five
+     across the top and a stretched sixth underneath. */
+  flex: 1 1 28%;
+  min-width: 68px;
+  overflow-wrap: anywhere;
+  padding: 6px 4px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--muted);
   font-family: inherit;
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 1.25;
+  text-wrap: balance;
   cursor: pointer;
 }
 
 .demo-tab--on {
   border-color: var(--accent);
   color: var(--accent-bright);
+  background: var(--surface-2);
 }
 
 .demo-grid {
@@ -64,6 +87,115 @@ body {
   color: var(--muted);
 }
 
+/* Taller than the game's 150px. In the game these cards are one tap in a list
+   you scroll past; here each one is the whole point of the section, and the art
+   needs the room to read as a place. */
+.colossus-hero,
+.embark-card {
+  min-height: 200px;
+}
+
+/* ── The encounter sheet ─────────────────────────────────────────────────────
+   Tapping a floor opens who stands on it. The grid is the game's own cell
+   numbering — 0 1 / 2 3 / 4 5, front row first — so the sheet is a picture of
+   the formation rather than a list of names. Cells nobody occupies are left
+   empty on purpose: an encounter that fields four units is a different problem
+   from one that fields six, and that only shows if the gaps are visible. */
+/* Narrow on purpose. Six cells at full sheet width made a 2x3 grid that had to
+   be scrolled to be seen whole, which defeats the point — the formation only
+   reads as a shape if the whole shape is on screen at once. Capped at 260px and
+   centred, the grid is a diagram rather than a gallery. */
+.enc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  width: 100%;
+  max-width: 260px;
+  margin: 4px auto 10px;
+}
+
+.enc-cell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.enc-cell--empty {
+  border-style: dashed;
+  opacity: 0.45;
+}
+
+.enc-cell--boss { border-color: #e0453f; }
+
+.enc-boss-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid #e0453f;
+  border-radius: 6px;
+  background: rgba(224, 69, 63, 0.18);
+  color: #ff7a72;
+  font-size: 0.62rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.enc-portrait {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.enc-name {
+  position: relative;
+  z-index: 1;
+  padding: 12px 3px 3px;
+  font-size: 0.52rem;
+  line-height: 1.15;
+  text-align: center;
+  color: #fff;
+  text-shadow: 0 1px 4px #000, 0 0 10px #000;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.85));
+}
+
+.enc-hp {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  z-index: 1;
+  font-size: 0.52rem;
+  color: #ffd9a0;
+  text-shadow: 0 1px 4px #000;
+}
+
+/* The row label down the side of the grid, so "front" and "back" are named
+   rather than inferred from which row is on top. */
+.enc-legend {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto 6px;
+  padding: 0 2px;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
 .embark-level-pip {
+  cursor: pointer;
+}
+
+/* The item catalog is a read: the card already says everything a sheet would
+   have repeated, so nothing here invites a tap. */
+.demo-grid .item-card {
   cursor: default;
 }

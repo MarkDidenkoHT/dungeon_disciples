@@ -6,7 +6,7 @@
 import { mountEngraving } from '../vendor/public/engrave.js';
 import { ENGRAVING_CURRENCY, ENGRAVING_TOKEN } from '../vendor/data/engravings.js';
 import {
-  player, faction, demoState, seedResources, renderResourceBar, renderValorBar,
+  player, faction, demoState, seedResources, renderValorBar,
 } from './demo-boot.js';
 
 // Three units per faction, picked because they have portrait art and sit at
@@ -42,9 +42,8 @@ seedResources({
   Crystals_Air:    62,
 });
 
-const resBar   = document.getElementById('resource-bar');
 const valorBar = document.getElementById('valor-bar');
-const draw = () => { renderResourceBar(resBar); renderValorBar(valorBar); };
+const draw = () => renderValorBar(valorBar);
 
 demoState.onChange = draw;
 draw();

@@ -12,6 +12,23 @@
   --maxw: 1080px;
   --cdn: https://assets.markdidenkowork.workers.dev;
 
+  /* The three banners, in the colours the game itself themes with: Aurex keeps
+     the default gold, the Choir burns orange, the Grail runs green. Each comes
+     with a bright variant for text and a translucent one for an edge. */
+  --empire:        #d9a341;
+  --empire-bright: #ecd08a;
+  --empire-edge:   rgba(217, 163, 65, 0.38);
+  --choir:         #e0761f;
+  --choir-bright:  #ffd9a0;
+  --choir-edge:    rgba(224, 118, 31, 0.38);
+  --grail:         #7fb03a;
+  --grail-bright:  #d8e88a;
+  --grail-edge:    rgba(127, 176, 58, 0.38);
+
+  /* What a panel paints its edge and its top rule with. Every section sets its
+     own pair; this is the fallback. */
+  --panel-accent: var(--empire);
+  --panel-edge:   var(--empire-edge);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -63,8 +80,8 @@ a { color: var(--accent-bright); }
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   align-content: start;
-  filter: grayscale(0.85) brightness(0.7) contrast(1);
-  opacity: 0.42;
+  filter: grayscale(0.6) brightness(0.72) contrast(1.05);
+  opacity: 0.55;
 }
 
 .backdrop-tile {
@@ -123,11 +140,27 @@ footer {
 }
 
 .topbar-nav a {
+  position: relative;
   color: var(--muted);
   text-decoration: none;
+  padding-bottom: 2px;
+  transition: color 0.18s ease;
+}
+
+.topbar-nav a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transition: transform 0.18s ease;
 }
 
 .topbar-nav a:hover { color: var(--text); }
+.topbar-nav a:hover::after { transform: scaleX(1); }
 
 .topbar-right {
   margin-left: auto;
@@ -171,11 +204,20 @@ footer {
   white-space: nowrap;
 }
 
-.btn:hover { filter: brightness(1.08); }
+.btn {
+  transition: filter 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.btn:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 6px 20px -6px var(--accent);
+  transform: translateY(-1px);
+}
 
 .btn--ghost {
-  background: transparent;
+  background: rgba(12, 13, 17, 0.5);
   color: var(--accent-bright);
+  backdrop-filter: blur(3px);
 }
 
 .btn--lg { padding: 14px 28px; font-size: 19px; }
@@ -191,7 +233,20 @@ footer {
     var(--hero-img);
   background-size: cover;
   background-position: center 30%;
+  border-bottom: 1px solid var(--empire-edge);
 }
+
+/* A vignette, so the copy in the bottom-left corner is not competing with the
+   brightest part of the screenshot behind it. */
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 20% 95%, rgba(0, 0, 0, 0.55), transparent 60%);
+}
+
+.hero-inner { position: relative; z-index: 1; }
 
 .hero-inner { padding: 70px 20px 60px; }
 
@@ -200,6 +255,7 @@ footer {
   line-height: 1.05;
   letter-spacing: 0.01em;
   font-weight: normal;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.75);
 }
 
 .hero-tagline {
@@ -230,23 +286,82 @@ footer {
 }
 
 /* ── Sections ─────────────────────────────────────────────────────────────── */
+/* Every section is a panel floating over the loading-screen backdrop. The panel
+   IS the `.wrap`, which is already the centred max-width box — giving it the
+   background rather than the section is what leaves the art showing down both
+   gutters instead of being covered edge to edge. `width: calc(100% - 32px)`
+   keeps a gutter on narrow screens too, so the art is never fully hidden.
+
+   `--panel-accent` / `--panel-edge` are set per section below, so the page
+   steps through the three banner colours as you scroll it. */
 section {
-  padding: 64px 0;
-  scroll-margin-top: 70px;
+  padding: 26px 0;
+  scroll-margin-top: 78px;
 }
 
+main section > .wrap {
+  position: relative;
+  width: calc(100% - 32px);
+  padding: 40px 34px;
+  border: 1px solid var(--panel-edge);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(23, 26, 34, 0.93), rgba(13, 14, 19, 0.95));
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+/* The lit top edge. A gradient rather than a solid border-top so it fades out
+   at the corners instead of fighting the rounded radius. */
+main section > .wrap::before {
+  content: '';
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--panel-accent), transparent);
+  opacity: 0.85;
+}
+
+#lore      > .wrap { --panel-accent: var(--empire); --panel-edge: var(--empire-edge); }
+#factions  > .wrap { --panel-accent: var(--empire); --panel-edge: var(--empire-edge); }
+#loop      > .wrap { --panel-accent: var(--choir);  --panel-edge: var(--choir-edge); }
+#castle    > .wrap { --panel-accent: var(--empire); --panel-edge: var(--empire-edge); }
+#heroes    > .wrap { --panel-accent: var(--choir);  --panel-edge: var(--choir-edge); }
+#evolve    > .wrap { --panel-accent: var(--grail);  --panel-edge: var(--grail-edge); }
+#embark    > .wrap { --panel-accent: var(--empire); --panel-edge: var(--empire-edge); }
+#items     > .wrap { --panel-accent: var(--choir);  --panel-edge: var(--choir-edge); }
+#transmute > .wrap { --panel-accent: var(--grail);  --panel-edge: var(--grail-edge); }
+#engrave   > .wrap { --panel-accent: var(--empire); --panel-edge: var(--empire-edge); }
+#colossus  > .wrap { --panel-accent: var(--choir);  --panel-edge: var(--choir-edge); }
+#more      > .wrap { --panel-accent: var(--empire); --panel-edge: var(--empire-edge); }
+#join      > .wrap { --panel-accent: var(--grail);  --panel-edge: var(--grail-edge); }
+
+/* This IS the section heading. There used to be an <h2> under it saying the
+   same thing in bigger letters; the kicker now carries the name on its own. */
 .section-label {
-  font-size: 13px;
-  letter-spacing: 0.22em;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: clamp(22px, 3vw, 30px);
+  line-height: 1.2;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 10px;
+  color: var(--panel-accent);
+  margin-bottom: 18px;
 }
 
-h2 {
-  font-size: clamp(26px, 3.6vw, 38px);
-  font-weight: normal;
-  line-height: 1.2;
+/* A rule trailing off the heading, in the panel's own colour. It replaces the
+   weight the <h2> used to give the top of a section. */
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--panel-accent), transparent);
+  opacity: 0.55;
 }
 
 h3 {
@@ -262,11 +377,6 @@ h3 {
 
 .lede + .lede { margin-top: 12px; }
 
-.rule {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--border), transparent);
-}
-
 /* ── Factions ─────────────────────────────────────────────────────────────── */
 .factions {
   margin-top: 34px;
@@ -277,8 +387,8 @@ h3 {
 
 .faction {
   position: relative;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 1px solid var(--panel-edge);
+  border-radius: 14px;
   overflow: hidden;
   background-size: cover;
   background-position: center;
@@ -286,6 +396,19 @@ h3 {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Each card carries its own banner's colour rather than the section's, which is
+   the whole point of the block: three answers, three palettes, side by side. */
+.faction--empire { --panel-accent: var(--empire); --panel-edge: var(--empire-edge); --panel-bright: var(--empire-bright); }
+.faction--choir  { --panel-accent: var(--choir);  --panel-edge: var(--choir-edge);  --panel-bright: var(--choir-bright); }
+.faction--grail  { --panel-accent: var(--grail);  --panel-edge: var(--grail-edge);  --panel-bright: var(--grail-bright); }
+
+.faction:hover {
+  transform: translateY(-4px);
+  border-color: var(--panel-accent);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
 }
 
 .faction::after {
@@ -309,17 +432,20 @@ h3 {
 }
 
 .faction-crest {
-  width: 52px;
-  height: 52px;
+  width: 54px;
+  height: 54px;
   flex: 0 0 auto;
   border-radius: 50%;
-  border: 1px solid var(--accent);
+  border: 1px solid var(--panel-accent);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.45), 0 0 18px -4px var(--panel-accent);
   object-fit: cover;
 }
 
 .faction-name {
-  font-size: 26px;
-  color: var(--accent-bright);
+  font-size: 23px;
+  line-height: 1.15;
+  color: var(--panel-bright, var(--accent-bright));
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
 }
 
 .faction-desc {
@@ -337,20 +463,35 @@ h3 {
 }
 
 .loop-step {
+  position: relative;
   border: 1px solid var(--border);
+  border-left: 2px solid var(--panel-edge);
   border-radius: var(--radius);
-  background: rgba(23, 26, 34, 0.84);
-  padding: 18px;
+  background: linear-gradient(180deg, rgba(28, 31, 40, 0.9), rgba(18, 20, 26, 0.9));
+  padding: 18px 18px 18px 20px;
+  transition: border-left-color 0.2s ease, transform 0.2s ease;
 }
 
+.loop-step:hover {
+  border-left-color: var(--panel-accent);
+  transform: translateY(-2px);
+}
+
+/* The step number as a struck coin rather than a bare numeral — it has to read
+   as a sequence at a glance, next to five others. */
 .loop-step::before {
   counter-increment: step;
   content: counter(step);
-  display: block;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-bottom: 10px;
+  border: 1px solid var(--panel-edge);
+  border-radius: 50%;
   font-size: 13px;
-  letter-spacing: 0.2em;
-  color: var(--accent);
-  margin-bottom: 6px;
+  color: var(--panel-accent);
+  background: rgba(0, 0, 0, 0.35);
 }
 
 .loop-step h3 { font-size: 18px; }
@@ -362,8 +503,6 @@ h3 {
 }
 
 /* ── Demos ────────────────────────────────────────────────────────────────── */
-.demo-section + .demo-section { border-top: 1px solid var(--border); }
-
 .demo-layout {
   margin-top: 28px;
   display: grid;
@@ -399,18 +538,31 @@ h3 {
   content: '\2756';
   position: absolute;
   left: 0;
-  color: var(--accent);
+  color: var(--panel-accent);
   font-size: 11px;
   top: 4px;
 }
 
 .phone {
   position: relative;
-  border: 1px solid var(--border);
+  border: 1px solid var(--panel-edge);
   border-radius: 22px;
   padding: 10px;
-  background: #06070a;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+  background: linear-gradient(180deg, #0d0f14, #06070a);
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* A faint halo in the section's colour, so the frame reads as part of the panel
+   rather than a screenshot dropped onto it. */
+.phone::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 22px;
+  pointer-events: none;
+  box-shadow: 0 0 34px -10px var(--panel-accent);
 }
 
 .phone iframe {
@@ -422,22 +574,51 @@ h3 {
   background: var(--bg-2);
 }
 
-.phone-caption {
-  margin-top: 10px;
-  font-size: 13px;
+/* ── Other mechanics ──────────────────────────────────────────────────────── */
+/* The one section with no demo beside it: these mechanics have no screen of
+   their own to frame. Same card as a loop step, without the step number. */
+.more-grid {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.more-item {
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--panel-edge);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(28, 31, 40, 0.9), rgba(18, 20, 26, 0.9));
+  padding: 18px;
+  transition: border-left-color 0.2s ease, transform 0.2s ease;
+}
+
+.more-item:hover {
+  border-left-color: var(--panel-accent);
+  transform: translateY(-2px);
+}
+
+.more-item h3 {
+  font-size: 18px;
+  color: var(--panel-accent);
+}
+
+.more-item p {
+  margin-top: 6px;
+  font-size: 15px;
   color: var(--muted);
-  text-align: center;
 }
 
 /* ── Join ─────────────────────────────────────────────────────────────────── */
-.join {
-  text-align: center;
-  border-top: 1px solid var(--border);
-  background:
-    radial-gradient(60% 120% at 50% 0%, rgba(200, 151, 58, 0.11), transparent 70%);
-}
+.join { text-align: center; }
 
-.join h2 { margin-bottom: 14px; }
+/* The glow belongs on the panel, not the section — on the section it sat behind
+   the panel's own opaque background and was invisible. */
+.join > .wrap {
+  background:
+    radial-gradient(70% 130% at 50% 0%, rgba(127, 176, 58, 0.14), transparent 68%),
+    linear-gradient(180deg, rgba(23, 26, 34, 0.93), rgba(13, 14, 19, 0.95));
+}
 
 .join .lede { margin: 0 auto 26px; text-align: center; }
 
@@ -454,10 +635,17 @@ h3 {
 }
 
 footer {
-  border-top: 1px solid var(--border);
-  padding: 26px 0 40px;
+  padding: 10px 0 44px;
   font-size: 14px;
   color: var(--muted);
+}
+
+footer > .wrap {
+  width: calc(100% - 32px);
+  padding: 20px 26px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(13, 14, 19, 0.92);
 }
 
 .footer-inner {
@@ -480,12 +668,35 @@ footer {
 
 @media (max-width: 480px) {
   body { font-size: 16px; }
-  section { padding: 48px 0; }
+  section { padding: 14px 0; }
   .phone iframe { height: 620px; }
+
+  /* The gutter shrinks but never closes — a sliver of the art down each side is
+     what keeps the panels reading as panels. */
+  main section > .wrap,
+  footer > .wrap {
+    width: calc(100% - 20px);
+    padding: 26px 18px;
+    border-radius: 12px;
+  }
 }
 
 @media (max-width: 767px) {
   .backdrop {
     grid-template-columns: 1fr;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .faction,
+  .loop-step,
+  .more-item,
+  .btn,
+  .topbar-nav a,
+  .topbar-nav a::after { transition: none; }
+  .faction:hover,
+  .loop-step:hover,
+  .more-item:hover,
+  .btn:hover { transform: none; }
 }

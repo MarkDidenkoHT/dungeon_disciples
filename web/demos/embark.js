@@ -1,13 +1,17 @@
-// The departure board: three regions, ten floors each.
+// The departure board: three regions, ten levels each.
 //
-// Read-only on purpose — this one is a picture of where you go, not a thing to
-// poke at. The cards are the game's: same classes, same art, same blurbs, and
-// the floor count comes from the real encounter tables rather than a number
-// typed here, so a region that grows a floor grows one here too.
+// The cards are the game's: same classes, same art, same blurbs, and the level
+// count comes from the real encounter tables rather than a number typed here,
+// so a region that grows a level grows one here too.
+//
+// Tapping a level opens who stands on it. That is the one thing the board could
+// not say on its own — "ten levels, four of them bosses" is a fact about the
+// region, not about the fight — and the encounter tables already hold it.
 import { REGION_ENCOUNTERS } from '../vendor/data/embark.js';
+import { UNITS } from '../vendor/data/units.js';
 import { assetUrl } from '../vendor/public/asset_base.js';
-import { escapeHtml } from '../vendor/public/utils.js';
-import { L, t } from './demo-boot.js';
+import { escapeHtml, unitName, openSheet } from '../vendor/public/utils.js';
+import { L, t, player } from './demo-boot.js';
 
 // Copied from the embark screen, where this table is presentation only — the
 // labels, the art and the blurb.
@@ -41,11 +45,12 @@ const REGIONS = [
   },
 ];
 
-// Floors that end in a boss fight — highlighted red on the level row, as in the
-// game.
-const BOSS_LEVELS = [3, 6, 10];
+// Levels that end in a boss fight — highlighted red on the level row, as in the
+// game. Levels 3, 6 and 10 end on a fresh tier of the region's boss; level 9
+// fields the tier-2 boss a second time.
+const BOSS_LEVELS = [3, 6, 9, 10];
 
-const floorsIn = regionId => Object.keys(REGION_ENCOUNTERS[regionId] || {}).length || 1;
+const levelsIn = regionId => Object.keys(REGION_ENCOUNTERS[regionId] || {}).length || 1;
 
 const rLabel = r => (L === 'ru' ? r.label_ru : r.label);
 const rDesc  = r => (L === 'ru' ? r.description_ru : r.description);
@@ -61,7 +66,107 @@ document.getElementById('regions').innerHTML = REGIONS.map(r => `
       </div>
     </div>
     <div class="embark-level-row">
-      ${Array.from({ length: floorsIn(r.id) }, (_, i) => i + 1).map(lv => `
-        <span class="embark-level-pip${BOSS_LEVELS.includes(lv) ? ' embark-level-pip--boss' : ''}">${lv}</span>`).join('')}
+      ${Array.from({ length: levelsIn(r.id) }, (_, i) => i + 1).map(lv => `
+        <span class="embark-level-pip${BOSS_LEVELS.includes(lv) ? ' embark-level-pip--boss' : ''}"
+              role="button" tabindex="0"
+              data-region="${r.id}" data-level="${lv}">${lv}</span>`).join('')}
     </div>
   </div>`).join('');
+
+// ── Who is on a level ───────────────────────────────────────────────────────
+// A deliberately partial view. The real battle screen carries initiative order,
+// resistances, items, spells and a live health bar on every cell; none of that
+// is decidable from a standing formation, and all of it would bury the one
+// thing this demo is for — that an encounter is a SHAPE. So the sheet shows the
+// shape and nothing else: who, how much health, and which of the six cells they
+// are standing in.
+//
+// The cells are the game's own numbering, front row first:
+//
+//     0 1
+//     2 3
+//     4 5
+//
+// which is why the grid is filled by index rather than by iterating the enemy
+// list — the list is in whatever order the table was written, and the gaps are
+// as much a part of the encounter as the units. A level that fields two is read
+// at a glance against one that fields six.
+const CELLS = 6;
+
+// `enemy.key` is "region.unit_key"; the units themselves live under
+// UNITS.enemies, filed by the same region id.
+function enemyUnit(key) {
+  const [region, unitKey] = String(key).split('.');
+  return UNITS.enemies?.[region]?.[unitKey] || null;
+}
+
+// Filed under the unit's id, the same portraits the castle grid uses.
+const portraitUrl = id => assetUrl(`/assets/character_portraits/p_${id}.png`);
+
+function cellHtml(enemy) {
+  if (!enemy) return '<div class="enc-cell enc-cell--empty"></div>';
+
+  const unit = enemyUnit(enemy.key);
+  if (!unit) return '<div class="enc-cell enc-cell--empty"></div>';
+
+  // The encounter entry, not the unit, is what marks a boss: a boss is the one
+  // carrying `spells` into the fight, which is also what makes level 9 a boss
+  // level; the unit itself is an ordinary row in the table.
+  const boss = Boolean(enemy.spells);
+  const name = escapeHtml(unitName(unit, player));
+
+  return `
+    <div class="enc-cell${boss ? ' enc-cell--boss' : ''}">
+      <img class="enc-portrait" src="${portraitUrl(unit.id)}" alt=""
+           loading="lazy" onerror="this.remove()">
+      <span class="enc-hp">${unit.hp}&#9829;</span>
+      <span class="enc-name">${name}</span>
+    </div>`;
+}
+
+function openLevel(regionId, level) {
+  const region  = REGIONS.find(r => r.id === regionId);
+  const encounter = REGION_ENCOUNTERS[regionId]?.[`level_${level}`];
+  if (!region || !encounter) return;
+
+  // One pass over the enemy list into a six-slot array, so an unoccupied cell
+  // stays unoccupied instead of the units closing up behind it.
+  const grid = Array(CELLS).fill(null);
+  for (const e of encounter.enemies || []) {
+    if (e.cell >= 0 && e.cell < CELLS) grid[e.cell] = e;
+  }
+
+  const title = `${rLabel(region)} — ${t('Level', 'Уровень')} ${level}`;
+  // Its own class rather than the level pip's: a pip is a fixed 28px square
+  // sized for a one- or two-digit number, and a word does not fit in one.
+  const badge = BOSS_LEVELS.includes(level)
+    ? `<span class="enc-boss-badge">${t('Boss', 'Босс')}</span>`
+    : '';
+
+  openSheet(title, `
+    <div class="enc-legend">
+      <span>${t('Front row', 'Передний ряд')}</span>
+      <span>${grid.filter(Boolean).length} / ${CELLS}</span>
+    </div>
+    <div class="enc-grid">${grid.map(cellHtml).join('')}</div>
+    <div class="enc-legend"><span>${t('Back row', 'Задний ряд')}</span></div>
+    <div class="demo-note">${t(
+      'Melee units only reach the front row. Ranged units reach anyone. The same enemies stand in the same cells every time you come back to this level.',
+      'Ближний бой достаёт только передний ряд, дальний — любого. Эти же враги стоят в этих же клетках каждый раз, когда вы приходите на этот уровень.')}</div>`,
+    badge);
+}
+
+document.getElementById('regions').addEventListener('click', e => {
+  const pip = e.target.closest('.embark-level-pip');
+  if (pip) openLevel(pip.dataset.region, Number(pip.dataset.level));
+});
+
+// The pips are spans acting as buttons, so they need the keyboard behaviour a
+// button would have given them for free.
+document.getElementById('regions').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const pip = e.target.closest('.embark-level-pip');
+  if (!pip) return;
+  e.preventDefault();
+  openLevel(pip.dataset.region, Number(pip.dataset.level));
+});

@@ -14,8 +14,7 @@ import {
   COLOSSUS_MAX_HP, COLOSSUS_MILESTONES, colossusPhaseFor, colossusWeek,
 } from '../vendor/data/colossus.js';
 import {
-  player, faction, FACTIONS, L, demoState, seedResources,
-  renderResourceBar, mountFactionTabs,
+  player, faction, FACTIONS, L, demoState, seedResources, mountFactionTabs,
 } from './demo-boot.js';
 
 const OTHERS = Object.keys(FACTIONS).filter(f => f !== faction);
@@ -85,16 +84,13 @@ state.me.next_milestone = nextMilestone(state.me.damage);
 
 demoState.colossus = state;
 
-const draw = () => renderResourceBar(document.getElementById('resource-bar'));
-
 async function render() {
   await renderColossusPage(document.getElementById('host'), state, {
     player,
     L,
     onAttack:  attack,
-    onRefresh: () => { draw(); render(); },
+    onRefresh: () => render(),
   });
-  draw();
 }
 
 function attack() {

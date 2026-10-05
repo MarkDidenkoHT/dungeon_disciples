@@ -66,6 +66,17 @@ function buildBackdrop() {
 
   const cols    = getComputedStyle(el).gridTemplateColumns.split(' ').length;
   const tileH   = (el.clientWidth / cols) * (850 / 400);
+
+  // A page laid out at zero width measures zero, and zero tiles are infinitely
+  // many rows — which threw, and the throw took the REST of this module with
+  // it, `applyLang()` included. A visitor whose browser restored the tab in the
+  // background got an untranslated page and no backdrop.
+  //
+  // That is not hypothetical: a hidden or prerendered tab has an innerWidth of
+  // 0 until it is shown. Bail out instead, and let the `load` and `resize`
+  // handlers below build it once there is a width to measure.
+  if (!Number.isFinite(tileH) || tileH <= 0) return;
+
   // One row of slack, because the page grows as the demo frames finish loading
   // and a backdrop that stops short is more obvious than one that is clipped.
   const rows    = Math.ceil(document.body.scrollHeight / tileH) + 1;
@@ -90,6 +101,8 @@ function buildBackdrop() {
     .map(url => `<div class="backdrop-tile" style="background-image:url('${url}')"></div>`)
     .join('');
 }
+
+applyLang();
 
 buildBackdrop();
 // The page gets taller as the frames load, and the column count changes with
@@ -129,5 +142,3 @@ function demoSrc(name) {
 for (const frame of document.querySelectorAll('iframe[data-demo]')) {
   frame.src = demoSrc(frame.dataset.demo);
 }
-
-applyLang();

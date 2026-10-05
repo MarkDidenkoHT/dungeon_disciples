@@ -11,7 +11,7 @@
 // them in place — a widget's text is baked in at mount time (`const L = ...`),
 // so a reload is both the correct answer and the cheap one.
 
-import { setUiLanguage, applyFactionTheme, RESOURCE_BAR_SLOTS } from '../vendor/public/utils.js';
+import { setUiLanguage, applyFactionTheme } from '../vendor/public/utils.js';
 import { assetUrl } from '../vendor/public/asset_base.js';
 import { ENGRAVING_CURRENCY, ENGRAVING_TOKEN } from '../vendor/data/engravings.js';
 import { demoState } from '../vendor/public/api.js';
@@ -19,9 +19,9 @@ import { demoState } from '../vendor/public/api.js';
 export { demoState };
 
 export const FACTIONS = {
-  empire:              { label: { en: 'Aurex',      ru: 'Аурекс' }, crest: 'empire' },
-  choir_of_the_cursed: { label: { en: 'The Choir',  ru: 'Хор' },    crest: 'choir' },
-  grail_of_sorrow:     { label: { en: 'The Grail',  ru: 'Грааль' }, crest: 'grail' },
+  empire:              { label: { en: 'Empire of Aurex',      ru: 'Империя Аурекс' }, crest: 'empire' },
+  choir_of_the_cursed: { label: { en: 'Choir of the Cursed', ru: 'Хор Проклятых' },   crest: 'choir' },
+  grail_of_sorrow:     { label: { en: 'Grail of Sorrow',     ru: 'Грааль Скорби' },   crest: 'grail' },
 };
 
 export const L = (() => {
@@ -51,22 +51,12 @@ document.documentElement.lang = L;
 applyFactionTheme(faction);
 
 // ── Resource read-outs ──────────────────────────────────────────────────────
-// Both of these are the game's own strips, markup and all — the framed gold /
-// crystal bar that sits above every screen, and the Valor + token row the
-// engraving page hangs under it. They belong to the app shell in the game,
-// which is why a demo has to render its own.
-
-export function renderResourceBar(el) {
-  if (!el) return;
-  const amountOf = key => demoState.resources.find(r => r.item === key)?.amount ?? 0;
-  el.className = 'resource-bar';
-  el.innerHTML = RESOURCE_BAR_SLOTS.map(slot => `
-    <div class="res-bar-item">
-      <span class="res-bar-icon">${slot.icon}</span>
-      <span class="res-bar-val">${amountOf(slot.key)}</span>
-    </div>`).join('');
-}
-
+// The gold / crystal strip the game hangs above every screen is deliberately
+// not reproduced here. It belongs to the app shell rather than to any screen,
+// and on the landing page it read as a HUD for a purse the visitor does not
+// have — numbers they cannot spend, above a demo they cannot lose. The purse
+// itself still exists (`seedResources`), because the widgets price against it.
+//
 // What the engraving page spends: Valor from the Colossus, and the tokens won
 // in the Crown Tourney. Gold rides in the resource bar above it.
 export function renderValorBar(el) {
