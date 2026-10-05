@@ -103,20 +103,54 @@ function enemyUnit(key) {
 // Filed under the unit's id, the same portraits the castle grid uses.
 const portraitUrl = id => assetUrl(`/assets/character_portraits/p_${id}.png`);
 
-function cellHtml(enemy) {
-  if (!enemy) return '<div class="enc-cell enc-cell--empty"></div>';
+// Not every unit is one cell. The Glittering Abyss alone fields thirteen that
+// are not: Chillrock and Rimewarden take a whole ROW, Cryodrox a whole COLUMN.
+// Drawing them as a single square was a lie about the board — a row unit holds
+// the entire front line on its own, and that is the whole shape of the fight.
+//
+// Same rule the battle engine uses (litanyCellFootprint in utils/battle-engine):
+//
+//   tile    one cell.
+//   row     both columns of that row.
+//   column  the cell and the one BELOW it, so the anchor is the TOP of the two.
+//
+const CELL_COLS = 2;
+function footprint(cell, size) {
+  if (size === 'row') {
+    const top = Math.floor(cell / CELL_COLS) * CELL_COLS;
+    return [top, top + 1];
+  }
+  if (size === 'column') return [cell, cell + CELL_COLS];
+  return [cell];
+}
+
+// Explicit placement rather than auto-flow: once one unit spans two columns and
+// another spans two rows, the grid's own packing starts shuffling the tiles
+// around them and the formation stops matching the cell numbers.
+function placement(cell, size) {
+  const row = Math.floor(cell / CELL_COLS) + 1;
+  const col = (cell % CELL_COLS) + 1;
+  if (size === 'row')    return `grid-column:1/span 2;grid-row:${row};`;
+  if (size === 'column') return `grid-column:${col};grid-row:${row}/span 2;`;
+  return `grid-column:${col};grid-row:${row};`;
+}
+
+function cellHtml(enemy, cell) {
+  if (!enemy) return `<div class="enc-cell enc-cell--empty" style="${placement(cell, 'tile')}"></div>`;
 
   const unit = enemyUnit(enemy.key);
-  if (!unit) return '<div class="enc-cell enc-cell--empty"></div>';
+  if (!unit) return `<div class="enc-cell enc-cell--empty" style="${placement(cell, 'tile')}"></div>`;
 
   // The encounter entry, not the unit, is what marks a boss: a boss is the one
   // carrying `spells` into the fight, which is also what makes level 9 a boss
   // level; the unit itself is an ordinary row in the table.
   const boss = Boolean(enemy.spells);
+  const size = unit.size || 'tile';
   const name = escapeHtml(unitName(unit, player));
+  const span = size === 'tile' ? '' : ` enc-cell--${size}`;
 
   return `
-    <div class="enc-cell${boss ? ' enc-cell--boss' : ''}">
+    <div class="enc-cell${span}${boss ? ' enc-cell--boss' : ''}" style="${placement(cell, size)}">
       <img class="enc-portrait" src="${portraitUrl(unit.id)}" alt=""
            loading="lazy" onerror="this.remove()">
       <span class="enc-hp">${unit.hp}&#9829;</span>
@@ -130,11 +164,23 @@ function openLevel(regionId, level) {
   if (!region || !encounter) return;
 
   // One pass over the enemy list into a six-slot array, so an unoccupied cell
-  // stays unoccupied instead of the units closing up behind it.
-  const grid = Array(CELLS).fill(null);
+  // stays unoccupied instead of the units closing up behind it. A two-cell unit
+  // is drawn once, at its anchor; the cell its body covers is marked taken so
+  // nothing is drawn under it and no empty box is drawn over it.
+  const grid  = Array(CELLS).fill(null);
+  const taken = new Set();
   for (const e of encounter.enemies || []) {
-    if (e.cell >= 0 && e.cell < CELLS) grid[e.cell] = e;
+    if (!(e.cell >= 0 && e.cell < CELLS)) continue;
+    const unit = enemyUnit(e.key);
+    grid[e.cell] = e;
+    for (const c of footprint(e.cell, unit?.size || 'tile')) {
+      if (c !== e.cell && c < CELLS) taken.add(c);
+    }
   }
+  const cells = grid
+    .map((e, i) => (taken.has(i) ? '' : cellHtml(e, i)))
+    .join('');
+  const occupied = grid.filter(Boolean).length + taken.size;
 
   const title = `${rLabel(region)} — ${t('Level', 'Уровень')} ${level}`;
   // Its own class rather than the level pip's: a pip is a fixed 28px square
@@ -146,9 +192,9 @@ function openLevel(regionId, level) {
   openSheet(title, `
     <div class="enc-legend">
       <span>${t('Front row', 'Передний ряд')}</span>
-      <span>${grid.filter(Boolean).length} / ${CELLS}</span>
+      <span>${occupied} / ${CELLS}</span>
     </div>
-    <div class="enc-grid">${grid.map(cellHtml).join('')}</div>
+    <div class="enc-grid">${cells}</div>
     <div class="enc-legend"><span>${t('Back row', 'Задний ряд')}</span></div>
     <div class="demo-note">${t(
       'Melee units only reach the front row. Ranged units reach anyone. The same enemies stand in the same cells every time you come back to this level.',

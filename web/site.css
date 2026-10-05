@@ -162,6 +162,15 @@ footer {
 .topbar-nav a:hover { color: var(--text); }
 .topbar-nav a:hover::after { transform: scaleX(1); }
 
+/* "Play" is a nav item, not a button. It used to be a filled gold slab that
+   shouted over the brand and everything else in the bar; here it points at the
+   join block at the bottom of the page, where the real call to action lives. */
+.topbar-nav-play {
+  color: var(--accent-bright);
+}
+
+.topbar-nav-play::after { background: var(--accent-bright); }
+
 .topbar-right {
   margin-left: auto;
   display: flex;
@@ -663,7 +672,7 @@ footer > .wrap {
   }
   .demo-section:nth-of-type(even) .demo-copy { order: 0; }
   .phone { max-width: 420px; margin: 0 auto; }
-  .topbar-nav { display: none; }
+  .topbar-nav a:not(.topbar-nav-play) { display: none; }
 }
 
 @media (max-width: 480px) {

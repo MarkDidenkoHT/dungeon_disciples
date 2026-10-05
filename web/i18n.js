@@ -87,11 +87,11 @@ export const STRINGS = {
     'd.heroes.li4': 'Seven spells for each faction!',
 
     'd.items.label': 'Items',
-    'd.items.p1': 'Eighty-four items in five rarities. Common and rare items stack; every epic and mythic is unique, so you can only ever own one of each. Shattered is not a step above mythic — it is epic in power and price, and sits in its own rarity so tournament rules can count it separately.',
-    'd.items.p2': 'An item is more than its stats. It carries a passive, it can require a tag before a unit is allowed to wear it, and it can add or remove tags: Bloodless turns a Zombie into a Skeleton, and every effect that works on Zombies stops working on that unit.',
-    'd.items.li1': 'Filter by rarity along the top.',
-    'd.items.li2': 'Every card is the game’s own item card.',
-    'd.items.li3': 'The passive under the name is the main thing an item does.',
+    'd.items.p1': 'Over a hundred items in five rarities. Some are available only to certain factions; some are unique, and you can never own more than one.',
+    'd.items.p2': 'Items are not only stats. Many grant passive abilities, and many interact with a unit’s tags — requiring certain tags before the item can be worn, or even taking them away.',
+    'd.items.li1': 'Every item is crafted at the forge for in-game currency.',
+    'd.items.li2': 'Each unit can wear 1 item.',
+    'd.items.li3': 'Items can completely change your formation and the strategies you play.',
 
     'd.transmute.label': 'Transmutation',
     'd.transmute.p1': 'There are six kinds of crystal, and you earn them from everything you do — runs, errands, the Colossus. You end up with a pile of some and not enough of the ones you need.',
@@ -211,11 +211,11 @@ export const STRINGS = {
     'd.heroes.li4': 'Семь заклинаний для каждой фракции!',
 
     'd.items.label': 'Предметы',
-    'd.items.p1': 'Восемьдесят четыре предмета пяти редкостей. Обычные и редкие складываются; каждый эпический и мифический уникален — больше одного не получить. Расколотые — не ступень выше мифических: по силе и цене они эпические, а вынесены в отдельную редкость, чтобы турнирные правила считали их отдельно.',
-    'd.items.p2': 'Предмет — это не только статы. У него есть пассивка, он может требовать метку, без которой юнит его не наденет, и может сам добавлять или снимать метки: «Обескровленный» превращает Зомби в Скелета, и все эффекты для Зомби на него больше не действуют.',
-    'd.items.li1': 'Фильтр по редкости — сверху.',
-    'd.items.li2': 'Каждая карточка — настоящая игровая карточка предмета.',
-    'd.items.li3': 'Пассивка под названием — главное, что делает предмет.',
+    'd.items.p1': 'Более ста предметов пяти редкостей, некоторые доступны определенным фракциям, некоторые уникальны и их нельзя иметь более одного.',
+    'd.items.p2': 'Предметы — это не только статы. Многие дают пассивные способности, многие взаимодействуют с тэгами воинов, требуют некоторые чтобы предмет можно было одеть, или даже отнимают их.',
+    'd.items.li1': 'Все предметы создаются в кузнице за внутриигровую валюту.',
+    'd.items.li2': 'Каждый воин может одеть 1 предмет.',
+    'd.items.li3': 'Предметы могут полностью менять боевое построение и влиять на стратегии.',
 
     'd.transmute.label': 'Трансмутация',
     'd.transmute.p1': 'Кристаллов шесть видов, и выпадают они отовсюду: из походов, за поручения, с Колосса. В итоге одних накапливается с избытком, а нужных для крафта не хватает.',

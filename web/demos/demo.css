@@ -108,15 +108,28 @@ body {
 .enc-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  /* Explicit rows rather than a per-cell aspect-ratio: a unit that spans two
+     rows has to resolve against rows that already have a height. The 2:3 on the
+     grid keeps every single cell square. */
+  grid-template-rows: repeat(3, 1fr);
+  aspect-ratio: 2 / 3;
   gap: 4px;
   width: 100%;
   max-width: 260px;
   margin: 4px auto 10px;
 }
 
+/* A two-cell unit is bordered in the accent so the footprint reads as one body
+   rather than as two squares that happen to touch. */
+.enc-cell--row,
+.enc-cell--column {
+  border-color: var(--accent);
+}
+
 .enc-cell {
   position: relative;
-  aspect-ratio: 1 / 1;
+  min-width: 0;
+  min-height: 0;
   border: 1px solid var(--border);
   border-radius: 6px;
   overflow: hidden;

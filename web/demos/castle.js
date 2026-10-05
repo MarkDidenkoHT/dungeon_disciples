@@ -16,7 +16,7 @@ import {
   unitName, escapeHtml,
 } from '../vendor/public/utils.js';
 import {
-  player, faction, L, t, seedResources,
+  player, faction, L, t, seedResources, mountFactionTabs,
 } from './demo-boot.js';
 
 const { BUILDING_POOLS, SLOT_CATEGORIES, SLOT_FIXED_BUILDING, BUILDING_MAX_LEVELS } = BUILDINGS;
@@ -216,6 +216,8 @@ seedResources({
   Crystals_Nature: 64,
   Crystals_Air:    71,
 });
+
+mountFactionTabs(document.getElementById('factions'));
 
 render();
 applyLayer();

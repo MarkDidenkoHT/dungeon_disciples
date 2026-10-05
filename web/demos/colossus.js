@@ -14,7 +14,7 @@ import {
   COLOSSUS_MAX_HP, COLOSSUS_MILESTONES, colossusPhaseFor, colossusWeek,
 } from '../vendor/data/colossus.js';
 import {
-  player, faction, FACTIONS, L, demoState, seedResources, mountFactionTabs,
+  player, faction, FACTIONS, L, demoState, seedResources,
 } from './demo-boot.js';
 
 const OTHERS = Object.keys(FACTIONS).filter(f => f !== faction);
@@ -117,5 +117,4 @@ function attack() {
   render();
 }
 
-mountFactionTabs(document.getElementById('factions'));
 render();
