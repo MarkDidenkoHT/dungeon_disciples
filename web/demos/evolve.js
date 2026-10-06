@@ -52,7 +52,6 @@ function renderTrack() {
          data-i="${i}" title="${escapeHtml(unitName(u, player))}">
       <img class="portrait-art-img" src="${portraitUrl(u.id)}"
            alt="${escapeHtml(unitName(u, player))}" onerror="this.style.display='none'">
-      <div class="portrait-name">${escapeHtml(unitName(u, player))}</div>
     </div>`).join('');
 }
 

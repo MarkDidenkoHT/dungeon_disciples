@@ -16,6 +16,8 @@ export const STRINGS = {
     'nav.loop': 'How it plays',
     'nav.mechanics': 'Mechanics',
     'nav.play': 'Play',
+    'nav.music': 'Music',
+    'nav.faction': 'Faction',
 
     'hero.tagline': 'One crown, broken into pieces. Three powers that will not share them.',
     'hero.sub': 'A turn-based tactics game you play inside Telegram. Build a castle, recruit units, equip them, and send six of them into a dungeon. Where a unit stands decides the fight, and the roster you raise stays yours.',
@@ -55,6 +57,13 @@ export const STRINGS = {
     'loop.s5.p': 'Initiative sets the turn order. Damage comes in six elements and is reduced by armor. Most abilities depend on where units are standing, on both sides.',
     'loop.s6.h': 'Daily and weekly',
     'loop.s6.p': 'A faction boss with ten thousand health, daily errands, a nightly tournament, PvP, and engravings you pay for with what you win.',
+    'loop.s7.h': 'And that is not all',
+    'loop.s7.p': 'Plenty already in the game did not fit on this page: unit size, loyalty, callings, combat barks, litanies, the Chronicle, mercenaries, errands, the Crown Tourney. Come and see for yourself.',
+    'loop.s8.h': 'In active development',
+    'loop.s8.p': 'The game is in active development: mechanics, content and events arrive and are updated all the time.',
+    'video.label': 'Gameplay',
+    'video.p1': 'The game in motion, recorded in the real client. More clips on the channel.',
+    'video.cta': 'Shattered Crown on YouTube',
 
     'd.castle.label': 'Castle',
     'd.castle.p1': 'The castle — page one has 12 slots for your army: the hero, 8 for the faction’s units and 3 for mercenaries. You are free to build several identical tier-1 units and set each on a different development path. Build two Acolytes — upgrade one to Templar and the second to Ardent Priest — and the same with any unit.',
@@ -94,16 +103,15 @@ export const STRINGS = {
     'd.items.li3': 'Items can completely change your formation and the strategies you play.',
 
     'd.transmute.label': 'Transmutation',
-    'd.transmute.p1': 'There are six kinds of crystal, and you earn them from everything you do — runs, errands, the Colossus. You end up with a pile of some and not enough of the ones you need.',
-    'd.transmute.p2': 'Transmutation fixes that. You spend two kinds you have to spare and get back a third kind of your choosing. It costs time rather than gold — about an hour — and you have to build the lab first.',
-    'd.transmute.li1': 'Tap a corner to pick a crystal, then set the amount with − and +.',
-    'd.transmute.li2': 'Hold − or + to move in fives.',
-    'd.transmute.li3': 'The timer is shortened here so you can watch it finish.',
+    'd.transmute.p1': 'There are six kinds of crystal in the game. They are the core resources — used to develop your units, craft items, raise buildings and so on. Crystals drop as rewards from everything: runs, errands, the Colossus. You end up with a surplus of some and short of the ones you need, and transmutation is what solves that. You pick the kind you want, and the two kinds you are willing to trade away.',
+    'd.transmute.li1': 'Build the laboratory to unlock transmutation.',
+    'd.transmute.li2': 'Pick the crystals, then tap or hold − or + to change the amount.',
+    'd.transmute.li3': 'After a set time the transmutation finishes — you get a notification.',
 
     'd.engrave.label': 'Engraving',
-    'd.engrave.p1': 'Engraving permanently changes one unit’s stats. You pick a set of three stats: one goes down, the other two go up. You do not choose the amounts — the stat you give up falls about twice as far as each of the other two rises.',
-    'd.engrave.p2': 'A higher tier scales all three numbers up together. You pay in Valor from the Colossus, in gold, and in tokens that only drop in the Crown Tourney. An engraving can be replaced later, but never removed.',
-    'd.engrave.li1': 'Pick a unit, pick a set of stats, then spend the points with − and +.',
+    'd.engrave.p1': 'Engraving is an expensive way to modify your units. It permanently changes one unit’s stats or abilities. You pick a set of stats or abilities, and choose what you are willing to sacrifice in exchange for the bonus — lowering armor, say, to raise power in return.',
+    'd.engrave.p2': 'The higher the tier, the more you can change through engraving, and the more it costs. You pay in Valor from the Colossus, in gold, and in tokens that only drop in the Crown Tourney.',
+    'd.engrave.li1': 'Pick a unit and an engraving, then spend the points with − and +.',
     'd.engrave.li2': 'Every number shown is that unit’s real stat.',
     'd.engrave.li3': 'The eighth set trades passive ranks instead of stats.',
 
@@ -114,18 +122,6 @@ export const STRINGS = {
     'd.colossus.li2': 'Tap another faction to see how far along it is.',
     'd.colossus.li3': 'In the game, Attack starts a real battle.',
 
-    'more.label': 'Other mechanics',
-    'more.lede': 'There is more going on than has a screen of its own. A few of the things running underneath every battle.',
-    'more.s1.h': 'Unit size',
-    'more.s1.p': 'Most units stand in one cell. Some take a whole row, or a whole column of two — a big unit covers two cells at once, and what can reach it changes with it.',
-    'more.s2.h': 'Loyalty',
-    'more.s2.p': 'A squad is capped by loyalty, not by headcount. A one-cell unit costs 1, a two-cell unit costs 2, and your hero decides how much you have to spend.',
-    'more.s3.h': 'Callings',
-    'more.s3.p': 'Each faction has two. A unit is given one at random, and you can change it at the Temple for 100 gold. It decides what that unit’s Chronicle asks of it — and whether it may sing in a litany.',
-    'more.s4.h': 'Combat barks',
-    'more.s4.p': 'Units talk during a fight. The line is picked from who is speaking, who they are hitting and what just happened. Pure flavour — no game logic ever reads it.',
-    'more.s5.h': 'Litanies',
-    'more.s5.p': 'Eighteen scripted executions, two for every hero. When the right formation is standing on the board and the enemy champion is about to fall, the chorus performs and the lead lands the blow — and unlike a bark, it pays.',
 
     'join.label': 'Join',
     'join.lede': 'No install, no account to create, no store page. Open the bot, pick a faction, and you have your first castle a couple of minutes later.',
@@ -133,6 +129,7 @@ export const STRINGS = {
 
     'footer.note': 'Shattered Crown — a turn-based tactics game in Telegram.',
     'footer.demos': 'Every demo on this page runs the game’s own code against its own data.',
+    'footer.youtube': 'YouTube',
   },
 
   ru: {
@@ -140,6 +137,8 @@ export const STRINGS = {
     'nav.loop': 'Как играть',
     'nav.mechanics': 'Механики',
     'nav.play': 'Играть',
+    'nav.music': 'Музыка',
+    'nav.faction': 'Фракция',
 
     'hero.tagline': 'Одна корона, расколотая на части. Три силы, что не станут делиться.',
     'hero.sub': 'Пошаговая тактика прямо в Telegram. Стройте замок, набирайте юнитов, снаряжайте их и отправляйте шестерых в подземелье. Исход боя решает то, кто где стоит, а собранный отряд остаётся с вами.',
@@ -179,6 +178,13 @@ export const STRINGS = {
     'loop.s5.p': 'Порядок хода задаёт инициатива. Урон бывает шести видов, и его снижает броня. Большинство способностей зависит от того, кто где стоит — с обеих сторон.',
     'loop.s6.h': 'Ежедневное и еженедельное',
     'loop.s6.p': 'Босс фракции с десятью тысячами здоровья, ежедневные поручения, вечерний турнир, PvP и гравировки, которые покупаются за награды со всего этого.',
+    'loop.s7.h': 'И это не всё',
+    'loop.s7.p': 'Многое из того, что уже есть, не поместилось на этой странице: размер юнитов, верность, призвания, боевые реплики, литании, Хроника, наёмники, поручения, Турнир Короны. Приходите и посмотрите сами.',
+    'loop.s8.h': 'В активной разработке',
+    'loop.s8.p': 'Игра в активной разработке: механики, контент и события появляются и обновляются постоянно.',
+    'video.label': 'Геймплей',
+    'video.p1': 'Игра в движении, записано в настоящем клиенте. Больше роликов — на канале.',
+    'video.cta': 'Shattered Crown на YouTube',
 
     'd.castle.label': 'Замок',
     'd.castle.p1': 'Замок — на первой странице 12 слотов для ваших войск - герой, 8 для войск фракции и 3 для наемников. Вы свободно можете строить несколько одинаковых юнитов первого уровня и задать им разные пути развития. Постройте двух Послушников - одного улучшите до Тамплиера, а второго до Ревностный Жреца - и так с любым юнитом.',
@@ -218,16 +224,15 @@ export const STRINGS = {
     'd.items.li3': 'Предметы могут полностью менять боевое построение и влиять на стратегии.',
 
     'd.transmute.label': 'Трансмутация',
-    'd.transmute.p1': 'Кристаллов шесть видов, и выпадают они отовсюду: из походов, за поручения, с Колосса. В итоге одних накапливается с избытком, а нужных для крафта не хватает.',
-    'd.transmute.p2': 'Это и решает трансмутация. Вы тратите два вида, которых у вас в избытке, и получаете третий — тот, который выберете. Платите не золотом, а временем, около часа. Сначала нужно построить лабораторию.',
-    'd.transmute.li1': 'Нажмите на угол, чтобы выбрать кристалл, затем задайте количество через − и +.',
-    'd.transmute.li2': 'Удерживайте − или +, чтобы менять по пять.',
-    'd.transmute.li3': 'Здесь таймер сокращён, чтобы вы увидели результат.',
+    'd.transmute.p1': 'В игре шесть видов кристаллов - это основные ресурсы, используются для развития войск и создания предметов, постройки зданий и т.д. Кристаллы выпадают в качестве награды отовсюду: из походов, за поручения, с Колосса. В итоге одних накапливается с избытком, а нужных может не хватать - эту проблему решает трансмутация. Вы выбираете нужный вам вид кристаллов, и два других - которые вы готовы обменять.',
+    'd.transmute.li1': 'Постройте лабораторию чтобы открыть трансмутацию.',
+    'd.transmute.li2': 'Выберите кристаллы, нажмите или удерживайте − или + чтобы менять количество.',
+    'd.transmute.li3': 'Спустя определенное время трансмутация будет завершена - вы получите уведомление.',
 
     'd.engrave.label': 'Гравировка',
-    'd.engrave.p1': 'Гравировка навсегда меняет статы одного юнита. Вы выбираете набор из трёх статов: один уходит в минус, два других — в плюс. Величины вы не выбираете: стат в минусе падает примерно вдвое сильнее, чем растёт каждый из двух остальных.',
-    'd.engrave.p2': 'Чем выше ранг, тем больше все три числа. Платить нужно Доблестью с Колосса, золотом и жетонами, которые выпадают только в Турнире Короны. Гравировку можно заменить, но нельзя убрать.',
-    'd.engrave.li1': 'Выберите юнита и набор статов, затем распределите очки через − и +.',
+    'd.engrave.p1': 'Гравировка это дорогостоящий способ модификации воинов. Гравировка навсегда меняет статы или способности одного юнита. Вы выбираете набор из статов или способностей - и выбираете чем вы готовы пожертвовать в обмен на бонус. Например понизить броню, но в обмен увиличить силу.',
+    'd.engrave.p2': 'Чем выше ранг, тем больше вы можете изменить через гравировку, и тем дороже она обойдется. Платить нужно доблестью с Колосса, золотом и жетонами, которые выпадают только в Турнире Короны.',
+    'd.engrave.li1': 'Выберите юнита и гравировку, затем распределите очки через − и +.',
     'd.engrave.li2': 'Все показанные числа — настоящие статы этого юнита.',
     'd.engrave.li3': 'Восьмой набор меняет ранги пассивок вместо статов.',
 
@@ -238,18 +243,6 @@ export const STRINGS = {
     'd.colossus.li2': 'Нажмите на другую фракцию, чтобы увидеть её прогресс.',
     'd.colossus.li3': 'В игре «Атаковать» начинает настоящий бой.',
 
-    'more.label': 'Другие механики',
-    'more.lede': 'В игре есть и то, у чего нет своего экрана. Немного из того, что работает под каждым боем.',
-    'more.s1.h': 'Размер юнита',
-    'more.s1.p': 'Большинство юнитов занимает одну клетку. Некоторые занимают целый ряд или целую колонну из двух — крупный юнит закрывает сразу две клетки, и то, кто до него дотянется, меняется вместе с этим.',
-    'more.s2.h': 'Верность',
-    'more.s2.p': 'Отряд ограничен верностью, а не числом бойцов. Одноклеточный юнит стоит 1, двухклеточный — 2, а сколько верности у вас есть, решает герой.',
-    'more.s3.h': 'Призвания',
-    'more.s3.p': 'У каждой фракции их два. Юнит получает призвание случайно, а сменить его можно в Храме за 100 золота. От призвания зависит, чего от юнита потребует Хроника — и может ли он петь в литании.',
-    'more.s4.h': 'Боевые реплики',
-    'more.s4.p': 'Юниты разговаривают в бою. Реплика подбирается по тому, кто говорит, в кого бьёт и что только что произошло. Чистый флейвор — игровая логика это не читает.',
-    'more.s5.h': 'Литании',
-    'more.s5.p': 'Восемнадцать срежиссированных казней, по две на каждого героя. Когда на поле стоит нужный строй, а вражеский чемпион вот-вот падёт, сначала выступает хор, а удар наносит ведущий — и, в отличие от реплики, это даёт награду.',
 
     'join.label': 'Присоединиться',
     'join.lede': 'Без установки, без регистрации, без страницы в магазине. Откройте бота, выберите фракцию — и через пару минут у вас первый замок.',
@@ -257,6 +250,7 @@ export const STRINGS = {
 
     'footer.note': 'Shattered Crown — пошаговая тактика в Telegram.',
     'footer.demos': 'Каждое демо на этой странице работает на коде и данных самой игры.',
+    'footer.youtube': 'YouTube',
   },
 };
 

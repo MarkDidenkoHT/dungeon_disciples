@@ -28,6 +28,24 @@
       <a class="topbar-nav-play" href="#join" data-i18n="nav.play">Play</a>
     </nav>
     <div class="topbar-right">
+      <div class="faction-pick" id="faction-pick" role="group" data-i18n-label="nav.faction" aria-label="Faction">
+        <button type="button" data-faction="empire" aria-pressed="true">
+          <img data-src="crests/empire.jpg" alt="" loading="lazy">
+          <span class="faction-pick-name" data-i18n="f.empire.name">Empire of Aurex</span>
+        </button>
+        <button type="button" data-faction="choir_of_the_cursed" aria-pressed="false">
+          <img data-src="crests/choir.jpg" alt="" loading="lazy">
+          <span class="faction-pick-name" data-i18n="f.choir.name">Choir of the Cursed</span>
+        </button>
+        <button type="button" data-faction="grail_of_sorrow" aria-pressed="false">
+          <img data-src="crests/grail.jpg" alt="" loading="lazy">
+          <span class="faction-pick-name" data-i18n="f.grail.name">Grail of Sorrow</span>
+        </button>
+      </div>
+      <button class="music-btn" id="music" type="button" aria-pressed="false">
+        <span class="music-btn-icon" aria-hidden="true"></span>
+        <span class="sr-only" data-i18n="nav.music">Music</span>
+      </button>
       <div class="lang" id="lang" role="group" aria-label="Language">
         <button type="button" data-lang="en" aria-pressed="true">EN</button>
         <button type="button" data-lang="ru" aria-pressed="false">RU</button>
@@ -126,6 +144,41 @@
         <div class="loop-step">
           <h3 data-i18n="loop.s6.h">Daily and weekly</h3>
           <p data-i18n="loop.s6.p">A faction boss with ten thousand health, daily errands, a nightly tournament, PvP, and engravings you pay for with what you win.</p>
+        </div>
+        <div class="loop-step">
+          <h3 data-i18n="loop.s7.h">And that is not all</h3>
+          <p data-i18n="loop.s7.p">Plenty already in the game did not fit on this page: unit size, loyalty, callings, combat barks, litanies, the Chronicle, mercenaries, errands, the Crown Tourney. Come and see for yourself.</p>
+        </div>
+        <div class="loop-step">
+          <h3 data-i18n="loop.s8.h">In active development</h3>
+          <p data-i18n="loop.s8.p">The game is in active development: mechanics, content and events arrive and are updated all the time.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="demo-section" id="video">
+    <div class="wrap">
+      <p class="section-label" data-i18n="video.label">Gameplay</p>
+      <div class="demo-layout">
+        <div class="demo-copy">
+          <p data-i18n="video.p1">The game in motion, recorded in the real client. More clips on the channel.</p>
+          <p class="video-cta">
+            <a class="btn" href="https://www.youtube.com/@ShatteredCrownGame" target="_blank" rel="noopener noreferrer"
+               data-i18n="video.cta">Shattered Crown on YouTube</a>
+          </p>
+        </div>
+        <div>
+          <!-- nocookie: YouTube's own privacy-preserving host, so a visitor who
+               only scrolls past is not handed a tracking cookie. -->
+          <div class="phone phone--video">
+            <iframe src="https://www.youtube-nocookie.com/embed/XNVLHjHyMtg"
+                    title="Shattered Crown gameplay" loading="lazy"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen></iframe>
+          </div>
         </div>
       </div>
     </div>
@@ -238,12 +291,11 @@
       <p class="section-label" data-i18n="d.transmute.label">Transmutation</p>
       <div class="demo-layout">
         <div class="demo-copy">
-          <p data-i18n="d.transmute.p1">There are six kinds of crystal, and you earn them from everything you do — runs, errands, the Colossus. You end up with a pile of some and not enough of the ones you need.</p>
-          <p data-i18n="d.transmute.p2">Transmutation fixes that. You spend two kinds you have to spare and get back a third kind of your choosing. It costs time rather than gold — about an hour — and you have to build the lab first.</p>
+          <p data-i18n="d.transmute.p1">There are six kinds of crystal in the game. They are the core resources — used to develop your units, craft items, raise buildings and so on. Crystals drop as rewards from everything: runs, errands, the Colossus. You end up with a surplus of some and short of the ones you need, and transmutation is what solves that. You pick the kind you want, and the two kinds you are willing to trade away.</p>
           <ul class="demo-points">
-            <li data-i18n="d.transmute.li1">Tap a corner to pick a crystal, then set the amount with − and +.</li>
-            <li data-i18n="d.transmute.li2">Hold − or + to move in fives.</li>
-            <li data-i18n="d.transmute.li3">The timer is shortened here so you can watch it finish.</li>
+            <li data-i18n="d.transmute.li1">Build the laboratory to unlock transmutation.</li>
+            <li data-i18n="d.transmute.li2">Pick the crystals, then tap or hold − or + to change the amount.</li>
+            <li data-i18n="d.transmute.li3">After a set time the transmutation finishes — you get a notification.</li>
           </ul>
         </div>
         <div>
@@ -258,10 +310,10 @@
       <p class="section-label" data-i18n="d.engrave.label">Engraving</p>
       <div class="demo-layout">
         <div class="demo-copy">
-          <p data-i18n="d.engrave.p1">Engraving permanently changes one unit’s stats. You pick a set of three stats: one goes down, the other two go up. You do not choose the amounts — the stat you give up falls about twice as far as each of the other two rises.</p>
-          <p data-i18n="d.engrave.p2">A higher tier scales all three numbers up together. You pay in Valor from the Colossus, in gold, and in tokens that only drop in the Crown Tourney. An engraving can be replaced later, but never removed.</p>
+          <p data-i18n="d.engrave.p1">Engraving is an expensive way to modify your units. It permanently changes one unit’s stats or abilities. You pick a set of stats or abilities, and choose what you are willing to sacrifice in exchange for the bonus — lowering armor, say, to raise power in return.</p>
+          <p data-i18n="d.engrave.p2">The higher the tier, the more you can change through engraving, and the more it costs. You pay in Valor from the Colossus, in gold, and in tokens that only drop in the Crown Tourney.</p>
           <ul class="demo-points">
-            <li data-i18n="d.engrave.li1">Pick a unit, pick a set of stats, then spend the points with − and +.</li>
+            <li data-i18n="d.engrave.li1">Pick a unit and an engraving, then spend the points with − and +.</li>
             <li data-i18n="d.engrave.li2">Every number shown is that unit’s real stat.</li>
             <li data-i18n="d.engrave.li3">The eighth set trades passive ranks instead of stats.</li>
           </ul>
@@ -293,34 +345,6 @@
     </div>
   </section>
 
-  <section id="more">
-    <div class="wrap">
-      <p class="section-label" data-i18n="more.label">Other mechanics</p>
-      <p class="lede" data-i18n="more.lede">There is more going on than has a screen of its own. A few of the things running underneath every battle.</p>
-      <div class="more-grid">
-        <div class="more-item">
-          <h3 data-i18n="more.s1.h">Unit size</h3>
-          <p data-i18n="more.s1.p">Most units stand in one cell. Some take a whole row, or a whole column of two — a big unit covers two cells at once, and what can reach it changes with it.</p>
-        </div>
-        <div class="more-item">
-          <h3 data-i18n="more.s2.h">Loyalty</h3>
-          <p data-i18n="more.s2.p">A squad is capped by loyalty, not by headcount. A one-cell unit costs 1, a two-cell unit costs 2, and your hero decides how much you have to spend.</p>
-        </div>
-        <div class="more-item">
-          <h3 data-i18n="more.s3.h">Callings</h3>
-          <p data-i18n="more.s3.p">Each faction has two. A unit is given one at random, and you can change it at the Temple for 100 gold. It decides what that unit’s Chronicle asks of it — and whether it may sing in a litany.</p>
-        </div>
-        <div class="more-item">
-          <h3 data-i18n="more.s4.h">Combat barks</h3>
-          <p data-i18n="more.s4.p">Units talk during a fight. The line is picked from who is speaking, who they are hitting and what just happened. Pure flavour — no game logic ever reads it.</p>
-        </div>
-        <div class="more-item">
-          <h3 data-i18n="more.s5.h">Litanies</h3>
-          <p data-i18n="more.s5.p">Eighteen scripted executions, two for every hero. When the right formation is standing on the board and the enemy champion is about to fall, the chorus performs and the lead lands the blow — and unlike a bark, it pays.</p>
-        </div>
-      </div>
-    </div>
-  </section>
 
   <section class="join" id="join">
     <div class="wrap">
@@ -336,6 +360,7 @@
   <div class="wrap footer-inner">
     <span data-i18n="footer.note">Shattered Crown — a turn-based tactics game in Telegram.</span>
     <span data-i18n="footer.demos">Every demo on this page runs the game’s own code against its own data.</span>
+    <a class="footer-link" href="https://www.youtube.com/@ShatteredCrownGame" target="_blank" rel="noopener noreferrer" data-i18n="footer.youtube">YouTube</a>
   </div>
 </footer>
 

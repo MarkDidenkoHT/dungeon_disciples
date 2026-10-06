@@ -83,9 +83,10 @@ export function seedResources(pairs) {
   demoState.resources = Object.entries(pairs).map(([item, amount]) => ({ item, amount }));
 }
 
-// The faction switcher a few demos carry. Switching reloads the frame: it
-// resolves its faction from the query string once, at boot, and so does the
-// faction theme on <body>.
+// The faction switcher a few demos carry. Switching hands the choice UP to the
+// landing page rather than reloading this frame on its own: the page keeps one
+// faction for everything on it, so the header and the other frames have to move
+// together with this one. Standalone (no parent), it still reloads itself.
 export function mountFactionTabs(el) {
   if (!el) return;
   el.innerHTML = Object.entries(FACTIONS).map(([id, f]) => `
@@ -95,6 +96,10 @@ export function mountFactionTabs(el) {
   el.addEventListener('click', e => {
     const btn = e.target.closest('.demo-tab');
     if (!btn || btn.dataset.faction === faction) return;
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'sc-faction', faction: btn.dataset.faction }, '*');
+      return;
+    }
     location.search = `?lang=${L}&faction=${btn.dataset.faction}`;
   });
 }

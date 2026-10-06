@@ -88,6 +88,17 @@ Two things are not straight copies:
   same buildings in all three factions (same ids, slots, effects and level
   ladders in `BUILDING_POOLS`); only the names, the art and the crystal in the
   price change. Page 1 shares nothing, because a barracks is its unit.
+- The page has ONE faction, picked in the header and kept in `localStorage`.
+  `landing.js` writes it onto `<body data-faction>`, which is what `site.css`
+  hangs the whole palette off, and passes it to every demo as `?faction=`. The
+  faction tabs still inside a few demos no longer reload their own frame: they
+  `postMessage` the choice up to the page, so the header and the other seven
+  frames move with them. The hero art follows the banner too.
+- The faction themes (`sfx/themes/*.mp3`, the game's own) are OFF until the
+  visitor presses the note in the header. The choice is deliberately not
+  remembered — arriving to unexpected sound on a second visit is the same
+  rudeness one navigation later — and the button press IS the gesture browsers
+  require before audio may play.
 - Factions are named in full — Empire of Aurex, Choir of the Cursed, Grail of
   Sorrow — in `i18n.js`, in `index.html`'s inline English, and in the demo
   faction tabs (`demos/demo-boot.js`).

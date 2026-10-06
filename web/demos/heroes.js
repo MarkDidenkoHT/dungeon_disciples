@@ -78,7 +78,6 @@ function render() {
          data-i="${i}" title="${escapeHtml(unitName(h, player))}">
       <img class="portrait-art-img" src="${assetUrl(`/assets/character_portraits/p_${h.id}.png`)}"
            alt="${escapeHtml(unitName(h, player))}" onerror="this.style.display='none'">
-      <div class="portrait-name">${escapeHtml(unitName(h, player))}</div>
     </div>`).join('');
 }
 

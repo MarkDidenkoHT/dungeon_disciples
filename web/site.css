@@ -178,6 +178,101 @@ footer {
   gap: 12px;
 }
 
+/* ── Faction picker ───────────────────────────────────────────────────────── */
+/* Three crests. On a wide bar the active one also spells its name out, because
+   a crest alone does not tell a first-time visitor what it is. */
+.faction-pick {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.faction-pick button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 2px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.faction-pick img {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid transparent;
+  opacity: 0.45;
+  transition: opacity 0.18s ease, border-color 0.18s ease;
+}
+
+.faction-pick button:hover img { opacity: 0.8; }
+
+.faction-pick button[aria-pressed="true"] img {
+  opacity: 1;
+  border-color: var(--accent);
+  box-shadow: 0 0 10px -2px var(--accent);
+}
+
+/* Only the chosen one is named, and only when there is room for it. */
+.faction-pick-name { display: none; }
+
+@media (min-width: 1100px) {
+  .faction-pick button[aria-pressed="true"] .faction-pick-name {
+    display: block;
+    padding-right: 8px;
+    color: var(--accent-bright);
+    white-space: nowrap;
+  }
+}
+
+/* ── Music toggle ─────────────────────────────────────────────────────────── */
+.music-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.18s ease, border-color 0.18s ease;
+}
+
+.music-btn:hover { color: var(--text); }
+
+.music-btn[aria-pressed="true"] {
+  color: var(--accent-bright);
+  border-color: var(--accent);
+}
+
+/* A speaker that gains a wave when the sound is on, so the state is readable
+   without colour alone. */
+.music-btn-icon::before { content: '\266A'; font-size: 15px; }
+.music-btn[aria-pressed="true"] .music-btn-icon::before { content: '\266B'; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .lang {
   display: flex;
   border: 1px solid var(--border);
@@ -205,8 +300,10 @@ footer {
   padding: 10px 18px;
   border-radius: var(--radius);
   border: 1px solid var(--accent);
-  background: linear-gradient(180deg, #cf9f45, #9c6f22);
-  color: #1a1206;
+  /* Follows the banner like everything else accented. Dark text reads on all
+     three: the darkest stop is the faction's own accent, never near-black. */
+  background: linear-gradient(180deg, var(--accent-bright), var(--accent));
+  color: #15100a;
   font-family: inherit;
   font-size: 16px;
   text-decoration: none;
@@ -335,18 +432,33 @@ main section > .wrap::before {
   opacity: 0.85;
 }
 
-#lore      > .wrap { --panel-accent: var(--empire); --panel-edge: var(--empire-edge); }
-#factions  > .wrap { --panel-accent: var(--empire); --panel-edge: var(--empire-edge); }
-#loop      > .wrap { --panel-accent: var(--choir);  --panel-edge: var(--choir-edge); }
-#castle    > .wrap { --panel-accent: var(--empire); --panel-edge: var(--empire-edge); }
-#heroes    > .wrap { --panel-accent: var(--choir);  --panel-edge: var(--choir-edge); }
-#evolve    > .wrap { --panel-accent: var(--grail);  --panel-edge: var(--grail-edge); }
-#embark    > .wrap { --panel-accent: var(--empire); --panel-edge: var(--empire-edge); }
-#items     > .wrap { --panel-accent: var(--choir);  --panel-edge: var(--choir-edge); }
-#transmute > .wrap { --panel-accent: var(--grail);  --panel-edge: var(--grail-edge); }
-#engrave   > .wrap { --panel-accent: var(--empire); --panel-edge: var(--empire-edge); }
-#colossus  > .wrap { --panel-accent: var(--choir);  --panel-edge: var(--choir-edge); }
-#more      > .wrap { --panel-accent: var(--empire); --panel-edge: var(--empire-edge); }
+/* One banner for the whole page. The header picks it, landing.js writes it onto
+   <body>, and everything accented follows from here — the same attribute the
+   game themes its own screens with. Sections used to cycle through the three
+   colours on their own, which looked arbitrary once the visitor could choose. */
+body[data-faction="empire"] {
+  --accent:        var(--empire);
+  --accent-bright: var(--empire-bright);
+  --panel-accent:  var(--empire);
+  --panel-edge:    var(--empire-edge);
+}
+
+body[data-faction="choir_of_the_cursed"] {
+  --accent:        var(--choir);
+  --accent-bright: var(--choir-bright);
+  --panel-accent:  var(--choir);
+  --panel-edge:    var(--choir-edge);
+}
+
+body[data-faction="grail_of_sorrow"] {
+  --accent:        var(--grail);
+  --accent-bright: var(--grail-bright);
+  --panel-accent:  var(--grail);
+  --panel-edge:    var(--grail-edge);
+}
+
+/* The three cards in the Choose a banner block keep their OWN colours: the
+   whole point of that block is the three side by side. */
 #join      > .wrap { --panel-accent: var(--grail);  --panel-edge: var(--grail-edge); }
 
 /* This IS the section heading. There used to be an <h2> under it saying the
@@ -511,6 +623,13 @@ h3 {
   color: var(--muted);
 }
 
+/* A plain closing line under the six steps: the mechanics it names have no
+   screen on this page, so they are listed rather than explained. */
+.loop-more {
+  margin-top: 20px;
+  color: var(--muted);
+}
+
 /* ── Demos ────────────────────────────────────────────────────────────────── */
 .demo-layout {
   margin-top: 28px;
@@ -583,6 +702,15 @@ h3 {
   background: var(--bg-2);
 }
 
+/* The gameplay clip is a YouTube Short, so the frame is 9:16 rather than the
+   fixed height the demo frames use. */
+.phone--video iframe {
+  height: auto;
+  aspect-ratio: 9 / 16;
+}
+
+.video-cta { margin-top: 20px; }
+
 /* ── Other mechanics ──────────────────────────────────────────────────────── */
 /* The one section with no demo beside it: these mechanics have no screen of
    their own to frame. Same card as a loop step, without the step number. */
@@ -649,6 +777,14 @@ footer {
   color: var(--muted);
 }
 
+.footer-link {
+  color: var(--accent-bright);
+  text-decoration: none;
+  border-bottom: 1px solid var(--panel-edge);
+}
+
+.footer-link:hover { border-bottom-color: var(--accent); }
+
 footer > .wrap {
   width: calc(100% - 32px);
   padding: 20px 26px;
@@ -673,10 +809,21 @@ footer > .wrap {
   .demo-section:nth-of-type(even) .demo-copy { order: 0; }
   .phone { max-width: 420px; margin: 0 auto; }
   .topbar-nav a:not(.topbar-nav-play) { display: none; }
+  .topbar-inner { gap: 10px; }
+  .topbar-right { gap: 8px; }
 }
 
 @media (max-width: 480px) {
   body { font-size: 16px; }
+  /* The bar carries six controls on a phone and the brand is the one thing on
+     it that is repeated immediately below, in the hero, at six times the size.
+     It goes, and everything else fits on one row instead of being clipped. */
+  .brand { display: none; }
+  .faction-pick { padding: 0; border: 0; background: none; gap: 2px; }
+  .faction-pick img { width: 26px; height: 26px; }
+  .music-btn { width: 28px; height: 28px; }
+  .lang button { padding: 5px 8px; font-size: 13px; }
+  .topbar-nav { margin-left: 0; }
   section { padding: 14px 0; }
   .phone iframe { height: 620px; }
 

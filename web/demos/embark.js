@@ -100,8 +100,12 @@ function enemyUnit(key) {
   return UNITS.enemies?.[region]?.[unitKey] || null;
 }
 
-// Filed under the unit's id, the same portraits the castle grid uses.
-const portraitUrl = id => assetUrl(`/assets/character_portraits/p_${id}.png`);
+// Filed under the unit's id. A row or column unit has a SECOND portrait drawn
+// for its real footprint, filed under `p2_` — the same rule the game's own
+// battle-prep grid uses (getPortraitUrl, variant 'grid'). Using `p_` for them
+// stretched a square portrait across two cells.
+const portraitUrl = (id, size) =>
+  assetUrl(`/assets/character_portraits/${size === 'row' || size === 'column' ? 'p2' : 'p'}_${id}.png`);
 
 // Not every unit is one cell. The Glittering Abyss alone fields thirteen that
 // are not: Chillrock and Rimewarden take a whole ROW, Cryodrox a whole COLUMN.
@@ -120,7 +124,12 @@ function footprint(cell, size) {
     const top = Math.floor(cell / CELL_COLS) * CELL_COLS;
     return [top, top + 1];
   }
-  if (size === 'column') return [cell, cell + CELL_COLS];
+  if (size === 'column') {
+    // A column anchored on the bottom row grows UP instead, exactly as
+    // battle-prep's getCells does, so the body never falls off the board.
+    const top = cell + CELL_COLS < CELLS ? cell : cell - CELL_COLS;
+    return [top, top + CELL_COLS];
+  }
   return [cell];
 }
 
@@ -128,8 +137,9 @@ function footprint(cell, size) {
 // another spans two rows, the grid's own packing starts shuffling the tiles
 // around them and the formation stops matching the cell numbers.
 function placement(cell, size) {
-  const row = Math.floor(cell / CELL_COLS) + 1;
-  const col = (cell % CELL_COLS) + 1;
+  const anchor = footprint(cell, size)[0];
+  const row = Math.floor(anchor / CELL_COLS) + 1;
+  const col = (anchor % CELL_COLS) + 1;
   if (size === 'row')    return `grid-column:1/span 2;grid-row:${row};`;
   if (size === 'column') return `grid-column:${col};grid-row:${row}/span 2;`;
   return `grid-column:${col};grid-row:${row};`;
@@ -151,7 +161,7 @@ function cellHtml(enemy, cell) {
 
   return `
     <div class="enc-cell${span}${boss ? ' enc-cell--boss' : ''}" style="${placement(cell, size)}">
-      <img class="enc-portrait" src="${portraitUrl(unit.id)}" alt=""
+      <img class="enc-portrait" src="${portraitUrl(unit.id, size)}" alt=""
            loading="lazy" onerror="this.remove()">
       <span class="enc-hp">${unit.hp}&#9829;</span>
       <span class="enc-name">${name}</span>
