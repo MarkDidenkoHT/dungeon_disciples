@@ -994,12 +994,22 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const occ = (state.combatants || []).find(c => String(c.id) === String(id));
       if (!occ) continue;
       const cellEl = document.querySelector(`.battle-cell[data-id="${id}"]`);
-      if (!cellEl) continue;
 
       const maxHp = occ.max_hp || 1;
       const cur   = Math.max(0, Math.min(value, maxHp));
       const pct   = cur / maxHp;
       const dead  = cur <= 0;
+
+      // The queue card carries the same bar, and it is only redrawn when the
+      // order itself moves — so it has to be stepped here or it would sit on the
+      // HP the unit had when it last took a turn.
+      const queueFill = root.querySelector(`.portrait-card--init[data-id="${id}"] .init-hp-fill`);
+      if (queueFill) {
+        queueFill.style.width      = `${pct * 100}%`;
+        queueFill.style.background = hpColor(pct);
+      }
+
+      if (!cellEl) continue;
 
       const sub = cellEl.querySelector('.battle-cell-sub');
       // A shield is not HP and is not stamped here, so the shield chip is left
@@ -2419,6 +2429,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const portrait = getPortraitUrl(c);
       const isActive = i === 0;
       const side     = c.side;
+      // The queue card used to show the portrait alone, so a unit one hit from
+      // death looked exactly like one at full health — the player had to find it
+      // on the board to know. Same numbers and same colour ramp as the cell bar.
+      const hpPct = Math.max(0, Math.min(1, (c.battle_hp ?? 0) / (c.max_hp || 1)));
       return `
         <div class="portrait-card portrait-card--init portrait-card--${side}
                     ${isActive ? 'portrait-card--selected' : ''}"
@@ -2428,6 +2442,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             ? `<img class="portrait-art-img" src="${portrait}" alt="${cName(c)}" onerror="this.style.display='none'">`
             : `<div class="portrait-art">${side === 'player' ? '⚔' : '💀'}</div>`
           }
+          <div class="init-hp-bar"><div class="init-hp-fill" style="width:${hpPct * 100}%;background:${hpColor(hpPct)}"></div></div>
           <div class="init-side-strip"></div>
         </div>
       `;

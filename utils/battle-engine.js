@@ -899,8 +899,16 @@ class BattleEngine {
     const bonded = this.combatants.find(c => c._unity_host_id === dying.id && c.alive);
     if (bonded) {
       bonded.alive = false;
+      // Every other death in the engine arrives with battle_hp already at or
+      // below zero; this one was the exception, and the client reads deaths from
+      // the log, not from `alive`. pushLog only reports an HP it has not seen,
+      // and `killed`/`targetId` are what drive the death animation and drop the
+      // unit out of the initiative queue — so without both the passenger stood
+      // on the board at full health all the way through the rest of the
+      // exchange and only blinked out when the end-of-turn render reconciled it.
+      bonded.battle_hp = 0;
       this.tallyKill(bonded);
-      this.pushLog({ type: 'passive', passive: 'Unity', actorId: bonded.id, actorName: bonded.unit_name, actorCell: bonded.cellIndex, targetName: bonded.unit_name, targetCell: bonded.cellIndex, message: `${bonded.unit_name} perishes with their host.` });
+      this.pushLog({ type: 'passive', passive: 'Unity', actorId: bonded.id, actorName: bonded.unit_name, actorCell: bonded.cellIndex, targetId: bonded.id, targetName: bonded.unit_name, targetCell: bonded.cellIndex, killed: true, message: `${bonded.unit_name} perishes with their host.` });
       this.revokeGrantedBuffs(bonded);
       this.fireTrigger('on_death', { dying: bonded, actor: bonded, target: null, dmg: 0 });
     }
