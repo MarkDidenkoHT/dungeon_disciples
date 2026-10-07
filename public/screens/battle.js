@@ -161,6 +161,12 @@ const BT = {
   },
   concedeYes:   { en: 'Concede',            ru: 'Сдаться' },
   concedeNo:    { en: 'Keep fighting',      ru: 'Продолжить бой' },
+  retreat:      { en: 'Retreat',            ru: 'Отступить' },
+  retreatAsk:   {
+    en: 'Retreat from this fight? Your fallen stay dead and every survivor leaves at 1 HP.',
+    ru: 'Отступить из этого боя? Павшие останутся мёртвыми, а выжившие уйдут с 1 HP.',
+  },
+  retreatYes:   { en: 'Retreat',            ru: 'Отступить' },
   theirTurn:    { en: 'Opponent',           ru: 'Соперник' },
   collapseLog:  { en: 'Collapse log',       ru: 'Свернуть журнал' },
   btnInfo:      { en: 'Info',               ru: 'Инфо' },
@@ -1955,6 +1961,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
                it should only draw the eye once it starts to go. -->
           <div class="attrition-line" id="attrition-line">
             <div class="attrition-round" id="attrition-round">1</div>
+            <!-- Leaving the fight. It sits here, in the gap between the two
+                 armies, because that is the one column on the screen that is
+                 about the match rather than about the board — and because the
+                 action panel at the bottom is for things done to the enemy,
+                 which this is not. Same circle as the round pip above it, so
+                 the column reads as one stack. -->
+            <button class="battle-concede-btn" id="battle-concede" hidden>⚑</button>
             <!-- PvP only: a person is on the other end and a turn they never
                  take would otherwise stall the fight, so the clock that spends
                  it for them is shown rather than left implicit. Hidden outright
@@ -2004,11 +2017,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         </div>
         <div class="battle-log-bar">
           <button class="battle-log-toggle" id="battle-log-toggle" aria-expanded="false"></button>
-          <!-- PvP only. A region fight can be walked out of from the reconnect
-               prompt on embark, but a duel has another person waiting in it —
-               leaving has to be a deliberate act with a stated cost, taken here
-               rather than by closing the app. -->
-          <button class="battle-concede-btn" id="battle-concede" hidden></button>
         </div>
         <div class="battle-log" id="battle-log"></div>
         <div class="battle-info hidden" id="battle-info"></div>
@@ -2443,24 +2451,36 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             : `<div class="portrait-art">${side === 'player' ? '⚔' : '💀'}</div>`
           }
           <div class="init-hp-bar"><div class="init-hp-fill" style="width:${hpPct * 100}%;background:${hpColor(hpPct)}"></div></div>
-          <div class="init-side-strip"></div>
         </div>
       `;
     }).join('');
   }
 
-  // ── Conceding ─────────────────────────────────────────────────────────────
-  // Same terms as abandoning a region fight, which is what the server applies:
-  // the fallen stay dead, survivors are written back at 1 HP, and the player
-  // still on the field is given the win. Nothing is escaped by leaving.
+  // The kind of battle is only certain once the stream has spoken, so the word
+  // on the button is applied through here and can be re-applied when it flips.
+  const leaveLabel = () => BTx(isPvpBattle ? 'concede' : 'retreat');
+  function labelLeaveBtn() {
+    const btn = root.querySelector('#battle-concede');
+    if (!btn) return;
+    btn.title = leaveLabel();
+    btn.setAttribute('aria-label', leaveLabel());
+  }
+
+  // ── Leaving the fight ─────────────────────────────────────────────────────
+  // One route for both modes, because the server already applies one set of
+  // terms: the fallen stay dead, survivors are written back at 1 HP, and in a
+  // duel the player still on the field is given the win. Nothing is escaped by
+  // leaving. Only the wording differs — a duel is CONCEDED to someone, a region
+  // fight is RETREATED from.
   function setupConcede() {
     const btn = root.querySelector('#battle-concede');
     if (!btn) return;
-    btn.hidden = !isPvpBattle;
-    btn.textContent = BTx('concede');
+    btn.hidden = false;
+    labelLeaveBtn();
     btn.addEventListener('click', async () => {
       if (battleResolved || btn.disabled) return;
-      if (!await askConfirm(BTx('concedeAsk'), BTx('concedeYes'), BTx('concedeNo'))) return;
+      const ask = isPvpBattle ? BTx('concedeAsk') : BTx('retreatAsk');
+      if (!await askConfirm(ask, leaveLabel(), BTx('concedeNo'))) return;
       btn.disabled = true;
       try {
         await api('/battle/end', { chat_id: player.chat_id, battle_id });
@@ -2515,7 +2535,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // state refresh — moves the clock. One place, so no path can forget.
   function readTurnMeta(data) {
     if (!data) return;
-    if (data.kind === 'pvp') isPvpBattle = true;
+    if (data.kind === 'pvp' && !isPvpBattle) { isPvpBattle = true; labelLeaveBtn(); }
     if (data.turn_deadline !== undefined) turnDeadline = data.turn_deadline;
     if (data.your_turn     !== undefined) yourTurn     = !!data.your_turn;
   }
