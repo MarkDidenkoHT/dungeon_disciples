@@ -1017,7 +1017,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
       if (!cellEl) continue;
 
-      const sub = cellEl.querySelector('.battle-cell-sub');
+      const sub = cellEl.querySelector('.bc-hp-text');
       // A shield is not HP and is not stamped here, so the shield chip is left
       // exactly as it was rather than being rewritten from stale state.
       if (sub) {
@@ -2329,7 +2329,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const aegisLevel = aegisLevelFor(occ);
 
     let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''} ${aegisLevel ? 'battle-cell--aegis' : ''}`;
-    if (isActor)               cls += ' battle-cell--acting anim-actor-pulse';
+    if (isActor)               cls += ' battle-cell--acting';
     else if (isTarget)         cls += ' battle-cell--targetable';
     else if (selectedCombatant?.id === occ.id) cls += ' battle-cell--selected';
     else if (occ.side === 'player') cls += ' battle-cell--placed';
@@ -2342,7 +2342,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (aegisLevel) cellEl.style.setProperty('--aegis-level', aegisLevel);
     else            cellEl.style.removeProperty('--aegis-level');
 
-    const sub = cellEl.querySelector('.battle-cell-sub');
+    const sub = cellEl.querySelector('.bc-hp-text');
     if (sub) {
       sub.innerHTML = occ.alive
         ? `${occ.battle_hp}/${occ.max_hp}${(occ.buffs||[]).find(b=>b.type==='shield') ? ` 🛡${(occ.buffs||[]).find(b=>b.type==='shield').value}` : ''}`
@@ -2402,7 +2402,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         const aegisLevel = aegisLevelFor(occ);   // see aegisLevelFor above
 
         let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''} ${aegisLevel ? 'battle-cell--aegis' : ''}`;
-        if (isActor)              cls += ' battle-cell--acting anim-actor-pulse';
+        if (isActor)              cls += ' battle-cell--acting';
         else if (isTarget)        cls += ' battle-cell--targetable';
         else if (isSelected)      cls += ' battle-cell--selected';
         else if (side === 'player') cls += ' battle-cell--placed';
@@ -2414,11 +2414,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             <div class="bc-debuff-icons">${debuffIconsHtml(occ)}</div>
             <div class="bc-buff-icons">${buffIconsHtml(occ)}</div>
             <div class="battle-cell-info">
-              <span class="battle-cell-name">${cName(occ)}</span>
-              ${occ.alive
-                ? `<span class="battle-cell-sub">${occ.battle_hp}/${occ.max_hp}${(occ.buffs||[]).find(b=>b.type==='shield') ? ` 🛡${(occ.buffs||[]).find(b=>b.type==='shield').value}` : ''}</span>`
-                : `<span class="battle-cell-sub">💀</span>`}
-              <div class="bc-hp-bar"><div class="bc-hp-fill" style="width:${Math.max(0, hpPct*100)}%;background:${hpColor(hpPct)}"></div></div>
+              <div class="bc-hp-bar">
+                <div class="bc-hp-fill" style="width:${Math.max(0, hpPct*100)}%;background:${hpColor(hpPct)}"></div>
+                <span class="bc-hp-text">${occ.alive
+                  ? `${occ.battle_hp}/${occ.max_hp}${(occ.buffs||[]).find(b=>b.type==='shield') ? ` 🛡${(occ.buffs||[]).find(b=>b.type==='shield').value}` : ''}`
+                  : '💀'}</span>
+              </div>
             </div>
           </div>
         `);

@@ -4057,9 +4057,36 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .battle-cell--acting {
-  outline: 2px solid var(--accent) !important;
+  outline: 1px solid rgba(var(--accent-rgb), 0.35) !important;
   background: #2a200a !important;
-  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.battle-cell--acting::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 3px;
+  border-radius: 3px;
+  background: conic-gradient(from var(--accent-spin),
+    var(--accent-2) 0deg,
+    var(--accent) 70deg,
+    var(--accent-bright) 110deg,
+    var(--accent) 150deg,
+    var(--accent-2) 230deg,
+    rgba(var(--accent-rgb), 0.15) 300deg,
+    var(--accent-2) 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask-composite: exclude;
+  filter: drop-shadow(0 0 4px rgba(var(--accent-rgb), 0.55));
+  animation: accent-ring-spin 1.6s linear infinite;
+  pointer-events: none;
+  z-index: 6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-cell--acting::after { animation: none; }
 }
 
 .battle-cell--targetable {
@@ -4094,18 +4121,13 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .anim-hit   { animation: anim-hit   0.4s ease-out; }
 .anim-death { animation: anim-death 0.55s ease-out forwards; }
 .anim-log-in { animation: anim-log-in 0.2s ease-out; }
-.anim-actor-pulse { animation: pulse-acting 1.2s ease-in-out infinite; }
-
-@keyframes pulse-acting {
-  0%, 100% { box-shadow: 0 0 0 2px var(--accent); }
-  50%       { box-shadow: 0 0 0 5px var(--accent); }
-}
-
 .bc-hp-bar {
+  position: relative;
   width: 100%;
-  height: 3px;
-  background: var(--border);
-  border-radius: 2px;
+  height: 11px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  border-radius: 3px;
   margin-top: 2px;
   overflow: hidden;
 }
@@ -4113,7 +4135,22 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .bc-hp-fill {
   height: 100%;
   border-radius: 2px;
-  transition: width 0.3s ease;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.bc-hp-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.46rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.95), 0 0 3px rgba(0,0,0,0.8);
+  white-space: nowrap;
 }
 
 .screen-battle-result {
