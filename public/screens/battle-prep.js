@@ -1002,6 +1002,27 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     return `<div class="bc-buff-icons">${icons}</div>`;
   }
 
+  function hpColor(pct) {
+    if (pct > 0.6) return '#4a9a4a';
+    if (pct > 0.3) return '#c8973a';
+    return '#c84a3a';
+  }
+
+  // The HP number sits inside the bar rather than above it, as in battle. A unit
+  // whose definition carries no hp at all draws a neutral full bar, so it does
+  // not read as standing at 0.
+  function hpBarHtml(cur, max) {
+    const known = Number.isFinite(Number(max)) && Number(max) > 0;
+    const pct   = known ? Math.max(0, Math.min(1, Number(cur) / Number(max))) : 1;
+    const dead  = known && Number(cur) <= 0;
+    const color = known ? hpColor(pct) : 'var(--border)';
+    const label = !known ? '—' : (dead ? '💀' : `${cur}/${max}`);
+    return `<div class="bc-hp-bar">
+              <div class="bc-hp-fill" style="width:${pct * 100}%;background:${color}"></div>
+              <span class="bc-hp-text">${label}</span>
+            </div>`;
+  }
+
   function renderPlayerGrid() {
     const grid = root.querySelector('#player-grid');
     const inspBuffs = inspirationBuffs(synergyUnits());
@@ -1038,8 +1059,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
                      data-i="${i}" style="grid-row:span ${rowSpan};grid-column:span ${colSpan};">
           ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">` : ''}
           <div class="battle-cell-info">
-            <span class="battle-cell-name">${name}</span>
-            <span class="battle-cell-sub">${isAlive ? `${currentHp}/${maxHp}` : 'Dead'}</span>
+            ${hpBarHtml(isAlive ? currentHp : 0, maxHp)}
           </div>
           ${spellDot}
           ${inspBadge}
@@ -1107,8 +1127,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
       return `<div class="battle-cell battle-cell--enemy" data-i="${i}" style="grid-column:span ${colSpan};grid-row:span ${rowSpan};">
         <img class="battle-cell-portrait" src="${assetUrl(`/assets/character_portraits/p_${e.id}.png`)}" alt="${e.name}" onerror="this.style.display='none'">
         <div class="battle-cell-info">
-          <span class="battle-cell-name">${e.name}</span>
-          <span class="battle-cell-sub">❤ ${e.current_hp ?? e.hp}</span>
+          ${hpBarHtml(e.current_hp ?? e.hp, e.hp)}
         </div>
         ${eInsp}
       </div>`;
