@@ -59,9 +59,22 @@ function untilText(iso) {
   return hours > 0 ? `${hours}${T('hours')} ${mins % 60}m` : `${mins}m`;
 }
 
+// An errand borrows the art of a building, in its own faction — same convention
+// and same suffix as the castle screen (infirmary_e.jpg / _c / _g). Reading the
+// suffix off the DEF's faction rather than the player's keeps the image right
+// for any errand we can hold, offered or not.
+const FACTION_ART_SUFFIX = { empire: 'e', choir_of_the_cursed: 'c', grail_of_sorrow: 'g' };
+
+function errandArtUrl(def) {
+  const suffix = FACTION_ART_SUFFIX[def?.faction];
+  if (!def?.art || !suffix) return '';
+  return assetUrl(`/assets/buildings/${def.art}_${suffix}.jpg`);
+}
+
 function errandHeaderHtml(def, desc) {
-  const art = def?.art
-    ? `<img class="errand-art-img" src="${assetUrl(`/assets/icons/errands/${def.art}`)}" alt=""
+  const src = errandArtUrl(def);
+  const art = src
+    ? `<img class="errand-art-img" src="${src}" alt=""
             onerror="this.closest('.errand-header').classList.add('errand-header--noart')">`
     : '';
   return `
