@@ -404,7 +404,7 @@ const UNIT_ABILITIES = {
     id: 'impale 2',
     name: 'Impale',
     name_ru: "Пронзание",
-    rank: 1,
+    rank: 2,
     type: 'passive',
     trigger: 'on_hit',
     description: 'Deals 30% of damage to the unit behind the target.',
