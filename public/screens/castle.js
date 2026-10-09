@@ -21,13 +21,13 @@ import { REGIONS, getRegionsForMaterial, eventRegionsForMaterial } from '../../d
 import { renderSpellTome }   from './spell_tome.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
-  resolveAbility, abilityName, renderModalContent, openSheet, closeSheet, getSheetBody, GOLD_ICON,
+  resolveAbility, renderModalContent, openSheet, closeSheet, getSheetBody, GOLD_ICON,
   openSubSheet, closeSubSheet, getSubSheetBody, cap, onSheetClose, RESOURCE_BAR_SLOTS, gameConfirm,
   buildUnitCard, getActionLabel, buildAbilityModalParts,
   renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
   handleUnitInspect, unitName, buildingLabel, enableTrackSwipe, escapeHtml,
   playAdPlaceholder as playAd,
-  tagListLabel, renderHeroSpellSlot,
+  renderItemPassive, renderItemTags, renderHeroSpellSlot,
 } from '../utils.js';
 import { getEquipBlock } from '../../data/item_rules.js';
 import { errandRosterIds, maybeShowErrandsIntro } from '../errands.js';
@@ -195,7 +195,6 @@ const CASTLE_TEXT = {
   spellsWhere: { en: 'Spells are viewed and researched in the Spell Tome.',
                  ru: 'Заклинания можно посмотреть и изучить в Книге заклинаний.' },
   spellsGoto:  { en: 'Open Spell Tome',                       ru: 'Открыть Книгу заклинаний' },
-  requires:    { en: 'Requires',                              ru: 'Требует' },
   // Item picker chrome. Same two axes the old roster sheet filtered on — what
   // the item does and how good it is — minus the craft tab, which now lives on
   // the Items screen.
@@ -226,8 +225,6 @@ const CASTLE_TEXT = {
   traitGrants: { en: 'Grants Tag',                            ru: 'Даёт метку' },
   traitNeeds:  { en: 'Needs Tag',                             ru: 'Нужна метка' },
   unique:      { en: 'Unique',                                ru: 'Уникальный' },
-  grantsTag:   { en: 'Grants tag',                            ru: 'Даёт метку' },
-  stripsTag:   { en: 'Strips tag',                            ru: 'Снимает метку' },
   equippedElse:{ en: 'Equipped on another unit',              ru: 'Надет на другом бойце' },
   nothingMatches:{ en: 'Nothing matches these filters.',      ru: 'Ничего не найдено по фильтрам.' },
   equippedOn:  { en: 'on',                                    ru: 'у' },
@@ -3312,29 +3309,6 @@ export function renderCastle(root, params = {}) {
     return Object.entries(statMods || {}).map(([k, v]) => itemStatChip(k, v)).join('');
   }
 
-  function itemPassiveHtml(stats) {
-    const key = stats?.passive;
-    if (!key) return '';
-    const def   = resolveAbility(key);
-    // abilityName, not def.name — the Russian name lives on the definition as
-    // name_ru, so reading .name left item passives in English.
-    const label = abilityName(def) || String(key).split(' ')[0].replace(/_/g, ' ');
-    return `<button class="item-passive" data-ability-key="${key}" data-ability-type="passive">
-              <span class="item-passive-icon">✦</span>${label}
-            </button>`;
-  }
-
-  // `unitTags` marks an unmet requirement on the chip itself, so the reason line
-  // underneath never has to repeat it.
-  function itemTagsHtml(stats, unitTags = null) {
-    const unmet = stats.tag_required && Array.isArray(unitTags) && !unitTags.includes(stats.tag_required);
-    return [
-      stats.tag_required ? `<span class="item-card-tag ${unmet ? 'item-card-tag--unmet' : ''}">${CASTLE_TEXT.requires[castleLang]}: ${stats.tag_required}</span>` : '',
-      stats.adds_tag     ? `<span class="item-card-tag item-card-tag--adds">${CASTLE_TEXT.grantsTag[castleLang]}: ${stats.adds_tag}</span>` : '',
-      stats.removes_tag  ? `<span class="item-card-tag item-card-tag--removes">${CASTLE_TEXT.stripsTag[castleLang]}: ${tagListLabel(stats.removes_tag)}</span>` : '',
-    ].join('');
-  }
-
   // ── Item equipping, in the castle ─────────────────────────────────────────
   // Lives here rather than on the roster screen: the castle slot is now the
   // unit's home, and the roster tab has become a dedicated item screen. Crafting
@@ -3459,8 +3433,8 @@ export function renderCastle(root, params = {}) {
             <div class="item-card-main">
               <div class="item-card-name">${itemName(it, player)}</div>
               <div class="item-card-stats">${itemStatModsHtml(stats.stat_mods)}</div>
-              ${itemPassiveHtml(stats)}
-              <div class="item-card-tags">${itemTagsHtml(stats, unitTags)}</div>
+              ${renderItemPassive(stats)}
+              <div class="item-card-tags">${renderItemTags(stats, { unitTags })}</div>
             </div>
           </div>
           ${here

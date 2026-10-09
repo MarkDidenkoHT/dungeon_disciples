@@ -1012,6 +1012,64 @@ function itemStatChip(key, val) {
           </span>`;
 }
 
+// Ranks are shown as numerals so a rank-2 passive cannot be mistaken for the
+// rank-1 one of the same name: the item card used to print only the ability
+// name, which made `iron_will 2` and `iron_will 1` the same line of text.
+const RANK_NUMERALS = ['', 'I', 'II', 'III', 'IV', 'V'];
+export function abilityRankLabel(key) {
+  const rank = abilityRank(key);
+  return RANK_NUMERALS[rank] || (rank ? String(rank) : '');
+}
+
+// The passive an item grants, and the tags it requires or changes. Shared by the
+// items screen, the castle equip sheet and the item modal (buildItemCard below)
+// so an item reads the same in all three: three near-identical copies had
+// already drifted apart on which of them showed the rank.
+//
+// `interactive` off renders a div instead of a button, for the modal that is
+// already showing the passive's description underneath.
+export function renderItemPassive(stats, opts = {}) {
+  const { interactive = true } = opts;
+  const key = stats?.passive;
+  if (!key) return '';
+  const def = resolveAbility(key);
+  // abilityName, not def.name: the Russian name lives on the definition as
+  // name_ru, so reading .name directly left every item-granted passive in
+  // English while the rest of the card translated.
+  const label   = abilityName(def) || String(key).replace(/\s+\d+$/, '').replace(/_/g, ' ');
+  const rank    = abilityRankLabel(key);
+  const fileKey = String(key).replace(/\s+/g, '_').replace(/_\d+$/, '');
+  const inner = `
+    <img class="item-passive-icon-img" src="${assetUrl(`/assets/icons/abilities/${fileKey}.jpg`)}"
+         alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">
+    <span class="item-passive-icon" style="display:none;">✦</span>
+    <span class="item-passive-name">${label}</span>
+    ${rank ? `<span class="item-passive-rank">${rank}</span>` : ''}`;
+  return interactive
+    ? `<button class="item-passive" data-ability-key="${key}" data-ability-type="passive">${inner}</button>`
+    : `<div class="item-passive item-passive--static">${inner}</div>`;
+}
+
+// `unitTags` marks an unmet requirement on the chip itself, so the reason line
+// underneath never has to repeat it. `showFaction` is the item modal only.
+export function renderItemTags(stats, opts = {}) {
+  const { unitTags = null, showFaction = false } = opts;
+  if (!stats) return '';
+  const unmet = stats.tag_required && Array.isArray(unitTags)
+    && !unitTags.includes(stats.tag_required);
+  const pill = (cls, label, value) => `
+    <span class="item-card-tag${cls ? ' ' + cls : ''}">
+      <span class="item-card-tag-label">${label}</span>${value}
+    </span>`;
+  return [
+    stats.tag_required ? pill(unmet ? 'item-card-tag--unmet' : '', uiText('Requires', 'Требует'), stats.tag_required) : '',
+    stats.adds_tag     ? pill('item-card-tag--adds',    uiText('Grants', 'Даёт'),   stats.adds_tag) : '',
+    stats.removes_tag  ? pill('item-card-tag--removes', uiText('Strips', 'Снимает'), tagListLabel(stats.removes_tag)) : '',
+    showFaction && stats.faction
+      ? pill('', uiText('Faction', 'Фракция'), cap(String(stats.faction).replace(/_/g, ' '))) : '',
+  ].join('');
+}
+
 export function buildItemCard(item, player) {
   const stats  = item.item_stats || item || {};
   const iconId = stats.icon || stats.key || 'item';
@@ -1023,18 +1081,11 @@ export function buildItemCard(item, player) {
   const passiveDef  = stats.passive ? resolveAbility(stats.passive) : null;
   const passiveDesc = passiveDef ? buildStatDescription(passiveDef, 'passive') : '';
   const passiveHtml = passiveDef
-    ? `<div class="item-passive item-passive--static">
-         <span class="item-passive-icon">✦</span>${abilityName(passiveDef)}
-       </div>
+    ? `${renderItemPassive(stats, { interactive: false })}
        ${passiveDesc ? `<div class="item-modal-passive-desc">${escapeHtml(passiveDesc)}</div>` : ''}`
     : '';
 
-  const tagsHtml = [
-    stats.tag_required ? `<span class="item-card-tag">${uiText('Requires', 'Требует')}: ${stats.tag_required}</span>` : '',
-    stats.adds_tag     ? `<span class="item-card-tag item-card-tag--adds">${uiText('Grants tag', 'Даёт метку')}: ${stats.adds_tag}</span>` : '',
-    stats.removes_tag  ? `<span class="item-card-tag item-card-tag--removes">${uiText('Strips tag', 'Снимает метку')}: ${tagListLabel(stats.removes_tag)}</span>` : '',
-    stats.faction      ? `<span class="item-card-tag">${uiText('Faction', 'Фракция')}: ${cap(String(stats.faction).replace(/_/g, ' '))}</span>` : '',
-  ].join('');
+  const tagsHtml = renderItemTags(stats, { showFaction: true });
 
   return `
     <div class="item-card item-card--rarity-${rarity} item-card--modal">

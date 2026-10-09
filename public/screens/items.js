@@ -11,8 +11,8 @@ import {
   resolveUnitDef, resolveAbility,
   openSheet, closeSheet, getSheetBody,
   applyBackground, buildAbilityModalParts,
-  itemName, itemRarity, CRYSTAL_ICONS, GOLD_ICON, unitName, abilityName,
-  tagListLabel, playPageTurnSound,
+  itemName, itemRarity, CRYSTAL_ICONS, GOLD_ICON, unitName,
+  renderItemPassive, renderItemTags, playPageTurnSound,
 } from '../utils.js';
 import { mountTransmutation } from '../transmute.js';
 import { mountEngraving } from '../engrave.js';
@@ -250,28 +250,6 @@ export function renderItems(root, params = {}) {
     return Object.entries(statMods || {}).map(([key, val]) => statChip(key, val)).join('');
   }
 
-  function itemPassiveHtml(stats) {
-    const key = stats?.passive;
-    if (!key) return '';
-    const def = resolveAbility(key);
-    // abilityName, not def.name: the Russian name lives on the definition as
-    // name_ru, so reading .name directly left every item-granted passive in
-    // English while the rest of the card translated.
-    const label = abilityName(def) || String(key).split(' ')[0].replace(/_/g, ' ');
-    return `<button class="item-passive" data-ability-key="${key}" data-ability-type="passive">
-              <span class="item-passive-icon">✦</span>${label}
-            </button>`;
-  }
-
-  function itemTagsHtml(stats) {
-    const ru = L === 'ru';
-    return [
-      stats.tag_required ? `<span class="item-card-tag">${ru ? 'Требует' : 'Requires'}: ${stats.tag_required}</span>` : '',
-      stats.adds_tag     ? `<span class="item-card-tag item-card-tag--adds">${ru ? 'Даёт метку' : 'Grants tag'}: ${stats.adds_tag}</span>` : '',
-      stats.removes_tag  ? `<span class="item-card-tag item-card-tag--removes">${ru ? 'Снимает метку' : 'Strips tag'}: ${tagListLabel(stats.removes_tag)}</span>` : '',
-    ].join('');
-  }
-
   function itemAsideHtml({ iconId, name, rarity: r, unique, countLine }) {
     return `
       <div class="item-card-aside">
@@ -309,8 +287,8 @@ export function renderItems(root, params = {}) {
           <div class="item-card-main">
             <div class="item-card-name">${itemName(item, player)}</div>
             <div class="item-card-stats">${formatStatMods(stats.stat_mods)}</div>
-            ${itemPassiveHtml(stats)}
-            <div class="item-card-tags">${itemTagsHtml(stats)}</div>
+            ${renderItemPassive(stats)}
+            <div class="item-card-tags">${renderItemTags(stats)}</div>
           </div>
         </div>
       </div>`;
@@ -414,8 +392,8 @@ export function renderItems(root, params = {}) {
           <div class="item-card-main">
             <div class="item-card-name">${itemName(itemDef, player)}</div>
             <div class="item-card-stats">${formatStatMods(itemDef.stat_mods)}</div>
-            ${itemPassiveHtml(itemDef)}
-            <div class="item-card-tags">${itemTagsHtml(itemDef)}</div>
+            ${renderItemPassive(itemDef)}
+            <div class="item-card-tags">${renderItemTags(itemDef)}</div>
           </div>
         </div>
         <div class="item-cost">${costChips(itemDef.cost || {}, itemDef.item_cost || {})}</div>

@@ -7597,16 +7597,36 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .item-card-tag {
-  font-size: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6rem;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
   color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.item-card-tag-label {
+  font-weight: 600;
+  opacity: 0.6;
 }
 
 .item-card-tag--adds {
+  background: #26200f;
+  border-color: #54421a;
   color: #c49a4a;
 }
 
 .item-card-tag--removes {
-  color: #a05a5a;
+  background: #2a1414;
+  border-color: #5a2a2a;
+  color: #c07a7a;
 }
 
 .item-card-stats {
@@ -8132,7 +8152,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .mat-chip-img { width: 38px; height: 38px; object-fit: contain; display: block; }
 .mat-chip { font-size: 0.78rem; gap: 5px; }
 .mat-chip .res-icon-img { width: 38px; height: 38px; object-fit: contain; }
-.mat-row { gap: 12px; }
 
 .mat-sheet-cost { display: flex; flex-direction: column; gap: 6px; }
 
@@ -8292,6 +8311,23 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 .item-passive-icon { font-size: 0.8rem; line-height: 1; }
 
+.item-passive-icon-img {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.item-passive-rank {
+  font-size: 0.64rem;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: rgba(var(--accent-rgb), 0.22);
+  letter-spacing: 0.06em;
+}
+
 .item-card-tags {
   display: flex;
   flex-wrap: wrap;
@@ -8310,6 +8346,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .item-card-tag--unmet {
   color: var(--danger);
   border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
 }
 
 .bc-state--spell { border-color: rgba(var(--accent-rgb), 0.5); }
@@ -10941,6 +10978,7 @@ html[lang="ru"] .turn-timer-label,
 html[lang="ru"] .unit-progress-key,
 html[lang="ru"] .unit-slide-badge,
 html[lang="ru"] .unit-tag,
+html[lang="ru"] .item-card-tag,
 html[lang="ru"] .upgrade-unit-label {
   text-transform: none;
   letter-spacing: 0.02em;
