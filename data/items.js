@@ -1072,8 +1072,8 @@ const ITEM_DEFS = {
   },
   sanctified_reliquary_of_dawn: {
     key:          'sanctified_reliquary_of_dawn',
-    name:         'Reliquary Of Dawn',
-    name_ru:      'Реликварий Рассвета',
+    name:         'Sanctified Reliquary Of Dawn',
+    name_ru:      'Освещенный Реликварий Рассвета',
     faction:      'empire',
     tag_required: 'Holy',
     adds_tag:     'Caster',
