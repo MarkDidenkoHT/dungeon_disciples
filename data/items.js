@@ -1080,7 +1080,7 @@ const ITEM_DEFS = {
     stat_mods:    { death_resist: 10, hp: 5 },
     passive:      'resist_aura_death 2',
     icon:         'sanctified_reliquary_of_dawn',
-    rarity:       'Mythic',
+    rarity:       'mythic',
     unique:       true,
     cost:         { Gold: 610, Crystals_Life: 125, Crystals_Death: 10 },
     item_cost:    { reliquary_of_dawn: 1, death_resistance_potion: 2 },
