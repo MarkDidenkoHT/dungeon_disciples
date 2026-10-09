@@ -396,17 +396,17 @@ function dispatchPassive(trigger, owner, def, ctx) {
 
     // Vow of Ash is the one Vow that resolves entirely at battle start, so it
     // needs no charge — it simply takes initiative off every unit of the listed
-    // tags on BOTH sides, the carrier included. The count is per side: each
-    // unit is slowed by the Demons standing with IT, not by the Demons standing
-    // opposite, so the two armies pay separately for their own damnation.
+    // tags on BOTH sides, the carrier included. The count is GLOBAL: every
+    // Demon on the field counts, whichever side it stands on, so both armies
+    // pay the same toll for the damnation on the field as a whole.
     if (p.vow_ash_initiative_per_demon != null) {
       const tags = p.vow_ash_tags ?? ['Holy', 'Demon'];
-      const perSide = { player: tagCount(engine, 'player', 'Demon'), enemy: tagCount(engine, 'enemy', 'Demon') };
+      const demons = tagCount(engine, 'player', 'Demon') + tagCount(engine, 'enemy', 'Demon');
       for (const c of engine.combatants) {
         if (!c.alive) continue;
         const unitTags = c.unit_data?.tags ?? c.tags ?? [];
         if (!tags.some(t => unitTags.includes(t))) continue;
-        const want = p.vow_ash_initiative_per_demon * (perSide[c.side] ?? 0);
+        const want = p.vow_ash_initiative_per_demon * demons;
         // Floored at zero, and recorded by what was actually TAKEN — a unit that
         // had less initiative than the Vow demanded gives what it has and no
         // more, so anything that later hands the loss back is honest.
