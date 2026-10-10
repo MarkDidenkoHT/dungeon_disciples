@@ -713,6 +713,16 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   }
 
   const ACTOR_ENTRY_TYPES = new Set(['action', 'ability', 'spell', 'defend', 'skip', 'pool', 'cast']);
+  // A 'pool' entry is a unit's turn only when something GRANTED the pool — a
+  // warder whose action is the ward names itself as the source. A pool filled
+  // by a spell param or a passive names nobody, and applyDecay / grantShield
+  // then fall back to the victim for the log's actor. Counting those as turns
+  // charged a turn beat per victim and, worse, `idFor` marked the VICTIMS as
+  // having acted, so a side-wide rot cleared the initiative queue.
+  function isTurnEntry(e) {
+    if (!ACTOR_ENTRY_TYPES.has(e.type)) return false;
+    return !(e.type === 'pool' && e.actorId == null);
+  }
   const ROUND_BREATH_MS = 500;
   // The beat between one character's turn and the next.
   //
@@ -796,7 +806,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         turnsPlayed = 0;
         pendingLeadIn = false;
         await new Promise(r => setTimeout(r, ROUND_BREATH_MS));
-      } else if (ACTOR_ENTRY_TYPES.has(entry.type)) {
+      } else if (isTurnEntry(entry)) {
         const id = idFor(entry);
         if (id && !acted.has(id)) { acted.add(id); queueNow(); }
         const turnKey = turnKeyOf(entry);
@@ -962,8 +972,17 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
               // — but a round boundary or somebody acting ends the group, or a
               // second volley later in the batch would be swallowed into this one.
               if (closesFxGroup(e, entry)) break;
-              if (!sameFxGroup(e, entry)) continue;
               if (effectForEntry(e, actor) !== effectName) continue;
+              // A pool grant is a CONSEQUENCE of the entry above it, not an
+              // event of its own, so it is allowed to join a group whose type
+              // differs as long as the actor and the picture agree. The Long Rot
+              // logs the cast and then the decay pool it filled, both drawing
+              // decay_touch on the same unit — two identical animations end to
+              // end for one spell. Grouped, the duplicate key below drops the
+              // second.
+              const poolRider = (e.type === 'pool' || entry.type === 'pool') &&
+                e.actorName === entry.actorName && e.actorCell === entry.actorCell;
+              if (!sameFxGroup(e, entry) && !poolRider) continue;
             }
             const call = singleEffectCall(e, effectName, actor, actorCell);
             fxCovered.add(j);

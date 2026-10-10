@@ -430,7 +430,11 @@ function dispatchPassive(trigger, owner, def, ctx) {
       const who = p.shield_target === 'all_allies'
         ? engine.combatants.filter(c => c.side === owner.side && c.alive)
         : [owner];
-      for (const u of who) engine.grantShield(u, p.shield_amount, def);
+      // `owner` is the source even when it shields itself: a whole-side ward
+      // otherwise logged one entry per ally each claiming a different actor,
+      // and the client can only animate entries together when they agree on
+      // who did it (see sameFxGroup in public/screens/battle.js).
+      for (const u of who) engine.grantShield(u, p.shield_amount, def, owner);
     }
     if (p.ally_max_hp_bonus != null || p.ally_max_hp_bonus_per_tag != null) {
       const hpEach = p.ally_max_hp_bonus_per_tag != null
@@ -1159,14 +1163,17 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
     }
     // ── Decay: stacking anti-heal pool on the TARGET (see POOL_CAP_PCT).
+    // `owner` is named as the source so the log — and with it the client's
+    // animation grouping, which keys on the actor — credits the unit whose
+    // passive it is rather than falling back to the victim.
     if (p.decay_amount != null) {
-      engine.applyDecay(target, p.decay_amount, def);
+      engine.applyDecay(target, p.decay_amount, def, owner);
     }
     // ── Shield: absorbs damage. `shield_target: 'self'` shields the attacker
     // (a unit that hardens as it strikes); anything else shields whoever was
     // hit, which is what an ally-facing trigger wants.
     if (p.shield_amount != null) {
-      engine.grantShield(p.shield_target === 'self' ? owner : target, p.shield_amount, def);
+      engine.grantShield(p.shield_target === 'self' ? owner : target, p.shield_amount, def, owner);
     }
     if (p.chain_targets != null && !ctx._is_chain_hit) {
       const enemies = engine.combatants.filter(c => c.side !== owner.side && c.alive && !c._untargetable && c.id !== target.id);

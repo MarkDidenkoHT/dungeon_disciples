@@ -3985,7 +3985,18 @@ class BattleEngine {
       // Decay pool — The Long Rot. Same pool the Decay ACTION fills, so a
       // spell-cast rot and a unit-cast one are the same debuff at different
       // magnitudes rather than two systems that look alike.
-      if (params.decay_amount) this.applyDecay(c, params.decay_amount, { name: params._spell_name || 'Decay' });
+      //
+      // The CASTER is named as the source, the same way shield_caster above
+      // names it. Without it applyDecay falls back to the victim for the log's
+      // actor, so a side-wide rot (Grave Rot) wrote six entries that each
+      // claimed a different actor — and the client groups simultaneous
+      // animations by actor, so it could only play them one after another, each
+      // behind its own turn beat. The whole-side version of this took about
+      // eight seconds to say one thing.
+      if (params.decay_amount) {
+        this.applyDecay(c, params.decay_amount, { name: params._spell_name || 'Decay' },
+                        this.heroFor(params._caster_side));
+      }
 
       // Deferred + recurring: strip N effects of a polarity, every round, for
       // `rounds` rounds. The handler re-queues itself until the count runs out.
