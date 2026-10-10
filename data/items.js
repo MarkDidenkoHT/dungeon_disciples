@@ -1314,7 +1314,6 @@ const ITEM_DEFS = {
     adds_tag:        'Caster',
     requires_action: 'damage',
     max_targets:     1,
-    adds_tag:        null,
     stat_mods:       { action_power: 2, hp: 5, fire_resist: 5 },
     passive:         'mithrails_light 2',
     icon:            'mithrails_touch',
