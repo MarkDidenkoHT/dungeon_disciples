@@ -466,7 +466,6 @@ const ITEM_DEFS = {
     passive:      'stoicism 1',
     icon:         'orb_of_light',
     rarity:       'rare',
-    unique:       true,
     cost:         { Gold: 40, Crystals_Life: 30 },
     requires:     { region: 'any', level: 1 },
     item_cost:    { life_charm: 1 }
