@@ -1104,7 +1104,14 @@ class BattleEngine {
 
   // `source` is whoever granted it, when there is one — an action names its
   // caster in the log; a passive that fires on being hit does not.
-  grantShield(target, amount, def, source = null) {
+  // `atStart` marks a ward that went up before the first turn. Every carrier on
+  // the board resolves its battle-start passives in the same instant, so those
+  // entries are not a sequence of events the player should watch one by one —
+  // the client fires their animation and forgets it, the way it already does
+  // for the battle-start traits (see TRAIT_FX in public/screens/battle.js).
+  // A ward granted on a TURN is left alone: there the ward IS the turn, and
+  // playback has to wait for it.
+  grantShield(target, amount, def, source = null, { atStart = false } = {}) {
     if (!target || !target.alive || !(amount > 0)) return 0;
     const cap    = this.poolCap(target);
     const before = target._shield ?? 0;
@@ -1127,6 +1134,7 @@ class BattleEngine {
       actorId: source?.id, actorName: (source || target).unit_name, actorCell: (source || target).cellIndex,
       targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
       value: added, total: target._shield,
+      ...(atStart ? { at_start: true } : {}),
     });
     return added;
   }

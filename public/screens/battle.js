@@ -495,6 +495,21 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
            a.actorName === b.actorName && a.actorCell === b.actorCell;
   }
 
+  // The same passive firing on SEVERAL units in one instant — Stone Form's
+  // round-start mend, which every gargoyle on the board takes at once, on both
+  // sides. Those entries name different actors, so sameFxGroup refuses them and
+  // each mend was awaited on its own.
+  //
+  // Safe because a passive entry is never a turn, and because the scan that
+  // uses this is closed by anybody ACTING (see closesFxGroup): two units can
+  // only land here together when nothing at all happened between them, which is
+  // the definition of one instant. The same passive firing on two units at two
+  // different moments has an action between them and stays two plays.
+  function sameInstantPassive(a, b) {
+    return a.type === b.type && !ACTOR_ENTRY_TYPES.has(a.type) &&
+           a.passive === b.passive && a.ability === b.ability;
+  }
+
   // Where a group of simultaneous entries has to STOP.
   //
   // Grouping skips past foreign entries rather than stopping at the first one —
@@ -508,10 +523,23 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // So: a round boundary closes a group, and so does anybody ACTING — including
   // this same actor acting again. Side-effect entries (passives, barks, statuses)
   // still do not, which is what keeps the interleaved-trigger case working.
+  // A DIFFERENT KIND of entry from the same actor is not a new turn, and must
+  // not close the group either. A multi-target decayer (Doomchanter, the
+  // Mother's line) logs its swing and then the pool that swing filled, victim
+  // by victim — so the first swing sat between the first two pool entries and
+  // cut the pool group at the first victim. Six pools, six separate plays, each
+  // behind its own turn beat, for one turn. The swings themselves grouped fine,
+  // which is why this looked like a pool-only problem.
+  //
+  // Only the SAME kind of entry still closes on identity, which is what keeps
+  // the second-volley case working: a unit that strikes twice in one batch (a
+  // borrowed turn, Infernal Mandate) logs 'action' both times and the second
+  // run must not be swallowed into the first.
   function closesFxGroup(e, entry) {
     if (e.type === 'round') return true;
     if (e.type === 'action' || e.type === 'ability' || e.type === 'spell' || e.type === 'cast') {
-      return !sameFxGroup(e, entry);
+      if (e.type === entry.type) return !sameFxGroup(e, entry);
+      return e.actorName !== entry.actorName || e.actorCell !== entry.actorCell;
     }
     return false;
   }
@@ -905,7 +933,17 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         // to end for one swing, which makes combat slower rather than better.
         // Fired and forgotten, they layer over the strike that is already
         // playing and are gone in a few hundred milliseconds.
-        if (RIDER_FX.has(effectName)) {
+        // A ward that went up before the first turn, flagged by the engine (see
+        // grantShield). Every carrier on the board resolves its battle-start
+        // passives in the same instant, so these are one moment and not a queue
+        // — fired and forgotten like the traits below, which is the only reason
+        // a line of six self-warders reaches round one promptly. Only the
+        // battle-start grant takes this path: a ward granted on a TURN is the
+        // turn, and playback still waits for it.
+        if (entry.at_start) {
+          const anchor = targetCellFor(entry) || actorCell;
+          if (anchor) EFFECTS[effectName](anchor);
+        } else if (RIDER_FX.has(effectName)) {
           const anchor = targetCell || actorCell;
           if (anchor) EFFECTS[effectName](anchor, { actorCell, targetCell });
         } else if (TRAIT_FX.has(effectName)) {
@@ -940,7 +978,22 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           }
         } else if (SIDE_WIDE_FX.has(effectName) || FOE_WIDE_FX.has(effectName)) {
           if (actor && actorCell && !fxCovered.has(entryIdx)) {
-            fxCovered.add(entryIdx);
+            // The WHOLE run is covered, not just this entry. A side-wide wash
+            // already paints every cell on the side, so one play says all of it
+            // — but Prayer of Healing logs one heal per ally (by name, skipping
+            // anyone at full HP), and covering only this entry left the other
+            // five each awaiting a full wash of their own: six identical washes
+            // end to end, each behind its own turn beat. Lion's Roar hid the bug
+            // by logging a single "all allies" line.
+            for (let j = entryIdx; j < newEntries.length; j++) {
+              const e = newEntries[j];
+              if (j !== entryIdx) {
+                if (closesFxGroup(e, entry)) break;
+                if (!sameFxGroup(e, entry)) continue;
+                if (effectForEntry(e, actor) !== effectName) continue;
+              }
+              fxCovered.add(j);
+            }
             const wantEnemies = FOE_WIDE_FX.has(effectName);
             const cells = state.combatants
               .filter(u => (wantEnemies ? u.side !== actor.side : u.side === actor.side) &&
@@ -982,7 +1035,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
               // second.
               const poolRider = (e.type === 'pool' || entry.type === 'pool') &&
                 e.actorName === entry.actorName && e.actorCell === entry.actorCell;
-              if (!sameFxGroup(e, entry) && !poolRider) continue;
+              if (!sameFxGroup(e, entry) && !poolRider && !sameInstantPassive(e, entry)) continue;
             }
             const call = singleEffectCall(e, effectName, actor, actorCell);
             fxCovered.add(j);

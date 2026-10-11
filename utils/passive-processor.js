@@ -434,7 +434,11 @@ function dispatchPassive(trigger, owner, def, ctx) {
       // otherwise logged one entry per ally each claiming a different actor,
       // and the client can only animate entries together when they agree on
       // who did it (see sameFxGroup in public/screens/battle.js).
-      for (const u of who) engine.grantShield(u, p.shield_amount, def, owner);
+      //
+      // `atStart` is what makes a whole LINE of self-warders readable: six units
+      // each carrying Shield or Ethereal Form put their wards up in one instant,
+      // and awaiting them played six identical washes before round one.
+      for (const u of who) engine.grantShield(u, p.shield_amount, def, owner, { atStart: true });
     }
     if (p.ally_max_hp_bonus != null || p.ally_max_hp_bonus_per_tag != null) {
       const hpEach = p.ally_max_hp_bonus_per_tag != null
@@ -553,7 +557,9 @@ function dispatchPassive(trigger, owner, def, ctx) {
     if (p.shield_per_tagged_unit != null && p.tag_required != null) {
       const n = tagCount(engine, owner.side, p.tag_required);
       const amount = p.shield_per_tagged_unit * n;
-      if (amount > 0) engine.grantShield(owner, amount, def, owner);
+      // Battle start, so the same `atStart` marker as the shield_amount branch
+      // above: the ghosts arrive together and their wards go up together.
+      if (amount > 0) engine.grantShield(owner, amount, def, owner, { atStart: true });
     }
     if (p.adjacent_physical_dmg_reduction_pct != null) {
 
