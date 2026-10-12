@@ -23,8 +23,8 @@ const TOURNEY_POINTS = { win: 3, loss: 1, forfeit: 0 };
 // Points first, then fewer units lost, then whoever finished earlier.
 const TOURNEY_TIEBREAKERS = ['points', 'units_lost', 'finished_at'];
 
-// Valor for everyone by result; tokens only for the podium, because tokens are
-// the half of an engraving's price that cannot be farmed (data/engravings.js).
+// Valor for everyone by result; the podium is the primary source of engraving
+// tokens, which also appear as very rare rewards on the longest quest milestones.
 const TOURNEY_PRIZES = {
   valor_per_win:    7,
   valor_per_battle: 2,

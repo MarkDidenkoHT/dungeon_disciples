@@ -1,6 +1,6 @@
 // Long-running quests. Unlike the daily tasks these never roll over with the
 // day: progress accumulates across every mode — regions, Colossus, bots, PvP —
-// and each quest is a chain of five milestones, each claimed on its own.
+// and each repeatable quest is a chain of ten milestones, each claimed on its own.
 //
 // Build-time constants read from BOTH sides — `require`d by routes/index.js and
 // imported as an ES module by public/daily.js — so the server and the sheet can
@@ -27,13 +27,14 @@
 // `go` is where the quest's button takes the player:
 //   embark | colossus | arena | spells | errands
 //
-// Rewards: `resources` (Gold), `crystals` (a count of the player's OWN faction
-// crystal, resolved server-side), `tokens` (tome_of_knowledge, health_potion),
+// Rewards: `resources` (Gold, Valor), `crystals` (a count of the player's OWN faction
+// crystal, resolved server-side), `tokens` (tome_of_knowledge, health_potion,
+// crossroad_sigil, engraving_token),
 // `supplies` (a count of the player's own faction supply row, also resolved
 // server-side, and paid without regard to the pool's ceiling).
 
-// The milestone ladder every standard quest climbs, as multiples of its `base`.
-const TIER_STEPS = [1, 3, 5, 7.5, 10];
+// Increasing increments make later milestones take longer, as multiples of `base`.
+const TIER_STEPS = [1, 3, 6, 10, 15, 21, 28, 36, 45, 55];
 
 const QUESTS = [
   {
@@ -45,10 +46,15 @@ const QUESTS = [
     desc:    { en: 'Deal {n} physical damage in battle.', ru: 'Нанесите {n} физического урона в бою.' },
     rewards: [
       { resources: { Gold: 100 } },
-      { tokens:    { health_potion: 5 } },
-      { resources: { Gold: 300 } },
-      { crystals:  40 },
-      { tokens:    { tome_of_knowledge: 1 }, resources: { Gold: 300 } },
+      { tokens:    { health_potion: 3 } },
+      { resources: { Gold: 250 } },
+      { crystals:  30 },
+      { tokens:    { tome_of_knowledge: 1 }, resources: { Gold: 200 } },
+      { resources: { Valor: 5 } },
+      { tokens:    { crossroad_sigil: 1 } },
+      { resources: { Gold: 600 }, crystals: 40 },
+      { resources: { Valor: 10 } },
+      { resources: { Gold: 1000, Valor: 10 } },
     ],
   },
   {
@@ -62,9 +68,14 @@ const QUESTS = [
     rewards: [
       { crystals:  15 },
       { resources: { Gold: 200 } },
-      { tokens:    { health_potion: 5 } },
-      { crystals:  50 },
-      { tokens:    { tome_of_knowledge: 1 }, crystals: 30 },
+      { tokens:    { health_potion: 3 } },
+      { crystals:  40 },
+      { tokens:    { tome_of_knowledge: 1 }, crystals: 25 },
+      { resources: { Valor: 5 } },
+      { resources: { Gold: 450 } },
+      { tokens:    { crossroad_sigil: 1 } },
+      { resources: { Valor: 10 }, crystals: 60 },
+      { resources: { Valor: 15 }, crystals: 80 },
     ],
   },
   {
@@ -77,9 +88,14 @@ const QUESTS = [
     rewards: [
       { resources: { Gold: 150 } },
       { crystals:  25 },
-      { tokens:    { health_potion: 5 } },
-      { resources: { Gold: 500 } },
-      { tokens:    { tome_of_knowledge: 1 }, crystals: 40 },
+      { tokens:    { health_potion: 3 } },
+      { resources: { Gold: 350 } },
+      { tokens:    { tome_of_knowledge: 1 }, crystals: 20 },
+      { resources: { Valor: 5 } },
+      { tokens:    { crossroad_sigil: 1 } },
+      { resources: { Gold: 600 } },
+      { resources: { Valor: 10 }, crystals: 50 },
+      { resources: { Valor: 15 }, crystals: 60 },
     ],
   },
   {
@@ -90,11 +106,16 @@ const QUESTS = [
     title:   { en: 'Demonbane',        ru: 'Гроза демонов' },
     desc:    { en: 'Slay {n} Demons.', ru: 'Уничтожьте {n} демонов.' },
     rewards: [
-      { tokens:    { health_potion: 3 } },
+      { tokens:    { health_potion: 2 } },
       { resources: { Gold: 250 } },
       { crystals:  35 },
-      { tokens:    { health_potion: 5 } },
-      { tokens:    { tome_of_knowledge: 1 }, resources: { Gold: 400 } },
+      { tokens:    { health_potion: 3 } },
+      { tokens:    { tome_of_knowledge: 1 }, resources: { Gold: 250 } },
+      { resources: { Valor: 5 } },
+      { crystals:  50 },
+      { resources: { Valor: 8 } },
+      { resources: { Gold: 600 }, crystals: 40 },
+      { resources: { Valor: 15 }, crystals: 60 },
     ],
   },
   {
@@ -106,10 +127,15 @@ const QUESTS = [
     desc:    { en: 'Slay {n} Knights.', ru: 'Уничтожьте {n} рыцарей.' },
     rewards: [
       { resources: { Gold: 150 } },
-      { tokens:    { health_potion: 5 } },
+      { tokens:    { health_potion: 3 } },
       { crystals:  35 },
-      { resources: { Gold: 450 } },
-      { tokens:    { tome_of_knowledge: 1 }, crystals: 40 },
+      { resources: { Gold: 300 } },
+      { tokens:    { tome_of_knowledge: 1 }, crystals: 20 },
+      { resources: { Valor: 5 } },
+      { resources: { Valor: 8 } },
+      { resources: { Gold: 550 } },
+      { resources: { Valor: 10 }, crystals: 50 },
+      { resources: { Valor: 15 } },
     ],
   },
   {
@@ -122,9 +148,14 @@ const QUESTS = [
     rewards: [
       { crystals:  15 },
       { resources: { Gold: 250 } },
-      { tokens:    { health_potion: 5 } },
-      { crystals:  50 },
-      { tokens:    { tome_of_knowledge: 1 }, resources: { Gold: 400 } },
+      { tokens:    { health_potion: 3 } },
+      { crystals:  40 },
+      { tokens:    { tome_of_knowledge: 1 }, resources: { Gold: 250 } },
+      { resources: { Valor: 5 } },
+      { crystals:  55 },
+      { resources: { Valor: 8 } },
+      { resources: { Gold: 600 }, crystals: 40 },
+      { resources: { Valor: 15 }, crystals: 60 },
     ],
   },
   // The three region bosses — Sister Aldra, Cryodrox and Malgrath the Undying,
@@ -140,14 +171,19 @@ const QUESTS = [
     title:   { en: 'Crownbreaker',     ru: 'Сокрушитель венцов' },
     desc:    { en: 'Slay {n} region bosses — Sister Aldra, Cryodrox or Malgrath the Undying.',
                ru: 'Победите {n} боссов регионов — Сестру Алдру, Криодрокса или Малграта Неумирающего.' },
-    // Supplies, the embark gate's own currency: the reward for clearing bosses
-    // is more chances to go clear bosses. Paid uncapped (see /quests/claim).
+    // Supplies and rare currencies reward this long boss ladder. Paid uncapped
+    // (see /quests/claim).
     rewards: [
       { supplies:  3 },
       { supplies:  5 },
+      { supplies:  6 },
       { supplies:  8 },
-      { supplies: 12 },
-      { supplies: 20 },
+      { supplies: 10 },
+      { supplies: 12, resources: { Valor: 5 } },
+      { supplies: 14 },
+      { supplies: 16, tokens: { crossroad_sigil: 1 } },
+      { supplies: 18, resources: { Valor: 10 } },
+      { supplies: 20, tokens: { engraving_token: 1 } },
     ],
   },
   {
@@ -160,9 +196,14 @@ const QUESTS = [
     rewards: [
       { resources: { Gold: 200 } },
       { crystals:  30 },
-      { tokens:    { health_potion: 5 } },
-      { resources: { Gold: 600 } },
-      { tokens:    { tome_of_knowledge: 2 } },
+      { tokens:    { health_potion: 3 } },
+      { resources: { Gold: 400 } },
+      { tokens:    { tome_of_knowledge: 1 } },
+      { resources: { Valor: 5 } },
+      { tokens:    { crossroad_sigil: 1 } },
+      { resources: { Gold: 700 }, crystals: 40 },
+      { resources: { Valor: 10 }, crystals: 50 },
+      { tokens:    { engraving_token: 1 }, resources: { Gold: 800 } },
     ],
   },
   {
@@ -175,10 +216,15 @@ const QUESTS = [
     desc:    { en: 'Deal {n} damage to the Colossus.', ru: 'Нанесите Колоссу {n} урона.' },
     rewards: [
       { crystals:  25 },
-      { resources: { Gold: 300 } },
-      { tokens:    { health_potion: 5 } },
-      { crystals:  60 },
-      { tokens:    { tome_of_knowledge: 2 }, resources: { Gold: 500 } },
+      { resources: { Gold: 250 } },
+      { tokens:    { health_potion: 3 } },
+      { crystals:  45 },
+      { tokens:    { tome_of_knowledge: 1 }, resources: { Gold: 300 } },
+      { resources: { Valor: 5 } },
+      { tokens:    { crossroad_sigil: 1 } },
+      { crystals:  70, resources: { Gold: 500 } },
+      { resources: { Valor: 10 } },
+      { tokens:    { engraving_token: 1 }, crystals: 80 },
     ],
   },
   {
@@ -192,9 +238,14 @@ const QUESTS = [
     rewards: [
       { resources: { Gold: 150 } },
       { crystals:  20 },
-      { tokens:    { health_potion: 5 } },
-      { resources: { Gold: 400 } },
-      { tokens:    { tome_of_knowledge: 1 }, crystals: 30 },
+      { tokens:    { health_potion: 3 } },
+      { resources: { Gold: 300 } },
+      { tokens:    { tome_of_knowledge: 1 }, crystals: 20 },
+      { resources: { Valor: 5 } },
+      { tokens:    { crossroad_sigil: 1 } },
+      { resources: { Gold: 500 }, crystals: 30 },
+      { resources: { Valor: 10 }, crystals: 40 },
+      { tokens:    { engraving_token: 1 }, crystals: 50 },
     ],
   },
   {
@@ -206,10 +257,15 @@ const QUESTS = [
     desc:    { en: 'Send units on {n} errands.', ru: 'Отправьте бойцов на {n} поручений.' },
     rewards: [
       { resources: { Gold: 100 } },
-      { tokens:    { health_potion: 5 } },
-      { crystals:  30 },
-      { resources: { Gold: 350 } },
-      { tokens:    { tome_of_knowledge: 3 } },
+      { tokens:    { health_potion: 3 } },
+      { crystals:  25 },
+      { resources: { Gold: 250 } },
+      { tokens:    { tome_of_knowledge: 1 } },
+      { resources: { Valor: 5 } },
+      { resources: { Valor: 8 } },
+      { resources: { Gold: 500 }, crystals: 30 },
+      { resources: { Valor: 10 } },
+      { resources: { Valor: 15 }, crystals: 40 },
     ],
   },
   // A faction has a fixed number of spells, so this ladder is spelled out rather

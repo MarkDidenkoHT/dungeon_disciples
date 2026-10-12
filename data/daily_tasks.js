@@ -95,7 +95,7 @@ const DAILY_REWARDS = [
     // fallback if it 404s.
     art:   'assets/icons/recources/valor.png',
     label: { en: '25 Valor', ru: '25 Доблести' },
-    // The engraving currency, otherwise earned only from the Colossus.
+    // The engraving currency; the Colossus is its main source.
     resources: { Valor: 25 },
     // Gold and crystals are seeded at registration, so a missing row means a
     // broken account and the claim skips it. Valor is not seeded: a player who

@@ -130,22 +130,31 @@ function dailyBodyHtml(state) {
 const TOKEN_NAMES = {
   health_potion:     ['Health Potion',     'Зелье здоровья'],
   tome_of_knowledge: ['Tome of Knowledge', 'Том знаний'],
+  crossroad_sigil:   ['Crossroad Sigil',   'Перекрёстная Печать'],
+  engraving_token:   ['Engraving Token',   'Жетон Гравировки'],
 };
 
 const questIcon = html => `<span class="quest-reward-icon">${html}</span>`;
 
-// One chip per thing a milestone pays: gold, the faction crystal, tokens.
+// One chip per thing a milestone pays: currencies, the faction crystal, tokens.
 function questRewardHtml(reward, factionCrystal) {
   const chips = [];
   if (reward?.resources?.Gold) chips.push([questIcon(GOLD_ICON), reward.resources.Gold, T('Gold', 'Золото')]);
+  if (reward?.resources?.Valor) {
+    const icon = `<img src="${assetUrl('/assets/icons/recources/valor.png')}" class="res-icon-img" alt="">`;
+    chips.push([questIcon(icon), reward.resources.Valor, T('Valor', 'Доблесть')]);
+  }
   if (reward?.crystals) {
     chips.push([questIcon(CRYSTAL_ICONS[factionCrystal] || CRYSTAL_ICONS.Crystals_Life), reward.crystals, T('Crystals', 'Кристаллы')]);
   }
   for (const [id, amount] of Object.entries(reward?.tokens || {})) {
     const def = TOKEN_DEFS[id];
-    const art = def?.art
-      ? `<img src="${assetUrl(`/${def.art}`)}" class="res-icon-img" alt="">`
-      : (def?.icon || '✦');
+    const tokenArt = def?.art || (id === 'engraving_token' ? 'assets/icons/recources/engraving_token.png' : null);
+    const fallback = def?.icon || '✦';
+    const art = tokenArt
+      ? `<img src="${assetUrl(`/${tokenArt}`)}" class="res-icon-img" alt=""
+                 onerror="this.replaceWith(document.createTextNode('${fallback}'))">`
+      : fallback;
     const name = TOKEN_NAMES[id] ? T(...TOKEN_NAMES[id]) : (def?.name || id);
     chips.push([questIcon(art), amount, name]);
   }

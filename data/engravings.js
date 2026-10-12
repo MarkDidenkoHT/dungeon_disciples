@@ -11,9 +11,9 @@ import { UNIT_ABILITIES } from './unit_abilities.js';
 
 const ENGRAVING_CURRENCY = 'Valor';
 
-// The second half of the price, and the one that cannot be farmed: tokens come
-// from placing in the Crown Tourney (3 / 2 / 1 for the top three), so an epic is
-// won rather than saved up for.
+// The second half of the price, and the one that is hardest to earn: tokens
+// mainly come from placing in the Crown Tourney (3 / 2 / 1 for the top three).
+// A few very long quest milestones also award one.
 const ENGRAVING_TOKEN = 'engraving_token';
 
 // Tiers multiply the whole triangle: an epic is three times an uncommon, both
