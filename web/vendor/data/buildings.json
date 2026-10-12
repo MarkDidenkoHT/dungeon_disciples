@@ -1403,8 +1403,8 @@
      "tier": 1,
      "upgrades": [],
      "art": "messenger_post",
-     "desc": "Opens errands. Each level pays more for every errand run.",
-     "desc_ru": "Открывает поручения. Каждый уровень увеличивает награду.",
+     "desc": "Opens errands. Levels 2 and 3 improve rewards; level 4 allows two errands at once.",
+     "desc_ru": "Открывает поручения. Уровни 2 и 3 увеличивают награду, а уровень 4 позволяет выполнять два поручения одновременно.",
      "cost": {
       "gold": 10
      },
@@ -1416,6 +1416,10 @@
       "3": {
        "gold": 400,
        "Crystals_Life": 120
+      },
+      "4": {
+       "gold": 4000,
+       "Crystals_Life": 1000
       }
      }
     },
@@ -2697,8 +2701,8 @@
      "tier": 1,
      "upgrades": [],
      "art": "messenger_post",
-     "desc": "Opens errands. Each level pays more for every errand run.",
-     "desc_ru": "Открывает поручения. Каждый уровень увеличивает награду.",
+     "desc": "Opens errands. Levels 2 and 3 improve rewards; level 4 allows two errands at once.",
+     "desc_ru": "Открывает поручения. Уровни 2 и 3 увеличивают награду, а уровень 4 позволяет выполнять два поручения одновременно.",
      "cost": {
       "gold": 10
      },
@@ -2710,6 +2714,10 @@
       "3": {
        "gold": 400,
        "Crystals_Fire": 120
+      },
+      "4": {
+       "gold": 4000,
+       "Crystals_Fire": 1000
       }
      }
     },
@@ -4359,8 +4367,8 @@
      "tier": 1,
      "upgrades": [],
      "art": "messenger_post",
-     "desc": "Opens errands. Each level pays more for every errand run.",
-     "desc_ru": "Открывает поручения. Каждый уровень увеличивает награду.",
+     "desc": "Opens errands. Levels 2 and 3 improve rewards; level 4 allows two errands at once.",
+     "desc_ru": "Открывает поручения. Уровни 2 и 3 увеличивают награду, а уровень 4 позволяет выполнять два поручения одновременно.",
      "cost": {
       "gold": 10
      },
@@ -4372,6 +4380,10 @@
       "3": {
        "gold": 400,
        "Crystals_Death": 120
+      },
+      "4": {
+       "gold": 4000,
+       "Crystals_Death": 1000
       }
      }
     },
@@ -4651,7 +4663,7 @@
   "infirmary": 3,
   "crystal_mine": 2,
   "mage_guild": 3,
-  "messenger_post": 3,
+  "messenger_post": 4,
   "mercenary_hall": 3,
   "supply_depot": 3,
   "garrison_annex": 3,

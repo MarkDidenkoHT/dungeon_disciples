@@ -28,12 +28,12 @@
 // the building that opens errands, so it is the one that should make them worth
 // running — one tier per level. Level 0 (no post) still maps to tier 1 rather
 // than to nothing, because a caller that has not loaded structures yet must not
-// silently price every errand at zero.
-const ERRAND_BUILDING_TIER = { 0: 1, 1: 1, 2: 2, 3: 3 };
+// silently price every errand at zero. Level 4 adds capacity, not a higher
+// payout tier.
+const ERRAND_BUILDING_TIER = { 0: 1, 1: 1, 2: 2, 3: 3, 4: 3 };
 
-// Post level 1 pays the base rate, level 2 pays 1.5x, level 3 pays 2x. The
-// errand pool itself does not get richer as the game goes on; raising the
-// Messenger's Post is the only thing that moves the rate.
+// Post level 1 pays the base rate, level 2 pays 1.5x, and levels 3-4 pay 2x.
+// Level 4 expands capacity without increasing the reward rate.
 const TIER_REWARD_MULT = { 1: 1, 2: 1.5, 3: 2 };
 
 // ── Duration ────────────────────────────────────────────────────────────────
@@ -177,7 +177,7 @@ const ERRANDS = [
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 function errandTier(postLevel) {
-  return ERRAND_BUILDING_TIER[Math.max(0, Math.min(3, Number(postLevel) || 0))] ?? 1;
+  return ERRAND_BUILDING_TIER[Math.max(0, Math.min(4, Number(postLevel) || 0))] ?? 1;
 }
 
 // Everything a roster row brings to a requirement check. `resolveDef` is passed

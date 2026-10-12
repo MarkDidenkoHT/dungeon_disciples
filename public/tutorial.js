@@ -289,11 +289,11 @@ const TUTORIAL_STEPS = {
   build_messenger_post: {
     en: {
       title: "The Messenger's Post",
-      text: "Start with the Messenger's Post — this is the building your daily task is waiting on. It opens errands: work for a single soldier that pays while you play, and it costs almost nothing to raise.",
+      text: "Start with the Messenger's Post — this is the building your daily task is waiting on. It opens errands: work for a single soldier that pays while you play. The first levels are cheap; its final level is a major investment.",
     },
     ru: {
       title: 'Почтовый двор',
-      text: 'Начните с Почтового двора — именно его ждёт ваше ежедневное задание. Он открывает поручения: работу для одного бойца, которая приносит доход, пока вы играете, и стоит сущие гроши.',
+      text: 'Начните с Почтового двора — именно его ждёт ваше ежедневное задание. Он открывает поручения: работу для одного бойца, которая приносит доход, пока вы играете. Первые уровни стоят недорого, но последний потребует серьёзных вложений.',
     },
   },
   // The second build on the same page: it proves the layer holds more than the

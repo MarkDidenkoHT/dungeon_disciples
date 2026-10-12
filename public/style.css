@@ -965,6 +965,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 
 .errand-sheet { display: flex; flex-direction: column; gap: 10px; padding: 0; }
 .errand-sheet--padded { padding: 10px; }
+.errand-active-list { display: flex; flex-direction: column; gap: 8px; margin: 0 10px; }
 
 .errand-sheet > .errand-btn,
 .errand-sheet > .errand-chips,
@@ -1719,6 +1720,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
   overflow: hidden;
   animation: sheet-up 0.22s cubic-bezier(0.32, 0.72, 0, 1);
 }
+
+.modal--errands-expanded { height: min(92%, 760px); }
 
 @keyframes sheet-up {
   from { transform: translateY(100%); }

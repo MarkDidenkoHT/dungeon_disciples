@@ -95,7 +95,7 @@ const SLOT_FIXED_BUILDING = {
 // whether the castle OFFERS an upgrade, so a building left behind here reads as
 // already maxed and its next level becomes unreachable in the UI.
 const BUILDING_MAX_LEVELS = {
-  blacksmith: 2, infirmary: 3, crystal_mine: 2, mage_guild: 2, messenger_post: 3,
+  blacksmith: 2, infirmary: 3, crystal_mine: 2, mage_guild: 2, messenger_post: 4,
   mercenary_hall: 3, garrison_annex: 3, proving_grounds: 3, training_grounds: 2,
   supply_depot: 3, temple: 5,
 };

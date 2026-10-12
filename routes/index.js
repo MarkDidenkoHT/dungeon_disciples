@@ -1062,10 +1062,10 @@ router.post('/login', async (req, res) => {
       let activeRec = null;
       try { activeRec = await getActiveBattle(chat_id); } catch (e) {}
       // The errand offer is minted here, once per player, rather than derived on
-      // every read of /errands — see ensureErrandOffer. It refuses to create a
-      // second while one is offered or running, so logging in repeatedly cannot
-      // reroll or stack errands. Never fatal: a player who cannot get an offer
-      // (no structures yet, empty roster) still logs in.
+      // every read of /errands — see ensureErrandOffer. It keeps at most one
+      // offer available for the player's free slot, so logging in repeatedly
+      // cannot reroll or stack errands. Never fatal: a player who cannot get an
+      // offer (no structures yet, empty roster) still logs in.
       try { await ensureErrandOffer(chat_id, updated[0]); } catch (e) {}
       // Every player needs a code to share; older accounts predate the column.
       try { updated[0].share_code = await ensureShareCode(updated[0]); } catch (e) {}
@@ -1563,11 +1563,9 @@ router.post('/player/reset', requireAuth, async (req, res) => {
     await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'DELETE' });
 
     // Errands were the one table a reset left behind, and a RUNNING row is a
-    // dead end: ensureErrandOffer returns early while anything is active and
-    // /errands/start answers errand_busy, so the player never gets another
-    // errand — and the only thing that clears `active` is the edge function
-    // finishing THIS one, which needs the roster row the two lines above just
-    // deleted. An untaken offer is stale too (it was minted for the faction and
+    // dead end: ensureErrandOffer cannot fill its slots while errands are
+    // active, and the edge function may need roster data that was just deleted.
+    // An untaken offer is stale too (it was minted for the faction and
     // throne level being wiped here), and a finished-but-unseen row would pay
     // out a reward for a unit that no longer exists. The whole account is going
     // away, so the rows go with it. Keyed on `player`, which holds the chat_id
@@ -2729,6 +2727,10 @@ function errandPostLevelOf(structures) {
   return buildingLevel(structures?.buildings_data, 'messenger_post');
 }
 
+function errandCapacityForLevel(level) {
+  return level >= 4 ? 2 : 1;
+}
+
 function throneLevelOf(structures) {
   return structures?.buildings_data?.slot_0?.level ?? 0;
 }
@@ -3032,10 +3034,11 @@ async function ensureErrandOffer(chat_id, player) {
 
   const active  = rows.filter(r => r.active);
   const offered = rows.filter(r => !r.active && r.errand_data?.offered);
+  const postLevel = errandPostLevelOf(structRows[0]);
+  const capacity = errandCapacityForLevel(postLevel);
 
-  // One at a time. A second errand while one is out would let a player empty the
-  // roster and then be unable to embark, which is the opposite of a draw.
-  if (active.length) return { rows, active, offerRow: null, roster, structRows };
+  // Keep the second offer available only while a level-4 errand slot is free.
+  if (active.length >= capacity) return { rows, active, offerRow: null, roster, structRows };
   // Already holding an offer: hand back the oldest and never mint a second. If a
   // race did write two, this consistently picks the same one and the extra is
   // simply never shown.
@@ -3047,7 +3050,7 @@ async function ensureErrandOffer(chat_id, player) {
   const offer = pickErrandFor({
     chat_id,
     faction: player.faction,
-    postLevel: errandPostLevelOf(structRows[0]),
+    postLevel,
     freeRows: freeRosterRows(roster, active),
     date: playerLocalDate(player.timezone),
     lastErrandId: rows[0]?.errand ?? null,
@@ -3137,9 +3140,13 @@ router.post('/errands/start', requireAuth, async (req, res) => {
       return res.status(400).json({ error: "Build the Messenger's Post first", code: 'errand_no_post' });
     }
 
+    const postLevel = errandPostLevelOf(structRows[0]);
     const active = rows.filter(r => r.active);
-    if (active.length) {
-      return res.status(400).json({ error: 'A unit is already on an errand', code: 'errand_busy' });
+    if (active.length >= errandCapacityForLevel(postLevel)) {
+      return res.status(400).json({ error: 'All errand slots are full', code: 'errand_busy' });
+    }
+    if (active.some(r => String(r.errand_data?.roster_id) === String(roster_id))) {
+      return res.status(400).json({ error: 'That unit is already on an errand', code: 'errand_unit_busy' });
     }
 
     const offerRow = rows
@@ -3163,7 +3170,6 @@ router.post('/errands/start', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'That unit does not meet the requirement', code: 'errand_requirement' });
     }
 
-    const postLevel = errandPostLevelOf(structRows[0]);
     const now         = Date.now();
     // The client sends which trip it picked; an unknown value resolves to the
     // shortest one, so the duration multiplier can never be forged.
@@ -3192,20 +3198,16 @@ router.post('/errands/start', requireAuth, async (req, res) => {
       reward:      ERR.rewardForTags(def, profile.tags, postLevel, offer.tier, duration.hours),
     };
 
-    // The offer row BECOMES the running errand — it is not a second row. That is
-    // what keeps "one errand per player" true no matter how the endpoint is
-    // called: there was one row, and now it is busy.
-    const updated = await supabase(`${ERRAND_TABLE}?id=eq.${encodeURIComponent(offerRow.id)}&active=is.false`, {
+    // The offer row becomes the running errand. Filtering on active=false
+    // prevents a second request from starting the same offer twice.
+    const updated = await supabase(`${ERRAND_TABLE}?id=eq.${encodeURIComponent(offerRow.id)}&player=eq.${encodeURIComponent(chat_id)}&active=is.false`, {
       method: 'PATCH',
       body: JSON.stringify({ errand_data, active: true }),
       headers: { Prefer: 'return=representation' },
     });
     const startedRow = Array.isArray(updated) ? updated[0] : updated;
-    // The `active=is.false` filter is the race guard: a second start that lands
-    // after the first matches no row and comes back empty rather than
-    // overwriting a unit that is already out.
     if (!startedRow) {
-      return res.status(400).json({ error: 'A unit is already on an errand', code: 'errand_busy' });
+      return res.status(400).json({ error: 'That errand was already taken', code: 'errand_busy' });
     }
 
     bumpDailyTask(chat_id, 'errands');
@@ -3549,13 +3551,19 @@ router.post('/errands/reroll/start', requireAuth, async (req, res) => {
     const player = await getPlayerByChatId(chat_id);
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
-    const rows    = await errandRowsFor(chat_id);
+    const [structRows, rows] = await Promise.all([
+      supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
+      errandRowsFor(chat_id),
+    ]);
     const active  = rows.filter(r => r.active);
     const offered = rows.filter(r => !r.active && r.errand_data?.offered);
+    const capacity = errandCapacityForLevel(errandPostLevelOf(structRows[0]));
 
     // Nothing to swap. Checked before the allowance so a player cannot burn a
     // day's rerolls against an offer that is not there.
-    if (active.length)   return res.status(400).json({ error: 'An errand is already running', code: 'errand_busy' });
+    if (active.length >= capacity) {
+      return res.status(400).json({ error: 'All errand slots are full', code: 'errand_busy' });
+    }
     if (!offered.length) return res.status(400).json({ error: 'No offer to reroll',           code: 'reroll_no_offer' });
 
     const record = favorRecordFor(player);
@@ -3617,7 +3625,8 @@ router.post('/errands/reroll/claim', requireAuth, async (req, res) => {
     ]);
     const active  = rows.filter(r => r.active);
     const offered = rows.filter(r => !r.active && r.errand_data?.offered);
-    if (active.length || !offered.length) {
+    const capacity = errandCapacityForLevel(errandPostLevelOf(structRows[0]));
+    if (active.length >= capacity || !offered.length) {
       // Burn the token, do NOT spend a daily use — there is nothing to swap.
       record.reroll.pending = null;
       await writeFavorRecord(chat_id, record);

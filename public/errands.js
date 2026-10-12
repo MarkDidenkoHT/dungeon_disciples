@@ -5,8 +5,9 @@ import { showTutorialSpotlight, isTutorialDone, markTutorialDone } from './tutor
 import { assetUrl } from './asset_base.js';
 
 // ── Errands ─────────────────────────────────────────────────────────────────
-// The daily draw. One non-hero unit goes out and is unavailable until it comes
-// back; errands cannot fail, so this sheet never has to explain odds or risk.
+// Each errand sends one non-hero unit away until it comes back; at higher post
+// levels more than one errand can run at once. Errands cannot fail, so this
+// sheet never has to explain odds or risk.
 //
 // COMPLETION IS NOT OURS. The Supabase edge functions finish the errand, apply
 // what it granted and notify the player through the bot. Everything here is
@@ -14,12 +15,13 @@ import { assetUrl } from './asset_base.js';
 const ET = {
   title:       { en: 'Errands',                ru: 'Поручения' },
   none:        { en: 'Nothing today',          ru: 'Сегодня ничего' },
-  noneDesc:    { en: 'No errand is waiting. Come back tomorrow — or free up a unit, if the one you sent is still away.',
-                 ru: 'Поручений нет. Возвращайтесь завтра — или дождитесь того, кого уже отправили.' },
+  noneDesc:    { en: 'No errand is waiting. Come back tomorrow — or free up your units, if anyone you sent is still away.',
+                 ru: 'Поручений нет. Возвращайтесь завтра — или дождитесь бойцов, которых уже отправили.' },
   reward:      { en: 'Reward',                 ru: 'Награда' },
   send:        { en: 'Send',                   ru: 'Отправить' },
   sending:     { en: 'Sending…',               ru: 'Отправляем…' },
   away:        { en: 'Away',                   ru: 'В пути' },
+  inProgress:  { en: 'Errands in progress',    ru: 'Поручения выполняются' },
   returns:     { en: 'Returns in',             ru: 'Вернётся через' },
   backHome:    { en: 'Home again',             ru: 'Вернулся домой' },
   gained:      { en: 'Brought home',           ru: 'Принесено' },
@@ -81,6 +83,25 @@ function errandHeaderHtml(def, desc) {
     <div class="errand-header ${art ? '' : 'errand-header--noart'}">
       ${art}
       ${desc ? `<p class="errand-desc">${desc}</p>` : ''}
+    </div>`;
+}
+
+function activeErrandsHtml(active) {
+  if (!active.length) return '';
+  return `
+    <div class="errand-active-list">
+      <div class="errand-section-label">${T('inProgress')}</div>
+      ${active.map(errand => {
+        const def = ERRANDS_BY_ID[errand.errand_id];
+        const left = errand.ends_at ? untilText(errand.ends_at) : null;
+        return `
+          <div class="errand-away">
+            <span class="errand-away-who">${errand.unit_name ?? ''} — ${def?.title?.[lang] ?? errand.errand_id}</span>
+            <span class="errand-away-state">${left ? `${T('returns')} ${left}` : T('away')}</span>
+          </div>
+          <div class="errand-section-label">${T('reward')}</div>
+          <div class="errand-chips">${rewardHtml(errand.reward)}</div>`;
+      }).join('')}
     </div>`;
 }
 
@@ -197,6 +218,7 @@ export async function openErrandsSheet(player) {
   function render() {
     const body = getSheetBody();
     if (!body) return;
+    body.closest('.modal')?.classList.toggle('modal--errands-expanded', messengerPostLevel() >= 4);
 
     // 1. Something finished. The bot already said so; this is the payoff screen.
     const done = state?.finished?.[0];
@@ -229,21 +251,15 @@ export async function openErrandsSheet(player) {
       return;
     }
 
-    // 2. A unit is out.
-    const active = state?.active?.[0];
-    if (active) {
-      const def  = ERRANDS_BY_ID[active.errand_id];
-      const left = active.ends_at ? untilText(active.ends_at) : null;
-      setSheetTitle(def?.title?.[lang] ?? active.errand_id);
+    // 2. Units are out. At level 4 an open offer can be shown alongside them.
+    const active = state?.active ?? [];
+    if (active.length && !state?.offer) {
+      const first = active[0];
+      const def = ERRANDS_BY_ID[first.errand_id];
+      setSheetTitle(def?.title?.[lang] ?? first.errand_id);
       body.innerHTML = `
         <div class="errand-sheet">
-          ${errandHeaderHtml(def, def?.desc?.[lang] ?? '')}
-          <div class="errand-away">
-            <span class="errand-away-who">${active.unit_name ?? ''}</span>
-            <span class="errand-away-state">${left ? `${T('returns')} ${left}` : T('away')}</span>
-          </div>
-          <div class="errand-section-label">${T('reward')}</div>
-          <div class="errand-chips">${rewardHtml(active.reward)}</div>
+          ${activeErrandsHtml(active)}
         </div>`;
       return;
     }
@@ -267,6 +283,7 @@ export async function openErrandsSheet(player) {
       setSheetTitle(def?.title?.[lang] ?? state.offer.errand_id);
       body.innerHTML = `
         <div class="errand-sheet">
+          ${activeErrandsHtml(active)}
           ${errandHeaderHtml(def, def?.desc?.[lang] ?? '')}
 
           <div class="errand-parts">
