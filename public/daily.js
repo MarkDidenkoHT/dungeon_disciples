@@ -233,7 +233,10 @@ function sortQuests(quests) {
 }
 
 function questsBodyHtml(state, player) {
-  return `<div class="quest-list">${sortQuests(state.quests).map(q => questHtml(q, state.faction_crystal, player)).join('')}</div>`;
+  const claimable = state.quests.filter(q => q.claimable).length;
+  return `
+    ${claimable ? `<div class="quest-actions"><button class="quest-btn quest-btn--claim" data-claim-all>${T('Claim all', 'Забрать все')} (${claimable})</button></div>` : ''}
+    <div class="quest-list">${sortQuests(state.quests).map(q => questHtml(q, state.faction_crystal, player)).join('')}</div>`;
 }
 
 // What a claim paid, lifted off the button it was claimed from. Positioned on
@@ -310,6 +313,8 @@ export function openDailyTasks(player, { tab } = {}) {
   list.addEventListener('click', e => {
     const reward = e.target.closest('.daily-reward');
     if (reward && !reward.disabled) return claimDaily(reward.dataset.reward, reward);
+    const claimAllBtn = e.target.closest('[data-claim-all]');
+    if (claimAllBtn && !claimAllBtn.disabled) return claimAllQuests(claimAllBtn);
     const claimBtn = e.target.closest('[data-claim]');
     if (claimBtn && !claimBtn.disabled) return claimQuest(claimBtn.dataset.claim, claimBtn);
     const goBtn = e.target.closest('[data-go]');
@@ -383,6 +388,54 @@ export function openDailyTasks(player, { tab } = {}) {
       await afterClaim();
     } catch (err) {
       claimFailed(err, btn);
+    }
+  }
+
+  async function claimAllQuests(btn) {
+    btn.disabled = true;
+    let claimable;
+    try {
+      const fresh = await bootstrapCache.refresh(player.chat_id);
+      claimable = (fresh?.quests || []).filter(q => q.claimable);
+    } catch (err) {
+      alert(err?.message || T('Failed to refresh quests.', 'Не удалось обновить задания.'));
+      btn.disabled = false;
+      return;
+    }
+    if (!claimable.length) {
+      paint();
+      return;
+    }
+
+    let claimed = 0;
+    let failure = null;
+    for (const quest of claimable) {
+      try {
+        await api('/quests/claim', { chat_id: player.chat_id, quest: quest.id });
+        claimed++;
+      } catch (err) {
+        failure = err;
+        break;
+      }
+    }
+    if (claimed) {
+      celebrateClaim(btn, `<span class="quest-reward">${T(
+        `${claimed} quest rewards claimed`,
+        `Получено наград за задания: ${claimed}`,
+      )}</span>`);
+    }
+    try {
+      await afterClaim();
+    } catch (err) {
+      failure ||= err;
+    }
+    if (failure) {
+      const pair = ERRORS[failure?.code];
+      const reason = pair ? T(pair[0], pair[1]) : (failure?.message || T('Failed', 'Не удалось'));
+      alert(T(
+        `Claimed ${claimed} of ${claimable.length} quests. ${reason}`,
+        `Получено наград за задания: ${claimed} из ${claimable.length}. ${reason}`,
+      ));
     }
   }
 

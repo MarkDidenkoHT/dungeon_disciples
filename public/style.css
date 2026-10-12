@@ -1297,6 +1297,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .daily-claimed-note { font-size: 0.8rem; font-weight: 400; color: var(--muted); }
 
 .quest-list { display: flex; flex-direction: column; gap: 10px; }
+.quest-actions { display: flex; justify-content: flex-end; margin-bottom: 10px; }
 
 .quest {
   display: flex;
@@ -4160,8 +4161,10 @@ button.cost-bar-item:active { transform: scale(0.9); }
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  height: 100dvh;
+  min-height: 0;
   padding: 20px;
+  overflow: hidden;
   background-image: var(--result-bg);
   background-size: cover;
   background-position: center;
@@ -4204,12 +4207,20 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .result-content {
   max-width: 500px;
   width: 100%;
-  /* padding: 40px; */
+  max-height: calc(100dvh - 40px);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   text-align: center;
 }
 
 .result-rewards {
-  margin: 24px 0;
+  flex: 0 1 auto;
+  max-height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0 0 16px;
   text-align: left;
   background: #000;
   border-radius: 8px;
