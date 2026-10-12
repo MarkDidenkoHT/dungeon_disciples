@@ -10719,41 +10719,29 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   margin: 0 0 6px;
 }
 
-/* The formation stays a board on the left, while each cell's requirement gets
-   its own row in the right-hand list. */
+/* Keep the board and its requirements inside one shared frame. */
 .litany-formation {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   align-items: stretch;
-  gap: 4px;
+  gap: 8px;
   width: 100%;
   margin: 0 0 10px;
-}
-
-/* The player's half of the board, drawn small. Two columns with the FRONT one
-   on the right, matching how battle prep lays the player's side out. */
-.litany-grid {
-  display: grid;
-  grid-template-columns: 38px 38px;
-  grid-template-rows: auto repeat(3, minmax(36px, auto));
-  gap: 4px;
-  width: max-content;
-  max-width: 100%;
-  margin: 0;
   padding: 7px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.22);
 }
 
-.litany-grid-col-label {
-  color: var(--muted);
-  font-size: 0.6rem;
-  font-weight: 800;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  text-align: center;
-  padding-bottom: 1px;
+/* The player's half of the board, drawn small, with equal-height rows. */
+.litany-grid {
+  display: grid;
+  grid-template-columns: 38px 38px;
+  grid-template-rows: repeat(3, minmax(36px, 1fr));
+  gap: 4px;
+  width: max-content;
+  max-width: 100%;
+  margin: 0;
 }
 
 /* An empty cell is drawn, not omitted: "the front column" only means anything
@@ -10973,7 +10961,6 @@ html[lang="ru"] .items-tab,
 html[lang="ru"] .library-line-label,
 html[lang="ru"] .library-section-label,
 html[lang="ru"] .library-tagchip-role,
-html[lang="ru"] .litany-grid-col-label,
 html[lang="ru"] .litany-row-role,
 html[lang="ru"] .litany-section-title,
 html[lang="ru"] .loading-title,

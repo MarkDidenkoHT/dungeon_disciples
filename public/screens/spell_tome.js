@@ -859,26 +859,24 @@ export function renderSpellTome(root, { player }) {
       }
 
       // The player's own half of the board, drawn at the size of a diagram: two
-      // columns, three rows, the front one on the RIGHT exactly as battle prep
-      // lays it out for the player's side (frontColFor in data/formation_synergies.js).
-      // The back column is drawn and left empty because a litany that cared only
-      // about the front column still has to say which column that is.
+      // columns, three rows, oriented exactly as battle prep lays out the
+      // player's side (frontColFor in data/formation_synergies.js). Empty cells
+      // are drawn too, so the marked cells keep their place on the board.
       //
       // ONE CELL IS ONE BLOCK. A two-cell unit is a single square of the diagram
       // spanning two places, with ONE letter on it — drawing its letter twice said
       // "two units of this line", which is the opposite of what a Golden Lion is.
       // Every element is placed explicitly (`grid-area`) rather than flowed,
       // because a spanning block makes auto-placement shuffle everything after it.
-      // Row 1 of the grid is the column labels, so a board row `r` is grid row
-      // `r + 2`.
+      // A board row `r` is grid row `r + 1`.
       //
       // A block carries no size of its own: the GRID's tracks size it (see
       // .litany-grid in style.css), so a span always covers its squares and the
-      // gap between them exactly. A hardcoded width could not — the column labels
-      // are wider than a square, and wider again once translated.
+      // gap between them exactly. A hardcoded width could not reliably cover a
+      // spanning cell and its gap.
       const gridArea = c => {
         const col = c.col === 'back' ? 1 : 2;
-        const row = (c.row ?? 0) + 2;
+        const row = (c.row ?? 0) + 1;
         if (c.size === 'row')    return `grid-area: ${row} / 1 / span 1 / span 2`;
         if (c.size === 'column') return `grid-area: ${row} / ${col} / span 2 / span 1`;
         return `grid-area: ${row} / ${col}`;
@@ -936,16 +934,13 @@ export function renderSpellTome(root, { player }) {
                    : c.col === 'back' ? 'litanyColBack' : 'litanyColFront'),
                  c.size === 'column' ? `${(c.row ?? 0) + 1}-${(c.row ?? 0) + 2}` : (c.row ?? 0) + 1)).join('; ')))}">
           <div class="litany-grid">
-            <span class="litany-grid-col-label" style="grid-area: 1 / 1">${escapeHtml(t('litanyColBack'))}</span>
-            <span class="litany-grid-col-label" style="grid-area: 1 / 2">${escapeHtml(t('litanyColFront'))}</span>
             ${cells.map(c => `
               <span class="litany-grid-cell litany-grid-cell--filled litany-grid-cell--${c.role}"
                     style="${gridArea(c)}">${escapeHtml(c.key)}</span>`).join('')}
             ${empties.map(sq => `
               <span class="litany-grid-cell" style="${gridArea(sq)}"></span>`).join('')}
           </div>
-          <div class="litany-grid-reqs" style="grid-template-rows: auto repeat(${cells.length}, minmax(36px, auto))">
-            <span class="litany-grid-col-label" aria-hidden="true"></span>
+          <div class="litany-grid-reqs" style="grid-template-rows: repeat(${cells.length}, minmax(36px, auto))">
             ${reqRowsHtml}
           </div>
         </div>`;
