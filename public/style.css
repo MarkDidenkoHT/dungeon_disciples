@@ -10705,18 +10705,27 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   margin: 0 0 6px;
 }
 
-/* The player's half of the board, drawn small. Two columns with the FRONT one
-   on the right, matching how battle prep lays the player's side out, so the
-   diagram and the thing it describes are the same shape. The marked cells carry
-   the letters the bands below are keyed to. */
-.litany-grid {
+/* The formation stays a board on the left, while each cell's requirement gets
+   its own row in the right-hand list. */
+.litany-formation {
   display: grid;
-  grid-template-columns: 38px 38px minmax(0, 1fr);
-  grid-template-rows: auto repeat(3, minmax(36px, auto));
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: start;
   gap: 4px;
   width: 100%;
-  max-width: 100%;
   margin: 0 0 10px;
+}
+
+/* The player's half of the board, drawn small. Two columns with the FRONT one
+   on the right, matching how battle prep lays the player's side out. */
+.litany-grid {
+  display: grid;
+  grid-template-columns: 38px 38px;
+  grid-template-rows: auto repeat(3, minmax(36px, auto));
+  gap: 4px;
+  width: max-content;
+  max-width: 100%;
+  margin: 0;
   padding: 7px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -10797,9 +10806,7 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 }
 
 .litany-grid-reqs {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  display: grid;
   gap: 4px;
   min-width: 0;
 }

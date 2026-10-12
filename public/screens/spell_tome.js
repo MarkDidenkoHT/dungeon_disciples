@@ -884,29 +884,12 @@ export function renderSpellTome(root, { player }) {
         return `grid-area: ${row} / ${col}`;
       };
 
-      // WHAT FILLS THE CELL, BESIDE THE CELL. Column 3 of the same grid, on the
-      // same row as the lettered square, so A's calling is level with A and
-      // there is nothing to match up by eye. This used to be a list of bands
-      // under the board - every one of them repeating a letter the board had
-      // already drawn, so reading the formation meant looking twice.
-      //
-      // Grouped BY BOARD ROW, not per cell: a row can hold two cells (one in
-      // each column), and one block per cell put both at the same grid area,
-      // drawn on top of each other. They stack in the row's own block instead,
-      // and the row track grows to fit (minmax in .litany-grid).
-      const cellsByRow = new Map();
-      for (const c of cells) {
-        const r = c.row ?? 0;
-        if (!cellsByRow.has(r)) cellsByRow.set(r, []);
-        cellsByRow.get(r).push(c);
-      }
-
-      const reqHtml = (cell, withKey) => {
+      // WHAT FILLS EACH CELL, in its own row to the right of the formation.
+      // Unlike the board, this list is per cell: two cells can share a board row
+      // but their requirements must still start on separate rows.
+      const reqHtml = cell => {
         const roleLabel = TOME_TEXT.litanyRoles[cell.role]?.[lang] || cap(cell.role || '');
-        // The letter only where it settles something: a row holding two cells
-        // has two blocks beside it and nothing else says which is which. On the
-        // rows that hold one - most of them - the square IS the label.
-        const keyTag = withKey && cell.key
+        const keyTag = cell.key
           ? `<span class="litany-row-key">${escapeHtml(cell.key)}</span>` : '';
         // A CHORUS cell names a calling and no ids at all — the player decides
         // who may stand there, so there are no faces to draw. The word is the
@@ -935,15 +918,9 @@ export function renderSpellTome(root, { player }) {
           </div>`;
       };
 
-      const reqRowsHtml = [...cellsByRow.entries()]
-        .sort(([a], [b]) => a - b)
-        .map(([row, rowCells]) => {
-          const many = rowCells.length > 1;
-          const inner = [...rowCells]
-            .sort((a, b) => String(a.key).localeCompare(String(b.key)))
-            .map(c => reqHtml(c, many)).join('');
-          return `<div class="litany-grid-reqs" style="grid-area: ${row + 2} / 3">${inner}</div>`;
-        }).join('');
+      const reqRowsHtml = [...cells]
+        .sort((a, b) => String(a.key).localeCompare(String(b.key)))
+        .map(reqHtml).join('');
 
       // The squares no cell covers, drawn empty so the two columns read as a board.
       const empties = [];
@@ -951,21 +928,26 @@ export function renderSpellTome(root, { player }) {
         if (!keyOfCell.has(`${r}:${col}`)) empties.push({ row: r, col, size: 'tile' });
       }
       const gridHtml = `
-        <div class="litany-grid" role="img"
+        <div class="litany-formation" role="img"
              aria-label="${escapeHtml(TOME_TEXT.litanyGridAria[lang](
                cells.map(c => TOME_TEXT.litanyGridCellAria[lang](
                  c.key,
                  t(c.size === 'row' ? 'litanyColBoth'
                    : c.col === 'back' ? 'litanyColBack' : 'litanyColFront'),
                  c.size === 'column' ? `${(c.row ?? 0) + 1}-${(c.row ?? 0) + 2}` : (c.row ?? 0) + 1)).join('; ')))}">
-          <span class="litany-grid-col-label" style="grid-area: 1 / 1">${escapeHtml(t('litanyColBack'))}</span>
-          <span class="litany-grid-col-label" style="grid-area: 1 / 2">${escapeHtml(t('litanyColFront'))}</span>
-          ${cells.map(c => `
+          <div class="litany-grid">
+            <span class="litany-grid-col-label" style="grid-area: 1 / 1">${escapeHtml(t('litanyColBack'))}</span>
+            <span class="litany-grid-col-label" style="grid-area: 1 / 2">${escapeHtml(t('litanyColFront'))}</span>
+            ${cells.map(c => `
               <span class="litany-grid-cell litany-grid-cell--filled litany-grid-cell--${c.role}"
                     style="${gridArea(c)}">${escapeHtml(c.key)}</span>`).join('')}
-          ${empties.map(sq => `
+            ${empties.map(sq => `
               <span class="litany-grid-cell" style="${gridArea(sq)}"></span>`).join('')}
-          ${reqRowsHtml}
+          </div>
+          <div class="litany-grid-reqs" style="grid-template-rows: auto repeat(${cells.length}, minmax(36px, auto))">
+            <span class="litany-grid-col-label" aria-hidden="true"></span>
+            ${reqRowsHtml}
+          </div>
         </div>`;
 
       // The verses are deliberately NOT listed here. They are the moment itself,
