@@ -94,10 +94,9 @@ function newCallingFor(faction) {
 //   kind 'oath'     the unending one: gold for a permanent stat, and the price
 //                   climbs with every oath the unit has already sworn
 //
-// The deeds are deliberately NOT split by calling yet. "Deal or restore 500"
-// pools damage and healing into one number, so a priest and a swordsman fill
-// the same block by doing their own job, and no unit is handed a track it
-// cannot walk.
+// The deeds are deliberately NOT split by calling yet. "Deal, heal or shield
+// 500" pools damage, healing and shields into one number, so every unit can fill
+// the block by doing its own job.
 const DEVOTION_BLOCKS = [
   { tier: 1, id: 'calling',  kind: 'calling',
     short: 'Calling',  short_ru: 'Призвание' },
@@ -112,7 +111,7 @@ const DEVOTION_BLOCKS = [
             name: 'Cast 10 spells',      name_ru: 'Сотворить 10 заклинаний',
             short: 'Spells',             short_ru: 'Заклинания' } },
   { tier: 3, id: 'deeds',    kind: 'deed', counter: 'deeds',    target: 500,
-    name: 'Deal or restore 500',     name_ru: 'Нанести или восстановить 500',
+    name: 'Deal, heal or shield 500', name_ru: 'Нанести урон, исцелить или защитить на 500',
     short: 'Deeds',    short_ru: 'Деяния' },
   { tier: 4, id: 'litanies', kind: 'deed', counter: 'litanies', target: 3,
     name: 'Stand in 3 litanies',     name_ru: 'Выстоять в 3 литаниях',

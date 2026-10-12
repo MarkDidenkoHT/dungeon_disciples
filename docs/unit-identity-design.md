@@ -126,7 +126,7 @@ has not reached yet disabled.
 |---|---|
 | **1** | the portrait — tap to change the calling, and its border carries the calling's colour. No stats; what it buys is the choice |
 | **2** | finish 3 errands — or, for the hero, **cast 10 spells**: a hero never leaves on an errand, so the ordinary rung is one it could never reach |
-| **3** | deal or restore 500 — damage and healing pooled, so a priest and a swordsman fill it the same way |
+| **3** | deal, heal or shield 500 — damage, healing and shields pooled, so every unit can fill it by doing its own job |
 | **4** | stand in 3 litanies |
 | **5** | **the oath** — gold for a permanent point of HP, for a unit at the end of its branch. 1000, then 1500, then 2000, with no ceiling |
 

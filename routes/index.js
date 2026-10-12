@@ -2799,7 +2799,7 @@ function withBonusHp(rosterRows, hpBonus) {
 //             can see a finished one is when the player is shown the result -
 //             which is also the one place that is idempotent, because it sets
 //             the `seen` flag.
-//   deeds     the battle engine credits damage and healing per roster id
+//   deeds     the battle engine credits damage, healing and active shields per roster id
 //             (creditDeed); banked at reward time, below.
 //   litanies  every player unit that was on the board when one fired. The deed
 //             is standing there, not performing a role - most units can never

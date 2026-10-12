@@ -139,8 +139,8 @@ class BattleEngine {
     // What each side has dealt and slain, for quests (data/quests.js). Keyed by
     // the quest counter names so the route can hand it straight over.
     this.tally = { player: {}, enemy: {}, ...(state?.tally || {}) };
-    // Block 3 of the Temple's page (data/callings.js): damage dealt and HP
-    // restored, pooled into one number per ROSTER unit rather than per side.
+    // Block 3 of the Temple's page (data/callings.js): damage dealt, HP restored
+    // and shields granted, pooled into one number per ROSTER unit rather than per side.
     // Keyed by `_rosterId`, so a combatant without one - every bot and every
     // encounter unit - simply never appears here. In a duel both armies have
     // roster ids, so the route credits only the side it is paying out and the
@@ -1276,8 +1276,12 @@ class BattleEngine {
       for (const t of list) {
         if (!actor.alive) break;
         if (!t?.alive) continue;
-        if (poolAction === 'shield') this.grantShield(t, power, label, actor);
-        else                         this.applyDecay(t, power, label, actor);
+        if (poolAction === 'shield') {
+          const added = this.grantShield(t, power, label, actor);
+          this.creditDeed(actor, added);
+        } else {
+          this.applyDecay(t, power, label, actor);
+        }
         // A pool action is neither a heal nor a hit, so it fired no trigger at
         // all — a warder or a decayer carrying Dispel never got to use it.
         this.fireTrigger('on_pool', { actor, target: t, dmg: power, dying: null });
