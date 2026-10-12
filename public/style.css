@@ -10710,7 +10710,7 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 .litany-formation {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
-  align-items: start;
+  align-items: stretch;
   gap: 4px;
   width: 100%;
   margin: 0 0 10px;
