@@ -79,7 +79,7 @@ export function restorePlan({ roster, resSpell, healSpell, amountOf, potions = 0
     const cost = bill(resSpell, dead.length);
     if (affordable(cost)) modes.push({ mode: 'resurrect', label: 'resurrectAll', count: dead.length, cost });
 
-    if (healSpell) {
+    if (healSpell && potions < 1) {
       // The fallen pay both spells — raised by one, brought to full by the
       // other — which is exactly what pressing the two per-unit buttons costs.
       const full = merge(cost, bill(healSpell, dead.length + wounded.length));
@@ -92,10 +92,9 @@ export function restorePlan({ roster, resSpell, healSpell, amountOf, potions = 0
   // POTIONS BEFORE CRYSTALS, and only when there are enough for everyone hurt.
   // A potion heals to FULL where the spell heals heal_pct, so it is both the
   // cheaper and the better fix — crystals are a mined resource the player can
-  // come back for, a potion is not spent on anything else, and partial coverage
-  // would mean paying crystals for a worse result on some units than the potions
-  // bought for others. One potion short and this is the ordinary crystal Heal.
-  // No spell required: the per-unit potion button does not ask for one either.
+  // come back for, a potion is not spent on anything else. When any potion is
+  // held, do not offer a crystal-heal alternative; the per-unit potion button
+  // can be used on the units it covers. No spell is required for potions.
   if (!dead.length && wounded.length) {
     if (potions >= wounded.length) {
       modes.push({
@@ -104,7 +103,7 @@ export function restorePlan({ roster, resSpell, healSpell, amountOf, potions = 0
         count: wounded.length,
         cost:  { health_potion: wounded.length },
       });
-    } else if (healSpell) {
+    } else if (healSpell && potions < 1) {
       const cost = bill(healSpell, wounded.length);
       if (affordable(cost)) modes.push({ mode: 'heal', label: 'healAll', count: wounded.length, cost });
     }
