@@ -624,15 +624,20 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (!imageLoaded || !cell.isConnected) return null;
 
     const facing = actor.side === 'enemy' ? -1 : 1;
+    const cellBounds = cell.getBoundingClientRect();
 
     const pose = document.createElement('img');
     pose.className = 'battle-action-pose';
     pose.alt = '';
     pose.setAttribute('aria-hidden', 'true');
     pose.src = assetUrl(imagePath);
+    pose.style.left = `${cellBounds.left}px`;
+    pose.style.top = `${cellBounds.top}px`;
+    pose.style.width = `${cellBounds.width}px`;
+    pose.style.height = `${cellBounds.height}px`;
     pose.style.setProperty('--pose-facing', String(facing));
     pose.style.setProperty('--pose-duration', `${ACTION_POSE_DURATION_MS}ms`);
-    cell.appendChild(pose);
+    document.body.appendChild(pose);
     cell.classList.add('battle-cell--action-pose');
 
     let disposed = false;

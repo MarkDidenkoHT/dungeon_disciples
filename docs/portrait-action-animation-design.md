@@ -24,8 +24,10 @@ art production.
 ## The idea
 
 Keep the existing portrait and coded effect system. At the moment of an action, briefly
-darken or mute the idle portrait, show one or two generated action poses in its place,
-then let the existing coded effect carry the motion, impact or spell result.
+darken or mute the idle portrait and show one or two generated action poses as separate
+images anchored to the acting unit's battle cell. The action image is not embedded in or
+clipped to the character portrait. The existing coded effect carries the motion, impact
+or spell result.
 
 The authored images provide **character acting**; the existing effects provide
 **gameplay motion and feedback**. Neither needs to pretend to be the other.
@@ -34,7 +36,8 @@ An action beat could look like this:
 
 1. **Ready:** the normal portrait remains visible.
 2. **Anticipation:** the portrait darkens slightly or pulls back for a short beat.
-3. **Action pose:** a generated image replaces it briefly (or cuts between two poses).
+3. **Action pose:** a separate generated image appears briefly (or cuts between two
+poses), enlarged and centered on the acting unit.
 4. **Effect and impact:** the existing coded animation plays and gameplay feedback lands.
 5. **Settle:** return to the normal portrait.
 
@@ -91,12 +94,13 @@ art is an enhancement layer, not a new requirement for valid unit data.
 The first implementation registers available art by log action type and unit id. The
 `action` type is the basic unit action, and `action_e2111.png` is its pilot pose. Only
 registered images are requested; unregistered units keep their existing portrait and
-coded effect unchanged. The idle portrait dims as its action pose appears; the pose is
-shown at twice its normal scale, then fades away while the existing coded effect plays.
-That effect starts 120 ms after the pose appears, with no added delay for reduced-motion
-users. The pose does not travel across the board or shake the cell. Art is preloaded
-through the normal CDN-to-origin fallback so a new asset can work before it has been
-copied to the CDN.
+coded effect unchanged. The idle portrait dims as a separate action image appears, anchored
+to the actor's battle cell but rendered independently of the portrait frame. The action
+image is shown at twice its normal scale, then fades away while the existing coded effect
+plays. That effect starts 120 ms after the image appears, with no added delay for
+reduced-motion users. The image does not travel across the board or shake the cell. Art is
+preloaded through the normal CDN-to-origin fallback so a new asset can work before it has
+been copied to the CDN.
 
 ## Presentation and timing
 
