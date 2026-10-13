@@ -91,7 +91,10 @@ art is an enhancement layer, not a new requirement for valid unit data.
 The first implementation registers available art by log action type and unit id. The
 `action` type is the basic unit action, and `action_e2111.png` is its pilot pose. Only
 registered images are requested; unregistered units keep their existing portrait and
-coded effect unchanged.
+coded effect unchanged. The loaded pose appears larger than its battle cell, lunges
+toward the logged target, then recoils while the existing coded effect plays. Art is
+preloaded through the normal CDN-to-origin fallback so a new asset can work before it
+has been copied to the CDN.
 
 ## Presentation and timing
 
@@ -164,9 +167,8 @@ Before broad asset production, verify that the pilot:
 
 ## Open questions
 
-- Should the action pose **replace** the idle portrait inside the cell, or briefly appear
-  as a larger cut-in while the cell stays visible? The first is the lower-cost and
-  less disruptive default.
+- How should pose scale, lunge distance and timing be tuned for other image proportions
+  and action families?
 - Should pose lookup be strictly unit-and-action-specific, or can some action families
   share generic poses? The proposed fallback supports both; the pilot should establish
   whether shared poses look coherent enough.

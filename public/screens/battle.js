@@ -20,8 +20,40 @@ const ACTION_POSE_ASSETS = {
     e2111: '/assets/animations/action_e2111.png',
   },
 };
-const ACTION_POSE_MIN_MS = 180;
+const ACTION_POSE_DURATION_MS = 620;
 const ACTION_POSE_MAX_MS = 1800;
+const ACTION_POSE_LOAD_WAIT_MS = 800;
+const ACTION_POSE_PRELOADS = new Map();
+
+function preloadActionPose(imagePath) {
+  if (!ACTION_POSE_PRELOADS.has(imagePath)) {
+    const image = new Image();
+    image.alt = '';
+    image.setAttribute('aria-hidden', 'true');
+    image.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;';
+    const loaded = new Promise(resolve => {
+      let retriedFromCdn = false;
+      const timeout = setTimeout(() => cleanup(false), 10000);
+      const cleanup = result => {
+        clearTimeout(timeout);
+        image.remove();
+        resolve(result);
+      };
+      image.onload = () => cleanup(true);
+      image.onerror = () => {
+        if (image.dataset.assetRetried && !retriedFromCdn) {
+          retriedFromCdn = true;
+          return;
+        }
+        cleanup(false);
+      };
+    });
+    document.body.appendChild(image);
+    image.src = assetUrl(imagePath);
+    ACTION_POSE_PRELOADS.set(imagePath, loaded);
+  }
+  return ACTION_POSE_PRELOADS.get(imagePath);
+}
 
 // Effects that take two positional cells — EFFECTS[name](sourceCell, targetCell)
 // — because something (life, blood) travels between the acting unit and its
@@ -317,6 +349,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // def cannot be found (an older snapshot, a unit that has since been renamed).
   const cName = c => (c ? (unitName(resolveUnitDef(c)) || c.unit_name || '') : '');
   initSfx(player); // pick up the player's sfx_enabled setting for ability sounds
+  for (const byUnit of Object.values(ACTION_POSE_ASSETS)) {
+    for (const imagePath of Object.values(byUnit)) preloadActionPose(imagePath);
+  }
   // Warm the researched-spell set at mount. render() needs it to decide whether
   // the hero's cast button is live, and render runs long before anyone opens the
   // cast sheet — without this the button spends the first turn guessing.
@@ -577,46 +612,58 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return c ? document.querySelector(`.battle-cell[data-id="${c.id}"]`) : null;
   }
 
-  function showActionPose(entry, actor, cell) {
+  async function showActionPose(entry, actor, cell, targetCell) {
     const unitId = actor?.unit_data?.unit_id ?? actor?.unit_data?.id;
     const imagePath = ACTION_POSE_ASSETS[entry.type]?.[unitId];
     if (!imagePath || !cell) return null;
+    const imageLoaded = await Promise.race([
+      preloadActionPose(imagePath),
+      new Promise(resolve => setTimeout(() => resolve(false), ACTION_POSE_LOAD_WAIT_MS)),
+    ]);
+    if (!imageLoaded || !cell.isConnected) return null;
+
+    const start = cell.getBoundingClientRect();
+    const target = targetCell?.getBoundingClientRect();
+    const dx = target
+      ? target.left + target.width / 2 - (start.left + start.width / 2)
+      : (actor.side === 'enemy' ? -1 : 1) * Math.min(start.width * 1.5, 150);
+    const dy = target
+      ? target.top + target.height / 2 - (start.top + start.height / 2)
+      : 0;
+    const distance = Math.hypot(dx, dy) || 1;
+    const travel = Math.min(distance * 0.62, 190);
+    const facing = actor.side === 'enemy' ? -1 : 1;
 
     const pose = document.createElement('img');
-    pose.className = 'battle-cell-action-pose';
+    pose.className = 'battle-action-pose';
     pose.alt = '';
     pose.setAttribute('aria-hidden', 'true');
+    pose.src = assetUrl(imagePath);
+    pose.style.left = `${start.left + start.width / 2}px`;
+    pose.style.top = `${start.top + start.height / 2}px`;
+    pose.style.setProperty('--pose-lunge-x', `${dx / distance * travel}px`);
+    pose.style.setProperty('--pose-lunge-y', `${dy / distance * travel}px`);
+    pose.style.setProperty('--pose-recoil-x', `${dx / distance * travel * 0.55}px`);
+    pose.style.setProperty('--pose-recoil-y', `${dy / distance * travel * 0.55}px`);
+    pose.style.setProperty('--pose-facing', String(facing));
+    pose.style.setProperty('--pose-duration', `${ACTION_POSE_DURATION_MS}ms`);
+    document.body.appendChild(pose);
+    cell.classList.add('battle-cell--action-pose');
 
-    let visibleAt = null;
     let disposed = false;
+    let resolveFinished;
+    const finished = new Promise(resolve => { resolveFinished = resolve; });
     const cleanup = () => {
       if (disposed) return;
       disposed = true;
       clearTimeout(fallbackTimer);
       pose.remove();
       cell.classList.remove('battle-cell--action-pose');
+      resolveFinished();
     };
     const fallbackTimer = setTimeout(cleanup, ACTION_POSE_MAX_MS);
-
-    pose.onload = () => {
-      if (disposed || !cell.isConnected) {
-        cleanup();
-        return;
-      }
-      visibleAt = Date.now();
-      cell.classList.add('battle-cell--action-pose');
-    };
-    pose.onerror = cleanup;
-    cell.appendChild(pose);
-    pose.src = assetUrl(imagePath);
-
-    return async () => {
-      if (visibleAt !== null) {
-        const remaining = ACTION_POSE_MIN_MS - (Date.now() - visibleAt);
-        if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
-      }
-      cleanup();
-    };
+    pose.addEventListener('animationend', cleanup, { once: true });
+    return () => finished;
   }
 
   function singleEffectCall(entry, effectName, actor, actorCell) {
@@ -964,8 +1011,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const actorCell = actor
         ? document.querySelector(`.battle-cell[data-id="${actor.id}"]`)
         : null;
+      const actionTargetCell = targetCellFor(entry);
       const finishActionPose = entry.type === 'action'
-        ? showActionPose(entry, actor, actorCell)
+        ? await showActionPose(entry, actor, actorCell, actionTargetCell)
         : null;
       // An entry already covered by an earlier play is a repeat of something the
       // player has just seen AND heard — four splash victims fired the same clip
