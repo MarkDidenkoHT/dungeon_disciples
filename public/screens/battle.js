@@ -1050,8 +1050,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         }
       }
 
-      if (finishActionPose) await finishActionPose();
-
       // The result of THIS entry, applied now that its animation has finished.
       // Without it nothing on the board moved until the whole exchange had been
       // played and render() ran at the end — so a spell appeared to leave the
