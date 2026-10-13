@@ -152,7 +152,7 @@ const UNITS = {
       hp: 50, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 10, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 1', 'choir 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -166,7 +166,7 @@ const UNITS = {
       hp: 55, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 16, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 1', 'choir 2'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
@@ -180,7 +180,7 @@ const UNITS = {
       hp: 65, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 14, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 2', 'choir 2'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -194,7 +194,7 @@ const UNITS = {
       hp: 116, armor: 4, initiative: 30,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 14, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 1', 'choir 2', 'stoicism 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -208,7 +208,7 @@ const UNITS = {
       hp: 55, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 10, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 1', 'sovereigns_levy 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -222,7 +222,7 @@ const UNITS = {
       hp: 65, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 16, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 2', 'sovereigns_levy 1'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
@@ -236,7 +236,7 @@ const UNITS = {
       hp: 75, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 14, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 2', 'sovereigns_levy 2'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -250,7 +250,7 @@ const UNITS = {
       hp: 75, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 14, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       passive: ['divided_flame 2', 'sovereigns_levy 1', 'stoicism 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -494,7 +494,7 @@ const UNITS = {
       hp: 35, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 35, life: 0, death: 15, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 8, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 6, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       xp: 75, passive: ['unending_servitude 1', 'shield 1'], ability: 'purge 1',
     },
     emberkeeper: {
@@ -507,7 +507,7 @@ const UNITS = {
       hp: 40, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 35, life: 0, death: 15, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 8, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       xp: 400, passive: ['unending_servitude 1', 'shield 2'], ability: 'purge 1',
     },
     pyre_warden: {
@@ -520,7 +520,7 @@ const UNITS = {
       hp: 45, armor: 5, initiative: 20,
       resistances: { air: 0, fire: 35, life: 0, death: 15, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 16, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 10, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       xp: 1850, passive: ['undying 1', 'shield 2'], ability: 'purge 1',
     },
     ashen_warden: {
@@ -533,7 +533,7 @@ const UNITS = {
       hp: 55, armor: 5, initiative: 20,
       resistances: { air: 0, fire: 35, life: 0, death: 15, cold: 0, nature: 5 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       xp: 3350, passive: ['undying 1', 'shield 2', 'resist_aura_death 1'], ability: 'purge 1',
     },
     pyre_choir: {
@@ -546,7 +546,7 @@ const UNITS = {
       hp: 50, armor: 10, initiative: 20,
       resistances: { air: 0, fire: 40, life: 0, death: 10, cold: 0, nature: 10 },
       action: 'song_of_ash', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 10, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 8, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       xp: 3150, passive: ['undying 1', 'shield 2', 'resist_aura_nature 1' ], ability: 'purge 1',
     },
     clay_gargoyle: {
@@ -1014,7 +1014,7 @@ const UNITS = {
       hp: 40, armor: 5, initiative: 30,
       resistances: { air: 5, fire: 30, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 8, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       xp: 400, passive: ['renew 1', 'resist_aura_fire 1'], ability: 'rite_of_reclamation 1',
     },
     ash_precentor: {
@@ -1027,7 +1027,7 @@ const UNITS = {
       hp: 50, armor: 5, initiative: 30,
       resistances: { air: 10, fire: 35, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 16, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 10, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       xp: 1350, passive: ['renew 1', 'resist_aura_fire 2'], ability: 'rite_of_reclamation 2',
     },
     ash_liturgist: {
@@ -1040,7 +1040,7 @@ const UNITS = {
       hp: 55, armor: 10, initiative: 30,
       resistances: { air: 10, fire: 40, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
       xp: 1820, passive: ['renew 1', 'resist_aura_fire 2', 'dispel 1'], ability: 'rite_of_reclamation 2',
     },
   },
@@ -1967,7 +1967,7 @@ const UNITS = {
       hp: 45, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 0, life: 40, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 12, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+      damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
       xp: 400, passive: ['renew 1','field_medic 1', 'vitality 1'], ability: 'prayer_of_healing 1',
     },
     ardent_priest: {
@@ -1980,7 +1980,7 @@ const UNITS = {
       hp: 50, armor: 5, initiative: 20,
       resistances: { air: 0, fire: 5, life: 40, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 16, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+      damage_source: null, action_power: 12, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
       xp: 1520, passive: ['renew 1', 'field_medic 1', 'vitality 2'], ability: 'prayer_of_healing 2',
     },
     high_priest: {
@@ -1993,7 +1993,7 @@ const UNITS = {
       hp: 55, armor: 5, initiative: 25,
       resistances: { air: 0, fire: 10, life: 40, death: 0, cold: 0, nature: 10 },
       action: 'heal', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+      damage_source: null, action_power: 14, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
       xp: 3640, passive: ['renew 2', 'field_medic 1', 'vitality 2'], ability: 'prayer_of_healing 2',
     },
     seraphic_priest: {
@@ -2006,7 +2006,7 @@ const UNITS = {
       hp: 55, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 5, life: 40, death: 0, cold: 0, nature: 5 },
       action: 'heal', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 8, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+      damage_source: null, action_power: 6, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
       xp: 1520, passive: ['regenerate 1', 'stoicism 1', 'ethereal_form 1'], ability: 'redemption 2',
     },
     seraph: {
@@ -2019,7 +2019,7 @@ const UNITS = {
       hp: 65, armor: 0, initiative: 20,
       resistances: { air: 0, fire: 10, life: 40, death: 0, cold: 0, nature: 10 },
       action: 'heal', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+      damage_source: null, action_power: 8, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
       xp: 3640, passive: ['regenerate 1', 'stoicism 1', 'ethereal_form 2'], ability: 'redemption 2',
     },
     apprentice: {
@@ -2149,7 +2149,7 @@ const UNITS = {
       hp: 40, armor: 5, initiative: 35,
       resistances: { air: 10, fire: 5, life: 40, death: 5, cold: 5, nature: 5 },
       action: 'shield', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 12, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
+      damage_source: null, action_power: 8, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
       xp: 480, passive: ['inspiration_initiative 1', 'aegis 1'], ability: 'frost_armor 1',
     },
     bulwark_magus: {
@@ -2162,7 +2162,7 @@ const UNITS = {
       hp: 50, armor: 10, initiative: 35,
       resistances: { air: 20, fire: 10, life: 40, death: 10, cold: 10, nature: 10 },
       action: 'shield', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 10, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
+      damage_source: null, action_power: 6, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
       xp: 1560, passive: ['inspiration_initiative 1', 'aegis 2'], ability: 'frost_armor 2',
     },
     bulwark_archon: {
@@ -2175,7 +2175,7 @@ const UNITS = {
       hp: 55, armor: 15, initiative: 35,
       resistances: { air: 20, fire: 10, life: 40, death: 10, cold: 15, nature: 10 },
       action: 'shield', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 12, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
+      damage_source: null, action_power: 8, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
       xp: 3640, passive: ['inspiration_initiative 1', 'aegis 2', 'stoicism 1'], ability: 'frost_armor 2',
     },
     protector: {
@@ -2188,7 +2188,7 @@ const UNITS = {
       hp: 50, armor: 20, initiative: 35,
       resistances: { air: 20, fire: 10, life: 40, death: 10, cold: 10, nature: 20 },
       action: 'shield', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 16, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
+      damage_source: null, action_power: 12, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
       xp: 1560, passive: ['protector 2', 'aegis 1'], ability: 'blessing_of_protection 2',
     },
     aegis_sentinel: {
@@ -2201,7 +2201,7 @@ const UNITS = {
       hp: 55, armor: 25, initiative: 35,
       resistances: { air: 25, fire: 10, life: 40, death: 10, cold: 15, nature: 20 },
       action: 'shield', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 20, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
+      damage_source: null, action_power: 14, action_icon: 'shield.jpg', action_animation: 'shield_ward', action_sfx: 'divine_spell',
       xp: 3640, passive: ['protector 2', 'aegis 1', 'stoicism 1'], ability: 'blessing_of_protection 2',
     },
   },
@@ -3584,10 +3584,10 @@ const UNITS = {
         tags: ['Caster', 'Holy'],
         pref_position: 'back',
         size: 'tile',
-        hp: 40, armor: 0, initiative: 20,
+        hp: 35, armor: 0, initiative: 20,
         resistances: { air: 0, fire: 5, life: 40, death: 5, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 8, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+        damage_source: null, action_power: 6, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
         xp: 130, passive: ['vitality 1', 'pure_blood 1'], ability: 'infernal_mandate 1',
       },
       keeper_of_purity: {
@@ -3597,10 +3597,10 @@ const UNITS = {
         tags: ['Caster', 'Holy'],
         pref_position: 'back',
         size: 'tile',
-        hp: 50, armor: 0, initiative: 20,
+        hp: 45, armor: 0, initiative: 20,
         resistances: { air: 0, fire: 10, life: 40, death: 10, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 12, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+        damage_source: null, action_power: 8, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
         xp: 540, passive: ['vitality 2', 'pure_blood 1'], ability: 'infernal_mandate 1',
       },
       high_keeper: {
@@ -3610,10 +3610,10 @@ const UNITS = {
         tags: ['Caster', 'Holy'],
         pref_position: 'back',
         size: 'tile',
-        hp: 60, armor: 0, initiative: 20,
+        hp: 55, armor: 0, initiative: 20,
         resistances: { air: 0, fire: 10, life: 40, death: 10, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 16, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+        damage_source: null, action_power: 10, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
         xp: 1560, passive: ['vitality 2', 'beacon_of_hope 1', 'pure_blood 1'], ability: 'infernal_mandate 1',
       },
       grand_keeper: {
@@ -3623,10 +3623,10 @@ const UNITS = {
         tags: ['Caster', 'Holy'],
         pref_position: 'back',
         size: 'tile',
-        hp: 70, armor: 0, initiative: 20,
+        hp: 65, armor: 0, initiative: 20,
         resistances: { air: 0, fire: 20, life: 50, death: 20, cold: 0, nature: 0 },
         action: 'heal', target_type: 'ally', targets: 1, range: 3,
-        damage_source: null, action_power: 20, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
+        damage_source: null, action_power: 12, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
         xp: 4005, passive: ['vitality 2', 'beacon_of_hope 2', 'pure_blood 1'], ability: 'infernal_mandate 2',
       },
       keeper_of_the_bloodied_veil: {
@@ -3636,10 +3636,10 @@ const UNITS = {
         tags: ['Demon', 'Holy'],
         pref_position: 'back',
         size: 'tile',
-        hp: 60, armor: 15, initiative: 20,
+        hp: 55, armor: 15, initiative: 20,
         resistances: { air: 0, fire: 25, life: 40, death: 25, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'life', action_power: 20, action_icon: 'communion.jpg',
+        damage_source: 'life', action_power: 16, action_icon: 'communion.jpg',
         xp: 4005, passive: ['choir 2', 'communion 2', 'pure_blood 1'], ability: 'infernal_mandate 2',
       },
       crimson_scout: {
