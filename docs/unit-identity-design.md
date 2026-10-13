@@ -224,9 +224,12 @@ two languages inside Telegram. The player gets the feeling of naming with none o
   in the roster, the Chronicle and the battle log; the type name stays as the subtitle, so
   nobody loses track of what the unit is: **Halvard**, Blade Master. First name free, each
   later rename 200 gold.
-- **Name-pool direction.** Given names are sex-specific. The second part is a faction
-  flavored fantasy byname or epithet, localized for a strong Russian fantasy sound rather
-  than translated literally or reshaped as a Slavic surname. The following is the current
+- **Name-pool direction.** Every unit definition has a `sex` (`male` or `female`)
+  presentation, shared by its evolution line and persisted in `unit_data` at creation;
+  login sync backfills it for existing roster entries. Given names are sex-specific.
+  The second part is a faction-flavored fantasy byname or epithet, localized for a strong
+  Russian fantasy sound rather than translated literally or reshaped as a Slavic surname.
+  The following is the current
   shortlist for discussion, not an implementation-ready complete pool:
 
   | Faction | Male given names | Female given names |

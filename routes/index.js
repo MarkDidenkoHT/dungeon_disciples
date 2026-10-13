@@ -942,6 +942,7 @@ function makeUnitData(unitId, buildingSlot) {
   const hp  = def?.hp ?? 50;
   return {
     unit_id: unitId,
+    sex: def?.sex,
     building_slot: buildingSlot || null,
     current_xp: 0,
     current_hp: hp,
@@ -966,6 +967,7 @@ async function syncRosterMaxHp(chat_id) {
     const patch = {};
     if (unitData.max_hp !== def.hp) patch.max_hp = def.hp;
     if (Number.isFinite(currentHp) && currentHp > def.hp) patch.current_hp = def.hp;
+    if (unitData.sex !== def.sex) patch.sex = def.sex;
     if (!Object.keys(patch).length) return;
 
     await supabase(`/roster?id=eq.${encodeURIComponent(row.id)}&chat_id=eq.${encodeURIComponent(chat_id)}`, {

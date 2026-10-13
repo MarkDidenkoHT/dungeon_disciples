@@ -4064,5 +4064,45 @@ const UNITS = {
   },
 };
 
+const UNIT_SEX_BY_LINEAGE = {
+  choir_of_the_cursed: {
+    h_d_1: 'male', h_d_2: 'male', h_d_3: 'male',
+    d1: 'male', d2: 'male', d3: 'female', d4: 'male',
+    d5: 'male', d6: 'male', d7: 'male',
+  },
+  empire: {
+    h_e_1: 'male', h_e_2: 'male', h_e_3: 'male',
+    e1: 'male', e2: 'male', e3: 'male', e4: 'male',
+    e6: 'male', e7: 'female',
+  },
+  grail_of_sorrow: {
+    h_g_1: 'male', h_g_2: 'male', h_g_3: 'female',
+    gs1: 'male', gs2: 'male', gs3: 'male', gs4: 'male',
+    gs5: 'male', gs6: 'male', gs7: 'female', gs8: 'female',
+  },
+  enemies: {
+    opb_e1: 'male', opb_e2: 'male', opb_e3: 'female',
+    opb_e4: 'male', opb_e5: 'female',
+    mv_e1: 'male', mv_e2: 'male', mv_e3: 'male', mv_e4: 'male',
+    dm_e1: 'male', dm_2: 'male', dm_e3: 'male', dm_e4: 'male',
+    colossus: 'male',
+  },
+};
+
+for (const [faction, factionPool] of Object.entries(UNITS)) {
+  const lineageSex = UNIT_SEX_BY_LINEAGE[faction];
+  const definitions = faction === 'enemies'
+    ? Object.values(factionPool).flatMap(regionPool => Object.values(regionPool))
+    : Object.values(factionPool);
+
+  for (const unit of definitions) {
+    const match = Object.entries(lineageSex || {})
+      .filter(([prefix]) => unit.id.startsWith(prefix))
+      .sort(([a], [b]) => b.length - a.length)[0];
+    if (!match) throw new Error(`Missing sex assignment for unit ${unit.id} (${faction})`);
+    unit.sex = match[1];
+  }
+}
+
 export { UNITS, UNIT_ABILITIES };
 if (typeof module !== 'undefined') module.exports = { UNITS, UNIT_ABILITIES };
