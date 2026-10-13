@@ -224,6 +224,25 @@ two languages inside Telegram. The player gets the feeling of naming with none o
   in the roster, the Chronicle and the battle log; the type name stays as the subtitle, so
   nobody loses track of what the unit is: **Halvard**, Blade Master. First name free, each
   later rename 200 gold.
+- **Name-pool direction.** Given names are sex-specific. The second part is a faction
+  flavored fantasy byname or epithet, localized for a strong Russian fantasy sound rather
+  than translated literally or reshaped as a Slavic surname. The following is the current
+  shortlist for discussion, not an implementation-ready complete pool:
+
+  | Faction | Male given names | Female given names |
+  |---|---|---|
+  | **Empire** | Aurelius — Аурилей; Valerius — Валерий; Lucius — Люций; Hadrian — Адриан; Cassian — Кассиан | Aurelia — Аурелия; Valeria — Валерия; Justina — Юстина; Octavia — Октавия; Elisia — Элизия |
+  | **Grail of Sorrow** | Corvin — Корвин; Vesper — Веспер; Malakor — Малакор; Iskar — Искар; Odran — Одран | Isolde — Изольда; Vespera — Веспера; Nereza — Нереза; Caldra — Калдра; Morwen — Морвен |
+  | **Choir of the Cursed** | Vael — Ваэль; Nerion — Нерион; Sythran — Ситран; Thamiel — Тамиэль; Xavren — Заврен | Vaelira — Ваэлира; Seraphine — Серафина; Nythra — Нитра; Khariel — Кариэль; Orissa — Орисса |
+
+  | Faction | English bynames / epithets | Russian forms |
+  |---|---|---|
+  | **Empire** | Sunborne; Lightbringer; Ironheart; Dawnshield; Oathkeeper | Солнцерождённый / Солнцерождённая; Светоносный / Светоносная; Железносердный / Железносердная; Рассветный Щит / Щит Рассвета; Хранитель Клятвы / Хранительница Клятвы |
+  | **Grail of Sorrow** | Soulreaper; Bloodthirst; Ashbringer; Gravewarden; Shadowstalker | Жнец Душ / Жница Душ; Кровожадный / Кровожадная; Пеплоносец / Пеплоносица; Страж Могилы / Стражница Могилы; Теневой Охотник / Теневая Охотница |
+  | **Choir of the Cursed** | Blackcantor; Hollowvoice; Razorchant; Soul-Eater; Voice of the Abyss | Чёрный Певчий / Чёрная Певчая; Пустоголосый / Пустоголосая; Певец Клинков / Певица Клинков; Пожиратель Душ / Пожирательница Душ; Глас Бездны |
+
+  Russian forms should agree with the character's sex where the epithet is gendered.
+  Constructions such as Глас Бездны can remain invariant.
 - **Epithet.** Earned, never bought. A rung, a tourney podium, a Colossus kill, an errand
   career, an oath count each award one — *the Thrice-Sent*, *Ashen-Handed*, *Who Held the
   Gate*. A unit wears one; swapping which is free. The collection is the record, the worn
