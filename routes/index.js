@@ -950,6 +950,31 @@ function makeUnitData(unitId, buildingSlot) {
   };
 }
 
+async function syncRosterMaxHp(chat_id) {
+  const rows = await supabase(
+    `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data`,
+  );
+  await Promise.all(rows.map(async row => {
+    const unitData = row.unit_data || {};
+    const def = getUnitByDataId(unitData.unit_id);
+    if (!def || !Number.isFinite(def.hp)) {
+      console.warn(`Cannot sync max HP for roster unit ${row.id}: missing definition for ${unitData.unit_id}`);
+      return;
+    }
+
+    const currentHp = Number(unitData.current_hp);
+    const patch = {};
+    if (unitData.max_hp !== def.hp) patch.max_hp = def.hp;
+    if (Number.isFinite(currentHp) && currentHp > def.hp) patch.current_hp = def.hp;
+    if (!Object.keys(patch).length) return;
+
+    await supabase(`/roster?id=eq.${encodeURIComponent(row.id)}&chat_id=eq.${encodeURIComponent(chat_id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ unit_data: { ...unitData, ...patch } }),
+    });
+  }));
+}
+
 // ── Automatic level-up ──────────────────────────────────────────────────────
 // A unit that has both the XP and the building it needs has nothing left to
 // decide, so making the player find it in the roster and press a button is just
@@ -1059,6 +1084,7 @@ router.post('/login', async (req, res) => {
         method: 'PATCH',
         body: JSON.stringify(patchBody),
       });
+      await syncRosterMaxHp(chat_id);
       let activeRec = null;
       try { activeRec = await getActiveBattle(chat_id); } catch (e) {}
       // The errand offer is minted here, once per player, rather than derived on
@@ -1100,6 +1126,7 @@ router.post('/login', async (req, res) => {
       method: 'POST',
       body: JSON.stringify(newPlayerBody),
     });
+    await syncRosterMaxHp(chat_id);
     let activeRec = null;
     try { activeRec = await getActiveBattle(chat_id); } catch (e) {}
     // Deliberately not awaited: the admin ping is bookkeeping, and a slow or
