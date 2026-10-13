@@ -975,6 +975,9 @@ async function syncRosterMaxHp(chat_id, faction = null) {
     const unitData = row.unit_data || {};
     const def = getUnitByDataId(unitData.unit_id);
     if (!def || !Number.isFinite(def.hp)) {
+      if (unitData.given_name_id && unitData.byname_id) {
+        usedNames.add(characterNameKey(unitData));
+      }
       console.warn(`Cannot sync max HP for roster unit ${row.id}: missing definition for ${unitData.unit_id}`);
       continue;
     }
@@ -993,15 +996,20 @@ async function syncRosterMaxHp(chat_id, faction = null) {
     if (!identityKey || usedNames.has(identityKey)) {
       Object.assign(patch, generateUniqueUnitIdentity(faction || def.f, def.sex, usedNames));
     } else {
-      Object.assign(patch, existingIdentity);
       usedNames.add(identityKey);
+      if (unitData.given_name_id !== existingIdentity.given_name_id
+        || unitData.byname_id !== existingIdentity.byname_id) {
+        Object.assign(patch, existingIdentity);
+      }
     }
+    const hasLegacyNames = ['given_name', 'given_name_ru', 'byname', 'byname_ru']
+      .some(key => Object.hasOwn(unitData, key));
     const nextUnitData = { ...unitData, ...patch };
     delete nextUnitData.given_name;
     delete nextUnitData.given_name_ru;
     delete nextUnitData.byname;
     delete nextUnitData.byname_ru;
-    if (!Object.keys(patch).length) continue;
+    if (!Object.keys(patch).length && !hasLegacyNames) continue;
 
     await supabase(`/roster?id=eq.${encodeURIComponent(row.id)}&chat_id=eq.${encodeURIComponent(chat_id)}`, {
       method: 'PATCH',

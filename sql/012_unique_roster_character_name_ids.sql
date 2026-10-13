@@ -37,8 +37,8 @@ WHERE roster.id = ranked_names.id
 CREATE UNIQUE INDEX roster_unique_character_name_ids
   ON public.roster (
     chat_id,
-    unit_data->>'given_name_id',
-    unit_data->>'byname_id'
+    (unit_data->>'given_name_id'),
+    (unit_data->>'byname_id')
   )
   WHERE COALESCE(unit_data->>'given_name_id', '') <> ''
     AND COALESCE(unit_data->>'byname_id', '') <> '';
