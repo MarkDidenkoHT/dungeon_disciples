@@ -15,47 +15,6 @@ import { openDailyTasks } from '../daily.js';
 const ROWS = 3;
 const COLS = 2;
 
-const ACTION_POSE_ASSETS = {
-  action: {
-    e2111: '/assets/animations/action_e2111.png',
-  },
-};
-const ACTION_POSE_DURATION_MS = 2100;
-const ACTION_POSE_MAX_MS = 3000;
-const ACTION_POSE_LOAD_WAIT_MS = 800;
-const ACTION_POSE_EFFECT_DELAY_MS = 180;
-const ACTION_POSE_PRELOADS = new Map();
-
-function preloadActionPose(imagePath) {
-  if (!ACTION_POSE_PRELOADS.has(imagePath)) {
-    const image = new Image();
-    image.alt = '';
-    image.setAttribute('aria-hidden', 'true');
-    image.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;';
-    const loaded = new Promise(resolve => {
-      let retriedFromCdn = false;
-      const timeout = setTimeout(() => cleanup(false), 10000);
-      const cleanup = result => {
-        clearTimeout(timeout);
-        image.remove();
-        resolve(result);
-      };
-      image.onload = () => cleanup(true);
-      image.onerror = () => {
-        if (image.dataset.assetRetried && !retriedFromCdn) {
-          retriedFromCdn = true;
-          return;
-        }
-        cleanup(false);
-      };
-    });
-    document.body.appendChild(image);
-    image.src = assetUrl(imagePath);
-    ACTION_POSE_PRELOADS.set(imagePath, loaded);
-  }
-  return ACTION_POSE_PRELOADS.get(imagePath);
-}
-
 // Effects that take two positional cells — EFFECTS[name](sourceCell, targetCell)
 // — because something (life, blood) travels between the acting unit and its
 // target. Everything else is single-cell / (cell, opts). Keep in sync with the
@@ -350,9 +309,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // def cannot be found (an older snapshot, a unit that has since been renamed).
   const cName = c => (c ? (unitName(resolveUnitDef(c)) || c.unit_name || '') : '');
   initSfx(player); // pick up the player's sfx_enabled setting for ability sounds
-  for (const byUnit of Object.values(ACTION_POSE_ASSETS)) {
-    for (const imagePath of Object.values(byUnit)) preloadActionPose(imagePath);
-  }
   // Warm the researched-spell set at mount. render() needs it to decide whether
   // the hero's cast button is live, and render runs long before anyone opens the
   // cast sheet — without this the button spends the first turn guessing.
@@ -611,49 +567,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         state.combatants.find(u => u.cellIndex === entry.targetCell)) ||
       null;
     return c ? document.querySelector(`.battle-cell[data-id="${c.id}"]`) : null;
-  }
-
-  async function showActionPose(entry, actor, cell) {
-    const unitId = actor?.unit_data?.unit_id ?? actor?.unit_data?.id;
-    const imagePath = ACTION_POSE_ASSETS[entry.type]?.[unitId];
-    if (!imagePath || !cell) return null;
-    const imageLoaded = await Promise.race([
-      preloadActionPose(imagePath),
-      new Promise(resolve => setTimeout(() => resolve(false), ACTION_POSE_LOAD_WAIT_MS)),
-    ]);
-    if (!imageLoaded || !cell.isConnected) return null;
-
-    const facing = actor.side === 'enemy' ? -1 : 1;
-    const cellBounds = cell.getBoundingClientRect();
-
-    const pose = document.createElement('img');
-    pose.className = 'battle-action-pose';
-    pose.alt = '';
-    pose.setAttribute('aria-hidden', 'true');
-    pose.src = assetUrl(imagePath);
-    pose.style.left = `${cellBounds.left}px`;
-    pose.style.top = `${cellBounds.top}px`;
-    pose.style.width = `${cellBounds.width}px`;
-    pose.style.height = `${cellBounds.height}px`;
-    pose.style.setProperty('--pose-facing', String(facing));
-    pose.style.setProperty('--pose-duration', `${ACTION_POSE_DURATION_MS}ms`);
-    document.body.appendChild(pose);
-    cell.classList.add('battle-cell--action-pose');
-
-    let disposed = false;
-    let resolveFinished;
-    const finished = new Promise(resolve => { resolveFinished = resolve; });
-    const cleanup = () => {
-      if (disposed) return;
-      disposed = true;
-      clearTimeout(fallbackTimer);
-      pose.remove();
-      cell.classList.remove('battle-cell--action-pose');
-      resolveFinished();
-    };
-    const fallbackTimer = setTimeout(cleanup, ACTION_POSE_MAX_MS);
-    pose.addEventListener('animationend', cleanup, { once: true });
-    return () => finished;
   }
 
   function singleEffectCall(entry, effectName, actor, actorCell) {
@@ -1001,14 +914,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const actorCell = actor
         ? document.querySelector(`.battle-cell[data-id="${actor.id}"]`)
         : null;
-      const finishActionPose = entry.type === 'action'
-        ? await showActionPose(entry, actor, actorCell)
-        : null;
-      if (finishActionPose && effectName && EFFECTS[effectName] &&
-          !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
-        const speed = Math.max(1, Number(window.__FX_SPEED__) || 1);
-        await new Promise(resolve => setTimeout(resolve, ACTION_POSE_EFFECT_DELAY_MS / speed));
-      }
       // An entry already covered by an earlier play is a repeat of something the
       // player has just seen AND heard — four splash victims fired the same clip
       // four times over itself.

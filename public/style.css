@@ -4065,52 +4065,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background: #2a200a !important;
 }
 
-.battle-cell--action-pose .battle-cell-portrait {
-  filter: brightness(0.45) saturate(0.7);
-}
-
-.battle-action-pose {
-  position: fixed;
-  z-index: 30;
-  background: #000;
-  object-fit: contain;
-  object-position: center;
-  pointer-events: none;
-  transform-origin: center;
-  animation: battle-action-pose-hold var(--pose-duration, 2100ms) ease-in-out both;
-  will-change: transform, opacity;
-}
-
-@keyframes battle-action-pose-hold {
-  0% {
-    opacity: 0;
-    transform: scaleX(var(--pose-facing)) scale(2);
-  }
-  6% {
-    opacity: 1;
-    transform: scaleX(var(--pose-facing)) scale(2);
-  }
-  12% {
-    opacity: 1;
-    transform: scaleX(var(--pose-facing)) scale(2);
-  }
-  76% {
-    opacity: 1;
-    transform: scaleX(var(--pose-facing)) scale(2);
-  }
-  100% {
-    opacity: 0;
-    transform: scaleX(var(--pose-facing)) scale(2);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .battle-action-pose {
-    animation-duration: 1ms;
-    will-change: auto;
-  }
-}
-
 .battle-cell--acting::after {
   content: '';
   position: absolute;
