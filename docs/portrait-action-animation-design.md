@@ -91,10 +91,10 @@ art is an enhancement layer, not a new requirement for valid unit data.
 The first implementation registers available art by log action type and unit id. The
 `action` type is the basic unit action, and `action_e2111.png` is its pilot pose. Only
 registered images are requested; unregistered units keep their existing portrait and
-coded effect unchanged. The loaded pose appears larger than its battle cell, lunges
-toward the logged target, then recoils while the existing coded effect plays. Art is
-preloaded through the normal CDN-to-origin fallback so a new asset can work before it
-has been copied to the CDN.
+coded effect unchanged. The loaded pose overlays the actor's existing portrait area
+for a readable hold, then fades away while the existing coded effect plays. It does
+not travel across the board or shake the cell. Art is preloaded through the normal
+CDN-to-origin fallback so a new asset can work before it has been copied to the CDN.
 
 ## Presentation and timing
 
