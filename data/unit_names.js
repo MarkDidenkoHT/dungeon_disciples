@@ -109,23 +109,32 @@ const FACTION_BY_UNIT_CODE = {
   d: 'choir_of_the_cursed',
 };
 
-function randomEntry(entries) {
-  return entries[Math.floor(Math.random() * entries.length)];
+function characterNameKey(identity) {
+  return `${identity.given_name.toLowerCase()} ${identity.byname.toLowerCase()}`;
 }
 
-function generateUnitIdentity(faction, sex) {
+function generateUniqueUnitIdentity(faction, sex, usedNames = new Set()) {
   const factionKey = UNIT_NAME_POOLS[faction] ? faction : FACTION_BY_UNIT_CODE[faction];
   const pool = UNIT_NAME_POOLS[factionKey]?.[sex];
   if (!pool) throw new Error(`No unit name pool for faction "${faction}" and sex "${sex}"`);
 
-  const givenName = randomEntry(pool.givenNames);
-  const byname = randomEntry(pool.bynames);
-  return {
-    given_name: givenName.en,
-    given_name_ru: givenName.ru,
-    byname: byname.en,
-    byname_ru: byname.ru,
-  };
+  const candidates = pool.givenNames.flatMap(givenName =>
+    pool.bynames.map(byname => ({
+      given_name: givenName.en,
+      given_name_ru: givenName.ru,
+      byname: byname.en,
+      byname_ru: byname.ru,
+    })),
+  );
+  const start = Math.floor(Math.random() * candidates.length);
+  for (let i = 0; i < candidates.length; i++) {
+    const candidate = candidates[(start + i) % candidates.length];
+    if (!usedNames.has(characterNameKey(candidate))) {
+      usedNames.add(characterNameKey(candidate));
+      return candidate;
+    }
+  }
+  throw new Error(`No unused character names remain for faction "${factionKey}" and sex "${sex}"`);
 }
 
-module.exports = { UNIT_NAME_POOLS, generateUnitIdentity };
+module.exports = { UNIT_NAME_POOLS, characterNameKey, generateUniqueUnitIdentity };

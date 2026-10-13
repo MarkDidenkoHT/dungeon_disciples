@@ -25,7 +25,7 @@ import {
   openSubSheet, closeSubSheet, getSubSheetBody, cap, onSheetClose, RESOURCE_BAR_SLOTS, gameConfirm,
   buildUnitCard, getActionLabel, buildAbilityModalParts,
   renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
-  handleUnitInspect, unitName, unitTypeName, buildingLabel, enableTrackSwipe, escapeHtml,
+  handleUnitInspect, unitName, unitCharacterName, unitTypeName, buildingLabel, enableTrackSwipe, escapeHtml,
   playAdPlaceholder as playAd,
   renderItemPassive, renderItemTags, renderHeroSpellSlot,
 } from '../utils.js';
@@ -1379,14 +1379,9 @@ export function renderCastle(root, params = {}) {
     };
     const throneDef  = throneState?.building_id ? getBuildingDef(player.faction, throneState.building_id) : null;
     const throneBg   = nodeBackground('slot_0', throneDef?.unit_id);
-    const throneUnit = rosterUnitForSlot('slot_0');
-    const throneName = throneUnit?.unit_data?.[castleLang === 'ru' ? 'given_name_ru' : 'given_name'] || '';
-
     centerSlot.innerHTML = `
-      <div class="castle-node castle-node--throne castle-node--clickable ${throneBg ? 'castle-node--portrait' : ''}" data-slot="slot_0"${throneBg}
-           ${throneUnit ? `title="${escapeHtml(unitName(throneUnit, player))}" aria-label="${escapeHtml(unitName(throneUnit, player))}"` : ''}>
+      <div class="castle-node castle-node--throne castle-node--clickable ${throneBg ? 'castle-node--portrait' : ''}" data-slot="slot_0"${throneBg}>
         ${throneBg ? '' : '<div class="castle-node-icon">♛</div>'}
-        ${throneName ? `<span class="castle-node-label castle-node-label--character">${escapeHtml(throneName)}</span>` : ''}
         ${nodeHpBar('slot_0')}
       </div>`;
 
@@ -1398,9 +1393,6 @@ export function renderCastle(root, params = {}) {
       const state      = data[slot] || { level: 0, building_id: null };
       const def        = state.building_id ? getBuildingDef(player.faction, state.building_id) : null;
       const isEmpty    = !state.building_id;
-      const occupant   = rosterUnitForSlot(slot);
-      const characterName = occupant ? unitName(occupant, player) : '';
-      const givenName = occupant?.unit_data?.[castleLang === 'ru' ? 'given_name_ru' : 'given_name'] || '';
       // A mercenary slot's unit lives in MERCENARY_BUILDINGS, not the faction
       // pool, so both are consulted before giving up on a portrait.
       const mercDef    = !def && state.building_id ? getMercBuildingDef(state.building_id) : null;
@@ -1425,13 +1417,10 @@ export function renderCastle(root, params = {}) {
         ? ` title="${CASTLE_TEXT.slotLocked[castleLang](buildingLabel(getBuildingDef(player.faction, lockedBy.building)) || lockedBy.building, lockedBy.level)}"`
         : '';
       const glyph = (lockedBy || reserved) ? '🔒' : (isEmpty ? '＋' : '⚔');
-      const title = lockTitle
-        || (characterName ? ` title="${escapeHtml(characterName)}" aria-label="${escapeHtml(characterName)}"` : '')
-        || (reserved ? ` title="${CASTLE_TEXT.slotReserved[castleLang]}"` : '');
+      const title = lockTitle || (reserved ? ` title="${CASTLE_TEXT.slotReserved[castleLang]}"` : '');
       return `
         <div class="${classes}" data-slot="${slot}"${bg}${title}>
           ${bg && !lockedBy && !reserved && !previewDef ? '' : `<div class="castle-node-icon">${glyph}</div>`}
-          ${givenName ? `<span class="castle-node-label castle-node-label--character">${escapeHtml(givenName)}</span>` : ''}
           ${nodeHpBar(slot)}
         </div>`;
     };
@@ -3053,7 +3042,9 @@ export function renderCastle(root, params = {}) {
     // Titled by the UNIT standing in the slot — that is what the player is
     // inspecting. A slot with no unit (a utility building, an empty barracks)
     // keeps the building's own name and level.
-    const sheetTitle = (liveUnit && unitName(liveUnit)) || levelLabelFor(def, slotLevel);
+    const sheetTitle = (rosterUnit && unitCharacterName(rosterUnit, player))
+      || (liveUnit && unitName(liveUnit))
+      || levelLabelFor(def, slotLevel);
     openModal(sheetTitle, `
       <div id="slot-sheet-root">
         ${cardHtml}

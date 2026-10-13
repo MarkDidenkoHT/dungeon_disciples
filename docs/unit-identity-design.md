@@ -222,9 +222,8 @@ Telegram. A curated pool gives the player the feeling of naming without that bur
 - **Given name.** The long-term target is ~40 period-correct names per faction, EN + RU
   pairs, in `data/unit_names.js`; the initial pool is five per sex and faction. Creation
   currently rolls a name. Player selection and renaming are future work. The character
-  name replaces the type name in the roster, Chronicle and battle log; the type name stays
-  as the subtitle, so nobody loses track of what the unit is: **Halvard**, Blade Master.
-  First name free, each later rename 200 gold.
+  name is shown in the castle inspect, with the type name as its subtitle, e.g.
+  **Halvard**, Blade Master. First name free, each later rename 200 gold.
 - **Name-pool direction.** Every unit definition has a `sex` (`male` or `female`)
   presentation, shared by its evolution line and persisted in `unit_data` at creation;
   login sync backfills it for existing roster entries. Given names are sex-specific.
@@ -232,10 +231,13 @@ Telegram. A curated pool gives the player the feeling of naming without that bur
   Russian fantasy sound rather than translated literally or reshaped as a Slavic surname.
   A character receives a random given name and byname on creation. Both are stored with
   `sex` in the roster's `unit_data`, survive level-ups, and are backfilled for old roster
-  entries at login. Castle nodes show the given name, and the castle inspect shows the
-  full character name with the unit type beneath it; battle logs use the character name.
-  The starter pool below is intentionally small
-  and can be expanded before any player-facing rename system is added:
+  entries at login. Names appear only in the large castle unit inspect; the character
+  name is the sheet title and the unit type is shown beneath it. All other screens keep
+  showing the unit type. The starter pool below is intentionally small and can be
+  expanded before any player-facing rename system is added.
+  `sql/011_unique_roster_character_names.sql` resolves any existing collisions and adds
+  a unique database index per player roster, so concurrent assignments cannot duplicate
+  names. Apply this SQL in Supabase before deploying the application changes.
 
   | Faction | Male given names | Female given names |
   |---|---|---|
