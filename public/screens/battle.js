@@ -303,11 +303,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   const BL = player?.settings?.language === 'ru' ? 'ru' : 'en';
   const BTx = k => BT[k][BL];
 
-  // A combatant's `unit_name` is the ENGLISH name the server stamped on it when
-  // the battle was created, so it cannot be shown to a Russian player as-is.
-  // Resolve the definition and translate; fall back to the stored name if the
-  // def cannot be found (an older snapshot, a unit that has since been renamed).
-  const cName = c => (c ? (unitName(resolveUnitDef(c)) || c.unit_name || '') : '');
+  // The combatant carries its stored bilingual identity inside `unit_data`;
+  // resolve that first so the battle log and detail labels use the viewer's
+  // language, with the server-stamped type/name as the legacy fallback.
+  const cName = c => (c ? (unitName(c, player) || c.unit_name || '') : '');
   initSfx(player); // pick up the player's sfx_enabled setting for ability sounds
   // Warm the researched-spell set at mount. render() needs it to decide whether
   // the hero's cast button is live, and render runs long before anyone opens the

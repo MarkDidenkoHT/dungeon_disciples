@@ -272,7 +272,7 @@ export function renderItems(root, params = {}) {
     const holder = item.equipped_by != null
       ? units.find(u => String(u.id) === String(item.equipped_by))
       : null;
-    const holderName = holder ? unitName(resolveUnitDef(holder)) : '';
+    const holderName = holder ? unitName(holder, player) : '';
     const countLine  = count > 1
       ? `×${count}`
       : (holderName ? `${T('equippedOn')} ${holderName}` : T('free'));

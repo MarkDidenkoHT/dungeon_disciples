@@ -213,24 +213,29 @@ could sing.
 
 The question was names, named barks, renaming, or a personalisation item.
 
-**A curated given name plus an earned epithet. No free text.** Free text looks like the
-cheapest option and is the most expensive one: every unit name is a pair (`name`,
-`name_ru`), barks are written to be spoken *by* a named character, the battle log and the
-bark toast print the name at `0.6rem` inside a cell, and a free field needs moderation in
-two languages inside Telegram. The player gets the feeling of naming with none of that.
+**A curated given name and faction byname at creation, followed by earned epithets. No
+free text.** Free text looks like the cheapest option and is the most expensive one:
+character names need paired English and Russian forms, barks are written to be spoken
+*by* a named character, and a free field needs moderation in two languages inside
+Telegram. A curated pool gives the player the feeling of naming without that burden.
 
-- **Given name.** ~40 period-correct names per faction, EN + RU pairs, in
-  `data/unit_names.js`. The player picks from the pool or rolls. It replaces the type name
-  in the roster, the Chronicle and the battle log; the type name stays as the subtitle, so
-  nobody loses track of what the unit is: **Halvard**, Blade Master. First name free, each
-  later rename 200 gold.
+- **Given name.** The long-term target is ~40 period-correct names per faction, EN + RU
+  pairs, in `data/unit_names.js`; the initial pool is five per sex and faction. Creation
+  currently rolls a name. Player selection and renaming are future work. The character
+  name replaces the type name in the roster, Chronicle and battle log; the type name stays
+  as the subtitle, so nobody loses track of what the unit is: **Halvard**, Blade Master.
+  First name free, each later rename 200 gold.
 - **Name-pool direction.** Every unit definition has a `sex` (`male` or `female`)
   presentation, shared by its evolution line and persisted in `unit_data` at creation;
   login sync backfills it for existing roster entries. Given names are sex-specific.
   The second part is a faction-flavored fantasy byname or epithet, localized for a strong
   Russian fantasy sound rather than translated literally or reshaped as a Slavic surname.
-  The following is the current
-  shortlist for discussion, not an implementation-ready complete pool:
+  A character receives a random given name and byname on creation. Both are stored with
+  `sex` in the roster's `unit_data`, survive level-ups, and are backfilled for old roster
+  entries at login. Castle nodes show the given name, and the castle inspect shows the
+  full character name with the unit type beneath it; battle logs use the character name.
+  The starter pool below is intentionally small
+  and can be expanded before any player-facing rename system is added:
 
   | Faction | Male given names | Female given names |
   |---|---|---|
@@ -238,7 +243,7 @@ two languages inside Telegram. The player gets the feeling of naming with none o
   | **Grail of Sorrow** | Corvin — Корвин; Vesper — Веспер; Malakor — Малакор; Iskar — Искар; Odran — Одран | Isolde — Изольда; Vespera — Веспера; Nereza — Нереза; Caldra — Калдра; Morwen — Морвен |
   | **Choir of the Cursed** | Vael — Ваэль; Nerion — Нерион; Sythran — Ситран; Thamiel — Тамиэль; Xavren — Заврен | Vaelira — Ваэлира; Seraphine — Серафина; Nythra — Нитра; Khariel — Кариэль; Orissa — Орисса |
 
-  | Faction | English bynames / epithets | Russian forms |
+  | Faction | English bynames | Russian forms |
   |---|---|---|
   | **Empire** | Sunborne; Lightbringer; Ironheart; Dawnshield; Oathkeeper | Солнцерождённый / Солнцерождённая; Светоносный / Светоносная; Железносердный / Железносердная; Рассветный Щит / Щит Рассвета; Хранитель Клятвы / Хранительница Клятвы |
   | **Grail of Sorrow** | Soulreaper; Bloodthirst; Ashbringer; Gravewarden; Shadowstalker | Жнец Душ / Жница Душ; Кровожадный / Кровожадная; Пеплоносец / Пеплоносица; Страж Могилы / Стражница Могилы; Теневой Охотник / Теневая Охотница |
@@ -295,11 +300,12 @@ never competes for Valor or tokens; it cannot touch a passive, so it cannot brea
 
 ## Wiring notes
 
-- **Storage.** A new table, `unit_record`, keyed by `roster_id` — *not* `unit_data`.
-  `makeUnitData` ([routes/index.js](../routes/index.js)) rebuilds `unit_data` from scratch
-  on every level-up, which is the exact moment a record must survive. Columns: calling,
-  counters (jsonb), rungs claimed, epithets earned and worn, given name, oaths (jsonb list
-  of stat picks). `on delete cascade` from `roster` — that cascade *is* the no-refund rule.
+- **Storage.** The character's `sex`, given name and faction byname live in the existing
+  `roster.unit_data` jsonb; `makeUnitData` preserves them across level-ups, and login sync
+  backfills them for older entries. No schema migration is needed for these fields. The
+  future Chronicle record can use a separate `unit_record` table keyed by `roster_id` for
+  calling, counters (jsonb), rungs claimed, earned epithets and oaths (jsonb list of stat
+  picks). `on delete cascade` from `roster` — that cascade *is* the no-refund rule.
 - **Counters need a per-unit tally.** The engine keeps `this.tally` per *side* — `kills`,
   `kills:<tag>`, damage by school
   ([utils/battle-engine.js](../utils/battle-engine.js)). Extend it with a

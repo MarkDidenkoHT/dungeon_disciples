@@ -3491,6 +3491,13 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .castle-unit-card-wrap { position: relative; }
 
+.castle-unit-type-name {
+  padding: 4px 8px 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
 .unit-card-overlay--heal { padding-bottom: 46px; }
 
 .unit-card-overlay--actions {
@@ -6583,6 +6590,19 @@ button.cost-bar-item:active { transform: scale(0.9); }
   max-width: 100%;
   overflow: hidden;
   white-space: normal;
+}
+
+.castle-node-label--character {
+  position: absolute;
+  top: 8%;
+  left: 5%;
+  right: 5%;
+  z-index: 3;
+  padding: 1px 2px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.58);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .castle-node-timer { font-size: 0.65rem; }

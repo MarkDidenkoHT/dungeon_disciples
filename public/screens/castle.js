@@ -25,7 +25,7 @@ import {
   openSubSheet, closeSubSheet, getSubSheetBody, cap, onSheetClose, RESOURCE_BAR_SLOTS, gameConfirm,
   buildUnitCard, getActionLabel, buildAbilityModalParts,
   renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
-  handleUnitInspect, unitName, buildingLabel, enableTrackSwipe, escapeHtml,
+  handleUnitInspect, unitName, unitTypeName, buildingLabel, enableTrackSwipe, escapeHtml,
   playAdPlaceholder as playAd,
   renderItemPassive, renderItemTags, renderHeroSpellSlot,
 } from '../utils.js';
@@ -1379,10 +1379,14 @@ export function renderCastle(root, params = {}) {
     };
     const throneDef  = throneState?.building_id ? getBuildingDef(player.faction, throneState.building_id) : null;
     const throneBg   = nodeBackground('slot_0', throneDef?.unit_id);
+    const throneUnit = rosterUnitForSlot('slot_0');
+    const throneName = throneUnit?.unit_data?.[castleLang === 'ru' ? 'given_name_ru' : 'given_name'] || '';
 
     centerSlot.innerHTML = `
-      <div class="castle-node castle-node--throne castle-node--clickable ${throneBg ? 'castle-node--portrait' : ''}" data-slot="slot_0"${throneBg}>
+      <div class="castle-node castle-node--throne castle-node--clickable ${throneBg ? 'castle-node--portrait' : ''}" data-slot="slot_0"${throneBg}
+           ${throneUnit ? `title="${escapeHtml(unitName(throneUnit, player))}" aria-label="${escapeHtml(unitName(throneUnit, player))}"` : ''}>
         ${throneBg ? '' : '<div class="castle-node-icon">♛</div>'}
+        ${throneName ? `<span class="castle-node-label castle-node-label--character">${escapeHtml(throneName)}</span>` : ''}
         ${nodeHpBar('slot_0')}
       </div>`;
 
@@ -1394,6 +1398,9 @@ export function renderCastle(root, params = {}) {
       const state      = data[slot] || { level: 0, building_id: null };
       const def        = state.building_id ? getBuildingDef(player.faction, state.building_id) : null;
       const isEmpty    = !state.building_id;
+      const occupant   = rosterUnitForSlot(slot);
+      const characterName = occupant ? unitName(occupant, player) : '';
+      const givenName = occupant?.unit_data?.[castleLang === 'ru' ? 'given_name_ru' : 'given_name'] || '';
       // A mercenary slot's unit lives in MERCENARY_BUILDINGS, not the faction
       // pool, so both are consulted before giving up on a portrait.
       const mercDef    = !def && state.building_id ? getMercBuildingDef(state.building_id) : null;
@@ -1418,10 +1425,13 @@ export function renderCastle(root, params = {}) {
         ? ` title="${CASTLE_TEXT.slotLocked[castleLang](buildingLabel(getBuildingDef(player.faction, lockedBy.building)) || lockedBy.building, lockedBy.level)}"`
         : '';
       const glyph = (lockedBy || reserved) ? '🔒' : (isEmpty ? '＋' : '⚔');
-      const title = lockTitle || (reserved ? ` title="${CASTLE_TEXT.slotReserved[castleLang]}"` : '');
+      const title = lockTitle
+        || (characterName ? ` title="${escapeHtml(characterName)}" aria-label="${escapeHtml(characterName)}"` : '')
+        || (reserved ? ` title="${CASTLE_TEXT.slotReserved[castleLang]}"` : '');
       return `
         <div class="${classes}" data-slot="${slot}"${bg}${title}>
           ${bg && !lockedBy && !reserved && !previewDef ? '' : `<div class="castle-node-icon">${glyph}</div>`}
+          ${givenName ? `<span class="castle-node-label castle-node-label--character">${escapeHtml(givenName)}</span>` : ''}
           ${nodeHpBar(slot)}
         </div>`;
     };
@@ -1578,7 +1588,7 @@ export function renderCastle(root, params = {}) {
         <div class="dev-block dev-block--portrait ${open ? 'dev-block--live' : 'dev-block--locked'}"
              ${tint ? `style="--calling-tint:${tint}"` : ''}
              ${open ? `data-calling-for="${row.id}"` : ''}
-             title="${escapeHtml(unitName(def || row, player))}${open ? '' : ` — ${CASTLE_TEXT.devBlockLock[castleLang](block.tier)}`}">
+             title="${escapeHtml(unitName(row, player))}${open ? '' : ` — ${CASTLE_TEXT.devBlockLock[castleLang](block.tier)}`}">
           <div class="dev-art"${art ? ` style="background-image:url('${art}')"` : ''}></div>
           ${callId ? `<span class="dev-tag">${escapeHtml(callingName(callId, castleLang))}</span>` : ''}
           ${open ? '' : '<span class="dev-lock">\u{1F512}</span>'}
@@ -1690,7 +1700,7 @@ export function renderCastle(root, params = {}) {
         </div>`;
     }).join('');
 
-    openModal(`${unitName(def || row, player)} — ${CASTLE_TEXT.callingSheet[castleLang]}`, `
+    openModal(`${unitName(row, player)} — ${CASTLE_TEXT.callingSheet[castleLang]}`, `
       <div class="calling-sheet">
         <p class="ability-modal-desc">${CASTLE_TEXT.callingNoStats[castleLang]}</p>
         ${options}
@@ -1727,7 +1737,7 @@ export function renderCastle(root, params = {}) {
     const price  = oathPrice(sworn);
     const canPay = amountOf('gold') >= price;
 
-    openModal(`${unitName(def || row, player)} — ${CASTLE_TEXT.oathSheet[castleLang]}`, `
+    openModal(`${unitName(row, player)} — ${CASTLE_TEXT.oathSheet[castleLang]}`, `
       <div class="calling-sheet">
         <p class="ability-modal-desc">${CASTLE_TEXT.oathBlurb[castleLang]}</p>
         <div class="calling-opt">
@@ -2811,7 +2821,14 @@ export function renderCastle(root, params = {}) {
     // slot with no occupant yet (building raised, unit not spawned) still shows
     // the blueprint so the sheet is never empty.
     const baseUnit = rosterUnit ? resolveUnitDef(rosterUnit) : getUnitByUnitId(def.unit_id);
-    const liveUnit = rosterUnit && item ? withEquippedItem(baseUnit, item) : baseUnit;
+    const unitIdentity = rosterUnit ? {
+      given_name: rosterUnit.unit_data?.given_name,
+      given_name_ru: rosterUnit.unit_data?.given_name_ru,
+      byname: rosterUnit.unit_data?.byname,
+      byname_ru: rosterUnit.unit_data?.byname_ru,
+    } : {};
+    const displayUnit = baseUnit ? { ...baseUnit, ...unitIdentity } : baseUnit;
+    const liveUnit = displayUnit && item ? withEquippedItem(displayUnit, item) : displayUnit;
 
     // The card was showing the BLUEPRINT's numbers: full HP whatever state the
     // unit was really in, and `XP 720` — which is the XP this tier COSTS, not
@@ -3018,6 +3035,7 @@ export function renderCastle(root, params = {}) {
     // Binding to this div instead ties the listener's life to the content.
     const cardHtml = `
       <div class="castle-unit-card-wrap">
+        ${rosterUnit ? `<div class="castle-unit-type-name">${escapeHtml(unitTypeName(baseUnit, player))}</div>` : ''}
         ${buildUnitCard(liveUnit, {
           buildingLabel: levelLabelFor(def, slotLevel),
           itemSlotHtml, extraSlotHtml: treeBtnHtml, activeSlotHtml: spellSlotHtml, progress,
@@ -3679,7 +3697,7 @@ export function renderCastle(root, params = {}) {
   // Six of these exist in the whole game. Confirmed before spending, by name, so
   // it cannot go on the wrong unit with one stray tap on a crowded card.
   async function useTome(roster_id, rosterUnit) {
-    const name = unitName(getUnitByUnitId(rosterUnit?.unit_data?.unit_id)) || '';
+    const name = unitName(rosterUnit, player) || '';
     if (!await gameConfirm(CASTLE_TEXT.tomeConfirm[castleLang].replace('%s', name))) return;
     try {
       await api('/roster/tome', { chat_id: player.chat_id, roster_id });
@@ -3693,7 +3711,7 @@ export function renderCastle(root, params = {}) {
   }
 
   async function usePotion(roster_id, rosterUnit) {
-    const name = unitName(getUnitByUnitId(rosterUnit?.unit_data?.unit_id)) || '';
+    const name = unitName(rosterUnit, player) || '';
     const q = castleLang === 'ru'
       ? `Использовать зелье здоровья на «${name}»? Здоровье восстановится полностью.`
       : `Use a Health Potion on ${name}? It restores full health.`;

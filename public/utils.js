@@ -40,6 +40,17 @@ export function itemName(item, player) {
 // English word rather than an anonymous portrait.
 export function unitName(unit, player) {
   if (!unit) return '';
+  const lang = player?.settings?.language ?? (_uiLang === 'ru' ? 'ru' : 'en');
+  const identity = unit.unit_data || unit;
+  const givenName = lang === 'ru' ? identity.given_name_ru : identity.given_name;
+  const byname    = lang === 'ru' ? identity.byname_ru : identity.byname;
+  const characterName = [givenName, byname].filter(Boolean).join(' ');
+  if (characterName) return characterName;
+  return unitTypeName(unit, player);
+}
+
+export function unitTypeName(unit, player) {
+  if (!unit) return '';
   const src  = unit.name || unit.name_ru ? unit : (unit.unit_data || unit);
   const lang = player?.settings?.language ?? (_uiLang === 'ru' ? 'ru' : 'en');
   if (lang === 'ru') return src?.name_ru || src?.name || unit.unit_name || '';

@@ -174,8 +174,7 @@ function sizeRowSpan(size) { return SIZE_META[size]?.rowSpan ?? 1; }
 function sizeColSpan(size) { return SIZE_META[size]?.colSpan ?? 1; }
 
 function getUnitName(unit) {
-  const def = resolveUnitDef(unit);
-  return (def ? unitName(def) : '') || unit.unit_data?.unit_id || '?';
+  return unitName(unit) || unit.unit_data?.unit_id || '?';
 }
 
 function getLoyalty(heroUnit) {
@@ -1611,8 +1610,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     if (occ) {
       const unit = roster.find(u => u.id === occ.unitId);
       if (unit) {
-        const def  = resolveUnitDef(unit);
-        const name = unitName(def) || unit.unit_data?.unit_id || 'Unit';
+        const name = unitName(unit) || unit.unit_data?.unit_id || 'Unit';
         showDetail(name, unitDetailHtml(unit));
       }
       return;
