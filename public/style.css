@@ -4077,7 +4077,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   object-position: center;
   pointer-events: none;
   transform-origin: center;
-  animation: battle-action-pose-hold var(--pose-duration, 1400ms) ease-in-out both;
+  animation: battle-action-pose-hold var(--pose-duration, 2100ms) ease-in-out both;
   will-change: transform, opacity;
 }
 

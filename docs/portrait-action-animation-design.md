@@ -94,13 +94,13 @@ art is an enhancement layer, not a new requirement for valid unit data.
 The first implementation registers available art by log action type and unit id. The
 `action` type is the basic unit action, and `action_e2111.png` is its pilot pose. Only
 registered images are requested; unregistered units keep their existing portrait and
-coded effect unchanged. The idle portrait dims as a separate action image appears, anchored
-to the actor's battle cell but rendered independently of the portrait frame. The action
-image is shown at twice its normal scale, then fades away while the existing coded effect
-plays. That effect starts 120 ms after the image appears, with no added delay for
-reduced-motion users. The image does not travel across the board or shake the cell. Art is
-preloaded through the normal CDN-to-origin fallback so a new asset can work before it has
-been copied to the CDN.
+coded effect unchanged. The idle portrait dims as a separate action image appears on a
+black background, anchored to the actor's battle cell but rendered independently of the
+portrait frame. The action image is shown at twice its normal scale over a 2100 ms pose
+beat, then fades away while the existing coded effect plays. That effect starts 180 ms
+after the image appears, with no added delay for reduced-motion users. The image does not
+travel across the board or shake the cell. Art is preloaded through the normal
+CDN-to-origin fallback so a new asset can work before it has been copied to the CDN.
 
 ## Presentation and timing
 
