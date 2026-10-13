@@ -229,15 +229,17 @@ Telegram. A curated pool gives the player the feeling of naming without that bur
   login sync backfills it for existing roster entries. Given names are sex-specific.
   The second part is a faction-flavored fantasy byname or epithet, localized for a strong
   Russian fantasy sound rather than translated literally or reshaped as a Slavic surname.
-  A character receives a random given name and byname on creation. Both are stored with
-  `sex` in the roster's `unit_data`, survive level-ups, and are backfilled for old roster
-  entries at login. Names appear only in the large castle unit inspect; the character
-  name is the sheet title and the unit type is shown beneath it. All other screens keep
-  showing the unit type. The starter pool below is intentionally small and can be
-  expanded before any player-facing rename system is added.
-  `sql/011_unique_roster_character_names.sql` resolves any existing collisions and adds
-  a unique database index per player roster, so concurrent assignments cannot duplicate
-  names. Apply this SQL in Supabase before deploying the application changes.
+  A character receives a random given name and byname on creation. The roster stores
+  stable `given_name_id` and `byname_id` references with `sex`; localized strings stay in
+  the app catalog. IDs survive level-ups, and login sync backfills them for old roster
+  entries. Names appear only in the large castle unit inspect; the character name is the
+  sheet title and the unit type is shown beneath it. All other screens keep showing the
+  unit type. The starter pool below is intentionally small and can be expanded before
+  any player-facing rename system is added. Apply
+  `sql/012_unique_roster_character_name_ids.sql` in Supabase before deploying the
+  application changes. It replaces the text-based index from migration 011, removes
+  legacy localized name strings, clears duplicate IDs for login backfill, and installs
+  a per-player unique index over the stored IDs.
 
   | Faction | Male given names | Female given names |
   |---|---|---|
@@ -302,9 +304,11 @@ never competes for Valor or tokens; it cannot touch a passive, so it cannot brea
 
 ## Wiring notes
 
-- **Storage.** The character's `sex`, given name and faction byname live in the existing
+- **Storage.** The character's `sex`, `given_name_id`, and `byname_id` live in the existing
   `roster.unit_data` jsonb; `makeUnitData` preserves them across level-ups, and login sync
-  backfills them for older entries. No schema migration is needed for these fields. The
+  backfills IDs for older entries. Translated strings are resolved from the app's
+  `data/unit_names.js` catalog. Migration 012 replaces the prior text-based uniqueness
+  index with a per-player unique index over the IDs. The
   future Chronicle record can use a separate `unit_record` table keyed by `roster_id` for
   calling, counters (jsonb), rungs claimed, earned epithets and oaths (jsonb list of stat
   picks). `on delete cascade` from `roster` — that cascade *is* the no-refund rule.

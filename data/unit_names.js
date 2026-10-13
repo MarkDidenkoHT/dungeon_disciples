@@ -2,102 +2,102 @@ const UNIT_NAME_POOLS = {
   empire: {
     male: {
       givenNames: [
-        { en: 'Aurelius', ru: 'Аурилей' },
-        { en: 'Valerius', ru: 'Валерий' },
-        { en: 'Lucius', ru: 'Люций' },
-        { en: 'Hadrian', ru: 'Адриан' },
-        { en: 'Cassian', ru: 'Кассиан' },
+        { id: 'aurelius', en: 'Aurelius', ru: 'Аурилей' },
+        { id: 'valerius', en: 'Valerius', ru: 'Валерий' },
+        { id: 'lucius', en: 'Lucius', ru: 'Люций' },
+        { id: 'hadrian', en: 'Hadrian', ru: 'Адриан' },
+        { id: 'cassian', en: 'Cassian', ru: 'Кассиан' },
       ],
       bynames: [
-        { en: 'Sunborne', ru: 'Солнцерождённый' },
-        { en: 'Lightbringer', ru: 'Светоносный' },
-        { en: 'Ironheart', ru: 'Железносердный' },
-        { en: 'Dawnshield', ru: 'Рассветный Щит' },
-        { en: 'Oathkeeper', ru: 'Хранитель Клятвы' },
+        { id: 'sunborne', en: 'Sunborne', ru: 'Солнцерождённый' },
+        { id: 'lightbringer', en: 'Lightbringer', ru: 'Светоносный' },
+        { id: 'ironheart', en: 'Ironheart', ru: 'Железносердный' },
+        { id: 'dawnshield', en: 'Dawnshield', ru: 'Рассветный Щит' },
+        { id: 'oathkeeper', en: 'Oathkeeper', ru: 'Хранитель Клятвы' },
       ],
     },
     female: {
       givenNames: [
-        { en: 'Aurelia', ru: 'Аурелия' },
-        { en: 'Valeria', ru: 'Валерия' },
-        { en: 'Justina', ru: 'Юстина' },
-        { en: 'Octavia', ru: 'Октавия' },
-        { en: 'Elisia', ru: 'Элизия' },
+        { id: 'aurelia', en: 'Aurelia', ru: 'Аурелия' },
+        { id: 'valeria', en: 'Valeria', ru: 'Валерия' },
+        { id: 'justina', en: 'Justina', ru: 'Юстина' },
+        { id: 'octavia', en: 'Octavia', ru: 'Октавия' },
+        { id: 'elisia', en: 'Elisia', ru: 'Элизия' },
       ],
       bynames: [
-        { en: 'Sunborne', ru: 'Солнцерождённая' },
-        { en: 'Lightbringer', ru: 'Светоносная' },
-        { en: 'Ironheart', ru: 'Железносердная' },
-        { en: 'Dawnshield', ru: 'Рассветный Щит' },
-        { en: 'Oathkeeper', ru: 'Хранительница Клятвы' },
+        { id: 'sunborne', en: 'Sunborne', ru: 'Солнцерождённая' },
+        { id: 'lightbringer', en: 'Lightbringer', ru: 'Светоносная' },
+        { id: 'ironheart', en: 'Ironheart', ru: 'Железносердная' },
+        { id: 'dawnshield', en: 'Dawnshield', ru: 'Рассветный Щит' },
+        { id: 'oathkeeper', en: 'Oathkeeper', ru: 'Хранительница Клятвы' },
       ],
     },
   },
   grail_of_sorrow: {
     male: {
       givenNames: [
-        { en: 'Corvin', ru: 'Корвин' },
-        { en: 'Vesper', ru: 'Веспер' },
-        { en: 'Malakor', ru: 'Малакор' },
-        { en: 'Iskar', ru: 'Искар' },
-        { en: 'Odran', ru: 'Одран' },
+        { id: 'corvin', en: 'Corvin', ru: 'Корвин' },
+        { id: 'vesper', en: 'Vesper', ru: 'Веспер' },
+        { id: 'malakor', en: 'Malakor', ru: 'Малакор' },
+        { id: 'iskar', en: 'Iskar', ru: 'Искар' },
+        { id: 'odran', en: 'Odran', ru: 'Одран' },
       ],
       bynames: [
-        { en: 'Soulreaper', ru: 'Жнец Душ' },
-        { en: 'Bloodthirst', ru: 'Кровожадный' },
-        { en: 'Ashbringer', ru: 'Пеплоносец' },
-        { en: 'Gravewarden', ru: 'Страж Могилы' },
-        { en: 'Shadowstalker', ru: 'Теневой Охотник' },
+        { id: 'soulreaper', en: 'Soulreaper', ru: 'Жнец Душ' },
+        { id: 'bloodthirst', en: 'Bloodthirst', ru: 'Кровожадный' },
+        { id: 'ashbringer', en: 'Ashbringer', ru: 'Пеплоносец' },
+        { id: 'gravewarden', en: 'Gravewarden', ru: 'Страж Могилы' },
+        { id: 'shadowstalker', en: 'Shadowstalker', ru: 'Теневой Охотник' },
       ],
     },
     female: {
       givenNames: [
-        { en: 'Isolde', ru: 'Изольда' },
-        { en: 'Vespera', ru: 'Веспера' },
-        { en: 'Nereza', ru: 'Нереза' },
-        { en: 'Caldra', ru: 'Калдра' },
-        { en: 'Morwen', ru: 'Морвен' },
+        { id: 'isolde', en: 'Isolde', ru: 'Изольда' },
+        { id: 'vespera', en: 'Vespera', ru: 'Веспера' },
+        { id: 'nereza', en: 'Nereza', ru: 'Нереза' },
+        { id: 'caldra', en: 'Caldra', ru: 'Калдра' },
+        { id: 'morwen', en: 'Morwen', ru: 'Морвен' },
       ],
       bynames: [
-        { en: 'Soulreaper', ru: 'Жница Душ' },
-        { en: 'Bloodthirst', ru: 'Кровожадная' },
-        { en: 'Ashbringer', ru: 'Пеплоносица' },
-        { en: 'Gravewarden', ru: 'Стражница Могилы' },
-        { en: 'Shadowstalker', ru: 'Теневая Охотница' },
+        { id: 'soulreaper', en: 'Soulreaper', ru: 'Жница Душ' },
+        { id: 'bloodthirst', en: 'Bloodthirst', ru: 'Кровожадная' },
+        { id: 'ashbringer', en: 'Ashbringer', ru: 'Пеплоносица' },
+        { id: 'gravewarden', en: 'Gravewarden', ru: 'Стражница Могилы' },
+        { id: 'shadowstalker', en: 'Shadowstalker', ru: 'Теневая Охотница' },
       ],
     },
   },
   choir_of_the_cursed: {
     male: {
       givenNames: [
-        { en: 'Vael', ru: 'Ваэль' },
-        { en: 'Nerion', ru: 'Нерион' },
-        { en: 'Sythran', ru: 'Ситран' },
-        { en: 'Thamiel', ru: 'Тамиэль' },
-        { en: 'Xavren', ru: 'Заврен' },
+        { id: 'vael', en: 'Vael', ru: 'Ваэль' },
+        { id: 'nerion', en: 'Nerion', ru: 'Нерион' },
+        { id: 'sythran', en: 'Sythran', ru: 'Ситран' },
+        { id: 'thamiel', en: 'Thamiel', ru: 'Тамиэль' },
+        { id: 'xavren', en: 'Xavren', ru: 'Заврен' },
       ],
       bynames: [
-        { en: 'Blackcantor', ru: 'Чёрный Певчий' },
-        { en: 'Hollowvoice', ru: 'Пустоголосый' },
-        { en: 'Razorchant', ru: 'Певец Клинков' },
-        { en: 'Soul-Eater', ru: 'Пожиратель Душ' },
-        { en: 'Voice of the Abyss', ru: 'Глас Бездны' },
+        { id: 'blackcantor', en: 'Blackcantor', ru: 'Чёрный Певчий' },
+        { id: 'hollowvoice', en: 'Hollowvoice', ru: 'Пустоголосый' },
+        { id: 'razorchant', en: 'Razorchant', ru: 'Певец Клинков' },
+        { id: 'soul_eater', en: 'Soul-Eater', ru: 'Пожиратель Душ' },
+        { id: 'voice_of_the_abyss', en: 'Voice of the Abyss', ru: 'Глас Бездны' },
       ],
     },
     female: {
       givenNames: [
-        { en: 'Vaelira', ru: 'Ваэлира' },
-        { en: 'Seraphine', ru: 'Серафина' },
-        { en: 'Nythra', ru: 'Нитра' },
-        { en: 'Khariel', ru: 'Кариэль' },
-        { en: 'Orissa', ru: 'Орисса' },
+        { id: 'vaelira', en: 'Vaelira', ru: 'Ваэлира' },
+        { id: 'seraphine', en: 'Seraphine', ru: 'Серафина' },
+        { id: 'nythra', en: 'Nythra', ru: 'Нитра' },
+        { id: 'khariel', en: 'Khariel', ru: 'Кариэль' },
+        { id: 'orissa', en: 'Orissa', ru: 'Орисса' },
       ],
       bynames: [
-        { en: 'Blackcantor', ru: 'Чёрная Певчая' },
-        { en: 'Hollowvoice', ru: 'Пустоголосая' },
-        { en: 'Razorchant', ru: 'Певица Клинков' },
-        { en: 'Soul-Eater', ru: 'Пожирательница Душ' },
-        { en: 'Voice of the Abyss', ru: 'Глас Бездны' },
+        { id: 'blackcantor', en: 'Blackcantor', ru: 'Чёрная Певчая' },
+        { id: 'hollowvoice', en: 'Hollowvoice', ru: 'Пустоголосая' },
+        { id: 'razorchant', en: 'Razorchant', ru: 'Певица Клинков' },
+        { id: 'soul_eater', en: 'Soul-Eater', ru: 'Пожирательница Душ' },
+        { id: 'voice_of_the_abyss', en: 'Voice of the Abyss', ru: 'Глас Бездны' },
       ],
     },
   },
@@ -109,21 +109,23 @@ const FACTION_BY_UNIT_CODE = {
   d: 'choir_of_the_cursed',
 };
 
-function characterNameKey(identity) {
-  return `${identity.given_name.toLowerCase()} ${identity.byname.toLowerCase()}`;
-}
-
-function generateUniqueUnitIdentity(faction, sex, usedNames = new Set()) {
+function factionNamePool(faction, sex) {
   const factionKey = UNIT_NAME_POOLS[faction] ? faction : FACTION_BY_UNIT_CODE[faction];
   const pool = UNIT_NAME_POOLS[factionKey]?.[sex];
   if (!pool) throw new Error(`No unit name pool for faction "${faction}" and sex "${sex}"`);
+  return pool;
+}
 
+function characterNameKey(identity) {
+  return `${identity.given_name_id}:${identity.byname_id}`;
+}
+
+function generateUniqueUnitIdentity(faction, sex, usedNames = new Set()) {
+  const pool = factionNamePool(faction, sex);
   const candidates = pool.givenNames.flatMap(givenName =>
     pool.bynames.map(byname => ({
-      given_name: givenName.en,
-      given_name_ru: givenName.ru,
-      byname: byname.en,
-      byname_ru: byname.ru,
+      given_name_id: givenName.id,
+      byname_id: byname.id,
     })),
   );
   const start = Math.floor(Math.random() * candidates.length);
@@ -134,7 +136,37 @@ function generateUniqueUnitIdentity(faction, sex, usedNames = new Set()) {
       return candidate;
     }
   }
+  const factionKey = UNIT_NAME_POOLS[faction] ? faction : FACTION_BY_UNIT_CODE[faction];
   throw new Error(`No unused character names remain for faction "${factionKey}" and sex "${sex}"`);
 }
 
-module.exports = { UNIT_NAME_POOLS, characterNameKey, generateUniqueUnitIdentity };
+function resolveUnitIdentity(faction, sex, identity, language = 'en') {
+  if (!identity?.given_name_id || !identity?.byname_id) return '';
+  const pool = factionNamePool(faction, sex);
+  const givenName = pool.givenNames.find(entry => entry.id === identity.given_name_id);
+  const byname = pool.bynames.find(entry => entry.id === identity.byname_id);
+  if (!givenName || !byname) return '';
+  return `${language === 'ru' ? givenName.ru : givenName.en} ${language === 'ru' ? byname.ru : byname.en}`;
+}
+
+function identityFromLegacyNames(faction, sex, identity) {
+  const pool = factionNamePool(faction, sex);
+  const givenName = pool.givenNames.find(entry => entry.en === identity?.given_name
+    || entry.ru === identity?.given_name_ru);
+  const byname = pool.bynames.find(entry => entry.en === identity?.byname
+    || entry.ru === identity?.byname_ru);
+  return givenName && byname
+    ? { given_name_id: givenName.id, byname_id: byname.id }
+    : null;
+}
+
+const exported = {
+  UNIT_NAME_POOLS,
+  characterNameKey,
+  generateUniqueUnitIdentity,
+  resolveUnitIdentity,
+  identityFromLegacyNames,
+};
+
+if (typeof module !== 'undefined') module.exports = exported;
+export { UNIT_NAME_POOLS, characterNameKey, generateUniqueUnitIdentity, resolveUnitIdentity, identityFromLegacyNames };

@@ -6,7 +6,7 @@ const fs     = require('fs');
 const path   = require('path');
 
 const { UNITS } = require('../data/units');
-const { characterNameKey, generateUniqueUnitIdentity } = require('../data/unit_names');
+const { characterNameKey, generateUniqueUnitIdentity, identityFromLegacyNames, resolveUnitIdentity } = require('../data/unit_names');
 const { REGIONS, getEncounter, getLevelRewards, getFirstClearTokens, TOME_XP } = require('../data/embark');
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
@@ -941,15 +941,11 @@ function getFactionForUnit(unitDataId) {
 function makeUnitData(unitId, buildingSlot, faction = null, previousUnitData = null, usedNames = new Set()) {
   const def = getUnitByDataId(unitId);
   const hp  = def?.hp ?? 50;
-  const savedIdentity = previousUnitData?.given_name && previousUnitData?.given_name_ru
-    && previousUnitData?.byname && previousUnitData?.byname_ru
-    ? {
-        given_name: previousUnitData.given_name,
-        given_name_ru: previousUnitData.given_name_ru,
-        byname: previousUnitData.byname,
-        byname_ru: previousUnitData.byname_ru,
-      }
-    : generateUniqueUnitIdentity(faction || def?.f, def?.sex, usedNames);
+  const unitFaction = faction || def?.f;
+  const savedIdentity = previousUnitData?.given_name_id && previousUnitData?.byname_id
+    ? { given_name_id: previousUnitData.given_name_id, byname_id: previousUnitData.byname_id }
+    : identityFromLegacyNames(unitFaction, def?.sex, previousUnitData)
+      || generateUniqueUnitIdentity(unitFaction, def?.sex, usedNames);
   usedNames.add(characterNameKey(savedIdentity));
   return {
     unit_id: unitId,
@@ -966,7 +962,7 @@ function makeUnitData(unitId, buildingSlot, faction = null, previousUnitData = n
 function rosterCharacterNameKeys(rows) {
   return new Set((rows || [])
     .map(row => row.unit_data)
-    .filter(unitData => unitData?.given_name && unitData?.byname)
+    .filter(unitData => unitData?.given_name_id && unitData?.byname_id)
     .map(characterNameKey));
 }
 
@@ -988,19 +984,28 @@ async function syncRosterMaxHp(chat_id, faction = null) {
     if (unitData.max_hp !== def.hp) patch.max_hp = def.hp;
     if (Number.isFinite(currentHp) && currentHp > def.hp) patch.current_hp = def.hp;
     if (unitData.sex !== def.sex) patch.sex = def.sex;
-    const hasIdentity = unitData.given_name && unitData.given_name_ru && unitData.byname && unitData.byname_ru;
-    const identityKey = hasIdentity ? characterNameKey(unitData) : null;
+    const validIdentity = resolveUnitIdentity(faction || def.f, def.sex, unitData);
+    const legacyIdentity = validIdentity ? null : identityFromLegacyNames(faction || def.f, def.sex, unitData);
+    const existingIdentity = validIdentity
+      ? { given_name_id: unitData.given_name_id, byname_id: unitData.byname_id }
+      : legacyIdentity;
+    const identityKey = existingIdentity ? characterNameKey(existingIdentity) : null;
     if (!identityKey || usedNames.has(identityKey)) {
-      const identity = generateUniqueUnitIdentity(faction || def.f, def.sex, usedNames);
-      Object.assign(patch, identity);
+      Object.assign(patch, generateUniqueUnitIdentity(faction || def.f, def.sex, usedNames));
     } else {
+      Object.assign(patch, existingIdentity);
       usedNames.add(identityKey);
     }
+    const nextUnitData = { ...unitData, ...patch };
+    delete nextUnitData.given_name;
+    delete nextUnitData.given_name_ru;
+    delete nextUnitData.byname;
+    delete nextUnitData.byname_ru;
     if (!Object.keys(patch).length) continue;
 
     await supabase(`/roster?id=eq.${encodeURIComponent(row.id)}&chat_id=eq.${encodeURIComponent(chat_id)}`, {
       method: 'PATCH',
-      body: JSON.stringify({ unit_data: { ...unitData, ...patch } }),
+      body: JSON.stringify({ unit_data: nextUnitData }),
     });
   }
 }

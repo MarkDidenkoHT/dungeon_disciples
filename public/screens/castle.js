@@ -2811,10 +2811,9 @@ export function renderCastle(root, params = {}) {
     // the blueprint so the sheet is never empty.
     const baseUnit = rosterUnit ? resolveUnitDef(rosterUnit) : getUnitByUnitId(def.unit_id);
     const unitIdentity = rosterUnit ? {
-      given_name: rosterUnit.unit_data?.given_name,
-      given_name_ru: rosterUnit.unit_data?.given_name_ru,
-      byname: rosterUnit.unit_data?.byname,
-      byname_ru: rosterUnit.unit_data?.byname_ru,
+      given_name_id: rosterUnit.unit_data?.given_name_id,
+      byname_id: rosterUnit.unit_data?.byname_id,
+      sex: rosterUnit.unit_data?.sex,
     } : {};
     const displayUnit = baseUnit ? { ...baseUnit, ...unitIdentity } : baseUnit;
     const liveUnit = displayUnit && item ? withEquippedItem(displayUnit, item) : displayUnit;

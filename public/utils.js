@@ -2,6 +2,7 @@ import { assetUrl } from './asset_base.js';
 import { UNITS }          from '../data/units.js';
 import { UNIT_ABILITIES } from '../data/unit_abilities.js';
 import { applyItemModifiers, ITEM_DEFS } from '../data/items.js';
+import { resolveUnitIdentity } from '../data/unit_names.js';
 
 // Localized spell text. For a non-English language, returns ONLY that language's
 // field (e.g. name_ru) — no English fallback, so a missing translation shows up
@@ -47,9 +48,8 @@ export function unitCharacterName(unit, player) {
   if (!unit) return '';
   const lang = player?.settings?.language ?? (_uiLang === 'ru' ? 'ru' : 'en');
   const identity = unit.unit_data || unit;
-  const givenName = lang === 'ru' ? identity.given_name_ru : identity.given_name;
-  const byname    = lang === 'ru' ? identity.byname_ru : identity.byname;
-  const characterName = [givenName, byname].filter(Boolean).join(' ');
+  const faction = player?.faction || identity.f || unit.f;
+  const characterName = resolveUnitIdentity(faction, identity.sex || unit.sex, identity, lang);
   return characterName || unitTypeName(unit, player);
 }
 
