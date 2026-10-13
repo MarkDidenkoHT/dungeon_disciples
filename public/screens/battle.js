@@ -20,10 +20,10 @@ const ACTION_POSE_ASSETS = {
     e2111: '/assets/animations/action_e2111.png',
   },
 };
-const ACTION_POSE_DURATION_MS = 1400;
-const ACTION_POSE_MAX_MS = 2200;
+const ACTION_POSE_DURATION_MS = 2100;
+const ACTION_POSE_MAX_MS = 3000;
 const ACTION_POSE_LOAD_WAIT_MS = 800;
-const ACTION_POSE_EFFECT_DELAY_MS = 120;
+const ACTION_POSE_EFFECT_DELAY_MS = 180;
 const ACTION_POSE_PRELOADS = new Map();
 
 function preloadActionPose(imagePath) {

@@ -4072,6 +4072,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .battle-action-pose {
   position: fixed;
   z-index: 30;
+  background: #000;
   object-fit: contain;
   object-position: center;
   pointer-events: none;
