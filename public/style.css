@@ -4065,6 +4065,10 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background: #2a200a !important;
 }
 
+.battle-cell--action-pose .battle-cell-portrait {
+  filter: brightness(0.45) saturate(0.7);
+}
+
 .battle-action-pose {
   position: absolute;
   inset: 0;
@@ -4082,19 +4086,23 @@ button.cost-bar-item:active { transform: scale(0.9); }
 @keyframes battle-action-pose-hold {
   0% {
     opacity: 0;
-    transform: scaleX(var(--pose-facing)) scale(0.96);
+    transform: scaleX(var(--pose-facing)) scale(2);
+  }
+  6% {
+    opacity: 1;
+    transform: scaleX(var(--pose-facing)) scale(2);
   }
   12% {
     opacity: 1;
-    transform: scaleX(var(--pose-facing)) scale(1);
+    transform: scaleX(var(--pose-facing)) scale(2);
   }
   76% {
     opacity: 1;
-    transform: scaleX(var(--pose-facing)) scale(1);
+    transform: scaleX(var(--pose-facing)) scale(2);
   }
   100% {
     opacity: 0;
-    transform: scaleX(var(--pose-facing)) scale(1);
+    transform: scaleX(var(--pose-facing)) scale(2);
   }
 }
 

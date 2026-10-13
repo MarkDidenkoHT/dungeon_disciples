@@ -91,16 +91,18 @@ art is an enhancement layer, not a new requirement for valid unit data.
 The first implementation registers available art by log action type and unit id. The
 `action` type is the basic unit action, and `action_e2111.png` is its pilot pose. Only
 registered images are requested; unregistered units keep their existing portrait and
-coded effect unchanged. The loaded pose overlays the actor's existing portrait area
-for a readable hold, then fades away while the existing coded effect plays. It does
-not travel across the board or shake the cell. Art is preloaded through the normal
-CDN-to-origin fallback so a new asset can work before it has been copied to the CDN.
+coded effect unchanged. The idle portrait dims as its action pose appears; the pose is
+shown at twice its normal scale, then fades away while the existing coded effect plays.
+That effect starts 120 ms after the pose appears, with no added delay for reduced-motion
+users. The pose does not travel across the board or shake the cell. Art is preloaded
+through the normal CDN-to-origin fallback so a new asset can work before it has been
+copied to the CDN.
 
 ## Presentation and timing
 
 Use the battle cell as the anchor so the art remains attached to its unit through the
-existing playback flow. Keep the action pose within the portrait's established visual
-bounds and avoid covering health, status, target or damage feedback.
+existing playback flow. Keep the enlarged pose centered and preserve the readability of
+health, status, target and damage feedback.
 
 Initial timing should be tuned in play rather than treated as a fixed spec. A reasonable
 first prototype is a short anticipation (roughly 80–150 ms), an action pose held for

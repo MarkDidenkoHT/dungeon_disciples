@@ -23,6 +23,7 @@ const ACTION_POSE_ASSETS = {
 const ACTION_POSE_DURATION_MS = 1400;
 const ACTION_POSE_MAX_MS = 2200;
 const ACTION_POSE_LOAD_WAIT_MS = 800;
+const ACTION_POSE_EFFECT_DELAY_MS = 120;
 const ACTION_POSE_PRELOADS = new Map();
 
 function preloadActionPose(imagePath) {
@@ -632,6 +633,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     pose.style.setProperty('--pose-facing', String(facing));
     pose.style.setProperty('--pose-duration', `${ACTION_POSE_DURATION_MS}ms`);
     cell.appendChild(pose);
+    cell.classList.add('battle-cell--action-pose');
 
     let disposed = false;
     let resolveFinished;
@@ -641,6 +643,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       disposed = true;
       clearTimeout(fallbackTimer);
       pose.remove();
+      cell.classList.remove('battle-cell--action-pose');
       resolveFinished();
     };
     const fallbackTimer = setTimeout(cleanup, ACTION_POSE_MAX_MS);
@@ -996,6 +999,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const finishActionPose = entry.type === 'action'
         ? await showActionPose(entry, actor, actorCell)
         : null;
+      if (finishActionPose && effectName && EFFECTS[effectName] &&
+          !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+        const speed = Math.max(1, Number(window.__FX_SPEED__) || 1);
+        await new Promise(resolve => setTimeout(resolve, ACTION_POSE_EFFECT_DELAY_MS / speed));
+      }
       // An entry already covered by an earlier play is a repeat of something the
       // player has just seen AND heard — four splash victims fired the same clip
       // four times over itself.
