@@ -15,6 +15,14 @@ import { openDailyTasks } from '../daily.js';
 const ROWS = 3;
 const COLS = 2;
 
+const ACTION_POSE_ASSETS = {
+  action: {
+    e2111: '/assets/animations/action_e2111.png',
+  },
+};
+const ACTION_POSE_MIN_MS = 180;
+const ACTION_POSE_MAX_MS = 1800;
+
 // Effects that take two positional cells — EFFECTS[name](sourceCell, targetCell)
 // — because something (life, blood) travels between the acting unit and its
 // target. Everything else is single-cell / (cell, opts). Keep in sync with the
@@ -569,6 +577,48 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return c ? document.querySelector(`.battle-cell[data-id="${c.id}"]`) : null;
   }
 
+  function showActionPose(entry, actor, cell) {
+    const unitId = actor?.unit_data?.unit_id ?? actor?.unit_data?.id;
+    const imagePath = ACTION_POSE_ASSETS[entry.type]?.[unitId];
+    if (!imagePath || !cell) return null;
+
+    const pose = document.createElement('img');
+    pose.className = 'battle-cell-action-pose';
+    pose.alt = '';
+    pose.setAttribute('aria-hidden', 'true');
+
+    let visibleAt = null;
+    let disposed = false;
+    const cleanup = () => {
+      if (disposed) return;
+      disposed = true;
+      clearTimeout(fallbackTimer);
+      pose.remove();
+      cell.classList.remove('battle-cell--action-pose');
+    };
+    const fallbackTimer = setTimeout(cleanup, ACTION_POSE_MAX_MS);
+
+    pose.onload = () => {
+      if (disposed || !cell.isConnected) {
+        cleanup();
+        return;
+      }
+      visibleAt = Date.now();
+      cell.classList.add('battle-cell--action-pose');
+    };
+    pose.onerror = cleanup;
+    cell.appendChild(pose);
+    pose.src = assetUrl(imagePath);
+
+    return async () => {
+      if (visibleAt !== null) {
+        const remaining = ACTION_POSE_MIN_MS - (Date.now() - visibleAt);
+        if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
+      }
+      cleanup();
+    };
+  }
+
   function singleEffectCall(entry, effectName, actor, actorCell) {
     const fn = EFFECTS[effectName];
     if (!fn) return null;
@@ -911,6 +961,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         null;
       const effectName = effectForEntry(entry, actor);
       const abilitySound = soundForEntry(entry, actor);
+      const actorCell = actor
+        ? document.querySelector(`.battle-cell[data-id="${actor.id}"]`)
+        : null;
+      const finishActionPose = entry.type === 'action'
+        ? showActionPose(entry, actor, actorCell)
+        : null;
       // An entry already covered by an earlier play is a repeat of something the
       // player has just seen AND heard — four splash victims fired the same clip
       // four times over itself.
@@ -922,9 +978,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         const targetCell = targetCellFor(entry);
         const sourceCell = entry.sourceId
           ? document.querySelector(`.battle-cell[data-id="${entry.sourceId}"]`)
-          : null;
-        const actorCell = actor
-          ? document.querySelector(`.battle-cell[data-id="${actor.id}"]`)
           : null;
 
         // Riders come FIRST and are deliberately not awaited. They belong to the
@@ -1049,6 +1102,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           if (plays.length) await Promise.all(plays.map(run => run()));
         }
       }
+
+      if (finishActionPose) await finishActionPose();
 
       // The result of THIS entry, applied now that its animation has finished.
       // Without it nothing on the board moved until the whole exchange had been
