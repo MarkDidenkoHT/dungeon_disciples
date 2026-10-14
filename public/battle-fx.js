@@ -811,6 +811,76 @@ export async function holy_heal(cellEl) {
   console.log('[battle-fx] holy_heal END', dataId);
 }
 
+// ── empower ───────────────────────────────────────────────────────────────────
+// Power travels from the caster to the ally who will spend it on their next hit.
+export async function empower(cellEl, opts = {}) {
+  if (!cellEl || !opts.targetCell || !app || !window.PIXI) return;
+  const sourceId = cellEl.dataset.id;
+  const targetId = opts.targetCell.dataset.id;
+  const clamp01 = v => Math.max(0, Math.min(1, v));
+  const ADD = PIXI.BLEND_MODES.ADD;
+
+  const layer = new PIXI.Container();
+  const glow = new PIXI.Graphics();
+  glow.filters = [new PIXI.BlurFilter(7)];
+  glow.blendMode = ADD;
+  const lines = new PIXI.Graphics();
+  lines.blendMode = ADD;
+  layer.addChild(glow, lines);
+  app.stage.addChild(layer);
+
+  await animate(820, t => {
+    const from = cellBoundsFor(sourceId);
+    const to = cellBoundsFor(targetId);
+    if (!from || !to) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const sx = from.x + from.width / 2;
+    const sy = from.y + from.height / 2;
+    const tx = to.x + to.width / 2;
+    const ty = to.y + to.height / 2;
+    const dx = tx - sx, dy = ty - sy;
+    const length = Math.hypot(dx, dy) || 1;
+    const nx = -dy / length, ny = dx / length;
+    const flight = clamp01(t / 0.55);
+    const eased = 1 - Math.pow(1 - flight, 2);
+    const tipX = sx + dx * eased;
+    const tipY = sy + dy * eased;
+    const alpha = t < 0.12 ? t / 0.12 : t < 0.55 ? 1 : Math.max(0, 1 - (t - 0.55) / 0.45);
+
+    glow.clear();
+    lines.clear();
+    const segments = Math.max(2, Math.ceil(12 * eased));
+    glow.lineStyle(Math.max(2, from.width * 0.12), 0xffc94a, 0.55 * alpha);
+    lines.lineStyle(Math.max(1, from.width * 0.035), 0xfff2c8, 0.95 * alpha);
+    for (const g of [glow, lines]) {
+      g.moveTo(sx, sy);
+      for (let i = 1; i <= segments; i++) {
+        const p = i / segments;
+        if (p > eased) break;
+        const wobble = Math.sin(p * Math.PI * 7 + t * 12) * from.width * 0.035 * (1 - p * 0.4);
+        g.lineTo(sx + dx * p + nx * wobble, sy + dy * p + ny * wobble);
+      }
+      g.lineTo(tipX, tipY);
+    }
+
+    const radius = Math.min(to.width, to.height) * 0.48;
+    const impact = clamp01((t - 0.42) / 0.58);
+    const pulse = 1 - Math.abs(impact * 2 - 1);
+    const cx = tx, cy = ty;
+    if (impact > 0) {
+      softGlow(glow, cx, cy, radius * (0.2 + impact * 0.55), 0xffd966, 0.5 * pulse);
+      lines.lineStyle(2, 0xfff2c8, 0.85 * pulse);
+      lines.drawCircle(cx, cy, radius * (0.3 + impact * 0.55));
+      lines.lineStyle(1.5, 0xffc94a, 0.75 * pulse);
+      lines.drawCircle(cx, cy, radius * (0.18 + impact * 0.35));
+    }
+    softGlow(glow, tipX, tipY, Math.max(4, from.width * 0.09), 0xfff2c8, alpha);
+  });
+
+  layer.destroy({ children: true });
+}
+
 // ── shield_ward / decay_touch ─────────────────────────────────────────────────
 // The two POOL effects (see POOL_CAP_PCT in utils/battle-engine.js), built as
 // siblings of holy_heal so a ward and a mend read as the same KIND of event —
@@ -7040,6 +7110,7 @@ export const EFFECTS = {
   mace_swing,
   impale,
   holy_heal,
+  empower,
   shield_ward,
   decay_touch,
   protector,
