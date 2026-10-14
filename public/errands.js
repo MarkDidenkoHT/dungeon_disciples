@@ -147,12 +147,14 @@ export async function openErrandsSheet(player) {
   // commitment is the safe default when the unit may be wanted for an embark.
   let chosenHours = null;
 
-  async function load() {
-    // refresh(), not get(): opening the sheet is a deliberate act and the player
-    // is looking straight at this state, so it is worth one round-trip. The
-    // per-navigation badge is the thing that reads the cache — see
-    // refreshErrandButton — and it now shares whatever this stores.
-    state  = await errandsCache.refresh(player.chat_id);
+  async function load(forceRefresh = false) {
+    // Navigation refreshes this cache for the button badge. Reuse that result
+    // (or its in-flight request) rather than forcing another full errand read
+    // when the sheet opens. Writes refresh the cache, and its TTL bounds
+    // cross-device staleness.
+    state  = await (forceRefresh
+      ? errandsCache.refresh(player.chat_id)
+      : errandsCache.get(player.chat_id));
     chosen = state.offer?.candidates?.[0] ?? null;   // Send is one tap
     chosenHours = state.offer?.durations?.[0]?.hours ?? state.offer?.hours ?? null;
     render();
@@ -245,7 +247,7 @@ export async function openErrandsSheet(player) {
           await bootstrapCache.refresh(player.chat_id);
           refreshResourceBar(player).catch(() => {});
         } catch { /* acknowledging is cosmetic; never block on it */ }
-        await load();
+        await load(true);
         refreshErrandButton(player).catch(() => {});
       });
       return;
@@ -343,7 +345,7 @@ export async function openErrandsSheet(player) {
         btn.textContent = T('sending');
         try {
           await api('/errands/start', { chat_id: player.chat_id, roster_id: chosen, hours: chosenHours });
-          await load();                      // refreshes the cache; that unit is out now
+          await load(true);                  // that unit is out now
           refreshErrandButton(player).catch(() => {});
         } catch (err) {
           btn.disabled = false;

@@ -45,7 +45,8 @@ function loaderEnd() {
 }
 
 export async function api(path, body = null) {
-  const showLoader = body && !LOADER_SILENT_PATHS.has(path);
+  const pathName = path.split('?')[0];
+  const showLoader = !LOADER_SILENT_PATHS.has(pathName) && (Boolean(body) || pathName === '/errands');
   if (showLoader) loaderStart();
   try {
     return await request(path, body);

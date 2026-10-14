@@ -109,8 +109,13 @@ async function requireAuth(req, res, next) {
   const chatId = (req.body && req.body.chat_id) || req.query.chat_id;
   if (!token || !chatId) return res.status(401).json({ error: 'Unauthorized' });
   try {
-    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chatId)}&select=session_token&limit=1`);
+    const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chatId)}&select=id,faction,timezone,session_token&limit=1`);
     if (!rows.length || rows[0].session_token !== token) return res.status(401).json({ error: 'Unauthorized' });
+    req.authenticatedPlayer = {
+      id: rows[0].id,
+      faction: rows[0].faction,
+      timezone: rows[0].timezone,
+    };
     next();
   } catch (err) {
     serverError(res, err);
@@ -3117,7 +3122,7 @@ router.get('/errands', requireAuth, async (req, res) => {
   const { chat_id } = req.query;
   if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
   try {
-    const player = await getPlayerByChatId(chat_id);
+    const player = req.authenticatedPlayer;
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
     const { rows, active, offerRow, roster, structRows } = await ensureErrandOffer(chat_id, player);
