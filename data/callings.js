@@ -112,7 +112,7 @@ const DEVOTION_BLOCKS = [
             short: 'Spells',             short_ru: 'Заклинания' } },
   { tier: 3, id: 'deeds',    kind: 'deed', counter: 'deeds',    target: 500,
     name: 'Deal, heal or shield 500', name_ru: 'Нанести урон, исцелить или защитить на 500',
-    short: 'Deeds',    short_ru: 'Деяния' },
+    short: 'Points',   short_ru: 'Очки' },
   { tier: 4, id: 'litanies', kind: 'deed', counter: 'litanies', target: 3,
     name: 'Stand in 3 litanies',     name_ru: 'Выстоять в 3 литаниях',
     short: 'Litanies', short_ru: 'Литании' },

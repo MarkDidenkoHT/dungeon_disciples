@@ -12,7 +12,7 @@ import { SPELLS }            from '../../data/spells.js';
 import {
   callingsForFaction, callingName, callingTint,
   DEVOTION_BLOCKS, oathPrice, devotionCount, oathsSworn, devotionBonusHp,
-  blockFor, blockName, devotionState, previousUnfinished,
+  blockFor, blockName, blockShort, devotionState, previousUnfinished,
 } from '../../data/callings.js';
 import { DEATH_ENABLED }    from '../../data/game_flags.js';
 // Which regions drop a material — the castle's cost bar uses it to answer
@@ -1651,6 +1651,7 @@ export function renderCastle(root, params = {}) {
         <div class="dev-block dev-block--deed dev-block--waiting" title="${escapeHtml(waitingTitle())}">
           <span class="dev-big dev-big--muted">${have}</span>
           <span class="dev-small">/ ${block.target}</span>
+          <span class="dev-label">${escapeHtml(blockShort(block, castleLang))}</span>
         </div>`;
     }
 
@@ -1659,6 +1660,7 @@ export function renderCastle(root, params = {}) {
            title="${escapeHtml(blockName(block, castleLang))}">
         <span class="dev-big">${have}</span>
         <span class="dev-small">/ ${block.target}</span>
+        <span class="dev-label">${escapeHtml(blockShort(block, castleLang))}</span>
         <div class="dev-bar"><div class="dev-bar-fill" style="width:${pct}%"></div></div>
       </div>`;
   }

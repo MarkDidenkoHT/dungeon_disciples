@@ -37,7 +37,7 @@ const { CALLINGS, CALLING_CHANGE_COST, callingsForFaction, newCallingFor,
         DEVOTION_BLOCKS, OATH_BASE_GOLD, OATH_STEP_GOLD, OATH_BONUS, oathPrice,
         devotionOf, oathsSworn, devotionBonusHp, blockDone, blockFor,
         devotionState, resetDevotionDeeds } = require('../data/callings');
-const { telegramWebhookHandler, notifyAdminNewPlayer, getBotUsername, takePendingInvite } = require('../utils/telegram');
+const { telegramWebhookHandler, notifyAdminNewPlayer, notifyAdminPvpQueue, getBotUsername, takePendingInvite } = require('../utils/telegram');
 const {
   generateInviteCode, normalizeInviteCode, INVITEE_WELCOME, INVITER_REWARDS,
   INVITER_DAILY_CAP, INVITE_MAX_ACCEPTED,
@@ -5890,12 +5890,21 @@ router.post('/pvp/enqueue', requireAuth, async (req, res) => {
     }
 
     pvpQueue.sweep();
+    const previousEntry = pvpQueue.get(chat_id);
     const result = pvpQueue.enqueue({
       chat_id: String(chat_id), mode, formation, power: squad.power, tourney_id: tourney?.id ?? null,
     });
 
     if (!result.matched) {
       await writeQueueRow(result.entry);
+      if (!previousEntry || previousEntry.mode !== mode) {
+        notifyAdminPvpQueue({
+          chat_id: String(chat_id),
+          mode,
+          power: squad.power,
+          waiting: pvpQueue.size(),
+        }).catch(err => console.error('Admin PvP queue notify failed:', err.message));
+      }
       return res.json({ status: 'waiting', queued_at: result.entry.enqueuedAt, waiting: pvpQueue.size() });
     }
 

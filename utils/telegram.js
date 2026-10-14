@@ -58,11 +58,12 @@ function pickLang(languageCode) {
 async function sendTelegramMessage(chatId, text, extra = {}) {
   if (!BOT_TOKEN) return;
   try {
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, parse_mode: 'HTML', text, ...extra }),
     });
+    if (!response.ok) console.error(`Telegram sendMessage failed: HTTP ${response.status}`);
   } catch (err) {
     console.error('Telegram sendMessage failed:', err.message);
   }
@@ -94,6 +95,19 @@ async function notifyAdminNewPlayer(player) {
     `Username: ${handle}\n` +
     `chat_id: <code>${escapeHtml(player?.chat_id)}</code>\n` +
     `Language: ${lang}`,
+  );
+}
+
+async function notifyAdminPvpQueue({ chat_id, mode, power, waiting } = {}) {
+  if (!ADMIN_CHAT_ID || String(chat_id) === String(ADMIN_CHAT_ID)) return;
+  const activity = mode === 'pvp_tourney' ? 'tournament' : 'PvP quick match';
+  await sendTelegramMessage(
+    ADMIN_CHAT_ID,
+    `⚔️ <b>Player waiting for a human ${activity} opponent</b>\n` +
+    `Player ID: <code>${escapeHtml(chat_id)}</code>\n` +
+    `Army power: ${escapeHtml(power)}\n` +
+    `Players waiting: ${escapeHtml(waiting)}\n` +
+    `Queue with your non-admin account now to give them a human opponent.`,
   );
 }
 
@@ -145,4 +159,4 @@ function telegramWebhookHandler(req, res) {
   handleTelegramUpdate(req.body).catch(err => console.error('Telegram webhook error:', err.message));
 }
 
-module.exports = { telegramWebhookHandler, sendTelegramMessage, handleTelegramUpdate, pickLang, notifyAdminNewPlayer, getBotUsername, takePendingInvite };
+module.exports = { telegramWebhookHandler, sendTelegramMessage, handleTelegramUpdate, pickLang, notifyAdminNewPlayer, notifyAdminPvpQueue, getBotUsername, takePendingInvite };
