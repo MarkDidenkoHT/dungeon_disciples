@@ -25,7 +25,7 @@ import {
   openSubSheet, closeSubSheet, getSubSheetBody, cap, onSheetClose, RESOURCE_BAR_SLOTS, gameConfirm,
   buildUnitCard, getActionLabel, buildAbilityModalParts,
   renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
-  handleUnitInspect, unitName, unitCharacterName, unitTypeName, buildingLabel, enableTrackSwipe, escapeHtml,
+  handleUnitInspect, unitName, buildingLabel, enableTrackSwipe, escapeHtml,
   playAdPlaceholder as playAd,
   renderItemPassive, renderItemTags, renderHeroSpellSlot,
 } from '../utils.js';
@@ -2810,13 +2810,7 @@ export function renderCastle(root, params = {}) {
     // slot with no occupant yet (building raised, unit not spawned) still shows
     // the blueprint so the sheet is never empty.
     const baseUnit = rosterUnit ? resolveUnitDef(rosterUnit) : getUnitByUnitId(def.unit_id);
-    const unitIdentity = rosterUnit ? {
-      given_name_id: rosterUnit.unit_data?.given_name_id,
-      byname_id: rosterUnit.unit_data?.byname_id,
-      sex: rosterUnit.unit_data?.sex,
-    } : {};
-    const displayUnit = baseUnit ? { ...baseUnit, ...unitIdentity } : baseUnit;
-    const liveUnit = displayUnit && item ? withEquippedItem(displayUnit, item) : displayUnit;
+    const liveUnit = baseUnit && item ? withEquippedItem(baseUnit, item) : baseUnit;
 
     // The card was showing the BLUEPRINT's numbers: full HP whatever state the
     // unit was really in, and `XP 720` — which is the XP this tier COSTS, not
@@ -3023,7 +3017,6 @@ export function renderCastle(root, params = {}) {
     // Binding to this div instead ties the listener's life to the content.
     const cardHtml = `
       <div class="castle-unit-card-wrap">
-        ${rosterUnit ? `<div class="castle-unit-type-name">${escapeHtml(unitTypeName(baseUnit, player))}</div>` : ''}
         ${buildUnitCard(liveUnit, {
           buildingLabel: levelLabelFor(def, slotLevel),
           itemSlotHtml, extraSlotHtml: treeBtnHtml, activeSlotHtml: spellSlotHtml, progress,
@@ -3041,8 +3034,7 @@ export function renderCastle(root, params = {}) {
     // Titled by the UNIT standing in the slot — that is what the player is
     // inspecting. A slot with no unit (a utility building, an empty barracks)
     // keeps the building's own name and level.
-    const sheetTitle = (rosterUnit && unitCharacterName(rosterUnit, player))
-      || (liveUnit && unitName(liveUnit))
+    const sheetTitle = (liveUnit && unitName(liveUnit, player))
       || levelLabelFor(def, slotLevel);
     openModal(sheetTitle, `
       <div id="slot-sheet-root">

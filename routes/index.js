@@ -6,7 +6,6 @@ const fs     = require('fs');
 const path   = require('path');
 
 const { UNITS } = require('../data/units');
-const { characterNameKey, generateUniqueUnitIdentity, identityFromLegacyNames, resolveUnitIdentity } = require('../data/unit_names');
 const { REGIONS, getEncounter, getLevelRewards, getFirstClearTokens, TOME_XP } = require('../data/embark');
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
@@ -938,19 +937,11 @@ function getFactionForUnit(unitDataId) {
   return null;
 }
 
-function makeUnitData(unitId, buildingSlot, faction = null, previousUnitData = null, usedNames = new Set()) {
+function makeUnitData(unitId, buildingSlot) {
   const def = getUnitByDataId(unitId);
   const hp  = def?.hp ?? 50;
-  const unitFaction = faction || def?.f;
-  const savedIdentity = previousUnitData?.given_name_id && previousUnitData?.byname_id
-    ? { given_name_id: previousUnitData.given_name_id, byname_id: previousUnitData.byname_id }
-    : identityFromLegacyNames(unitFaction, def?.sex, previousUnitData)
-      || generateUniqueUnitIdentity(unitFaction, def?.sex, usedNames);
-  usedNames.add(characterNameKey(savedIdentity));
   return {
     unit_id: unitId,
-    sex: def?.sex,
-    ...savedIdentity,
     building_slot: buildingSlot || null,
     current_xp: 0,
     current_hp: hp,
@@ -959,25 +950,14 @@ function makeUnitData(unitId, buildingSlot, faction = null, previousUnitData = n
   };
 }
 
-function rosterCharacterNameKeys(rows) {
-  return new Set((rows || [])
-    .map(row => row.unit_data)
-    .filter(unitData => unitData?.given_name_id && unitData?.byname_id)
-    .map(characterNameKey));
-}
-
-async function syncRosterMaxHp(chat_id, faction = null) {
+async function syncRosterMaxHp(chat_id) {
   const rows = await supabase(
     `/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data`,
   );
-  const usedNames = new Set();
   for (const row of rows) {
     const unitData = row.unit_data || {};
     const def = getUnitByDataId(unitData.unit_id);
     if (!def || !Number.isFinite(def.hp)) {
-      if (unitData.given_name_id && unitData.byname_id) {
-        usedNames.add(characterNameKey(unitData));
-      }
       console.warn(`Cannot sync max HP for roster unit ${row.id}: missing definition for ${unitData.unit_id}`);
       continue;
     }
@@ -986,34 +966,11 @@ async function syncRosterMaxHp(chat_id, faction = null) {
     const patch = {};
     if (unitData.max_hp !== def.hp) patch.max_hp = def.hp;
     if (Number.isFinite(currentHp) && currentHp > def.hp) patch.current_hp = def.hp;
-    if (unitData.sex !== def.sex) patch.sex = def.sex;
-    const validIdentity = resolveUnitIdentity(faction || def.f, def.sex, unitData);
-    const legacyIdentity = validIdentity ? null : identityFromLegacyNames(faction || def.f, def.sex, unitData);
-    const existingIdentity = validIdentity
-      ? { given_name_id: unitData.given_name_id, byname_id: unitData.byname_id }
-      : legacyIdentity;
-    const identityKey = existingIdentity ? characterNameKey(existingIdentity) : null;
-    if (!identityKey || usedNames.has(identityKey)) {
-      Object.assign(patch, generateUniqueUnitIdentity(faction || def.f, def.sex, usedNames));
-    } else {
-      usedNames.add(identityKey);
-      if (unitData.given_name_id !== existingIdentity.given_name_id
-        || unitData.byname_id !== existingIdentity.byname_id) {
-        Object.assign(patch, existingIdentity);
-      }
-    }
-    const hasLegacyNames = ['given_name', 'given_name_ru', 'byname', 'byname_ru']
-      .some(key => Object.hasOwn(unitData, key));
-    const nextUnitData = { ...unitData, ...patch };
-    delete nextUnitData.given_name;
-    delete nextUnitData.given_name_ru;
-    delete nextUnitData.byname;
-    delete nextUnitData.byname_ru;
-    if (!Object.keys(patch).length && !hasLegacyNames) continue;
+    if (!Object.keys(patch).length) continue;
 
     await supabase(`/roster?id=eq.${encodeURIComponent(row.id)}&chat_id=eq.${encodeURIComponent(chat_id)}`, {
       method: 'PATCH',
-      body: JSON.stringify({ unit_data: nextUnitData }),
+      body: JSON.stringify({ unit_data: { ...unitData, ...patch } }),
     });
   }
 }
@@ -1072,7 +1029,7 @@ function resolveAutoLevelUp(row, buildingsData) {
   const nextDef = getUnitByDataId(path.unit_id);
   if (!nextDef) return null;
 
-  const newUnitData = makeUnitData(nextDef.id, buildingSlot, faction, unitData);
+  const newUnitData = makeUnitData(nextDef.id, buildingSlot);
   newUnitData.current_xp = Math.max(0, (unitData.current_xp ?? 0) - xpRequired);
   const oldHp = Number(unitData.current_hp ?? unitData.max_hp ?? 0);
   if (oldHp > 0) newUnitData.current_hp = Math.min(newUnitData.max_hp, oldHp);
@@ -1127,7 +1084,7 @@ router.post('/login', async (req, res) => {
         method: 'PATCH',
         body: JSON.stringify(patchBody),
       });
-      await syncRosterMaxHp(chat_id, existing[0].faction);
+      await syncRosterMaxHp(chat_id);
       let activeRec = null;
       try { activeRec = await getActiveBattle(chat_id); } catch (e) {}
       // The errand offer is minted here, once per player, rather than derived on
@@ -1169,7 +1126,7 @@ router.post('/login', async (req, res) => {
       method: 'POST',
       body: JSON.stringify(newPlayerBody),
     });
-    await syncRosterMaxHp(chat_id, created[0]?.faction);
+    await syncRosterMaxHp(chat_id);
     let activeRec = null;
     try { activeRec = await getActiveBattle(chat_id); } catch (e) {}
     // Deliberately not awaited: the admin ping is bookkeeping, and a slow or
@@ -1881,15 +1838,10 @@ router.post('/player/faction', requireAuth, async (req, res) => {
   if (!HERO_IDS.includes(hero_id)) return res.status(400).json({ error: 'Invalid hero_id' });
   const heroDef = getUnitByDataId(hero_id);
   if (!heroDef) return res.status(400).json({ error: 'Hero not found in unit data' });
-  let usedNames = new Set();
   try {
-    const [existing, existingRoster] = await Promise.all([
-      supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=faction&limit=1`),
-      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=unit_data`),
-    ]);
+    const existing = await supabase(`/players?id=eq.${encodeURIComponent(player_id)}&chat_id=eq.${encodeURIComponent(chat_id)}&select=faction&limit=1`);
     if (!existing.length) return res.status(404).json({ error: 'Player not found' });
     if (existing[0].faction) return res.status(400).json({ error: 'Faction already chosen' });
-    usedNames = rosterCharacterNameKeys(existingRoster);
   } catch (err) {
     return serverError(res, err);
   }
@@ -1918,14 +1870,14 @@ router.post('/player/faction', requireAuth, async (req, res) => {
   // the rest of onboarding, so it must still fire), while `unit_fallen` and
   // `spell_revive` find no corpse and skip themselves.
   const startingUnitData = unitDef
-    ? { ...makeUnitData(unitDef.id, startingUnit.slot, faction, null, usedNames),
+    ? { ...makeUnitData(unitDef.id, startingUnit.slot),
         ...(DEATH_ENABLED ? { alive: false, current_hp: 0 } : { alive: true, current_hp: 1 }) }
     : null;
   // Every unit is born with a calling (data/callings.js). The hero included -
   // it is a roster row with no branch left, and a litany cell has to be able to
   // match it.
   const rosterEntries = [
-    { chat_id, unit_data: makeUnitData(heroDef.id, 'slot_0', faction, null, usedNames), is_hero: true, calling: newCallingFor(faction) },
+    { chat_id, unit_data: makeUnitData(heroDef.id, 'slot_0'), is_hero: true, calling: newCallingFor(faction) },
     ...(startingUnitData ? [{ chat_id, unit_data: startingUnitData, is_hero: false, calling: newCallingFor(faction) }] : []),
   ];
   const startingItems = STARTING_ITEM_KEYS.map(k => makeItemRow(player_id, k)).filter(Boolean);
@@ -4081,7 +4033,7 @@ router.post('/roster/levelup', requireAuth, async (req, res) => {
     }
     const nextDef = getUnitByDataId(path.unit_id);
     if (!nextDef) return res.status(400).json({ error: `Definition for ${path.unit_id} not found` });
-    const newUnitData = makeUnitData(nextDef.id, buildingSlot, faction, unitData);
+    const newUnitData = makeUnitData(nextDef.id, buildingSlot);
     newUnitData.current_xp = Math.max(0, (unitData.current_xp ?? 0) - (xpRequired ?? 0));
     const oldHp = Number(unitData.current_hp ?? unitData.max_hp ?? 0);
     if (oldHp > 0) {
@@ -4263,12 +4215,10 @@ router.post('/structures/build', requireAuth, async (req, res) => {
   const slotCategory = SLOT_CATEGORIES[slot];
   if (!slotCategory) return res.status(400).json({ error: 'Invalid slot' });
   try {
-    const [rows, playerRows, existingRoster] = await Promise.all([
+    const [rows, playerRows] = await Promise.all([
       supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
       supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=faction&limit=1`),
-      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=unit_data`),
     ]);
-    const usedNames = rosterCharacterNameKeys(existingRoster);
     if (!playerRows.length) return res.status(404).json({ error: 'Player not found' });
     const faction = playerRows[0].faction;
     if (!faction) return res.status(400).json({ error: 'Player has no faction' });
@@ -4354,7 +4304,7 @@ router.post('/structures/build', requireAuth, async (req, res) => {
     if (isNew && def.unit_id && slotCategory !== 'throne') {
       const unitDef = getUnitByDataId(def.unit_id);
       if (unitDef) {
-        await supabase('/roster', { method: 'POST', body: JSON.stringify([{ chat_id, unit_data: makeUnitData(unitDef.id, slot, faction, null, usedNames), is_hero: false, calling: newCallingFor(faction) }]) });
+        await supabase('/roster', { method: 'POST', body: JSON.stringify([{ chat_id, unit_data: makeUnitData(unitDef.id, slot), is_hero: false, calling: newCallingFor(faction) }]) });
       }
     }
 
@@ -6617,13 +6567,11 @@ router.post('/structures/mercenary/recruit', requireAuth, async (req, res) => {
     // The faction is read for the calling the new row is born with: a mercenary
     // is a foreign unit but a row in the PLAYER's roster, and it stands in the
     // player's litanies.
-    const [structRows, inventoryRows, mercPlayerRows, existingRoster] = await Promise.all([
+    const [structRows, inventoryRows, mercPlayerRows] = await Promise.all([
       supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
       supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=faction&limit=1`),
-      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=unit_data`),
     ]);
-    const usedNames = rosterCharacterNameKeys(existingRoster);
     if (!structRows.length) return res.status(404).json({ error: 'Structures not found' });
 
     const record = structRows[0];
@@ -6665,7 +6613,7 @@ router.post('/structures/mercenary/recruit', requireAuth, async (req, res) => {
         is_hero:   false,
         calling:   newCallingFor(mercPlayerRows[0]?.faction),
         unit_data: {
-          ...makeUnitData(unitTemplate.id, slot, mercPlayerRows[0]?.faction, null, usedNames),
+          ...makeUnitData(unitTemplate.id, slot),
           mercenary:        true,
           mercenary_region: bDef.region,
         },

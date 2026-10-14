@@ -2,7 +2,6 @@ import { assetUrl } from './asset_base.js';
 import { UNITS }          from '../data/units.js';
 import { UNIT_ABILITIES } from '../data/unit_abilities.js';
 import { applyItemModifiers, ITEM_DEFS } from '../data/items.js';
-import { resolveUnitIdentity } from '../data/unit_names.js';
 
 // Localized spell text. For a non-English language, returns ONLY that language's
 // field (e.g. name_ru) — no English fallback, so a missing translation shows up
@@ -40,20 +39,6 @@ export function itemName(item, player) {
 // it exists so that adding a unit and forgetting its translation costs a stray
 // English word rather than an anonymous portrait.
 export function unitName(unit, player) {
-  if (!unit) return '';
-  return unitTypeName(unit, player);
-}
-
-export function unitCharacterName(unit, player) {
-  if (!unit) return '';
-  const lang = player?.settings?.language ?? (_uiLang === 'ru' ? 'ru' : 'en');
-  const identity = unit.unit_data || unit;
-  const faction = player?.faction || identity.f || unit.f;
-  const characterName = resolveUnitIdentity(faction, identity.sex || unit.sex, identity, lang);
-  return characterName || unitTypeName(unit, player);
-}
-
-export function unitTypeName(unit, player) {
   if (!unit) return '';
   const src = unit.name || unit.name_ru
     ? unit

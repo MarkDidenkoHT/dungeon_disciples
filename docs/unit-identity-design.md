@@ -3,7 +3,6 @@
 Status: **draft for discussion, nothing built.** Last updated 2026-10-02.
 Companion docs: [daily-activities-design.md](daily-activities-design.md) — where the deeds
 come from, and what Engravings already do to a unit.
-[bark-style-guide.md](bark-style-guide.md) — the voice an epithet has to survive.
 
 ## Why
 
@@ -11,25 +10,21 @@ A unit is a row in a table that happens to have art. Two players with the same f
 the same branch and the same items own the *same* Blade Master, and nothing a player does
 to a unit is a choice — the tree decides, the building decides, the XP decides.
 
-Three problems, one system:
+Two problems, one system:
 
-1. **Units have no identity.** Interchangeable with the same unit in anyone else's
-   roster, so losing one costs nothing but ⚔.
-2. **A maxed unit is finished.** At the end of its branch XP keeps arriving and goes
+1. **A maxed unit is finished.** At the end of its branch XP keeps arriving and goes
    nowhere. The unit the player invested most in is the one the game stops talking about.
-3. **Gold dies when it peaks.** Every gold sink but engraving is one-time, and engraving
+2. **Gold dies when it peaks.** Every gold sink but engraving is one-time, and engraving
    is gated on tourney tokens — a player who skips the evening tourney has no gold sink.
 
 Guiding rules:
 
-- **Earned, not typed.** A name the player invents says nothing about the unit; a title
-  the unit won says everything.
 - **Deeds are the game you already play.** Errands, embarks, litanies, the Colossus, the
   tourney. A new *record* of the existing game, not a new grind.
-- **Never a second engraving.** Engravings own per-unit stat shopping. This owns identity
-  and the gold drain.
+- **Never a second engraving.** Engravings own per-unit stat shopping. This owns
+  progression and the gold drain.
 - **Losing a unit must hurt.** Dismissal refunds nothing. The record, the deeds, the
-  epithets and every oath are gone with the unit, and so is the gold.
+  oaths are gone with the unit, and so is the gold.
 
 ---
 
@@ -48,7 +43,6 @@ litanies are Proving Grounds 3):
 | Level | Opens |
 |---|---|
 | **Training Grounds 1** | The Chronicle; callings; deeds |
-| **Training Grounds 2** | Names and epithets |
 | **Training Grounds 3** *(new level)* | Oaths |
 
 The Training Grounds is the thinnest building in the castle — two levels for +3% then +5%
@@ -56,12 +50,11 @@ embark XP ([data/buildings.js](../data/buildings.js)) — so it is the right fic
 building that needs a second job. `BUILDING_MAX_LEVELS.training_grounds` goes 2 → 3, and
 the third level keeps raising embark XP too, so it is never bought for one feature.
 
-**The screen** is the roster as a book: one line per unit — portrait, name and worn
-epithet, calling, five deed pips, oath count. Tapping a unit opens its page: the calling
-track with the next deed's counter (`2 / 3 errands`), the epithets it has earned, the oath
-ladder with the next price, and the plain record — battles, kills, embarks, errands,
-litanies, days in service. The record is cheap to keep and it is most of the identity: a
-player reads "41 battles, 9 kills, 112 days" and the unit stops being a row.
+**The screen** is the roster as a book: one line per unit — portrait, calling, five deed
+pips and oath count. Tapping a unit opens its page: the calling track with the next deed's
+counter (`2 / 3 errands`), the oath ladder with the next price, and the plain record —
+battles, kills, embarks, errands, litanies, days in service. The record is cheap to keep:
+a player reads "41 battles, 9 kills, 112 days" and the unit stops being a row.
 
 ---
 
@@ -93,7 +86,7 @@ what stages the execution. It also cuts 298 hardcoded ids out of
 **Partly built already.** The callings themselves, the storage and the litany half are
 in: [data/callings.js](../data/callings.js), `roster.calling` jsonb, and
 [sql/backfill_callings.sql](../sql/backfill_callings.sql) to seed every existing unit.
-The Chronicle screen, the rungs, the deeds and everything in §3 and §4 below are not.
+The Chronicle screen, the rungs, the deeds and the oath track below are not.
 
 | Faction | callings | ids | `pays` in a litany |
 |---|---|---|---|
@@ -117,7 +110,7 @@ fields the same army every time it is drawn.
 
 **Where a calling is picked is the TEMPLE, not the Chronicle.** The two systems read the
 same `roster.calling` field and share nothing else: the Training Grounds teaches a squad
-to sing (litanies, rungs, epithets, everything else in this doc), the Temple decides what
+to sing (litanies, rungs and deeds), the Temple decides what
 a unit *is*. The Temple is the castle's **left page** — a grid of one row per unit and one
 column per Temple level, every column drawn from the first visit and the ones the Temple
 has not reached yet disabled.
@@ -209,65 +202,7 @@ could sing.
 
 ---
 
-## 3. Names and epithets
-
-The question was names, named barks, renaming, or a personalisation item.
-
-**A curated given name and faction byname at creation, followed by earned epithets. No
-free text.** Free text looks like the cheapest option and is the most expensive one:
-character names need paired English and Russian forms, barks are written to be spoken
-*by* a named character, and a free field needs moderation in two languages inside
-Telegram. A curated pool gives the player the feeling of naming without that burden.
-
-- **Given name.** The long-term target is ~40 period-correct names per faction, EN + RU
-  pairs, in `data/unit_names.js`; the initial pool is five per sex and faction. Creation
-  currently rolls a name. Player selection and renaming are future work. The character
-  name is shown in the castle inspect, with the type name as its subtitle, e.g.
-  **Halvard**, Blade Master. First name free, each later rename 200 gold.
-- **Name-pool direction.** Every unit definition has a `sex` (`male` or `female`)
-  presentation, shared by its evolution line and persisted in `unit_data` at creation;
-  login sync backfills it for existing roster entries. Given names are sex-specific.
-  The second part is a faction-flavored fantasy byname or epithet, localized for a strong
-  Russian fantasy sound rather than translated literally or reshaped as a Slavic surname.
-  A character receives a random given name and byname on creation. The roster stores
-  stable `given_name_id` and `byname_id` references with `sex`; localized strings stay in
-  the app catalog. IDs survive level-ups, and login sync backfills them for old roster
-  entries. Names appear only in the large castle unit inspect; the character name is the
-  sheet title and the unit type is shown beneath it. All other screens keep showing the
-  unit type. The starter pool below is intentionally small and can be expanded before
-  any player-facing rename system is added. Apply
-  `sql/012_unique_roster_character_name_ids.sql` in Supabase before deploying the
-  application changes. It replaces the text-based index from migration 011, removes
-  legacy localized name strings, clears duplicate IDs for login backfill, and installs
-  a per-player unique index over the stored IDs.
-
-  | Faction | Male given names | Female given names |
-  |---|---|---|
-  | **Empire** | Aurelius — Аурилей; Valerius — Валерий; Lucius — Люций; Hadrian — Адриан; Cassian — Кассиан | Aurelia — Аурелия; Valeria — Валерия; Justina — Юстина; Octavia — Октавия; Elisia — Элизия |
-  | **Grail of Sorrow** | Corvin — Корвин; Vesper — Веспер; Malakor — Малакор; Iskar — Искар; Odran — Одран | Isolde — Изольда; Vespera — Веспера; Nereza — Нереза; Caldra — Калдра; Morwen — Морвен |
-  | **Choir of the Cursed** | Vael — Ваэль; Nerion — Нерион; Sythran — Ситран; Thamiel — Тамиэль; Xavren — Заврен | Vaelira — Ваэлира; Seraphine — Серафина; Nythra — Нитра; Khariel — Кариэль; Orissa — Орисса |
-
-  | Faction | English bynames | Russian forms |
-  |---|---|---|
-  | **Empire** | Sunborne; Lightbringer; Ironheart; Dawnshield; Oathkeeper | Солнцерождённый / Солнцерождённая; Светоносный / Светоносная; Железносердный / Железносердная; Рассветный Щит / Щит Рассвета; Хранитель Клятвы / Хранительница Клятвы |
-  | **Grail of Sorrow** | Soulreaper; Bloodthirst; Ashbringer; Gravewarden; Shadowstalker | Жнец Душ / Жница Душ; Кровожадный / Кровожадная; Пеплоносец / Пеплоносица; Страж Могилы / Стражница Могилы; Теневой Охотник / Теневая Охотница |
-  | **Choir of the Cursed** | Blackcantor; Hollowvoice; Razorchant; Soul-Eater; Voice of the Abyss | Чёрный Певчий / Чёрная Певчая; Пустоголосый / Пустоголосая; Певец Клинков / Певица Клинков; Пожиратель Душ / Пожирательница Душ; Глас Бездны |
-
-  Russian forms should agree with the character's sex where the epithet is gendered.
-  Constructions such as Глас Бездны can remain invariant.
-- **Epithet.** Earned, never bought. A rung, a tourney podium, a Colossus kill, an errand
-  career, an oath count each award one — *the Thrice-Sent*, *Ashen-Handed*, *Who Held the
-  Gate*. A unit wears one; swapping which is free. The collection is the record, the worn
-  one is the presentation.
-- **Named barks.** The cheap, high-value tie-in. A worn epithet adds one key
-  (`epithet:<id>`) to the unit's set, resolved above the character's own lines in
-  `checkBark` — one or two lines per epithet in the faction's voice. ~20 epithets × 2 lines
-  is a day of writing, and it is the moment the system pays off: the unit that held the
-  gate says so, in its own words, once in a while.
-
----
-
-## 4. Oaths — the paragon
+## 3. Oaths — the paragon
 
 A unit at the end of its branch keeps earning XP that currently vanishes. An **oath** is
 what that XP buys once there is nothing left to evolve into. The hero is included — the
@@ -304,13 +239,8 @@ never competes for Valor or tokens; it cannot touch a passive, so it cannot brea
 
 ## Wiring notes
 
-- **Storage.** The character's `sex`, `given_name_id`, and `byname_id` live in the existing
-  `roster.unit_data` jsonb; `makeUnitData` preserves them across level-ups, and login sync
-  backfills IDs for older entries. Translated strings are resolved from the app's
-  `data/unit_names.js` catalog. Migration 012 replaces the prior text-based uniqueness
-  index with a per-player unique index over the IDs. The
-  future Chronicle record can use a separate `unit_record` table keyed by `roster_id` for
-  calling, counters (jsonb), rungs claimed, earned epithets and oaths (jsonb list of stat
+- **Storage.** The future Chronicle record can use a separate `unit_record` table keyed by
+  `roster_id` for calling, counters (jsonb), rungs claimed and oaths (jsonb list of stat
   picks). `on delete cascade` from `roster` — that cascade *is* the no-refund rule.
 - **Counters need a per-unit tally.** The engine keeps `this.tally` per *side* — `kills`,
   `kills:<tag>`, damage by school
@@ -331,17 +261,13 @@ never competes for Valor or tokens; it cannot touch a passive, so it cannot brea
   counts the engraving; it must count the record too, or a ten-oath roster queues as a
   cheap one and the PvP bands lie. Re-run `scripts/check-bot-templates.js` in the same
   deploy — the templates are written against ⚔ bands.
-- **i18n.** Callings, deed text, given names and epithets all need `_ru`; the epithet barks
-  need the style guide's RU rules, not a translation.
+- **i18n.** Callings and deed text need `_ru`.
 
 ## Open questions
 
-- **Is the oath point too strong?** Ten points is a tier's worth of stats. Options: every
-  second oath pays only an epithet step; or points are granted in pairs and count half; or
-  the ladder steepens to 1.4×.
+- **Is the oath point too strong?** Ten points is a tier's worth of stats. Options: points
+  are granted in pairs and count half, or the ladder steepens to 1.4×.
 - **Do mercenaries get a record?** They are bought rather than raised, and rebuyable.
 - **Calling versus a changing profile.** A unit's action can change on evolution. Both
   callings are open to every unit, so nothing breaks — but a *Crusade* medic is a player
   mistake the system will happily let them pay 500 gold to undo. Fine, or warn?
-- **How many epithets, and who writes them?** Start at ~20 and let the counters that
-  already exist name them.
