@@ -2146,7 +2146,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       ui.logToggle.setAttribute('aria-expanded', String(expanded));
     };
     ui.logToggle?.addEventListener('click', () => {
-      ui.battleLog.classList.toggle('battle-log--expanded');
+      const expanded = ui.battleLog.classList.toggle('battle-log--expanded');
+      ui.screen.classList.toggle('screen-battle--log-expanded', expanded);
       applyLogToggle();
     });
     applyLogToggle();
