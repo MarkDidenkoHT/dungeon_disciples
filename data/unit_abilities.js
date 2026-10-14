@@ -1878,6 +1878,7 @@ const UNIT_ABILITIES = {
     description_ru: "Залп: 6 физического урона всем врагам.",
     params: { volley_damage: 6 },
     effect_name: 'arrow_shot',
+    animation_sound: 'arrow_shot',
   },
   'volley 2': {
     id: 'volley 2',
@@ -1890,6 +1891,7 @@ const UNIT_ABILITIES = {
     description_ru: "Залп: 10 физического урона всем врагам.",
     params: { volley_damage: 10 },
     effect_name: 'arrow_shot',
+    animation_sound: 'arrow_shot',
   },
   'stone_form 1': {
     id: 'stone_form 1',

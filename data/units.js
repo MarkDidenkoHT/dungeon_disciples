@@ -2175,7 +2175,7 @@ const UNITS = {
       hp: 55, armor: 15, initiative: 45,
       resistances: { air: 5, fire: 25, life: 40, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'fire', action_power: 18, action_icon: 'flame_sword.jpg', action_animation: 'claw_strike',
+      damage_source: 'fire', action_power: 18, action_icon: 'flame_sword.jpg', action_animation: 'claw_strike', action_sfx: 'fire_spell_impact',
       xp: 1560, passive: ['concentration 1', 'burn 1', 'gravebane 1'], ability: 'ember_shroud 2',
     },
     dragon_knight: {
@@ -2188,7 +2188,7 @@ const UNITS = {
       hp: 65, armor: 15, initiative: 45,
       resistances: { air: 5, fire: 30, life: 40, death: 5, cold: 0, nature: 5 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'fire', action_power: 22, action_icon: 'flame_sword.jpg', action_animation: 'claw_strike',
+      damage_source: 'fire', action_power: 22, action_icon: 'flame_sword.jpg', action_animation: 'claw_strike', action_sfx: 'fire_spell_impact',
       xp: 2730, passive: ['concentration 1', 'burn 2', 'gravebane 1'], ability: 'ember_shroud 3',
     },
     blue_mage: {
@@ -3782,7 +3782,7 @@ const UNITS = {
         hp: 85, armor: 10, initiative: 30,
         resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 20, nature: 20 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'life', action_power: 10, action_animation: 'cannon_shot',
+        damage_source: 'life', action_power: 10, action_animation: 'cannon_shot', action_sfx: 'noxious_death',
         xp: 1320, passive: ['bleed 2', 'stoicism 1'], ability: null,
       },
       sister_aldra_2: {
@@ -3795,7 +3795,7 @@ const UNITS = {
         hp: 125, armor: 15, initiative: 30,
         resistances: { air: 25, fire: 25, life: 25, death: 25, cold: 25, nature: 25 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'life', action_power: 12, action_animation: 'cannon_shot',
+        damage_source: 'life', action_power: 12, action_animation: 'cannon_shot', action_sfx: 'noxious_death',
         xp: 1860, passive: ['bleed 2', 'recuperate 1', 'stoicism 1'], ability: null,
       },
       sister_aldra_3: {
@@ -3808,7 +3808,7 @@ const UNITS = {
         hp: 145, armor: 25, initiative: 30,
         resistances: { air: 25, fire: 25, life: 25, death: 25, cold: 25, nature: 25 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'life', action_power: 14, action_animation: 'cannon_shot',
+        damage_source: 'life', action_power: 14, action_animation: 'cannon_shot', action_sfx: 'noxious_death',
         xp: 2005, passive: ['bleed 3', 'recuperate 1', 'stoicism 1'], ability: null,
       },
     },
