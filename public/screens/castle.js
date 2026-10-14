@@ -22,7 +22,7 @@ import { renderSpellTome }   from './spell_tome.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
   resolveAbility, renderModalContent, openSheet, closeSheet, getSheetBody, GOLD_ICON,
-  openSubSheet, closeSubSheet, getSubSheetBody, cap, onSheetClose, RESOURCE_BAR_SLOTS, gameConfirm,
+  openSubSheet, closeSubSheet, getSubSheetBody, cap, onSheetClose, RESOURCE_BAR_SLOTS, CROSSROAD_SIGIL_SLOT, gameConfirm,
   buildUnitCard, getActionLabel, buildAbilityModalParts,
   renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
   handleUnitInspect, unitName, buildingLabel, enableTrackSwipe, escapeHtml,
@@ -709,14 +709,22 @@ export function renderCastle(root, params = {}) {
   // Costs are keyed 'gold' + 'Crystals_*' (data/buildings.js) — mercenary
   // upgrades are priced in trophies instead, which have no column in the strip
   // above, so those are appended after the resource and token slots.
-  const costBarOpts = () => ({
+  const costBarOpts = (includeSigil = false) => ({
     amountOf,
     lang: castleLang,
     onMaterialClick: openMaterialSourceSheet,
+    slots: includeSigil ? [...RESOURCE_BAR_SLOTS, CROSSROAD_SIGIL_SLOT] : RESOURCE_BAR_SLOTS,
   });
-  const showCostBar = (cost) => sharedShowCostBar(cost, costBarOpts());
+  const showCostBar = (cost) => {
+    const includeSigil = Number(cost?.crossroad_sigil) > 0;
+    refreshResourceBar(player, { includeSigil }).catch(() => {});
+    return sharedShowCostBar(cost, costBarOpts(includeSigil));
+  };
   // Mounted on the way in, shown only once a sheet prices something.
-  const primeCostBar = () => sharedPrimeCostBar(costBarOpts());
+  const primeCostBar = (includeSigil = false) => {
+    refreshResourceBar(player, { includeSigil }).catch(() => {});
+    return sharedPrimeCostBar(costBarOpts(includeSigil));
+  };
 
   // ── Where does this come from? ────────────────────────────────────────────
   // Opened from a cost the player cannot meet. Crystals and trophies both drop
@@ -3065,7 +3073,7 @@ export function renderCastle(root, params = {}) {
       if (cardWrap) cardWrap.innerHTML = ownCardHtml;
       const confirmBtn = body?.querySelector('#slot-confirm');
       if (confirmBtn) confirmBtn.disabled = true;
-      primeCostBar();
+      primeCostBar(mode === 'upgrade' && segment === 'respec');
       body?.querySelectorAll('#slot-upgrade-track .portrait-card')
           .forEach(c => c.classList.remove('portrait-card--selected'));
     }

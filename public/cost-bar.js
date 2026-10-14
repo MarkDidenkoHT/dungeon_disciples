@@ -27,7 +27,7 @@ export function showCostBar(cost, opts = {}) {
   mountCostBar(cost, opts, { hidden: false });
 }
 
-function mountCostBar(cost, { amountOf, lang = 'en', onMaterialClick } = {}, { hidden } = {}) {
+function mountCostBar(cost, { amountOf, lang = 'en', onMaterialClick, slots = RESOURCE_BAR_SLOTS } = {}, { hidden } = {}) {
   hideCostBar();
   const entries = Object.entries(cost || {}).filter(([, amt]) => Number(amt) > 0);
 
@@ -64,7 +64,7 @@ function mountCostBar(cost, { amountOf, lang = 'en', onMaterialClick } = {}, { h
             </button>`;
   };
 
-  const slots = RESOURCE_BAR_SLOTS.map(slot => {
+  const slotHtmls = slots.map(slot => {
     const need = required[slot.key] ?? 0;
     if (!need) {
       return `<div class="res-bar-item cost-bar-item cost-bar-item--idle">
@@ -77,7 +77,7 @@ function mountCostBar(cost, { amountOf, lang = 'en', onMaterialClick } = {}, { h
 
   // Trophy costs (mercenary upgrades) have no column above to line up with.
   const extras = Object.entries(required)
-    .filter(([key]) => !RESOURCE_BAR_SLOTS.some(s => s.key === key))
+    .filter(([key]) => !slots.some(s => s.key === key))
     .map(([key, need]) => {
       const name = key.replace(/_/g, ' ');
       const icon = `<img src="${assetUrl(`/assets/icons/recources/${key}.png`)}" class="res-icon-img" alt="${name}" onerror="this.style.visibility='hidden'">`;
@@ -96,7 +96,7 @@ function mountCostBar(cost, { amountOf, lang = 'en', onMaterialClick } = {}, { h
   // every column would sit one button-width to the left.
   bar.innerHTML = `
     <span class="res-bar-btn cost-bar-ghost" aria-hidden="true"></span>
-    <div class="resource-bar cost-bar">${slots}${extras}</div>
+    <div class="resource-bar cost-bar${slots.some(slot => slot.item_type === 'token') ? ' resource-bar--with-sigil' : ''}">${slotHtmls}${extras}</div>
     <span class="res-bar-btn cost-bar-ghost" aria-hidden="true"></span>`;
   // The bar lives outside #content-root, next to the resource strip, so no
   // screen-level delegation reaches it — it carries its own listener.
