@@ -1916,7 +1916,7 @@ const UNITS = {
       resistances: { air: 5, fire: 10, life: 40, death: 10, cold: 5, nature: 10 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 4, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-      xp: 1560, passive: ['inspiration_damage 1', 'command 1'], ability: 'prayer_of_healing 1',
+      xp: 1560, passive: ['inspiration_damage 1', 'command 1', 'pure_blood 1'], ability: 'prayer_of_healing 1',
     },
     sister_superior: {
       id: 'e8111', f: 'e', t: 4,
@@ -1929,7 +1929,7 @@ const UNITS = {
       resistances: { air: 10, fire: 10, life: 40, death: 10, cold: 10, nature: 10 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 5, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-      xp: 3640, passive: ['inspiration_damage 1', 'command 1'], ability: 'prayer_of_healing 2',
+      xp: 3640, passive: ['inspiration_damage 2', 'command 1', 'pure_blood 1'], ability: 'prayer_of_healing 2',
     },
     sister_guardian: {
       id: 'e82', f: 'e', t: 2,
@@ -1955,7 +1955,7 @@ const UNITS = {
       resistances: { air: 5, fire: 10, life: 40, death: 10, cold: 5, nature: 10 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 4, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-      xp: 1560, passive: ['inspiration_damage 1', 'stoicism 1'], ability: 'blessing_of_protection 2',
+      xp: 1560, passive: ['inspiration_damage 1', 'stoicism 1', 'vitality 1'], ability: 'blessing_of_protection 2',
     },
     sister_protector: {
       id: 'e8211', f: 'e', t: 4,
@@ -1968,7 +1968,7 @@ const UNITS = {
       resistances: { air: 10, fire: 15, life: 40, death: 15, cold: 10, nature: 10 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 5, action_icon: 'holy_heal.jpg', action_animation: 'holy_heal', action_sfx: 'holy_heal',
-      xp: 3640, passive: ['inspiration_damage 1', 'stoicism 1'], ability: 'blessing_of_protection 3',
+      xp: 3640, passive: ['inspiration_damage 1', 'stoicism 1', 'vitality 2'], ability: 'blessing_of_protection 3',
     },
     acolyte: {
       id: 'e2', f: 'e', t: 1,
