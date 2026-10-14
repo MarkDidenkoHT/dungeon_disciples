@@ -30,8 +30,8 @@
 // button and say why before the player taps.
 
 // What a unit's action actually does, derived from its definition in
-// data/units.js. Actions seen there: attack, heal, repair, 'mend flesh'
-// (several casings), sacrifice, none.
+// data/units.js. Empower is kept distinct from healing even though it targets
+// an ally, because it grants a damage bonus rather than restoring HP.
 function unitActionKind(unitDef) {
   if (!unitDef) return 'unknown';
   const raw = unitDef.action;
@@ -41,6 +41,7 @@ function unitActionKind(unitDef) {
 
   if (!name || name === 'none') return 'none';
   if (name === 'sacrifice')     return 'sacrifice';
+  if (name === 'empower')       return 'empower';
   if (/heal|mend|repair/.test(name)) return 'heal';
   // Anything aimed at an ally restores rather than harms, whatever it is called.
   if (targetType === 'ally') return 'heal';
@@ -78,6 +79,15 @@ function getEquipBlock(itemStats, unitDef, unitAbilities = {}) {
 
   const tags = (unitDef.tags || []).filter(Boolean);
   const kind = unitActionKind(unitDef);
+
+  const statMods = stats.stat_mods || {};
+  if (kind === 'empower' && Number(statMods.action_power ?? statMods.power) > 0) {
+    return {
+      code: 'blocked_empower_power',
+      reason:    'Power-granting items cannot be equipped on units with Empower',
+      reason_ru: 'Бойцы с «Усилением» не могут экипировать предметы, повышающие силу атаки',
+    };
+  }
 
   // ---- 1. explicit, per-item ------------------------------------------------
   const blockedTags = stats.blocked_tags || [];

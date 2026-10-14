@@ -1313,6 +1313,7 @@ class BattleEngine {
       this.pushLog({
         type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
         targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
+        actionKind: 'empower',
         value: bonusPct,
         message: `${actor.unit_name} empowers ${target.unit_name} — +${bonusPct}% damage on the next attack`,
       });

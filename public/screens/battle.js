@@ -277,6 +277,8 @@ const BT = {
                    ru: (a, t, v) => `${a} лечит ${t} на <span class="log-val-heal">${v}</span>` },
   logHit:        { en: (a, t, v) => `${a} hit ${t} for <span class="log-val">${v}</span>`,
                    ru: (a, t, v) => `${a} бьёт ${t} на <span class="log-val">${v}</span>` },
+  logEmpower:    { en: (a, t, v) => `${a} empowers ${t}: <span class="log-val-shield">+${v}%</span> damage on the next attack`,
+                   ru: (a, t, v) => `${a} усиливает ${t}: <span class="log-val-shield">+${v}%</span> к урону следующей атаки` },
   logResisted:   { en: (p, r) => ` <span class="log-resisted">(${p} power, ${r} resisted)</span>`,
                    ru: (p, r) => ` <span class="log-resisted">(${p} силы, ${r} поглощено)</span>` },
   // Was ALSO called logPower, silently overwriting the entry above it — so the
@@ -1775,6 +1777,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         BTf(tpl)(actor(), logPassive(entry.passive), target(), entry.value)}</div>`;
     }
     if (entry.type === 'action') {
+      if (entry.actionKind === 'empower') {
+        return `<div class="log-entry log-entry--shield">${BTf('logEmpower')(actor(), target(), entry.value)}</div>`;
+      }
       const line = entry.heal
         ? BTf('logHeal')(actor(), target(), entry.value)
         : BTf('logHit')(actor(), target(), entry.value);
