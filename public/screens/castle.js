@@ -713,7 +713,7 @@ export function renderCastle(root, params = {}) {
     amountOf,
     lang: castleLang,
     onMaterialClick: openMaterialSourceSheet,
-    slots: includeSigil ? [...RESOURCE_BAR_SLOTS, CROSSROAD_SIGIL_SLOT] : RESOURCE_BAR_SLOTS,
+    slots: includeSigil ? [CROSSROAD_SIGIL_SLOT] : RESOURCE_BAR_SLOTS,
   });
   const showCostBar = (cost) => {
     const includeSigil = Number(cost?.crossroad_sigil) > 0;
@@ -3159,6 +3159,8 @@ export function renderCastle(root, params = {}) {
       body?.querySelector('#slot-to-upgrade')?.addEventListener('click', () => {
         mode = 'upgrade';
         segment = 'advance';
+        selectedKey = null;
+        primeCostBar();
         renderRow();
       });
       body?.querySelector('#slot-back')?.addEventListener('click', () => {
@@ -3169,6 +3171,8 @@ export function renderCastle(root, params = {}) {
       body?.querySelector('#slot-to-respec')?.addEventListener('click', () => {
         mode = 'upgrade';
         segment = 'respec';
+        selectedKey = null;
+        primeCostBar(true);
         renderRow();
       });
       body?.querySelectorAll('#slot-upgrade-track .portrait-card').forEach(card => {
