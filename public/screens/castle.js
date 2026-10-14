@@ -150,8 +150,14 @@ const CASTLE_TEXT = {
   changeBranch:{ en: 'Change branch',                          ru: 'Сменить ветку' },
   sigilName:   { en: 'Crossroad Sigil',                        ru: 'Печать перепутья' },
   sigilMark:   { en: 'Crossroad Sigil required',               ru: 'Нужна печать перепутья' },
-  needSigil:   { en: 'You need a Crossroad Sigil to change to a different branch.',
-                 ru: 'Чтобы перейти на другую ветку, нужна печать перепутья.' },
+  needSigil:   { en: n => `You need ${n} Crossroad Sigil${n === 1 ? '' : 's'} to change to a different branch.`,
+                 ru: n => {
+                   const mod10 = n % 10, mod100 = n % 100;
+                   const word = mod10 === 1 && mod100 !== 11 ? 'печать'
+                     : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? 'печати'
+                     : 'печатей';
+                   return `Для перехода на другую ветку нужно ${n} ${word} перепутья.`;
+                 } },
   tomeName:    { en: 'Tome of Knowledge',                      ru: 'Том знаний' },
   tomeUse:     { en: 'Use Tome',                               ru: 'Том знаний' },
   tomeConfirm: { en: 'Use a Tome of Knowledge on %s? It grants 100 XP.',
@@ -606,15 +612,9 @@ export function renderCastle(root, params = {}) {
     return pool.filter(b => b.id !== current.id && b.tier != null && b.tier === current.tier && b.unit_id);
   }
 
-  // The Crossroad Sigil options: same-tier buildings reachable down the OTHER
-  // roads out of the nearest fork above this one. Most of the tree has no sibling
-  // at all — a branch that forks at tier 2 and then runs straight leaves its tier
-  // 3 and 4 buildings with nothing to respec into — so without this a wrong turn
-  // could only be undone by demolishing everything below it.
-  //
-  // Mirrors getCrossBranchRespecOptions in data/buildings.js, which is what
-  // /structures/respec validates against; this copy only decides what is OFFERED,
-  // and the server is what charges the Sigil.
+  // Same-tier buildings reachable down the other roads at any fork above this
+  // one. Deeper forks cost more sigils. Mirrors the server helper; this copy
+  // only decides what is offered.
   function crossBranchOptionsFor(buildingId) {
     const pools = buildingPools?.[player.faction];
     if (!pools) return [];
@@ -623,26 +623,40 @@ export function renderCastle(root, params = {}) {
     const pool = pools[current.category] || [];
     const parentOf = id => pool.find(b => (b.upgrades || []).includes(id)) || null;
 
+    const freeIds = new Set(respecOptionsFor(buildingId).map(b => b.id));
+    const pathChildren = new Map();
+    const pathIds = new Set([current.id]);
     let child = current;
-    let fork  = parentOf(current.id);
-    const seen = new Set([current.id]);
-    while (fork && (fork.upgrades || []).length < 2) {
-      if (seen.has(fork.id)) return [];
-      seen.add(fork.id);
-      child = fork;
-      fork  = parentOf(fork.id);
+    let parent = parentOf(child.id);
+    while (parent) {
+      if (pathIds.has(parent.id)) return [];
+      pathIds.add(parent.id);
+      pathChildren.set(parent.id, child.id);
+      child = parent;
+      parent = parentOf(child.id);
     }
-    if (!fork) return [];
-
     const out = [];
-    const walk = id => {
-      const b = pool.find(x => x.id === id);
-      if (!b || seen.has(b.id)) return;
-      seen.add(b.id);
-      if (b.tier === current.tier && b.unit_id) out.push(b);
-      for (const up of b.upgrades || []) walk(up);
-    };
-    for (const road of fork.upgrades || []) if (road !== child.id) walk(road);
+    const added = new Set();
+    let forkDepth = 0;
+    for (const forkId of pathIds) {
+      const fork = pool.find(b => b.id === forkId);
+      if (!fork || (fork.upgrades || []).length < 2) continue;
+      const pathChild = pathChildren.get(fork.id);
+      if (!pathChild) continue;
+      forkDepth++;
+      const visited = new Set();
+      const walk = id => {
+        const b = pool.find(x => x.id === id);
+        if (!b || pathIds.has(b.id) || visited.has(b.id)) return;
+        visited.add(b.id);
+        if (b.tier === current.tier && b.unit_id && !freeIds.has(b.id) && !added.has(b.id)) {
+          out.push({ ...b, sigils_required: forkDepth });
+          added.add(b.id);
+        }
+        for (const up of b.upgrades || []) walk(up);
+      };
+      for (const road of fork.upgrades || []) if (road !== pathChild) walk(road);
+    }
     return out;
   }
 
@@ -2882,7 +2896,7 @@ export function renderCastle(root, params = {}) {
             def: o,
             cost: respecCostFor(o.id, slotLevel),
           })),
-          // A Sigil option costs the same resources PLUS one token, so it can
+          // A Sigil option costs the same resources PLUS its listed tokens, so it can
           // still be refused for the ordinary reason (no gold) as well as the
           // new one (no Sigil). Both are checked at confirm.
           ...sigilOptions.map(o => ({
@@ -2892,7 +2906,7 @@ export function renderCastle(root, params = {}) {
             unit: getUnitByUnitId(o.unit_id),
             def: o,
             cost: respecCostFor(o.id, slotLevel),
-            needsSigil: true,
+            sigilsRequired: o.sigils_required,
           })),
         ];
       }
@@ -2922,7 +2936,7 @@ export function renderCastle(root, params = {}) {
     // until the confirm refuses one of them.
     const labelForChoice = c => {
       const base = unitName(c.unit) || levelLabelFor(c.def, c.kind === 'respec' ? slotLevel : nextLevel);
-      return c.needsSigil ? `✦ ${base}` : base;
+      return c.sigilsRequired ? `✦${c.sigilsRequired > 1 ? `×${c.sigilsRequired}` : ''} ${base}` : base;
     };
 
     // Why the arrow is dim, in the player's terms. A unit with no build to do
@@ -3111,8 +3125,8 @@ export function renderCastle(root, params = {}) {
       if (!c) return;
 
       if (c.kind === 'respec') {
-        if (c.needsSigil && tokenCount('crossroad_sigil') < 1) {
-          alert(CASTLE_TEXT.needSigil[castleLang]);
+        if (c.sigilsRequired && tokenCount('crossroad_sigil') < c.sigilsRequired) {
+          alert(CASTLE_TEXT.needSigil[castleLang](c.sigilsRequired));
           return;
         }
         if (!canAffordCost(c.cost)) {

@@ -4112,32 +4112,36 @@ router.post('/structures/respec', requireAuth, async (req, res) => {
     let target    = options.find(o => o.id === building_id);
 
     // Failing that, the target may be across a fork. That is a different move
-    // with a different price: the ordinary cost AND a Crossroad Sigil, which
-    // cannot be bought. The tier check still holds — getCrossBranchRespecOptions
-    // only ever returns buildings standing at the tier this slot is already at.
-    let usedSigil = false;
+    // with a different price: the ordinary cost AND the required Crossroad
+    // Sigils, which cannot be bought. The tier check still holds —
+    // getCrossBranchRespecOptions only returns buildings at this slot's tier.
+    let sigilsRequired = 0;
     if (!target) {
       target = getCrossBranchRespecOptions(faction, current.building_id).find(o => o.id === building_id);
-      if (target) usedSigil = true;
+      if (target) sigilsRequired = target.sigils_required;
     }
     if (!target) return res.status(400).json({ error: 'That building is not a valid respec for this slot' });
 
     const cost = getRespecCost(faction, target.id, current.level);
-    // The Sigil joins the same bill rather than being spent separately, so a
+    // Sigils join the same bill rather than being spent separately, so a
     // player short of one does not pay the gold and then get refused. One call,
     // one transaction: every line clears or nothing is taken.
     const bill = {};
     for (const [item, amount] of Object.entries(cost)) {
       bill[item === 'gold' ? 'Gold' : item] = amount;
     }
-    if (usedSigil) bill.crossroad_sigil = (bill.crossroad_sigil || 0) + 1;
+    if (sigilsRequired) bill.crossroad_sigil = (bill.crossroad_sigil || 0) + sigilsRequired;
 
     try {
       await spendResources(chat_id, bill);
     } catch (err) {
       const short = shortfallItem(err);
       if (short === 'crossroad_sigil') {
-        return res.status(400).json({ error: 'A Crossroad Sigil is needed to respec across branches', code: 'no_sigil' });
+        const sigilWord = sigilsRequired === 1 ? 'Sigil is' : 'Sigils are';
+        return res.status(400).json({
+          error: `${sigilsRequired} Crossroad ${sigilWord} needed to respec across branches`,
+          code: 'no_sigil',
+        });
       }
       if (short) return res.status(400).json({ error: `Not enough ${short}` });
       throw err;
@@ -4167,7 +4171,13 @@ router.post('/structures/respec', requireAuth, async (req, res) => {
         swappedUnit = { roster_id: entry.id, unit_id: newDef.id };
       }
     }
-    res.json({ structures: updated[0], cost, swapped_unit: swappedUnit, used_sigil: usedSigil });
+    res.json({
+      structures: updated[0],
+      cost,
+      swapped_unit: swappedUnit,
+      used_sigil: sigilsRequired > 0,
+      sigils_spent: sigilsRequired,
+    });
   } catch (err) {
     serverError(res, err);
   }

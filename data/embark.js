@@ -582,7 +582,7 @@ const TOKEN_DEFS = {
     name: 'Crossroad Sigil',
     icon: '✦',
     art:  'assets/icons/recources/crossroad_sigil.png',
-    desc: 'Respec a building into a branch it did not come from, at the same tier. The normal respec cost still applies.',
+    desc: 'Respec a building into a different branch at the same tier. Deeper branch swaps cost more sigils; the normal respec cost still applies.',
     where:'First clear of level 3 in any region.',
   },
   tome_of_knowledge: {

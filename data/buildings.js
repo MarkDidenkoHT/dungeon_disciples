@@ -1543,12 +1543,9 @@ function getRespecOptions(faction, buildingId) {
 // leaves its tier 3 and tier 4 buildings with no sibling at all, so a player who
 // took the wrong road at tier 2 could only get back by demolishing everything.
 //
-// This walks UP to the nearest real fork, then back DOWN every other branch,
-// collecting the buildings that sit at the SAME TIER as the one standing now.
-// Same tier because the unit keeps its XP and its place in the army — this
-// changes which road it took, not how far along it is.
-//
-// Charged a token rather than gold; see the Crossroad Sigil in routes/index.js.
+// Walks up every fork on the current path, then down the roads not taken,
+// collecting same-tier buildings. The number of forks crossed is the sigil
+// cost; direct sibling respecs remain free through getRespecOptions().
 function getCrossBranchRespecOptions(faction, buildingId) {
   const pools = BUILDING_POOLS[faction];
   if (!pools) return [];
@@ -1559,31 +1556,43 @@ function getCrossBranchRespecOptions(faction, buildingId) {
   const pool = pools[current.category] || [];
 
   const parentOf = id => pool.find(b => (b.upgrades || []).includes(id)) || null;
-
-  // Climb until an ancestor offers more than one road, remembering which road we
-  // came up so it can be excluded on the way back down.
-  let child  = current;
-  let fork   = parentOf(current.id);
-  const seen = new Set([current.id]);
-  while (fork && (fork.upgrades || []).length < 2) {
-    if (seen.has(fork.id)) return [];       
-    seen.add(fork.id);
-    child = fork;
-    fork  = parentOf(fork.id);
+  const freeIds = new Set(getRespecOptions(faction, buildingId).map(b => b.id));
+  const pathChildren = new Map();
+  const pathIds = new Set([current.id]);
+  let child = current;
+  let parent = parentOf(child.id);
+  while (parent) {
+    if (pathIds.has(parent.id)) return [];
+    pathIds.add(parent.id);
+    pathChildren.set(parent.id, child.id);
+    child = parent;
+    parent = parentOf(child.id);
   }
-  if (!fork) return [];                     
 
-  // Everything reachable from the roads NOT taken.
-  const out  = [];
-  const walk = id => {
-    const b = pool.find(x => x.id === id);
-    if (!b || seen.has(b.id)) return;
-    seen.add(b.id);
-    if (b.tier === current.tier && b.unit_id) out.push(b);
-    for (const up of b.upgrades || []) walk(up);
-  };
-  for (const road of fork.upgrades || []) {
-    if (road !== child.id) walk(road);
+  const out = [];
+  const added = new Set();
+  let forkDepth = 0;
+  for (const forkId of pathIds) {
+    const fork = pool.find(b => b.id === forkId);
+    if (!fork || (fork.upgrades || []).length < 2) continue;
+    const pathChild = pathChildren.get(fork.id);
+    if (!pathChild) continue;
+    forkDepth++;
+
+    const visited = new Set();
+    const walk = id => {
+      const b = pool.find(x => x.id === id);
+      if (!b || pathIds.has(b.id) || visited.has(b.id)) return;
+      visited.add(b.id);
+      if (b.tier === current.tier && b.unit_id && !freeIds.has(b.id) && !added.has(b.id)) {
+        out.push({ ...b, sigils_required: forkDepth });
+        added.add(b.id);
+      }
+      for (const up of b.upgrades || []) walk(up);
+    };
+    for (const road of fork.upgrades || []) {
+      if (road !== pathChild) walk(road);
+    }
   }
   return out;
 }
