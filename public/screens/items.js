@@ -3,6 +3,7 @@ import { api }                 from '../api.js';
 import { navigate }            from '../api.js';
 import { refreshResourceBar }  from '../api.js';
 import { bootstrapCache }      from '../api.js';
+import { showCostBar as sharedShowCostBar, hideCostBar } from '../cost-bar.js';
 import { ITEM_DEFS, meetsCraftRequirements, craftRequirementText } from '../../data/items.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { REGIONS, getRegionsForMaterial, eventRegionsForMaterial } from '../../data/embark.js';
@@ -12,7 +13,7 @@ import {
   openSheet, closeSheet, getSheetBody,
   applyBackground, buildAbilityModalParts,
   itemName, itemRarity, CRYSTAL_ICONS, GOLD_ICON, unitName,
-  renderItemPassive, renderItemTags, playPageTurnSound,
+  renderItemPassive, renderItemTags, playPageTurnSound, RESOURCE_BAR_SLOTS,
 } from '../utils.js';
 import { mountTransmutation } from '../transmute.js';
 import { mountEngraving } from '../engrave.js';
@@ -693,9 +694,34 @@ export function renderItems(root, params = {}) {
     return Number(def?.cost?.[key]) || 0;
   }
 
+  function craftCostFor(entry) {
+    const def = entry?.kind === 'blueprint' ? entry.def : null;
+    const cost = { ...(def?.cost || {}) };
+    for (const [key, amount] of Object.entries(def?.item_cost || {})) {
+      cost[key] = (Number(cost[key]) || 0) + Number(amount || 0);
+    }
+    return cost;
+  }
+
+  function craftCostSlots(cost, itemCostKeys) {
+    const keys = Object.keys(cost);
+    const resourceKeys = RESOURCE_BAR_SLOTS
+      .map(slot => slot.key)
+      .filter(key => keys.includes(key));
+    const orderedKeys = [...resourceKeys, ...keys.filter(key => !resourceKeys.includes(key))];
+    return orderedKeys.map(key => ({
+      key,
+      label: materialName(key),
+      icon: materialIcon(key),
+      item_type: itemCostKeys.has(key)
+        ? 'item'
+        : (resources.find(row => row.item === key)?.item_type === 'token' ? 'token' : 'inventory'),
+    }));
+  }
+
   // The strip under the resource bar. On the forge it is the trophies a craft
-  // needs; on the Engraving page it is the Valor the player holds, which is the
-  // only currency that page spends.
+  // needs; during crafting both strips narrow to the selected recipe, with the
+  // owned amounts above and the amounts required below.
   //
   // Mounted OUTSIDE this screen's host, next to the resource strip, so it is not
   // hidden by the host being hidden — which makes it the one thing on this
@@ -707,8 +733,32 @@ export function renderItems(root, params = {}) {
   // render() has already run.
   function showTrophyBar() {
     if (!hostVisible) return;
-    if (itemsLayer === 1) { showValorBar(); return; }
+    if (itemsLayer === 1) {
+      hideCostBar();
+      refreshResourceBar(player).catch(() => {});
+      showValorBar();
+      return;
+    }
     const entry = currentList()[selected];
+    if (itemsLayer === 2 && filter === 'craft' && entry?.kind === 'blueprint') {
+      const cost = craftCostFor(entry);
+      const itemCostKeys = new Set(Object.keys(entry.def.item_cost || {}));
+      const slots = craftCostSlots(cost, itemCostKeys);
+      const amountOf = key => itemCostKeys.has(key)
+        ? items.filter(item => itemKeyOf(item) === key && !item.equipped_by).length
+        : resources.find(row => row.item === key)?.amount ?? 0;
+      document.getElementById('roster-trophy-bar')?.remove();
+      refreshResourceBar(player, { slots }).catch(() => {});
+      sharedShowCostBar(cost, {
+        amountOf,
+        lang: L,
+        onMaterialClick: openMaterialSheet,
+        slots,
+      });
+      return;
+    }
+    hideCostBar();
+    refreshResourceBar(player).catch(() => {});
     // Most recipes (47 of 77 items) ask for no trophy at all — they are paid for
     // in gold, crystals and crafted parts. Narrowing the strip to "what THIS
     // craft needs" would leave it blank on all of those, so it falls back to
@@ -956,11 +1006,13 @@ export function renderItems(root, params = {}) {
     onShow: () => { hostVisible = true; load(); },
     onHide: () => {
       hostVisible = false;
+      hideCostBar();
       document.getElementById('roster-trophy-bar')?.remove();
       transmute?.stop();
     },
     destroy: () => {
       hostVisible = false;
+      hideCostBar();
       document.getElementById('roster-trophy-bar')?.remove();
       transmute?.stop();
     },

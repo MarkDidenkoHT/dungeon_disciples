@@ -289,25 +289,35 @@ export async function refreshNavLock(player) {
   });
 }
 
-export async function refreshResourceBar(player, { includeSigil = false } = {}) {
+export async function refreshResourceBar(player, { includeSigil = false, slots: customSlots } = {}) {
   const bar = document.getElementById('resource-bar');
   if (!bar) return;
   const boot = await bootstrapCache.get(player.chat_id);
-  const slots = includeSigil ? [CROSSROAD_SIGIL_SLOT] : RESOURCE_BAR_SLOTS;
-  bar.classList.toggle('resource-bar--with-sigil', includeSigil);
+  const slots = customSlots || (includeSigil ? [CROSSROAD_SIGIL_SLOT] : RESOURCE_BAR_SLOTS);
+  bar.classList.toggle('resource-bar--with-sigil', slots.some(slot => slot.item_type === 'token'));
   const find = slot => {
-    const inventory = slot.item_type === 'token' ? boot.tokens || [] : boot.resources || [];
+    if (slot.item_type === 'item') {
+      const key = slot.key;
+      return (boot.items || []).filter(item =>
+        (item.item_stats?.key || item.item_stats?.icon) === key && !item.equipped_by).length;
+    }
+    const inventory = slot.item_type === 'token'
+      ? boot.tokens || []
+      : [...(boot.resources || []), ...(boot.trophies || []), ...(boot.tokens || [])];
     return inventory.find(r => r.item === slot.key) || { amount: 0 };
   };
-  // Respec mode replaces the regular resources with the one currency relevant
-  // to the current choice; ordinary screens keep their full resource strip.
+  // Contextual slot lists replace the regular resources with the materials
+  // relevant to the current choice; ordinary screens keep their full strip.
   // The daily-tasks and errands buttons live OUTSIDE this element (see the
   // resource-bar-row in main.js), so rebuilding the strip never touches them.
-  bar.innerHTML = slots.map(slot => `
+  bar.innerHTML = slots.map(slot => {
+    const amount = find(slot);
+    return `
     <div class="res-bar-item">
       <span class="res-bar-icon">${slot.icon}</span>
-      <span class="res-bar-val">${find(slot).amount}</span>
-    </div>`).join('');
+      <span class="res-bar-val">${typeof amount === 'number' ? amount : amount.amount}</span>
+    </div>`;
+  }).join('');
 }
 
 let _navigate = null;
