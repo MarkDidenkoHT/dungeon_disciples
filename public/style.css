@@ -4098,6 +4098,41 @@ button.cost-bar-item:active { transform: scale(0.9); }
   .battle-cell--acting::after { animation: none; }
 }
 
+.battle-cell--acting--enemy {
+  outline: 1px solid rgba(200, 74, 58, 0.5) !important;
+  background: #2a1010 !important;
+}
+
+.battle-cell--acting--enemy::after,
+.battle-cell--acting-enemy::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 3px;
+  border-radius: 3px;
+  background: conic-gradient(from var(--accent-spin),
+    #8f2018 0deg,
+    #c84a3a 70deg,
+    #ff7a66 110deg,
+    #c84a3a 150deg,
+    #8f2018 230deg,
+    rgba(200, 74, 58, 0.15) 300deg,
+    #8f2018 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask-composite: exclude;
+  filter: drop-shadow(0 0 4px rgba(200, 74, 58, 0.65));
+  animation: accent-ring-spin 1.6s linear infinite;
+  pointer-events: none;
+  z-index: 6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .battle-cell--acting--enemy::after,
+  .battle-cell--acting-enemy::after { animation: none; }
+}
+
 .battle-cell--targetable {
   outline: 2px dashed #c84a3a !important;
   background: #2a1010 !important;

@@ -754,14 +754,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return !(e.type === 'pool' && e.actorId == null);
   }
   const ROUND_BREATH_MS = 500;
-  // The beat between one character's turn and the next.
-  //
-  // Nothing in the loop below paced TURNS — it awaited each animation and moved
-  // straight on, and an entry with no animation (a defend, a skip, a bark, a
-  // passive note) cost nothing at all. That is invisible when the player acts
-  // between every enemy, and it is the whole experience when the enemy leads
-  // initiative: three or four AI turns arrive in ONE batch and play end to end
-  // as a single blur, with the log only readable once it is over.
+  // An enemy's red acting ring is a telegraph: let it read before starting the
+  // action animation, without adding a second pause after the previous action.
+  const ENEMY_TURN_PREVIEW_MS = 350;
+  // The beat between player-controlled turns in a playback batch.
   const TURN_GAP_MS = 450;
   // Litany pacing (docs/combat-barks-design.md §5.5). A chorus verse holds the
   // playback for LITANY_VERSE_MS including its own strike animation; the lead's
@@ -803,10 +799,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const c = state.combatants.find(x => x.unit_name === e.actorName && x.cellIndex === e.actorCell);
       return c?.id ?? null;
     };
-    const queueNow = () => drawInitQueue(
+    const queueNow = (activeId = null) => drawInitQueue(
       state.combatants
-        .filter(c => (c.alive || dyingHere.has(c.id)) && !dead.has(c.id) && !acted.has(c.id))
-        .sort((a, b) => b.initiative - a.initiative));
+        .filter(c => (c.alive || dyingHere.has(c.id) || c.id === activeId) &&
+          !dead.has(c.id) && (!acted.has(c.id) || c.id === activeId))
+        .sort((a, b) => b.initiative - a.initiative),
+      activeId);
     queueNow();
 
     // Whose turn is currently playing. Keyed off the actor ON THE ENTRY rather
@@ -814,9 +812,22 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // name and cell for everything but a bark), and a turn that cannot be looked
     // up is still a different character stepping up and still needs its beat.
     let lastTurnKey = null;
+    let activeActorId = null;
     let turnsPlayed = 0;
     let pendingLeadIn = leadIn;
     const turnKeyOf = e => `${e.actorId ?? ''}|${e.actorName ?? ''}|${e.actorCell ?? ''}`;
+    const setActiveActor = id => {
+      if (activeActorId) {
+        root.querySelector(`.battle-cell[data-id="${activeActorId}"]`)
+          ?.classList.remove('battle-cell--acting--enemy', 'battle-cell--acting-enemy');
+      }
+      activeActorId = id;
+      const active = id && state.combatants.find(c => c.id === id);
+      if (active?.side === 'enemy') {
+        root.querySelector(`.battle-cell[data-id="${id}"]`)
+          ?.classList.add('battle-cell--acting--enemy', 'battle-cell--acting-enemy');
+      }
+    };
 
     for (let entryIdx = 0; entryIdx < newEntries.length; entryIdx++) {
       const entry = newEntries[entryIdx];
@@ -838,20 +849,21 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         await new Promise(r => setTimeout(r, ROUND_BREATH_MS));
       } else if (isTurnEntry(entry)) {
         const id = idFor(entry);
-        if (id && !acted.has(id)) { acted.add(id); queueNow(); }
         const turnKey = turnKeyOf(entry);
         if (turnKey !== lastTurnKey) {
+          if (activeActorId) acted.add(activeActorId);
           lastTurnKey = turnKey;
+          setActiveActor(id);
+          queueNow(id);
+          const active = id && state.combatants.find(c => c.id === id);
           if (pendingLeadIn) {
             pendingLeadIn = false;
             await new Promise(r => setTimeout(r, ROUND_BREATH_MS));
+          } else if (active?.side === 'enemy') {
+            await new Promise(r => setTimeout(r, ENEMY_TURN_PREVIEW_MS));
+          } else if (turnsPlayed > 0) {
+            await new Promise(r => setTimeout(r, TURN_GAP_MS));
           }
-          // Held AFTER the queue has moved, so the beat is spent looking at the
-          // order the next unit is stepping out of — same shape as the round
-          // breath. Not before the FIRST turn of a batch: the player has just
-          // tapped an action and is waiting on it, and a round boundary has
-          // already had its own pause.
-          if (turnsPlayed > 0) await new Promise(r => setTimeout(r, TURN_GAP_MS));
           turnsPlayed++;
         }
       }
@@ -1058,6 +1070,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       // enemy at full health right through the enemy's own turn, and every bar
       // on the field then snapped at once.
       applyEntryHp(entry);
+    }
+    if (activeActorId) {
+      acted.add(activeActorId);
+      setActiveActor(null);
+      queueNow();
     }
     console.log('[battle] playbackSequence END');
   }
@@ -2398,9 +2415,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   }
 
   function patchCell(cellEl, occ, actor, validTargetKeys) {
-    const isActor  = actor?.id === occ.id;
-    const isTarget = validTargetKeys.has(occ.id);
-    const hpPct    = occ.battle_hp / occ.max_hp;
+    const isActor       = actor?.id === occ.id;
+    const isEnemyActor  = actor?.side === 'enemy';
+    const isTarget      = validTargetKeys.has(occ.id);
+    const hpPct         = occ.battle_hp / occ.max_hp;
 
     // Same stacking ward as in renderSide. It has to be recomputed HERE too:
     // patchCell rewrites className wholesale, so without this a cell that was
@@ -2408,7 +2426,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const aegisLevel = aegisLevelFor(occ);
 
     let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''} ${aegisLevel ? 'battle-cell--aegis' : ''}`;
-    if (isActor)               cls += ' battle-cell--acting';
+    if (isActor)               cls += isEnemyActor ? ' battle-cell--acting battle-cell--acting--enemy' : ' battle-cell--acting';
     else if (isTarget)         cls += ' battle-cell--targetable';
     else if (selectedCombatant?.id === occ.id) cls += ' battle-cell--selected';
     else if (occ.side === 'player') cls += ' battle-cell--placed';
@@ -2473,6 +2491,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           : '';
 
         const isActor    = actor?.id === occ.id;
+        const isEnemyActor = actor?.side === 'enemy';
         const isTarget   = validTargetKeys.has(occ.id);
         const isSelected = selectedCombatant?.id === occ.id;
         const hpPct      = occ.battle_hp / occ.max_hp;
@@ -2481,7 +2500,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         const aegisLevel = aegisLevelFor(occ);   // see aegisLevelFor above
 
         let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''} ${aegisLevel ? 'battle-cell--aegis' : ''}`;
-        if (isActor)              cls += ' battle-cell--acting';
+        if (isActor)              cls += isEnemyActor ? ' battle-cell--acting battle-cell--acting--enemy' : ' battle-cell--acting';
         else if (isTarget)        cls += ' battle-cell--targetable';
         else if (isSelected)      cls += ' battle-cell--selected';
         else if (side === 'player') cls += ' battle-cell--placed';
@@ -2511,11 +2530,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // During playback `state` is already the END-of-turn state the server sent, so
   // its acted_this_round flags describe the wrong moment — playbackSequence
   // tracks who has gone and hands the remainder in here instead.
-  function drawInitQueue(order) {
+  function drawInitQueue(order, activeId = null) {
     if (!ui?.initQueue) return;
     ui.initQueue.innerHTML = order.map((c, i) => {
       const portrait = getPortraitUrl(c);
-      const isActive = i === 0;
+      const isActive = activeId ? c.id === activeId : i === 0;
       const side     = c.side;
       // The queue card used to show the portrait alone, so a unit one hit from
       // death looked exactly like one at full health — the player had to find it
