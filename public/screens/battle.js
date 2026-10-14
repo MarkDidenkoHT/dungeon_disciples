@@ -221,6 +221,7 @@ const BT = {
   actPassive:    { en: 'Passive',       ru: 'Пассивная' },
   actHeal:       { en: 'Heal',          ru: 'Лечение' },
   actAttack:     { en: 'Attack',        ru: 'Атака' },
+  actEmpower:    { en: 'Empower',       ru: 'Усиление' },
   passiveNone:   { en: 'None',          ru: 'Нет' },
   tapForStats:   { en: 'Tap a unit to see stats', ru: 'Нажмите на юнита, чтобы увидеть характеристики' },
   noUnitData:    { en: 'Unit data unavailable',   ru: 'Данные юнита недоступны' },
@@ -1144,6 +1145,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (key === 'holy_shock') return BTx('actHolyShock');
     if (key === 'shield')    return BTx('actShield');
     if (key === 'decay')     return BTx('actDecay');
+    if (key === 'empower')   return BTx('actEmpower');
     const actionType = typeof actionKey === 'object' ? actionKey?.action_type : null;
     if (actionType === 'none') return BTx('actPassive');
     if (unit?.buffs?._mothers_kiss || unit?._mothers_kiss) return BTx('actMothersKiss');
@@ -2166,7 +2168,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // direction asked for — 0 in the other direction so only one of the two
   // icons is ever active.
   function dmgMultPct(occ, dir) {
-    const m = Number(st(occ, '_dmg_mult') ?? 1) || 1;
+    const m = (Number(st(occ, '_dmg_mult') ?? 1) || 1) *
+              (1 + (Number(st(occ, '_empower_bonus_pct')) || 0) / 100);
     if (dir === 'up')   return m > 1 ? Math.round((m - 1) * 100) : 0;
     return m < 1 ? Math.round((1 - m) * 100) : 0;
   }

@@ -937,6 +937,15 @@ class BattleEngine {
     const tt   = data.target_type || data.action?.target_type;
     return tt === 'ally';
   }
+  isDamageDealer(unit) {
+    const data = unit.unit_data || unit;
+    const targetType = data.target_type || data.action?.target_type;
+    return targetType === 'enemy' && !!data.damage_source;
+  }
+  clearEmpower(unit) {
+    if (!unit) return;
+    unit._empower_bonus_pct = 0;
+  }
   getValidTargets(actor, forAbility = false) {
     if (forAbility) {
       if (actor._taunted_by_id != null) return [];
@@ -958,6 +967,12 @@ class BattleEngine {
 
     if (actionKey === 'sacrifice') {
       return this.combatants.filter(t => t.alive && t.side === actor.side && t.id !== actor.id);
+    }
+
+    if (actionKey === 'empower') {
+      return this.combatants.filter(t =>
+        t.alive && !t._untargetable && t.side === actor.side && this.isDamageDealer(t)
+      );
     }
 
     // Holy Shock is the only action that reaches BOTH sides: an ally is mended,
@@ -1290,6 +1305,24 @@ class BattleEngine {
       return this.afterAction(actor);
     }
 
+    if (poolAction === 'empower') {
+      const previousPct = Number(target._empower_bonus_pct) || 0;
+      if (previousPct > 0) this.clearEmpower(target);
+      const bonusPct = Math.max(0, Number(actor.unit_data?.action_power ?? actor.unit_data?.action?.value ?? 0)) * 10;
+      target._empower_bonus_pct = bonusPct;
+      this.pushLog({
+        type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+        targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
+        value: bonusPct,
+        message: `${actor.unit_name} empowers ${target.unit_name} — +${bonusPct}% damage on the next attack`,
+      });
+      if (actor.id !== target.id) {
+        this.fireTrigger('on_receive_ally_buff', { actor, target, dmg: 0, dying: null });
+      }
+      actor.acted_this_round = true;
+      return this.afterAction(actor);
+    }
+
     if (this.isHealer(actor) || holyShockHeal) {
       if (actor._mothers_kiss) {
         return this.doMothersKiss(actor);
@@ -1320,6 +1353,7 @@ class BattleEngine {
       // runs per-target dodge and all the on-hit machinery.
       const maxTargets = Math.max(1, Number(actor.unit_data?.targets ?? 1));
       if (maxTargets > 1) {
+        actor._empower_used_this_action = (actor._empower_bonus_pct ?? 0) > 0;
         const list = this.getValidTargets(actor).slice(0, maxTargets);
         for (const tgt of list) {
           if (!actor.alive) break;
@@ -1361,6 +1395,7 @@ class BattleEngine {
           }
         }
       }
+      actor._empower_used_this_action = (actor._empower_bonus_pct ?? 0) > 0;
       // Dodge — every Nth physical attack against this unit is avoided entirely.
       if ((actor.unit_data?.damage_source ?? 'physical') === 'physical') {
         const dodgeDef = this.resolveAllPassiveDefs(target).find(d => d.params?.dodge_every != null);
@@ -2163,6 +2198,10 @@ class BattleEngine {
     return this.afterAction(actor);
   }
   afterAction(actor) {
+    if (actor?._empower_used_this_action) {
+      this.clearEmpower(actor);
+      actor._empower_used_this_action = false;
+    }
     // A borrowed turn is not the striker's turn (see executeAction). Undo the
     // bookkeeping BEFORE the round check below — otherwise a commanded unit that
     // was the last one left to act ends the round while its own turn is still
@@ -3507,6 +3546,7 @@ class BattleEngine {
           _debuff_reduction:   c._debuff_reduction,
           _healing_reduction:  c._healing_reduction,
           _dmg_mult:           c._dmg_mult,
+          _empower_bonus_pct:  c._empower_bonus_pct ?? 0,
           _fear_dmg_reduction: c._fear_dmg_reduction,
           _terror_reduction:   c._terror_reduction,
           _terror_rounds:      c._terror_rounds,
@@ -3647,6 +3687,7 @@ class BattleEngine {
       c._debuff_reduction  = b._debuff_reduction  ?? 0;
       c._healing_reduction = b._healing_reduction ?? 0;
       c._dmg_mult          = b._dmg_mult          ?? 1;
+      c._empower_bonus_pct = b._empower_bonus_pct ?? 0;
       c._fear_dmg_reduction = b._fear_dmg_reduction ?? 0;
       c._terror_reduction  = b._terror_reduction  ?? 0;
       c._terror_rounds     = b._terror_rounds     ?? 0;

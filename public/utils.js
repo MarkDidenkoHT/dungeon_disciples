@@ -358,6 +358,7 @@ export function getActionLabel(actionKey) {
     attack:       'Attack',
     heal:         'Heal',
     repair:       'Repair',
+    empower:      'Empower',
     'mend flesh': 'Mend Flesh',
     sacrifice:    'Sacrifice',
     holy_shock:   'Holy Shock',   // heals an ally OR strikes an enemy — see getValidTargets
