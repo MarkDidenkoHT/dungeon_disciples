@@ -84,6 +84,7 @@ export function assetUrl(path) {
 // a CSS variable declared with a CDN URL. On fallback they are rewritten here.
 const CSS_IMAGE_VARS = [
   ['--img-battle-grid',        '/assets/icons/ui/battle_grid.png'],
+  ['--img-combat-log',         '/assets/icons/ui/combat_log.jpg'],
   ['--img-nav-active',         '/assets/icons/ui/bottom-nav-active.png'],
   ['--img-nav',                '/assets/icons/ui/bottom-nav.png'],
   ['--img-bottom-ui',          '/assets/icons/ui/bottom_ui.jpg'],
