@@ -293,16 +293,18 @@ export async function refreshResourceBar(player) {
   const bar = document.getElementById('resource-bar');
   if (!bar) return;
   const boot = await bootstrapCache.get(player.chat_id);
-  const inventory = boot.resources || [];
-  const find = name => inventory.find(r => r.item === name) || { amount: 0 };
-  // Resources only — 7 slots: gold + 6 crystals, drawn from RESOURCE_BAR_SLOTS so
-  // the build-cost bar that sits under this strip lines up column for column.
+  const find = slot => {
+    const inventory = slot.item_type === 'token' ? boot.tokens || [] : boot.resources || [];
+    return inventory.find(r => r.item === slot.key) || { amount: 0 };
+  };
+  // Resources plus the Crossroad Sigil, drawn from RESOURCE_BAR_SLOTS so the
+  // build-cost bar that sits under this strip lines up column for column.
   // The daily-tasks and errands buttons live OUTSIDE this element (see the
   // resource-bar-row in main.js), so rebuilding the strip never touches them.
   bar.innerHTML = RESOURCE_BAR_SLOTS.map(slot => `
     <div class="res-bar-item">
       <span class="res-bar-icon">${slot.icon}</span>
-      <span class="res-bar-val">${find(slot.key).amount}</span>
+      <span class="res-bar-val">${find(slot).amount}</span>
     </div>`).join('');
 }
 

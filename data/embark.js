@@ -484,9 +484,8 @@ function getEncounter(region_id, level) {
 }
 
 // ── Where does X drop? ──────────────────────────────────────────────────────
-// material -> region ids, so tapping a crafting ingredient can say where to go.
-// Materials are crystal names ('Crystals_Fire'), trophy ids ('grave_dust'), or
-// 'Gold'.
+// material -> region ids, so tapping a shortfall can say where to go. Materials
+// include crystals, trophies, 'Gold', and tokens awarded on first clears.
 let _dropIndex = null;
 function buildDropIndex() {
   const index = {};
@@ -503,6 +502,7 @@ function buildDropIndex() {
       if (rw.gold) add('Gold', region.id);
       for (const c of rw.crystals) add(c.type, region.id);
       for (const id of Object.keys(rw.trophies)) add(id, region.id);
+      for (const id of Object.keys(getFirstClearTokens(level) || {})) add(id, region.id);
     }
   }
   return Object.fromEntries(Object.entries(index).map(([k, v]) => [k, [...v]]));
@@ -581,9 +581,9 @@ const TOKEN_DEFS = {
     id:   'crossroad_sigil',
     name: 'Crossroad Sigil',
     icon: '✦',
-    art:  'assets/icons/recources/crossroad_sigil.png',
-    desc: 'Respec a building into a different branch at the same tier. Deeper branch swaps cost more sigils; the normal respec cost still applies.',
-    where:'First clear of level 3 in any region.',
+    art:  'assets/icons/recources/crossroad_sigil.svg',
+    desc: 'Respec a building into a different branch at the same tier. Every swap costs Crossroad Sigils; deeper branch swaps cost more.',
+    where:'First clear of levels 3 and 7 in any region.',
   },
   tome_of_knowledge: {
     id:   'tome_of_knowledge',

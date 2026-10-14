@@ -365,7 +365,6 @@ export function renderCastle(root, params = {}) {
   let trophyInventory    = [];
   let tokenInventory     = [];
   let resourceInventory  = [];
-  let respecCostPct      = 25;   // overwritten from /bootstrap
   // The Temple's ladder, from /bootstrap. The client draws all five columns
   // whatever the Temple's level is - a locked column is a promise, the same way
   // a locked castle slot is - so it needs the count and the price, not just the
@@ -462,7 +461,6 @@ export function renderCastle(root, params = {}) {
     heroMaxLevel       = buildingsResp.hero_max_level || 4;
     throneMaxLevel     = buildingsResp.throne_max_level || 4;
     mercenaryBuildings  = buildingsResp.mercenary_buildings || {};
-    respecCostPct       = buildingsResp.respec_cost_pct ?? 25;
     callingGateLevel    = buildingsResp.calling_building_level ?? callingGateLevel;
     callingChangeCost   = buildingsResp.calling_change_cost || callingChangeCost;
     devotionBlocks      = buildingsResp.devotion_blocks?.length ? buildingsResp.devotion_blocks : DEVOTION_BLOCKS;
@@ -583,8 +581,8 @@ export function renderCastle(root, params = {}) {
   // data/buildings.js is CommonJS (server-side only) and cannot be imported
   // here — but /bootstrap already sends the whole pool table, so the respec
   // rules are derived from that. Kept deliberately identical to
-  // getRespecOptions/getRespecCost in data/buildings.js, which the server
-  // enforces; this copy only decides what the UI offers.
+  // getRespecOptions in data/buildings.js, which the server enforces; this copy
+  // only decides what the UI offers.
   // Must agree with getRespecOptions in data/buildings.js, which is what the
   // server validates against — this had drifted into a second copy of the old
   // category+tier rule, so the sheet offered swaps /structures/respec refuses.
@@ -660,18 +658,6 @@ export function renderCastle(root, params = {}) {
     return out;
   }
 
-  function respecCostFor(buildingId, level) {
-    const def = getBuildingDef(player.faction, buildingId);
-    if (!def) return {};
-    const base = def.cost || (def.category === 'throne' ? throneUpgradeCosts[level] : null) || {};
-    const out = {};
-    for (const [item, amount] of Object.entries(base)) {
-      const scaled = Math.ceil(Number(amount) * respecCostPct / 100);
-      if (scaled > 0) out[item] = scaled;
-    }
-    return out;
-  }
-
   // Dwellings are paid for in gold + the faction's crystal now (see
   // applyBuildingCosts in data/buildings.js), so the sheet has to say what a
   // build costs and refuse to offer one the player cannot pay for.
@@ -684,26 +670,31 @@ export function renderCastle(root, params = {}) {
   // both are searched.
   function amountOf(item) {
     const key = item === 'gold' ? 'Gold' : item;
-    const row = resourceInventory.find(r => r.item === key)
-             || trophyInventory.find(r => r.item === key);
+    const row = key === 'crossroad_sigil'
+      ? tokenInventory.find(r => r.item === key)
+      : resourceInventory.find(r => r.item === key)
+        || trophyInventory.find(r => r.item === key);
     return row ? Number(row.amount) : 0;
   }
 
-  // Tokens are their own item_type and are NOT searched by amountOf — nothing is
-  // ever PRICED in them, so they must not turn up as a payable cost. They are a
-  // separate gate, asked about by name.
+  // Tokens are their own item_type, separate from resources and trophies.
   function tokenCount(id) {
     const row = tokenInventory.find(r => r.item === id);
     return row ? Number(row.amount) : 0;
   }
 
   function canAffordCost(cost) {
-    return Object.entries(cost || {}).every(([item, amt]) => amountOf(item) >= Number(amt));
+    return Object.entries(cost || {}).every(([item, amt]) =>
+      (item === 'crossroad_sigil' ? tokenCount(item) : amountOf(item)) >= Number(amt));
   }
 
   function costLabelFor(cost) {
     const parts = Object.entries(cost || {})
-      .map(([item, amt]) => `${amt} ${item === 'gold' ? 'Gold' : item.replace('Crystals_', '')}`);
+      .map(([item, amt]) => `${amt} ${
+        item === 'gold' ? 'Gold'
+          : item === 'crossroad_sigil' ? CASTLE_TEXT.sigilName[castleLang]
+            : item.replace('Crystals_', '')
+      }`);
     return parts.length ? parts.join(' + ') : CASTLE_TEXT.freeCost[castleLang];
   }
 
@@ -717,7 +708,7 @@ export function renderCastle(root, params = {}) {
   //
   // Costs are keyed 'gold' + 'Crystals_*' (data/buildings.js) — mercenary
   // upgrades are priced in trophies instead, which have no column in the strip
-  // above, so those are appended after the seven fixed slots.
+  // above, so those are appended after the resource and token slots.
   const costBarOpts = () => ({
     amountOf,
     lang: castleLang,
@@ -2852,12 +2843,12 @@ export function renderCastle(root, params = {}) {
 
     // Same-tier siblings. Respec used to live behind the Deconstruct pickaxe,
     // beside "the unit is destroyed for good" — but it is not destructive: same
-    // tier, keeps the unit's XP, costs a fraction of the new building. It is the
+    // tier and keeps the unit's XP. It costs only Crossroad Sigils. It is the
     // same question upgrading asks (what does this slot become?), so it belongs
     // in the same place, and Deconstruct is left holding only Demolish.
     const respecOptions = respecOptionsFor(state.building_id) || [];
-    // Offered in the SAME list as free siblings, marked, and priced with the
-    // Sigil on top. A separate tab would hide that these are the same decision —
+    // Offered in the SAME list as siblings, marked, and priced with sigils. A
+    // separate tab would hide that these are the same decision —
     // "what does this slot become?" — asked one fork higher up.
     const sigilOptions  = crossBranchOptionsFor(state.building_id) || [];
     const sigilsHeld    = tokenCount('crossroad_sigil');
@@ -2894,18 +2885,17 @@ export function renderCastle(root, params = {}) {
             buildingId: o.id,
             unit: getUnitByUnitId(o.unit_id),
             def: o,
-            cost: respecCostFor(o.id, slotLevel),
+            cost: { crossroad_sigil: 1 },
+            sigilsRequired: 1,
           })),
-          // A Sigil option costs the same resources PLUS its listed tokens, so it can
-          // still be refused for the ordinary reason (no gold) as well as the
-          // new one (no Sigil). Both are checked at confirm.
+          // Deeper choices cost more sigils according to how many forks they cross.
           ...sigilOptions.map(o => ({
             kind: 'respec',
             key: o.id,
             buildingId: o.id,
             unit: getUnitByUnitId(o.unit_id),
             def: o,
-            cost: respecCostFor(o.id, slotLevel),
+            cost: { crossroad_sigil: o.sigils_required },
             sigilsRequired: o.sigils_required,
           })),
         ];
@@ -2931,9 +2921,7 @@ export function renderCastle(root, params = {}) {
       });
     }
 
-    // A Sigil option is marked in the label itself. It sits in the same list as
-    // the free sibling swaps, and without the mark the two are indistinguishable
-    // until the confirm refuses one of them.
+    // Sigil costs are marked in the label and shown in the aligned cost bar.
     const labelForChoice = c => {
       const base = unitName(c.unit) || levelLabelFor(c.def, c.kind === 'respec' ? slotLevel : nextLevel);
       return c.sigilsRequired ? `✦${c.sigilsRequired > 1 ? `×${c.sigilsRequired}` : ''} ${base}` : base;
@@ -3649,8 +3637,8 @@ export function renderCastle(root, params = {}) {
   }
 
   // ── Deconstruction ────────────────────────────────────────────────────────
-  // Respec swaps the slot for a same-tier sibling at RESPEC_COST_PCT of its
-  // cost; Demolish empties it entirely. The throne is respec-only — a player
+  // Respec swaps the slot for a same-tier branch for Crossroad Sigils only;
+  // Demolish empties it entirely. The throne is respec-only — a player
   // without a throne has no hero. Both are server-validated; this is the UI.
   // Demolish only. Respec used to sit here too, one button above "the unit is
   // destroyed for good" — but it is the least destructive thing in the castle:

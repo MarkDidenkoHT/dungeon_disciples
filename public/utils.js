@@ -217,6 +217,7 @@ export const CRYSTAL_ICONS = {
 };
 
 export const GOLD_ICON = `<img src="${assetUrl('/assets/icons/recources/gold.png')}" class="res-icon-img" alt="Gold">`;
+export const CROSSROAD_SIGIL_ICON = `<img src="${assetUrl('/assets/icons/recources/crossroad_sigil.svg')}" class="res-icon-img" alt="Crossroad Sigil">`;
 
 // The resource strip's slots, in the order they are drawn. Anything that has to
 // line up COLUMN-WISE with that strip — the build-cost bar under it — renders
@@ -229,6 +230,7 @@ export const RESOURCE_BAR_SLOTS = [
   { key: 'Crystals_Nature', label: 'Nature', icon: CRYSTAL_ICONS.Crystals_Nature },
   { key: 'Crystals_Frost',  label: 'Frost',  icon: CRYSTAL_ICONS.Crystals_Frost },
   { key: 'Crystals_Air',    label: 'Air',    icon: CRYSTAL_ICONS.Crystals_Air },
+  { key: 'crossroad_sigil', label: 'Crossroad Sigil', icon: CROSSROAD_SIGIL_ICON, item_type: 'token' },
 ];
 
 export const SCREEN_BACKGROUNDS = {

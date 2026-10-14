@@ -1490,12 +1490,10 @@ applyBuildingCosts();
 // Two operations on an occupied slot:
 //   RESPEC  swap the building for a SIBLING — same category, same tier — so a
 //           player who took the wrong branch of an upgrade tree is not stuck
-//           with it. Costs RESPEC_COST_PCT of the new building's build cost.
+//           with it. Costs Crossroad Sigils rather than resources.
 //   CLEAR   demolish the slot outright, freeing it for a different line. The
 //           throne is exempt: it can be respecced but never cleared, since a
 //           player without a throne has no hero and no game.
-const RESPEC_COST_PCT = 25;
-
 // Same category and same tier as `buildingId`, excluding itself. For the throne
 // this is the other branch at the current level (…_2_a <-> …_2_b).
 // A respec swaps a building for a SIBLING — another branch the same parent
@@ -1545,7 +1543,7 @@ function getRespecOptions(faction, buildingId) {
 //
 // Walks up every fork on the current path, then down the roads not taken,
 // collecting same-tier buildings. The number of forks crossed is the sigil
-// cost; direct sibling respecs remain free through getRespecOptions().
+// cost; direct sibling swaps are offered by getRespecOptions() and cost one.
 function getCrossBranchRespecOptions(faction, buildingId) {
   const pools = BUILDING_POOLS[faction];
   if (!pools) return [];
@@ -1595,26 +1593,6 @@ function getCrossBranchRespecOptions(faction, buildingId) {
     }
   }
   return out;
-}
-
-// A percentage of a cost map, rounded up so a respec is never free.
-function scaleCost(cost, pct) {
-  const out = {};
-  for (const [item, amount] of Object.entries(cost || {})) {
-    const scaled = Math.ceil(Number(amount) * pct / 100);
-    if (scaled > 0) out[item] = scaled;
-  }
-  return out;
-}
-
-// What a respec into `buildingId` costs. Throne buildings carry no `cost` of
-// their own — they are paid for through THRONE_UPGRADE_COSTS — so fall back to
-// the cost of the level the slot currently sits at.
-function getRespecCost(faction, buildingId, level) {
-  const def = getBuildingDef(faction, buildingId);
-  if (!def) return {};
-  const base = def.cost || (def.category === 'throne' ? THRONE_UPGRADE_COSTS[level] : null) || {};
-  return scaleCost(base, RESPEC_COST_PCT);
 }
 
 // Buildings every castle starts with, at level 1, without paying for them.
@@ -1967,9 +1945,6 @@ module.exports = {
   supplyLabel,
   FACTION_CRYSTAL,
   BUILDING_COSTS,
-  RESPEC_COST_PCT,
   getRespecOptions,
   getCrossBranchRespecOptions,
-  getRespecCost,
-  scaleCost,
 };

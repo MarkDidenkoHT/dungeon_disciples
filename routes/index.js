@@ -9,7 +9,7 @@ const { UNITS } = require('../data/units');
 const { REGIONS, getEncounter, getLevelRewards, getFirstClearTokens, TOME_XP } = require('../data/embark');
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
-const { RESPEC_COST_PCT, getRespecOptions, getCrossBranchRespecOptions, getRespecCost, FACTION_CRYSTAL } = require('../data/buildings');
+const { getRespecOptions, getCrossBranchRespecOptions, FACTION_CRYSTAL } = require('../data/buildings');
 const { craftingUnlocked, engravingUnlocked, litaniesUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, DEFAULT_BUILDINGS, MERCENARY_BUILDINGS, SUPPLY_ITEM_TYPE, SUPPLY_ITEMS, SUPPLY_TICK_MINUTES, EMBARK_SUPPLY_COST, maxSupplies, supplyItemName, getUnitHpBonus, callingChangeUnlocked, callingTiersOpen, CALLING_BUILDING, CALLING_BUILDING_LEVEL, CALLING_TIERS } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
@@ -1775,7 +1775,6 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
         throne_upgrade_costs: THRONE_UPGRADE_COSTS,
         base_max_unit_tier:   maxUnitTier({}),
         mercenary_buildings:  MERCENARY_BUILDINGS,
-        respec_cost_pct:      RESPEC_COST_PCT,
         // The calling screen is the castle's left page, and the Temple is its
         // ladder. The client draws five columns whatever happens and needs the
         // gate and the price to label them.
@@ -4086,10 +4085,9 @@ router.post('/roster/levelup', requireAuth, async (req, res) => {
 });
 
 // ── Deconstruction ──────────────────────────────────────────────────────────
-// Respec: swap a slot's building for a sibling of the SAME category and tier,
-// for RESPEC_COST_PCT of the new building's cost. The slot keeps its level and
-// the unit it granted keeps its XP — only which unit it is changes. The throne
-// may be respecced (a different hero line at the same level) but never cleared.
+// Respec: swap a slot's building for a sibling or alternate branch at the same
+// tier. The slot keeps its level and the unit it granted keeps its XP; sigils
+// are the only cost. The throne may be respecced but never cleared.
 router.post('/structures/respec', requireAuth, async (req, res) => {
   const { chat_id, slot, building_id } = req.body;
   if (!chat_id || !slot || !building_id) return res.status(400).json({ error: 'chat_id, slot, and building_id required' });
@@ -4106,31 +4104,21 @@ router.post('/structures/respec', requireAuth, async (req, res) => {
     const current   = buildings[slot];
     if (!current || !current.building_id) return res.status(400).json({ error: 'Nothing to respec in this slot' });
 
-    // The target must be an offered sibling — same category, same tier. This is
-    // the whole guard against respeccing into a higher tier for a quarter price.
+    // A direct sibling costs one sigil. A target across another fork costs the
+    // number assigned by its depth on the branch tree.
     const options = getRespecOptions(faction, current.building_id);
     let target    = options.find(o => o.id === building_id);
+    let sigilsRequired = target ? 1 : 0;
 
-    // Failing that, the target may be across a fork. That is a different move
-    // with a different price: the ordinary cost AND the required Crossroad
-    // Sigils, which cannot be bought. The tier check still holds —
+    // Failing that, the target may be across a fork. The tier check still holds —
     // getCrossBranchRespecOptions only returns buildings at this slot's tier.
-    let sigilsRequired = 0;
     if (!target) {
       target = getCrossBranchRespecOptions(faction, current.building_id).find(o => o.id === building_id);
       if (target) sigilsRequired = target.sigils_required;
     }
     if (!target) return res.status(400).json({ error: 'That building is not a valid respec for this slot' });
 
-    const cost = getRespecCost(faction, target.id, current.level);
-    // Sigils join the same bill rather than being spent separately, so a
-    // player short of one does not pay the gold and then get refused. One call,
-    // one transaction: every line clears or nothing is taken.
-    const bill = {};
-    for (const [item, amount] of Object.entries(cost)) {
-      bill[item === 'gold' ? 'Gold' : item] = amount;
-    }
-    if (sigilsRequired) bill.crossroad_sigil = (bill.crossroad_sigil || 0) + sigilsRequired;
+    const bill = { crossroad_sigil: sigilsRequired };
 
     try {
       await spendResources(chat_id, bill);
@@ -4139,7 +4127,7 @@ router.post('/structures/respec', requireAuth, async (req, res) => {
       if (short === 'crossroad_sigil') {
         const sigilWord = sigilsRequired === 1 ? 'Sigil is' : 'Sigils are';
         return res.status(400).json({
-          error: `${sigilsRequired} Crossroad ${sigilWord} needed to respec across branches`,
+          error: `${sigilsRequired} Crossroad ${sigilWord} needed to respec`,
           code: 'no_sigil',
         });
       }

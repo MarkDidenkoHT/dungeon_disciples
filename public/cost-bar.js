@@ -41,7 +41,7 @@ function mountCostBar(cost, { amountOf, lang = 'en', onMaterialClick } = {}, { h
     required[key] = (required[key] || 0) + Number(amt);
   }
 
-  // The seven aligned slots. A slot with nothing to pay still renders, dimmed,
+  // The aligned slots. A slot with nothing to pay still renders, dimmed,
   // so every column keeps its position under the strip above.
   const slotHtml = (iconHtml, key, label, need) => {
     const have  = amountOf(key);

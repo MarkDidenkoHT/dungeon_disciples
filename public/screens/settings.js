@@ -355,7 +355,7 @@ export function renderSettings(root, params = {}) {
     const TOKEN_ICONS = {
       tome_of_knowledge: '/assets/icons/ui/tome_of_experience.png',
       health_potion:     '/assets/icons/ui/health_potion.png',
-      crossroad_sigil:   '/assets/icons/recources/crossroad_sigil.png',
+      crossroad_sigil:   '/assets/icons/recources/crossroad_sigil.svg',
     };
     for (const [id, amt] of Object.entries(g.tokens || {})) {
       const name = id.replace(/_/g, ' ');
