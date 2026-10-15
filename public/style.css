@@ -9,6 +9,7 @@
   --img-formation-highlight: url('https://assets.markdidenkowork.workers.dev/icons/ui/formation_highligt.png');
   --img-resource-bar: url('https://assets.markdidenkowork.workers.dev/icons/ui/recource_bar.png');
   --img-battle-prep-bg: url('https://assets.markdidenkowork.workers.dev/screens/battle_prep_bg.jpeg');
+  --img-action-panel: url('https://assets.markdidenkowork.workers.dev/icons/ui/action_panel.png');
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -3978,12 +3979,15 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .action-panel {
   flex-shrink: 0;
-  padding: 6px;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
+  position: relative;
+  aspect-ratio: 800 / 267;
+  padding: 15% 18% 16%;
+  background: var(--img-action-panel) center / 100% 100% no-repeat, #0a0908;
+  border-top: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  justify-content: center;
+  gap: 4px;
 }
 
 .action-panel--enemy { align-items: center; }
@@ -4016,7 +4020,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .action-btns .action-btn {
 
   width: 100%;
-  max-width: 65px;
+  max-width: 56px;
   aspect-ratio: 1 / 1;
   height: auto;
   padding: 0;
@@ -4069,6 +4073,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .action-btn:active       { background: #2a200a; }
+
 .action-btn--skip        { border-color: var(--muted); color: var(--muted); }
 .action-btn--cancel      { border-color: var(--danger); color: var(--danger); }
 .action-btn--disabled    { opacity: 0.5; cursor: not-allowed; border-color: var(--muted); color: var(--muted); }
