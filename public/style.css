@@ -3776,7 +3776,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
   flex-direction: row;
   align-items: flex-end;
   gap: 5px;
-  padding: 0 8px 10px;
+  padding: 0 8px 0;
+  margin-bottom: -5px;
   overflow-x: auto;
   flex-shrink: 0;
   scrollbar-width: none;
@@ -3843,6 +3844,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .battle-log-bar {
   flex-shrink: 0;
+  margin-top: -10px;
   display: flex;
   justify-content: center;
   border-top: 1px solid var(--border);
@@ -3978,20 +3980,20 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .log-val    { color: #c84a3a; font-weight: bold; }
 
 .action-panel {
-  flex-shrink: 0;
-  position: relative;
-  aspect-ratio: 800 / 267;
-  padding: 15% 18% 16%;
   background: var(--img-action-panel) center / 100% 100% no-repeat, #0a0908;
-  border-top: none;
+  min-height: 20vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
 }
 
 .action-panel--enemy { align-items: center; }
-.action-btns { display: flex; gap: 6px; justify-content: center; width: 100%; }
+.action-btns {
+  display: flex;
+  justify-content: center;
+  width: 70%;
+  margin: auto;
+}
 
 .action-slot {
   display: flex;
@@ -4711,7 +4713,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   height: 14px;
 
   margin-top: -5px;
-  margin-bottom: 3px;
   padding: 0 6px;
 
   background: rgba(10, 14, 20, 0.6);
