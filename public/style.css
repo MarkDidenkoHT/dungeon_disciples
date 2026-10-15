@@ -9927,12 +9927,10 @@ body[data-faction="grail_of_sorrow"] .tutorial-ring {
 .battle-concede-btn:disabled { opacity: 0.5; cursor: default; }
 .battle-concede-btn:disabled::before { content: none; }
 
-.portrait-card--init.portrait-card--player { box-shadow: inset 0 0 0 2px rgba(74, 154, 74, 0.9); }
-.portrait-card--init.portrait-card--enemy  { box-shadow: inset 0 0 0 2px rgba(200, 74, 58, 0.9); }
+.portrait-card--init.portrait-card--enemy .portrait-art-img,
+.portrait-card--init.portrait-card--enemy .portrait-art { transform: scaleX(-1); }
 
-.portrait-card--init.portrait-card--selected { box-shadow: inset 0 0 0 2px currentColor, 0 0 12px rgba(255, 214, 120, 0.55); }
-.portrait-card--init.portrait-card--player.portrait-card--selected { color: #6fd06f; }
-.portrait-card--init.portrait-card--enemy.portrait-card--selected  { color: #ff7a66; }
+.portrait-card--init.portrait-card--selected { box-shadow: inset 0 0 0 2px rgba(217, 180, 106, 0.95), 0 0 12px rgba(255, 214, 120, 0.55); }
 /* ── Bulk Resurrect / Heal, over the foot of the castle grid ───────────────
    position: absolute, so it adds NO layout height: the grid above it keeps
    every pixel it had and nothing reflows when the pair appears or goes away.
