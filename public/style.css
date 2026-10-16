@@ -11144,3 +11144,34 @@ html[lang="ru"] .upgrade-unit-label {
   font-weight: bold;
   color: #f5c542;
 }
+
+.prep-level-slider {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  padding: 8px 10px 0;
+}
+
+.prep-level-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.prep-level-title {
+  font-size: 0.78rem;
+  font-weight: bold;
+  color: var(--muted);
+  text-align: center;
+}
+
+.prep-level-rewards .resource-bar {
+  width: 100%;
+}
+
+.prep-xp-glyph {
+  font-size: 0.95rem;
+  color: #9fd3ff;
+}

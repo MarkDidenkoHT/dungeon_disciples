@@ -6,7 +6,7 @@ import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
 // The Spell Tome's tabs minus non-combat, which is roster-only and has nothing
 // castable in a battle.
 const COMBAT_CATEGORIES = SPELL_CATEGORIES.filter(c => c.id !== 'non_combat');
-import { getEncounter, QUICK_BATTLE_SUPPLY_COST, QUICK_BATTLE_POWER_MARGIN } from '../../data/embark.js';
+import { REGIONS, getEncounter, getLevelRewards, QUICK_BATTLE_SUPPLY_COST, QUICK_BATTLE_POWER_MARGIN } from '../../data/embark.js';
 import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
 import { derivePrefPosition, isPositionSatisfied, pickPositionBark } from '../../data/position_barks.js';
 import { initBattleFx, reattachBattleFx } from '../battle-fx.js';
@@ -26,7 +26,7 @@ let abilityInspectHandler = null;
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { lang } from './settings.js';
 import {
-  RESIST_ICONS, RESIST_ORDER,
+  RESIST_ICONS, RESIST_ORDER, RESOURCE_BAR_SLOTS,
   cap, dmgReduction, CRYSTAL_ICONS,
   resolveUnitDef, resolveAbility, buildStatDescription,
   renderModalContent, openSheet, closeSheet, getSheetBody, openSubSheet, closeSubSheet,
@@ -114,6 +114,11 @@ const BP_TEXT = {
   quickEmpty:   { en: 'Place your squad first', ru: 'Сначала расставьте отряд' },
   quickDone:    { en: 'Spoils claimed', ru: 'Добыча получена' },
   quickFailed:  { en: 'Quick Battle failed', ru: 'Быстрый бой не удался' },
+  levelPrev:    { en: 'Previous level', ru: 'Предыдущий уровень' },
+  levelNext:    { en: 'Next level',     ru: 'Следующий уровень' },
+  levelLabel:   { en: (n) => `Level ${n}`, ru: (n) => `Уровень ${n}` },
+  levelGrants:  { en: 'Grants', ru: 'Даёт' },
+  xpLabel:      { en: 'XP', ru: 'Опыт' },
     single_ally:  { en: 'Single ally',  ru: 'Один союзник' },
     single_enemy: { en: 'Single enemy', ru: 'Один враг' },
   },
@@ -197,6 +202,11 @@ function getLoyalty(heroUnit) {
 
 export function renderBattlePrep(root, { player, region_id, level, mode = null }) {
   const L = lang(player);
+  // The level is no longer fixed at entry: the side arrows slide through the
+  // region's cleared ground without going back to embark, so everything that
+  // reads it reads `curLevel` and is redrawn by setLevel().
+  let curLevel = Math.max(1, Number(level) || 1);
+  const levelCount = Object.keys(REGIONS.find(r => r.id === region_id)?.difficulties || {}).length;
 
   // Quick match arrives here from the arena page of embark with no region and no
   // level: the same screen, the same formation rules, but the other grid stays
@@ -253,6 +263,17 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
       </div>
 
       ${isPvp || isColossus ? '' : `
+      <div class="prep-level-slider" id="prep-level-slider">
+        <button class="embark-layer-arrow" id="prep-level-prev" type="button"
+                aria-label="${BP_TEXT.levelPrev[L]}"><span>‹</span></button>
+        <div class="prep-level-body">
+          <div class="prep-level-title" id="prep-level-title"></div>
+          <div class="prep-level-rewards" id="prep-level-rewards"></div>
+        </div>
+        <button class="embark-layer-arrow" id="prep-level-next" type="button"
+                aria-label="${BP_TEXT.levelNext[L]}"><span>›</span></button>
+      </div>
+
       <div class="quick-battle-block" id="quick-battle-block" hidden>
         <button class="quick-battle-card" id="quick-battle-btn" type="button">
           <img class="quick-battle-icon" src="${assetUrl('/assets/icons/ui/quick_battle.png')}" alt=""
@@ -1135,7 +1156,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
 
   function quickBattleState() {
     if (isPvp || isColossus) return null;
-    const cleared  = Number(regionProgress[region_id] ?? 1) > Number(level);
+    const cleared  = Number(regionProgress[region_id] ?? 1) > curLevel;
     const mine     = playerArmyPower();
     const theirs   = enemyArmyPower();
     const haveSupp = supplyState ? supplyState.amount >= QUICK_BATTLE_SUPPLY_COST : true;
@@ -1161,6 +1182,80 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     if (reason) reason.textContent = state.reason;
   }
 
+  // ── Level slider ─────────────────────────
+  // The same arrows the embark screen slides its layers with, bounded by the
+  // levels this region has and by the furthest one unlocked. The formation is
+  // left exactly as arranged - only the other side of the arena changes.
+  function maxPlayableLevel() {
+    return Math.max(1, Math.min(Number(regionProgress[region_id] ?? 1), levelCount || 1));
+  }
+
+  // What the level pays, at its table values. NOT adjusted for castle,
+  // expedition or event bonuses: those lift a real win's payout but not Quick
+  // Battle's, and one row cannot honestly show both.
+  function renderLevelRewards() {
+    const title = root.querySelector('#prep-level-title');
+    const row   = root.querySelector('#prep-level-rewards');
+    if (!row) return;
+    if (title) title.textContent = BP_TEXT.levelLabel[L](curLevel);
+
+    const rw  = getLevelRewards(region_id, curLevel) || { gold: 0, xp: 0, crystals: [], trophies: {} };
+    const got = {};
+    if (rw.gold) got.Gold = rw.gold;
+    for (const { type, amount } of rw.crystals || []) {
+      if (type && amount) got[type] = (got[type] || 0) + amount;
+    }
+
+    const cell = (iconHtml, value, label) => `
+      <div class="res-bar-item cost-bar-item${value ? '' : ' cost-bar-item--idle'}" title="${label}">
+        <span class="res-bar-icon">${iconHtml}</span>
+        <span class="res-bar-val">${value || '·'}</span>
+      </div>`;
+
+    const slots = RESOURCE_BAR_SLOTS
+      .map(slot => cell(slot.icon, got[slot.key] || 0, slot.label)).join('');
+
+    const trophies = Object.entries(rw.trophies || {}).map(([id, amount]) => {
+      const name = String(id).replace(/_/g, ' ');
+      const icon = `<img src="${assetUrl(`/assets/icons/recources/${id}.png`)}" class="res-icon-img" alt="${name}"
+                         onerror="this.style.visibility='hidden'">`;
+      return cell(icon, amount, name);
+    }).join('');
+
+    // The party total, split across the units that survive - and nothing a
+    // Quick Battle pays.
+    const xp = rw.xp ? cell(`<span class="prep-xp-glyph">✦</span>`, rw.xp, BP_TEXT.xpLabel[L]) : '';
+
+    row.innerHTML = `<div class="resource-bar cost-bar">${slots}${trophies}${xp}</div>`;
+  }
+
+  function renderLevelSlider() {
+    const slider = root.querySelector('#prep-level-slider');
+    if (!slider) return;
+    const max  = maxPlayableLevel();
+    const prev = root.querySelector('#prep-level-prev');
+    const next = root.querySelector('#prep-level-next');
+    if (prev) prev.disabled = curLevel <= 1;
+    if (next) next.disabled = curLevel >= max;
+    renderLevelRewards();
+  }
+
+  function setLevel(next) {
+    const max = maxPlayableLevel();
+    const want = Math.max(1, Math.min(next, max));
+    if (want === curLevel) return;
+    curLevel = want;
+    enemies = getEncounter(region_id, curLevel);
+    const indicator = root.querySelector('#enemy-spell-indicator');
+    if (indicator) {
+      indicator.style.display = enemies.some(e => Array.isArray(e?.spells) && e.spells.length > 0) ? '' : 'none';
+    }
+    renderEnemyGrid();
+    syncFormationSynergies(enemySynergyUnits(), 'enemy-grid');
+    renderLevelSlider();
+    renderQuickBattle();
+  }
+
   async function runQuickBattle() {
     if (quickBusy || !quickBattleState()?.ok) return;
     const playerUnitIds = roster
@@ -1169,7 +1264,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     quickBusy = true;
     renderQuickBattle();
     try {
-      const result = await api('/battle/quick', { chat_id: player.chat_id, playerUnitIds, region_id, level });
+      const result = await api('/battle/quick', { chat_id: player.chat_id, playerUnitIds, region_id, level: curLevel });
       resourceCache.invalidate();
       await refreshResourceBar(player).catch(() => {});
       const boot = await bootstrapCache.get(player.chat_id).catch(() => null);
@@ -2047,13 +2142,13 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
         playerUnitIds,
         placement,
         region_id,
-        level,
+        level: curLevel,
         selected_spells: selectedSpells.map(s => ({
           spell_id:  s.id,
           target_id: s.target_id ?? null,
         })),
       });
-      navigate('battle', { player, battle_id, region_id, level, snapshot: result.state, selectedSpells, logs: result.logs || [] });
+      navigate('battle', { player, battle_id, region_id, level: curLevel, snapshot: result.state, selectedSpells, logs: result.logs || [] });
     } catch (err) {
       console.error('Failed to create battle:', err);
       // The server refuses a second battle while one is still open. Reaching
@@ -2128,7 +2223,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
       // another player and does not exist until the queue pairs them.
       enemies = isPvp      ? []
               : isColossus ? (colossusState?.boss ? [colossusState.boss] : [])
-              : getEncounter(region_id, level);
+              : getEncounter(region_id, curLevel);
 
       // Was driven by the encounter's own hidden spell, which no longer exists.
       // The warning is still worth giving, so it now reads the enemies THEMSELVES
@@ -2154,9 +2249,12 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
       }
 
       root.querySelector('#quick-battle-btn')?.addEventListener('click', runQuickBattle);
+      root.querySelector('#prep-level-prev')?.addEventListener('click', () => setLevel(curLevel - 1));
+      root.querySelector('#prep-level-next')?.addEventListener('click', () => setLevel(curLevel + 1));
 
       renderPlayerGrid();
       renderEnemyGrid();
+      renderLevelSlider();
       renderQuickBattle();
       // The FX canvas goes up once the arena exists and has a size. Bonds
       // restored from a saved formation flare on arrival, which is the correct
