@@ -252,6 +252,13 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
                     onerror="this.replaceWith(document.createTextNode('⚔'))">`}
         </button>
 
+        ${isPvp || isColossus ? '' : `
+        <button id="quick-battle-btn" class="battle-prep-enter-btn battle-prep-enter-btn--quick"
+                type="button" hidden aria-label="${BP_TEXT.quickTitle[L]}">
+          <img src="${assetUrl('/assets/icons/ui/quick_battle.png')}" alt="${BP_TEXT.quickTitle[L]}"
+               onerror="this.replaceWith(document.createTextNode('\u26A1'))">
+        </button>`}
+
         <div class="prep-side prep-side--enemy">
           <span class="prep-side-label">${isPvp ? BP_TEXT.opponentPower[L] : isColossus ? BP_TEXT.colossus[L] : BP_TEXT.enemyPower[L]}</span>
           <span class="prep-side-stats">
@@ -271,19 +278,6 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
         </div>
         <button class="embark-layer-arrow" id="prep-level-next" type="button"
                 aria-label="${BP_TEXT.levelNext[L]}"><span>›</span></button>
-      </div>
-
-      <div class="quick-battle-block" id="quick-battle-block" hidden>
-        <button class="quick-battle-card" id="quick-battle-btn" type="button">
-          <img class="quick-battle-icon" src="${assetUrl('/assets/icons/ui/quick_battle.png')}" alt=""
-               onerror="this.replaceWith(document.createTextNode('\u26A1'))">
-          <span class="quick-battle-info">
-            <span class="quick-battle-label">${BP_TEXT.quickTitle[L]}</span>
-            <span class="quick-battle-desc">${BP_TEXT.quickDesc[L]}</span>
-            <span class="quick-battle-reason" id="quick-battle-reason"></span>
-          </span>
-          <span class="quick-battle-cost">${BP_TEXT.quickCost[L](QUICK_BATTLE_SUPPLY_COST)}</span>
-        </button>
       </div>`}
 
       <div class="battle-prep-tab-content active" id="tab-formation">
@@ -1167,18 +1161,17 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
   }
 
   function renderQuickBattle() {
-    const block = root.querySelector('#quick-battle-block');
-    if (!block) return;
+    const btn = root.querySelector('#quick-battle-btn');
+    if (!btn) return;
     const state = quickBattleState();
-    if (!state) { block.hidden = true; return; }
-    block.hidden = false;
-    const btn    = root.querySelector('#quick-battle-btn');
-    const reason = root.querySelector('#quick-battle-reason');
-    if (btn) {
-      btn.disabled = !state.ok || quickBusy;
-      btn.classList.toggle('quick-battle-card--off', !state.ok);
-    }
-    if (reason) reason.textContent = state.reason;
+    if (!state) { btn.hidden = true; return; }
+    btn.hidden   = false;
+    btn.disabled = !state.ok || quickBusy;
+    btn.classList.toggle('battle-prep-enter-btn--ready', state.ok && !quickBusy);
+    // The gate explains itself on the icon rather than in a caption beside it.
+    btn.title = state.ok
+      ? `${BP_TEXT.quickTitle[L]} — ${BP_TEXT.quickCost[L](QUICK_BATTLE_SUPPLY_COST)}`
+      : state.reason;
   }
 
   // ── Level slider ─────────────────────────
@@ -1206,13 +1199,15 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     }
 
     const cell = (iconHtml, value, label) => `
-      <div class="res-bar-item cost-bar-item${value ? '' : ' cost-bar-item--idle'}" title="${label}">
+      <div class="res-bar-item cost-bar-item" title="${label}">
         <span class="res-bar-icon">${iconHtml}</span>
-        <span class="res-bar-val">${value || '·'}</span>
+        <span class="res-bar-val">${value}</span>
       </div>`;
 
+    // Only what this level pays. An empty column is not information.
     const slots = RESOURCE_BAR_SLOTS
-      .map(slot => cell(slot.icon, got[slot.key] || 0, slot.label)).join('');
+      .filter(slot => got[slot.key])
+      .map(slot => cell(slot.icon, got[slot.key], slot.label)).join('');
 
     const trophies = Object.entries(rw.trophies || {}).map(([id, amount]) => {
       const name = String(id).replace(/_/g, ' ');
