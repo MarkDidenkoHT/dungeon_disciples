@@ -107,6 +107,8 @@ const BP_TEXT = {
   quickEmpty:   { en: 'Place your squad first', ru: 'Сначала расставьте отряд' },
   quickDone:    { en: 'Spoils claimed', ru: 'Добыча получена' },
   quickFailed:  { en: 'Quick Battle failed', ru: 'Быстрый бой не удался' },
+  quickAsk:     { en: (cost, have) => `Resolve this level at once for ${cost} supplies?<br>You have ${have}.`,
+                  ru: (cost, have) => `Пройти уровень мгновенно за ${cost} припасов?<br>У вас ${have}.` },
   levelPrev:    { en: 'Previous level', ru: 'Предыдущий уровень' },
   levelNext:    { en: 'Next level',     ru: 'Следующий уровень' },
   levelLabel:   { en: (n) => `Level ${n}`, ru: (n) => `Уровень ${n}` },
@@ -256,7 +258,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
         ${isPvp || isColossus ? '' : `
         <button id="quick-battle-btn" class="battle-prep-enter-btn battle-prep-enter-btn--quick"
                 type="button" hidden aria-label="${BP_TEXT.quickTitle[L]}">
-          <img src="${assetUrl('/assets/icons/ui/quick_battle.png')}" alt="${BP_TEXT.quickTitle[L]}"
+          <img src="${assetUrl('/assets/icons/ui/to_battle_quick.png')}" alt="${BP_TEXT.quickTitle[L]}"
                onerror="this.replaceWith(document.createTextNode('\u26A1'))">
         </button>`}
 
@@ -1264,6 +1266,11 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
 
   async function runQuickBattle() {
     if (quickBusy || !quickBattleState()?.ok) return;
+    // Three supplies is most of a pool, so it is never spent on a mis-tap: the
+    // cost and what is left are put in front of the player first.
+    const have = supplyState ? supplyState.amount : '?';
+    if (!await askBeforeBattle(BP_TEXT.quickAsk[L](QUICK_BATTLE_SUPPLY_COST, have))) return;
+
     const playerUnitIds = roster
       .filter(u => placedUnitIds().has(u.id))
       .map(u => ({ id: String(u.id), _rosterId: String(u.id) }));

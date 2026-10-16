@@ -4858,10 +4858,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .battle-prep-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 6px 10px;
-  flex-shrink: 0;
 }
 
 .prep-side {
@@ -11094,7 +11090,6 @@ html[lang="ru"] .upgrade-unit-label {
   .screen-castle .castle-layer-viewport { transition: none; }
 }
 
-.battle-prep-enter-btn--quick img { width: clamp(42px, 12vw, 66px); }
 
 .battle-prep-tab-content.active { margin: 0; }
 
