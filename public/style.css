@@ -11096,11 +11096,12 @@ html[lang="ru"] .upgrade-unit-label {
 
 .battle-prep-enter-btn--quick img { width: clamp(42px, 12vw, 66px); }
 
+.battle-prep-tab-content.active { margin: 0; }
+
 .prep-level-slider {
   display: flex;
   align-items: stretch;
-  gap: 8px;
-  padding: 8px 10px 0;
+  padding: 0 4px;
 }
 
 .prep-level-body {
@@ -11125,4 +11126,12 @@ html[lang="ru"] .upgrade-unit-label {
 .prep-xp-glyph {
   font-size: 0.95rem;
   color: #9fd3ff;
+}
+
+.quick-spoils {
+  margin-top: 8px;
+}
+
+.quick-spoils .resource-bar {
+  width: 100%;
 }

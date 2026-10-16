@@ -90,7 +90,7 @@ const BOSS_LEVELS = [3, 6, 10];
 // Each region card uses /assets/embark/<id>.jpg as its full background (see the
 // regionBgStyle scrim below). Descriptions and the guaranteed crystal match the
 // region's real roster and rewards (see data/units.js + data/embark.js).
-const REGIONS = [
+export const REGIONS = [
   {
     id: 'crimson_basilica',
     label: 'Crimson Basilica',

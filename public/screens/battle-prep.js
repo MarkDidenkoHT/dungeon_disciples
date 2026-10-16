@@ -25,6 +25,7 @@ import { resolveSynergies } from '../../data/formation_synergies.js';
 let abilityInspectHandler = null;
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { lang } from './settings.js';
+import { REGIONS as REGION_CARDS } from './embark.js';
 import {
   RESIST_ICONS, RESIST_ORDER, RESOURCE_BAR_SLOTS,
   cap, dmgReduction, CRYSTAL_ICONS,
@@ -270,13 +271,13 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
 
       ${isPvp || isColossus ? '' : `
       <div class="prep-level-slider" id="prep-level-slider">
-        <button class="embark-layer-arrow" id="prep-level-prev" type="button"
+        <button class="embark-layer-arrow embark-layer-arrow--live" id="prep-level-prev" type="button"
                 aria-label="${BP_TEXT.levelPrev[L]}"><span>‹</span></button>
         <div class="prep-level-body">
           <div class="prep-level-title" id="prep-level-title"></div>
           <div class="prep-level-rewards" id="prep-level-rewards"></div>
         </div>
-        <button class="embark-layer-arrow" id="prep-level-next" type="button"
+        <button class="embark-layer-arrow embark-layer-arrow--live" id="prep-level-next" type="button"
                 aria-label="${BP_TEXT.levelNext[L]}"><span>›</span></button>
       </div>`}
 
@@ -1182,45 +1183,56 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     return Math.max(1, Math.min(Number(regionProgress[region_id] ?? 1), levelCount || 1));
   }
 
-  // What the level pays, at its table values. NOT adjusted for castle,
-  // expedition or event bonuses: those lift a real win's payout but not Quick
-  // Battle's, and one row cannot honestly show both.
-  function renderLevelRewards() {
-    const title = root.querySelector('#prep-level-title');
-    const row   = root.querySelector('#prep-level-rewards');
-    if (!row) return;
-    if (title) title.textContent = BP_TEXT.levelLabel[L](curLevel);
-
-    const rw  = getLevelRewards(region_id, curLevel) || { gold: 0, xp: 0, crystals: [], trophies: {} };
-    const got = {};
-    if (rw.gold) got.Gold = rw.gold;
-    for (const { type, amount } of rw.crystals || []) {
-      if (type && amount) got[type] = (got[type] || 0) + amount;
-    }
-
+  // Icons and amounts, nothing else. Used by the level row and by the Quick
+  // Battle spoils modal, so the two can never drift apart.
+  function rewardRowHtml({ gold = 0, crystals = {}, trophies = {}, xp = 0 }) {
     const cell = (iconHtml, value, label) => `
       <div class="res-bar-item cost-bar-item" title="${label}">
         <span class="res-bar-icon">${iconHtml}</span>
         <span class="res-bar-val">${value}</span>
       </div>`;
 
-    // Only what this level pays. An empty column is not information.
+    const got = { ...crystals };
+    if (gold) got.Gold = gold;
+
     const slots = RESOURCE_BAR_SLOTS
       .filter(slot => got[slot.key])
       .map(slot => cell(slot.icon, got[slot.key], slot.label)).join('');
 
-    const trophies = Object.entries(rw.trophies || {}).map(([id, amount]) => {
+    const trophyCells = Object.entries(trophies).map(([id, amount]) => {
       const name = String(id).replace(/_/g, ' ');
       const icon = `<img src="${assetUrl(`/assets/icons/recources/${id}.png`)}" class="res-icon-img" alt="${name}"
                          onerror="this.style.visibility='hidden'">`;
       return cell(icon, amount, name);
     }).join('');
 
-    // The party total, split across the units that survive - and nothing a
-    // Quick Battle pays.
-    const xp = rw.xp ? cell(`<span class="prep-xp-glyph">✦</span>`, rw.xp, BP_TEXT.xpLabel[L]) : '';
+    const xpCell = xp ? cell(`<span class="prep-xp-glyph">✦</span>`, xp, BP_TEXT.xpLabel[L]) : '';
 
-    row.innerHTML = `<div class="resource-bar cost-bar">${slots}${trophies}${xp}</div>`;
+    return `<div class="resource-bar cost-bar">${slots}${trophyCells}${xpCell}</div>`;
+  }
+
+  // What the level pays, at its table values. NOT adjusted for castle,
+  // expedition or event bonuses: those lift a real win's payout but not Quick
+  // Battle's, and one row cannot honestly show both. The XP is the party
+  // total, split across survivors, and Quick Battle pays none of it.
+  function renderLevelRewards() {
+    const title = root.querySelector('#prep-level-title');
+    const row   = root.querySelector('#prep-level-rewards');
+    if (!row) return;
+    if (title) {
+      const card   = REGION_CARDS.find(r => r.id === region_id);
+      const region = (L === 'ru' && card?.label_ru) || card?.label || '';
+      title.textContent = region
+        ? `${region} — ${BP_TEXT.levelLabel[L](curLevel)}`
+        : BP_TEXT.levelLabel[L](curLevel);
+    }
+
+    const rw = getLevelRewards(region_id, curLevel) || { gold: 0, xp: 0, crystals: [], trophies: {} };
+    const crystals = {};
+    for (const { type, amount } of rw.crystals || []) {
+      if (type && amount) crystals[type] = (crystals[type] || 0) + amount;
+    }
+    row.innerHTML = rewardRowHtml({ gold: rw.gold, crystals, trophies: rw.trophies, xp: rw.xp });
   }
 
   function renderLevelSlider() {
@@ -1263,15 +1275,12 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
       await refreshResourceBar(player).catch(() => {});
       const boot = await bootstrapCache.get(player.chat_id).catch(() => null);
       supplyState = boot?.supplies || null;
-      const lines = [];
-      if (result.gold) lines.push(`\u{1FA99} ${result.gold}`);
-      for (const [type, amount] of Object.entries(result.crystals_gained || {})) {
-        lines.push(`${CRYSTAL_ICONS[type] || '\u{1F48E}'} ${amount}`);
-      }
-      for (const [id, amount] of Object.entries(result.trophies_gained || {})) {
-        lines.push(`${String(id).replace(/_/g, ' ')} \u00D7${amount}`);
-      }
-      await askBeforeBattle(`${BP_TEXT.quickDone[L]}<br>${lines.join(' \u00B7 ')}`, { confirmOnly: true });
+      const spoils = rewardRowHtml({
+        gold:     result.gold || 0,
+        crystals: result.crystals_gained || {},
+        trophies: result.trophies_gained || {},
+      });
+      await askBeforeBattle(`${BP_TEXT.quickDone[L]}<div class="quick-spoils">${spoils}</div>`, { confirmOnly: true });
     } catch (err) {
       console.error('Quick battle failed:', err);
       const reason =
