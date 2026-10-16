@@ -95,14 +95,6 @@ const BP_TEXT = {
     ru: 'Не удалось начать бой. Возможно, кто-то из отряда уже сражался с Колоссом сегодня или босс уже повержен.',
   },
   close:        { en: 'Close',        ru: 'Закрыть' },
-  scrollLeft:   { en: 'Scroll left',  ru: 'Прокрутить влево' },
-  scrollRight:  { en: 'Scroll right', ru: 'Прокрутить вправо' },
-  // Target scopes. The two tag_* forms interpolate a tag name that comes from
-  // the data files in English, so the Russian keeps it as-is rather than
-  // pretending to decline a word it does not have a translation for.
-  scopes: {
-    all_allies:   { en: 'All allies',   ru: 'Все союзники' },
-    all_enemies:  { en: 'All enemies',  ru: 'Все враги' },
   quickTitle:   { en: 'Quick Battle', ru: 'Быстрый бой' },
   quickDesc:    { en: 'Claim this level\u2019s resources at once. No experience.',
                   ru: 'Сразу получить ресурсы этого уровня. Без опыта.' },
@@ -117,8 +109,15 @@ const BP_TEXT = {
   levelPrev:    { en: 'Previous level', ru: 'Предыдущий уровень' },
   levelNext:    { en: 'Next level',     ru: 'Следующий уровень' },
   levelLabel:   { en: (n) => `Level ${n}`, ru: (n) => `Уровень ${n}` },
-  levelGrants:  { en: 'Grants', ru: 'Даёт' },
   xpLabel:      { en: 'XP', ru: 'Опыт' },
+  scrollLeft:   { en: 'Scroll left',  ru: 'Прокрутить влево' },
+  scrollRight:  { en: 'Scroll right', ru: 'Прокрутить вправо' },
+  // Target scopes. The two tag_* forms interpolate a tag name that comes from
+  // the data files in English, so the Russian keeps it as-is rather than
+  // pretending to decline a word it does not have a translation for.
+  scopes: {
+    all_allies:   { en: 'All allies',   ru: 'Все союзники' },
+    all_enemies:  { en: 'All enemies',  ru: 'Все враги' },
     single_ally:  { en: 'Single ally',  ru: 'Один союзник' },
     single_enemy: { en: 'Single enemy', ru: 'Один враг' },
   },
