@@ -2199,7 +2199,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
   const BUFF_DEFS = [
     { key: 'rage',        icon: 'rage.jpg',             en: 'Rage',            ru: 'Ярость',         n: c => num(c, '_rage_stacks') },
-    { key: 'fanaticism',  icon: 'fanaticism.jpg',       en: 'Fanaticism',      ru: 'Фанатизм',       n: c => num(c, '_fanaticism_stacks') },
+    // Fanaticism is NOT listed here. It books its bonus as a stat-grant record
+    // in `_effects` (registerStatGrantEffect), carrying the same art and the
+    // power it has actually handed over — so a row here drew a SECOND
+    // fanaticism icon beside it, one badged with stacks and one with power.
+    // The `_effects` record is the better of the two: power is the number the
+    // attack is built from, stacks are only how many times it fired.
     { key: 'aegis',       icon: 'aegis.jpg',            en: 'Aegis',           ru: 'Эгида',          n: c => num(c, '_aegis_stacks') },
     // Damage the unit can still absorb before anything reaches its HP.
     { key: 'shield',      icon: 'shield.jpg',            en: 'Shield',          ru: 'Щит',            n: c => num(c, '_shield'),             unit: 'dmg_absorb' },

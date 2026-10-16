@@ -256,7 +256,7 @@ const SPELLS = {
       category: 'buff',
       tier: 2,
       type: 'combat',
-      effect_icon: 'fanaticism',
+      effect_icon: 'chorus_of_war',
       description: 'The whole choir takes up the verse: +8% damage to every ally for 2 rounds, +3% per extra power. At full power it lasts 3 rounds.',
       description_ru: 'Весь хор подхватывает: +8% урона каждому союзнику на 2 раунда, +3% за доп. силу. На полной силе — 3 раунда.',
       cost: { crystals: { Crystals_Fire: 20 } },

@@ -1151,6 +1151,11 @@ class BattleEngine {
       value: added, total: target._shield,
       ...(atStart ? { at_start: true } : {}),
     });
+    // A ward IS a buff: a shield handed over by an ally feeds Fanaticism the
+    // same way an armor or a power grant does. Shields never ran through
+    // recordGrantedBuff (the pool is not a stat, so there is nothing to revoke
+    // by arithmetic), which is why this trigger had to be fired here.
+    if (source && source.id !== target.id) this.fireAllyBuffTriggers(source, [target]);
     return added;
   }
 
@@ -1716,7 +1721,7 @@ class BattleEngine {
     // 'damage' carries a fraction (0.15 = +15%); every other type is stat points.
     const shown = type === 'damage' ? Math.round(amount * 100) : amount;
     const text  = detail || (label ? `+${shown}${type === 'damage' ? '%' : ''} ${label}` : null);
-    return this.registerEffect(unit, {
+    const eff   = this.registerEffect(unit, {
       key,
       name:        def.name,
       polarity:    'positive',
@@ -1725,6 +1730,15 @@ class BattleEngine {
       ...(shown ? { amount: shown } : {}),
       ...(text   ? { detail: text } : {}),
     });
+    // registerEffect keeps the FIRST record's sentence while summing `amount`,
+    // so a grant that stacks — Fanaticism, which re-grants on every ally buff —
+    // wore a badge reading 6 beside a tooltip still claiming "+2 power". The
+    // sentence is rewritten from the running total whenever this call owns it
+    // (a `type` and no caller-supplied `detail`).
+    if (eff && label && !detail && eff.amount != null) {
+      eff.detail = `+${eff.amount}${type === 'damage' ? '%' : ''} ${label}`;
+    }
+    return eff;
   }
 
   // Takes `amount` off a stat-grant icon and removes the record once nothing is
@@ -3831,6 +3845,13 @@ class BattleEngine {
   // buff usually needs no new code here at all.
   applySpellParams(targets, params = {}) {
     const duration = params.duration_rounds || 0;
+    // Who a boon actually landed on, so the ally-buff trigger can be fired once
+    // the loop is done. A spell buff never fired it at all: every blessing in
+    // the game — Chorus of Wrath, Fury of the Choir, a resistance ward — left
+    // Fanaticism at zero stacks, which is the one buff source a player casts by
+    // hand and therefore the one they notice. Fired AFTER the loop, so a
+    // passive answering the trigger cannot move stats the loop is still reading.
+    const buffed = [];
 
     // Shields the CASTER, not the targets — Pall of Sorrow weakens an enemy and
     // veils your own hero in the same breath, so it cannot ride the per-target
@@ -3920,6 +3941,16 @@ class BattleEngine {
         if (c.battle_hp <= 0 && c.alive) { c.alive = false; this.applyOnDeathPassives(c); }
       }
       if (params.damage_boost)         { c._dmg_mult = (c._dmg_mult || 1) * (1 + params.damage_boost); revert.dmg_mult_div = (revert.dmg_mult_div || 1) * (1 + params.damage_boost); }
+      // The percentage spelling of damage_boost (15 rather than 0.15), which is
+      // what every buff spell in data/spells.js actually declares and what the
+      // casting sheet prints. Nothing here read it, so Fury of the Choir and
+      // Chorus of Wrath spent power, logged a cast, animated — and changed no
+      // number on the board, Fanaticism's included.
+      if (params.damage_boost_pct) {
+        const factor = 1 + params.damage_boost_pct / 100;
+        c._dmg_mult = (c._dmg_mult || 1) * factor;
+        revert.dmg_mult_div = (revert.dmg_mult_div || 1) * factor;
+      }
       if (params.damage_dealt_reduction_pct) {
         const factor = 1 - params.damage_dealt_reduction_pct / 100;
         c._dmg_mult = (c._dmg_mult || 1) * factor;
@@ -3983,6 +4014,7 @@ class BattleEngine {
           restore,
           divide,
         });
+        if (polarity === 'positive' && c.alive) buffed.push(c);
         this.pendingRoundEffects.push({
           type:   'expire_modifier',
           round:  this.round + duration,
@@ -4065,6 +4097,16 @@ class BattleEngine {
           name:     params._spell_name,
         });
       }
+    }
+
+    // The hero stands as the source: a spell has no unit behind it, and
+    // fireAllyBuffTriggers needs one both to exclude a self-buff (a hero
+    // blessing itself does not feed its own Fanaticism) and to check sides.
+    // With no hero on the board — a bot sim, an encounter cast — the null
+    // source still fires on every target the side filter lets through.
+    if (buffed.length) {
+      const caster = params._caster_side ? this.heroFor(params._caster_side) : null;
+      this.fireAllyBuffTriggers(caster, buffed.filter(c => !params._caster_side || c.side === params._caster_side));
     }
 
     // Battlefield-wide locks are deliberately not per-target: they hit every
