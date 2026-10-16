@@ -6,7 +6,7 @@ import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
 // The Spell Tome's tabs minus non-combat, which is roster-only and has nothing
 // castable in a battle.
 const COMBAT_CATEGORIES = SPELL_CATEGORIES.filter(c => c.id !== 'non_combat');
-import { getEncounter } from '../../data/embark.js';
+import { getEncounter, QUICK_BATTLE_SUPPLY_COST, QUICK_BATTLE_POWER_MARGIN } from '../../data/embark.js';
 import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
 import { derivePrefPosition, isPositionSatisfied, pickPositionBark } from '../../data/position_barks.js';
 import { initBattleFx, reattachBattleFx } from '../battle-fx.js';
@@ -103,6 +103,17 @@ const BP_TEXT = {
   scopes: {
     all_allies:   { en: 'All allies',   ru: 'Все союзники' },
     all_enemies:  { en: 'All enemies',  ru: 'Все враги' },
+  quickTitle:   { en: 'Quick Battle', ru: 'Быстрый бой' },
+  quickDesc:    { en: 'Claim this level\u2019s resources at once. No experience.',
+                  ru: 'Сразу получить ресурсы этого уровня. Без опыта.' },
+  quickCost:    { en: (n) => `${n} supplies`, ru: (n) => `${n} припасов` },
+  quickLocked:  { en: 'Clear this level first', ru: 'Сначала пройдите этот уровень' },
+  quickClose:   { en: (gap) => `Your army must lead by more than ${gap} power`,
+                  ru: (gap) => `Ваша армия должна превосходить врага более чем на ${gap} силы` },
+  quickNoSupp:  { en: (n) => `Not enough supplies (${n} needed)`, ru: (n) => `Недостаточно припасов (нужно ${n})` },
+  quickEmpty:   { en: 'Place your squad first', ru: 'Сначала расставьте отряд' },
+  quickDone:    { en: 'Spoils claimed', ru: 'Добыча получена' },
+  quickFailed:  { en: 'Quick Battle failed', ru: 'Быстрый бой не удался' },
     single_ally:  { en: 'Single ally',  ru: 'Один союзник' },
     single_enemy: { en: 'Single enemy', ru: 'Один враг' },
   },
@@ -240,6 +251,20 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
           </span>
         </div>
       </div>
+
+      ${isPvp || isColossus ? '' : `
+      <div class="quick-battle-block" id="quick-battle-block" hidden>
+        <button class="quick-battle-card" id="quick-battle-btn" type="button">
+          <img class="quick-battle-icon" src="${assetUrl('/assets/icons/ui/quick_battle.png')}" alt=""
+               onerror="this.replaceWith(document.createTextNode('\u26A1'))">
+          <span class="quick-battle-info">
+            <span class="quick-battle-label">${BP_TEXT.quickTitle[L]}</span>
+            <span class="quick-battle-desc">${BP_TEXT.quickDesc[L]}</span>
+            <span class="quick-battle-reason" id="quick-battle-reason"></span>
+          </span>
+          <span class="quick-battle-cost">${BP_TEXT.quickCost[L](QUICK_BATTLE_SUPPLY_COST)}</span>
+        </button>
+      </div>`}
 
       <div class="battle-prep-tab-content active" id="tab-formation">
         <div class="prep-track-row">
@@ -1076,6 +1101,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
       const total = playerArmyPower();
       playerPowerEl.textContent = total > 0 ? `⚔ ${total}` : '';
     }
+    renderQuickBattle();
   }
 
   // The ⚔ totals. Pulled out of the two render functions because the pre-battle
@@ -1096,6 +1122,79 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
 
   function enemyArmyPower() {
     return enemies.reduce((sum, e) => sum + calcUnitPower(e), 0);
+  }
+
+  // ── Quick Battle ──────────────────────────
+  // Region battles only, and never hidden once shown: when it cannot be used it
+  // says which gate is shut. The gates mirror /battle/quick, which is the
+  // authority - this only saves a round trip, and it reads the SAME power
+  // numbers the header displays, so block and server cannot disagree.
+  let regionProgress = {};
+  let supplyState    = null;
+  let quickBusy      = false;
+
+  function quickBattleState() {
+    if (isPvp || isColossus) return null;
+    const cleared  = Number(regionProgress[region_id] ?? 1) > Number(level);
+    const mine     = playerArmyPower();
+    const theirs   = enemyArmyPower();
+    const haveSupp = supplyState ? supplyState.amount >= QUICK_BATTLE_SUPPLY_COST : true;
+    if (!cleared)                                   return { ok: false, reason: BP_TEXT.quickLocked[L] };
+    if (mine <= 0)                                  return { ok: false, reason: BP_TEXT.quickEmpty[L] };
+    if (mine - theirs <= QUICK_BATTLE_POWER_MARGIN) return { ok: false, reason: BP_TEXT.quickClose[L](QUICK_BATTLE_POWER_MARGIN) };
+    if (!haveSupp)                                  return { ok: false, reason: BP_TEXT.quickNoSupp[L](QUICK_BATTLE_SUPPLY_COST) };
+    return { ok: true, reason: '' };
+  }
+
+  function renderQuickBattle() {
+    const block = root.querySelector('#quick-battle-block');
+    if (!block) return;
+    const state = quickBattleState();
+    if (!state) { block.hidden = true; return; }
+    block.hidden = false;
+    const btn    = root.querySelector('#quick-battle-btn');
+    const reason = root.querySelector('#quick-battle-reason');
+    if (btn) {
+      btn.disabled = !state.ok || quickBusy;
+      btn.classList.toggle('quick-battle-card--off', !state.ok);
+    }
+    if (reason) reason.textContent = state.reason;
+  }
+
+  async function runQuickBattle() {
+    if (quickBusy || !quickBattleState()?.ok) return;
+    const playerUnitIds = roster
+      .filter(u => placedUnitIds().has(u.id))
+      .map(u => ({ id: String(u.id), _rosterId: String(u.id) }));
+    quickBusy = true;
+    renderQuickBattle();
+    try {
+      const result = await api('/battle/quick', { chat_id: player.chat_id, playerUnitIds, region_id, level });
+      resourceCache.invalidate();
+      await refreshResourceBar(player).catch(() => {});
+      const boot = await bootstrapCache.get(player.chat_id).catch(() => null);
+      supplyState = boot?.supplies || null;
+      const lines = [];
+      if (result.gold) lines.push(`\u{1FA99} ${result.gold}`);
+      for (const [type, amount] of Object.entries(result.crystals_gained || {})) {
+        lines.push(`${CRYSTAL_ICONS[type] || '\u{1F48E}'} ${amount}`);
+      }
+      for (const [id, amount] of Object.entries(result.trophies_gained || {})) {
+        lines.push(`${String(id).replace(/_/g, ' ')} \u00D7${amount}`);
+      }
+      await askBeforeBattle(`${BP_TEXT.quickDone[L]}<br>${lines.join(' \u00B7 ')}`, { confirmOnly: true });
+    } catch (err) {
+      console.error('Quick battle failed:', err);
+      const reason =
+        err.code === 'no_supplies'       ? BP_TEXT.quickNoSupp[L](QUICK_BATTLE_SUPPLY_COST)
+        : err.code === 'not_cleared'     ? BP_TEXT.quickLocked[L]
+        : err.code === 'power_too_close' ? BP_TEXT.quickClose[L](QUICK_BATTLE_POWER_MARGIN)
+        : BP_TEXT.quickFailed[L];
+      await askBeforeBattle(reason, { confirmOnly: true });
+    } finally {
+      quickBusy = false;
+      renderQuickBattle();
+    }
   }
 
   function renderEnemyGrid() {
@@ -1995,6 +2094,8 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
       // extra round-trips of its own.
       const boot = await bootstrapCache.get(player.chat_id);
       const rosterData = boot.roster || [];
+      regionProgress   = boot.progress || {};
+      supplyState      = boot.supplies || null;
 
       items = boot.items || [];
 
@@ -2052,8 +2153,11 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
         syncSpellSheetTierTabs();
       }
 
+      root.querySelector('#quick-battle-btn')?.addEventListener('click', runQuickBattle);
+
       renderPlayerGrid();
       renderEnemyGrid();
+      renderQuickBattle();
       // The FX canvas goes up once the arena exists and has a size. Bonds
       // restored from a saved formation flare on arrival, which is the correct
       // read: as far as the player is concerned they have just been formed.

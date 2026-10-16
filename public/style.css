@@ -11093,3 +11093,54 @@ html[lang="ru"] .upgrade-unit-label {
 @media (prefers-reduced-motion: reduce) {
   .screen-castle .castle-layer-viewport { transition: none; }
 }
+
+.quick-battle-block {
+  padding: 0 10px 8px;
+}
+
+.quick-battle-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.quick-battle-card--off {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.quick-battle-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.quick-battle-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.quick-battle-label { font-size: 1rem; font-weight: bold; color: var(--text); }
+.quick-battle-desc  { font-size: 0.72rem; color: var(--muted); }
+.quick-battle-reason { font-size: 0.72rem; color: #f5c542; }
+.quick-battle-reason:empty { display: none; }
+
+.quick-battle-cost {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: bold;
+  color: #f5c542;
+}

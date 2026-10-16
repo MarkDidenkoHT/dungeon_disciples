@@ -6,7 +6,7 @@ const fs     = require('fs');
 const path   = require('path');
 
 const { UNITS } = require('../data/units');
-const { REGIONS, getEncounter, getLevelRewards, getFirstClearTokens, TOME_XP } = require('../data/embark');
+const { REGIONS, getEncounter, getLevelRewards, getFirstClearTokens, TOME_XP, QUICK_BATTLE_SUPPLY_COST, QUICK_BATTLE_POWER_MARGIN } = require('../data/embark');
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { getRespecOptions, getCrossBranchRespecOptions, FACTION_CRYSTAL } = require('../data/buildings');
@@ -27,7 +27,7 @@ const {
 const battleBus = require('../utils/battle-bus');
 const pvpQueue  = require('../utils/pvp-queue');
 const pvpView   = require('../utils/pvp-view');
-const { rosterUnitPower } = require('../utils/army-power');
+const { calcUnitPower, rosterUnitPower } = require('../utils/army-power');
 const {
   TOURNEY_BATTLES, TOURNEY_POINTS, TOURNEY_MODE, checkTourneyRules, ruleName,
 } = require('../data/tourney');
@@ -4629,6 +4629,128 @@ router.post('/battle/create', requireAuth, async (req, res) => {
       console.error('Failed to persist initial battle log:', err);
     }
     res.json({ record, state: engine.getSnapshot(), logs: initialLogs });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// POST /battle/quick - a cleared level resolved without fighting it.
+//
+// Pays the level's RESOURCES only: gold, crystals and trophies at their table
+// values, with no expedition/castle/event percentage bonuses, no event drops,
+// no XP, no first-clear tokens and no progress. Nothing here touches the
+// roster, so nobody is wounded, healed or levelled by it.
+//
+// Every gate is re-checked from server state. The client sends a squad and a
+// level; its power number, its idea of "cleared" and its supply count are all
+// recomputed here, because the whole feature is a payout with no battle behind
+// it to prove it was earned.
+router.post('/battle/quick', requireAuth, async (req, res) => {
+  const { chat_id, playerUnitIds, region_id, level } = req.body;
+  if (!chat_id || !playerUnitIds || !region_id || level === undefined) {
+    return res.status(400).json({ error: 'chat_id, playerUnitIds, region_id and level required' });
+  }
+  if (!Array.isArray(playerUnitIds) || playerUnitIds.length === 0 || playerUnitIds.length > 6) {
+    return res.status(400).json({ error: 'playerUnitIds must be a non-empty array of up to 6 entries' });
+  }
+  const region = REGIONS.find(r => r.id === region_id);
+  if (!region) return res.status(400).json({ error: 'Invalid region_id' });
+  if (!region.difficulties?.[`level_${level}`]) return res.status(400).json({ error: 'Invalid level' });
+  try {
+    const existing = await getActiveBattle(chat_id);
+    if (existing) return res.status(400).json({ error: 'A battle is already in progress', code: 'battle_in_progress' });
+
+    const player = await getPlayerByChatId(chat_id);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    // CLEARED, not merely unlocked. `progress[region_id]` is the next playable
+    // level, so a cleared level reads strictly below it - the level the player
+    // is standing on for the first time does not qualify.
+    const unlocked = Number(player.progress?.[region_id] ?? 1);
+    if (Number(level) >= unlocked) {
+      return res.status(400).json({ error: 'That level has not been cleared yet', code: 'not_cleared' });
+    }
+
+    const squad = await loadSquad(chat_id, playerUnitIds);
+    if (squad.error) return res.status(400).json({ error: squad.error, code: 'invalid_squad' });
+
+    const enemies    = getEncounter(region_id, level);
+    if (!enemies.length) return res.status(400).json({ error: 'No enemies for this region/level' });
+    const enemyPower = enemies.reduce((sum, e) => sum + calcUnitPower(e), 0);
+    if (squad.power - enemyPower <= QUICK_BATTLE_POWER_MARGIN) {
+      return res.status(400).json({
+        error: 'Your army is not far enough ahead of this encounter',
+        code:  'power_too_close',
+        power: squad.power, enemy_power: enemyPower,
+      });
+    }
+
+    // Charged last, after every refusal above, so a squad or a gate that fails
+    // costs nothing - the same ordering /battle/create uses.
+    const supplyItem = supplyItemName(player.faction);
+    if (supplyItem) {
+      try {
+        await spendResources(chat_id, { [supplyItem]: QUICK_BATTLE_SUPPLY_COST });
+      } catch (err) {
+        if (shortfallItem(err)) {
+          return res.status(400).json({
+            error: `Out of ${supplyItem}`,
+            code:  'no_supplies',
+            item:  supplyItem,
+          });
+        }
+        throw err;
+      }
+    }
+
+    const tuned          = getLevelRewards(region_id, level);
+    const inventoryRows  = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+    const payouts        = [];
+    const crystalsGained = {};
+    let   crystalTotal   = 0;
+    // A resource row the player has never held is skipped rather than invented,
+    // as on a real win: gold and crystals are seeded at registration.
+    const held = itemName => inventoryRows.some(r => r.item === itemName);
+    if (tuned.gold && held('Gold')) payouts.push({ item: 'Gold', amount: tuned.gold, item_type: 'resource' });
+    for (const { type, amount } of tuned.crystals) {
+      if (!type || !amount || !held(type)) continue;
+      payouts.push({ item: type, amount, item_type: 'resource' });
+      crystalsGained[type] = (crystalsGained[type] || 0) + amount;
+      crystalTotal += amount;
+    }
+    const trophiesGained = {};
+    for (const [id, amount] of Object.entries(tuned.trophies)) {
+      if (!id || !amount) continue;
+      trophiesGained[id] = (trophiesGained[id] || 0) + amount;
+      payouts.push({ item: id, amount, item_type: 'trophy' });
+    }
+
+    try {
+      if (payouts.length) await grantResources(chat_id, payouts);
+    } catch (err) {
+      // The supplies were taken for a payout that never landed. Hand them back.
+      if (supplyItem) {
+        try {
+          await grantResources(chat_id, [{ item: supplyItem, amount: QUICK_BATTLE_SUPPLY_COST, item_type: SUPPLY_ITEM_TYPE }]);
+        } catch (refundErr) {
+          console.error('Failed to refund supplies after quick battle payout failed:', refundErr);
+        }
+      }
+      throw err;
+    }
+
+    // The one tally it feeds. Quests, devotion and the invite moment stay with
+    // battles that were actually fought.
+    bumpDailyTask(chat_id, 'battles');
+
+    res.json({
+      quick: true,
+      gold: held('Gold') ? (tuned.gold || 0) : 0,
+      crystals_gained: crystalsGained,
+      crystal: crystalTotal,
+      trophies_gained: trophiesGained,
+      supplies_spent: supplyItem ? QUICK_BATTLE_SUPPLY_COST : 0,
+    });
   } catch (err) {
     serverError(res, err);
   }

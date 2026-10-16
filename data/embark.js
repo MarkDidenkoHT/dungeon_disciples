@@ -566,6 +566,12 @@ const FIRST_CLEAR_TOKENS = {
   9: { tome_of_knowledge: 1 },
 };
 
+// Quick Battle: a cleared level resolved instantly for its resources alone.
+// Three supplies rather than the one a real embark costs, and only when the
+// squad outweighs the encounter by more than this margin.
+const QUICK_BATTLE_SUPPLY_COST  = 3;
+const QUICK_BATTLE_POWER_MARGIN = 100;
+
 // XP a single Tome of Knowledge pours into one unit.
 const TOME_XP = 100;
 
@@ -613,5 +619,5 @@ function getFactionHomeRegion(faction) {
   return regions[0] || REGIONS.find(r => !r.comingSoon)?.id || null;
 }
 
-export { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, eventRegionsForMaterial, getFactionHomeRegion, FIRST_CLEAR_TOKENS, getFirstClearTokens, TOME_XP, TOKEN_DEFS };
-if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, eventRegionsForMaterial, getFactionHomeRegion, FIRST_CLEAR_TOKENS, getFirstClearTokens, TOME_XP, TOKEN_DEFS };
+export { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, eventRegionsForMaterial, getFactionHomeRegion, FIRST_CLEAR_TOKENS, getFirstClearTokens, TOME_XP, TOKEN_DEFS, QUICK_BATTLE_SUPPLY_COST, QUICK_BATTLE_POWER_MARGIN };
+if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, eventRegionsForMaterial, getFactionHomeRegion, FIRST_CLEAR_TOKENS, getFirstClearTokens, TOME_XP, TOKEN_DEFS, QUICK_BATTLE_SUPPLY_COST, QUICK_BATTLE_POWER_MARGIN };
