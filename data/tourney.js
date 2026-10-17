@@ -47,17 +47,52 @@ const TOURNEY_PRIZES = {
 //     of, and locked those players out of the evening rather than making them
 //     think about their squad.
 //
+// A `ban_tag` rule names ONE tag, spelled exactly as data/units.js writes it on
+// the unit. There is no `no_undead`: there is no Undead tag, so that rule banned
+// nobody — it announced a ban on a word printed on no card in the game and then
+// let every skeleton-and-vampire squad through the gate. Zombie, Vampire and
+// Skeleton are three tags, so they would be three rules, never one under a group
+// name the player cannot check their own roster against.
+//
+// The tags with a rule are the ones a PLAYER can field. Absent on purpose:
+//
+//   • Skeleton, Boss — enemy-only. No unit in choir_of_the_cursed, empire or
+//     grail_of_sorrow carries either, so the ban is empty: the `no_undead` bug
+//     again, with a correctly spelled tag.
+//   • Archer — two Empire units and nothing in the other two factions. Real, but
+//     it changes no squad anyone would have brought.
+//   • Caster — 164 units carry it, and banning it leaves the Choir 9 units and
+//     the bot pool 3 templates of 27 (scripts/check-bot-templates.js). Every
+//     squad on the field would be built out of the same three answers, which is
+//     the opposite of what a rule that changes the evening is for.
+//
 // `grim` is the one twist left. It is listed so the name and the shape survive,
 // but the cron does not roll it either (RULE_KINDS in the tourney-notify edge
 // function) until the engine halves healing. Anything added here must be
-// enforced somewhere before the cron is allowed to draw it. The
-// cron does not roll them either (RULE_KINDS in supabase/functions/tourney-notify):
-// rolling a rule nothing enforces would read as a bug to the player.
+// enforced somewhere before the cron is allowed to draw it. The cron also keeps
+// its own copy of the tag bans (TAG_BANS in supabase/functions/tourney-notify):
+// a rule that rolls there and is missing here announces a ban nothing enforces.
 const TOURNEY_RULES = [
+  { id: 'no_knights',    kind: 'ban_tag',         tag: 'Knight',
+    name: 'No Knights',           name_ru: 'Без рыцарей' },
   { id: 'no_demons',     kind: 'ban_tag',         tag: 'Demon',
     name: 'No Demons',            name_ru: 'Без демонов' },
-  { id: 'no_undead',     kind: 'ban_tag',         tag: 'Undead',
-    name: 'No Undead',            name_ru: 'Без нежити' },
+  { id: 'no_holy',       kind: 'ban_tag',         tag: 'Holy',
+    name: 'No Holy',              name_ru: 'Без святых' },
+  { id: 'no_zombies',    kind: 'ban_tag',         tag: 'Zombie',
+    name: 'No Zombies',           name_ru: 'Без зомби' },
+  { id: 'no_spirits',    kind: 'ban_tag',         tag: 'Spirit',
+    name: 'No Spirits',           name_ru: 'Без духов' },
+  { id: 'no_vampires',   kind: 'ban_tag',         tag: 'Vampire',
+    name: 'No Vampires',          name_ru: 'Без вампиров' },
+  { id: 'no_warriors',   kind: 'ban_tag',         tag: 'Warrior',
+    name: 'No Warriors',          name_ru: 'Без воинов' },
+  { id: 'no_constructs', kind: 'ban_tag',         tag: 'Construct',
+    name: 'No Constructs',        name_ru: 'Без конструктов' },
+  { id: 'no_engineers',  kind: 'ban_tag',         tag: 'Engineer',
+    name: 'No Engineers',         name_ru: 'Без инженеров' },
+  { id: 'no_court',      kind: 'ban_tag',         tag: 'Court',
+    name: 'No Court',             name_ru: 'Без Двора' },
   { id: 'tiles_only',    kind: 'size_only',       sizes: ['tile'],
     name: 'Tile-size units only', name_ru: 'Только одноклеточные' },
   { id: 'lean_squad',    kind: 'loyalty_max',     max: 3,
@@ -69,6 +104,7 @@ const TOURNEY_RULES = [
   { id: 'grim',          kind: 'twist',           effect: { healing_pct: 50 },
     name: 'Healing halved',       name_ru: 'Лечение вдвое слабее' },
 ];
+
 
 const TOURNEY_RULES_BY_ID = Object.fromEntries(TOURNEY_RULES.map(r => [r.id, r]));
 
