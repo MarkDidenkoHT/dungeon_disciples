@@ -129,6 +129,8 @@ const TAG_PARAM_ROLES = {
   inspiration_target_tag: 'affects',
   vow_ash_tags:           'affects',
   vs_tag:                 'vs',
+  // Warding counts these allies to size the reduction.
+  ward_ally_tag:          'scales',
   tag_exclusive:          'only',
 };
 

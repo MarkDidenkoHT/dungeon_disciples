@@ -1,4 +1,4 @@
-const { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility, stackPassiveKeys, effectiveArmor, effectiveResist, MITIGATION_CAP_PCT, addArmor, addResist, clampDefenses, formGuardianBond, bondAbilityFor } = require('./passive-processor');
+const { runTrigger, calcDamageWithPassives, wardReductionFor, getAbilityTargets, executeActiveAbility, stackPassiveKeys, effectiveArmor, effectiveResist, MITIGATION_CAP_PCT, addArmor, addResist, clampDefenses, formGuardianBond, bondAbilityFor } = require('./passive-processor');
 const { filterByTagRules } = require('./tag-rules.js');
 // Inspiration's reach is also the 'column_adjacent' relation a battle-prep
 // preview draws from, so the rule is defined once, there.
@@ -221,6 +221,14 @@ class BattleEngine {
   // hero earns, so killing it shuts the other side's casting down for good.
   // Living units on `side` carrying `tag`. The unit of account for every
   // "per Zombie / per Caster / per Knight" effect, so they all count alike.
+  // Ward percentage for the portrait chip. Mirrors what calcDamageWithPassives
+  // will apply on the next incoming hit; `null` school totals every ward the
+  // unit carries.
+  wardSnapshot(unit) {
+    const w = wardReductionFor(unit, null, this.ABILITIES, this);
+    return { _ward_reduction: w.pct, _ward_school: w.source };
+  }
+
   tagCountFor(side, tag) {
     if (!tag) return 0;
     return this.combatants.filter(c =>
@@ -3563,6 +3571,10 @@ class BattleEngine {
           _dmg_mult:           c._dmg_mult,
           _empower_bonus_pct:  c._empower_bonus_pct ?? 0,
           _fear_dmg_reduction: c._fear_dmg_reduction,
+          // Derived, not stored: the ward reads the passive and the living ally
+          // count every time it is asked, so it is computed here for the
+          // portrait rather than restored by rehydrate().
+          ...this.wardSnapshot(c),
           _terror_reduction:   c._terror_reduction,
           _terror_rounds:      c._terror_rounds,
           _sanctuary_rounds:   c._sanctuary_rounds,

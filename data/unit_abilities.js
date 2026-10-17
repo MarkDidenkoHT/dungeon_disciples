@@ -832,6 +832,54 @@ const UNIT_ABILITIES = {
     description_ru: "Наносит на 11% больше урона целям-демонам за каждого святого союзника на поле.",
     params: { vs_tag: 'Demon', vs_tag_dmg_bonus_pct_per_tag: 11, tag_required: 'Holy' },
   },
+  // ── Warding: less incoming damage of ONE school, per counted ally ──────────
+  //
+  // The defensive mirror of the exorcism/gravebane slayer family above, and
+  // deliberately generic: a new ward is a copy of these three entries with the
+  // four params retuned, and no engine change at all.
+  //   ward_damage_source          school it blunts ('physical', 'death',
+  //                               'nature', 'fire', 'cold', 'life', 'air');
+  //                               omit the key to blunt every school
+  //   ward_ally_tag               which living allies are counted
+  //   ward_reduction_pct_per_tag  points per counted ally
+  //   ward_reduction_pct_max      optional cap (defaults to the mitigation cap)
+  // Use ward_reduction_pct instead of the per-tag key for a flat ward.
+  // The count is of LIVING allies on the owner's own side, so the ward weakens
+  // as they fall. The unit's own tags are irrelevant — whoever carries the
+  // passive is the one protected.
+  'warding 1': {
+    id: 'warding 1',
+    name: 'Warding',
+    name_ru: "Оберег",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_hit_received',
+    description: 'Takes 3% less physical damage per Warrior ally on the field.',
+    description_ru: "Получает на 3% меньше физического урона за каждого союзника-воина на поле.",
+    params: { ward_damage_source: 'physical', ward_ally_tag: 'Warrior', ward_reduction_pct_per_tag: 3 },
+  },
+  'warding 2': {
+    id: 'warding 2',
+    name: 'Warding',
+    name_ru: "Оберег",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_hit_received',
+    description: 'Takes 4% less physical damage per Warrior ally on the field.',
+    description_ru: "Получает на 4% меньше физического урона за каждого союзника-воина на поле.",
+    params: { ward_damage_source: 'physical', ward_ally_tag: 'Warrior', ward_reduction_pct_per_tag: 4 },
+  },
+  'warding 3': {
+    id: 'warding 3',
+    name: 'Warding',
+    name_ru: "Оберег",
+    rank: 3,
+    type: 'passive',
+    trigger: 'on_hit_received',
+    description: 'Takes 5% less physical damage per Warrior ally on the field.',
+    description_ru: "Получает на 5% меньше физического урона за каждого союзника-воина на поле.",
+    params: { ward_damage_source: 'physical', ward_ally_tag: 'Warrior', ward_reduction_pct_per_tag: 5 },
+  },
   'gravebane 1': {
     id: 'gravebane 1',
     name: 'Gravebane',

@@ -2223,6 +2223,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // badge read "Dodge: 6" — six of what? It now counts down the hits until
     // the next dodge, which is the only number a player can act on.
     { key: 'dodge',       icon: 'dodge.jpg',            en: 'Dodge',           ru: 'Уклонение',      n: c => dodgeCountdown(c), unit: 'hits', alwaysNum: true },
+    // Ward (damage reduction per ally tag). The percentage is recomputed
+    // server-side every time the battle state is sent, so the chip falls as the
+    // counted allies die.
+    { key: 'ward',        icon: 'iron_will.jpg',        en: 'Warded',          ru: 'Оберег',         n: c => num(c, '_ward_reduction'),     unit: 'pct' },
     { key: 'defend',      icon: 'fortify.jpg',          en: 'Defending',       ru: 'В защите',       n: c => num(c, 'defend_armor_bonus'),  unit: 'armor' },
     { key: 'invulnerable',icon: 'undying.jpg',          en: 'Invulnerable',    ru: 'Неуязвим',       n: c => (st(c, '_invulnerable') ? 1 : 0) },
     { key: 'untargetable',icon: 'unity.jpg',            en: 'Cannot be targeted', ru: 'Нельзя выбрать целью', n: c => (st(c, '_untargetable') ? 1 : 0) },
