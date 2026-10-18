@@ -233,13 +233,6 @@ const TOME_TEXT = {
     en: w => `Every ${w.one} below is staged over the same death — an enemy champion. No other kill will do:`,
     ru: w => `Все ${w.manyLower} ниже обставляются одной и той же смертью — гибелью вражеского чемпиона. Другая жертва не подойдёт:`,
   },
-  // A row of faces reads as "all of these stand here" unless it says otherwise,
-  // and every role in a litany is a CHOICE of exactly ONE. The count of the
-  // choice is spelled out because a bare "any 5" reads as "take any five".
-  litanyAnyOf: {
-    en: n => `any 1 of ${n}`,
-    ru: n => `любой 1 из ${n}`,
-  },
   litanyReward:    { en: 'Reward',      ru: 'Награда' },
   // The formation is a PLACE on the board, not a list, so the card draws the
   // player's half of the battle grid and keys each marked cell to the band that
@@ -753,7 +746,7 @@ export function renderSpellTome(root, { player }) {
 
   // Takes unit DEFS, already deduplicated by name — data/litanies.js lists every
   // tier and branch that may fill a role, which is the same face over and over
-  // to a reader, and the caller needs that count for its "any N" line anyway.
+  // to a reader.
   function litanyUnitChips(defs) {
     if (!defs.length) return '';
     // Faces, not a list. The name rides on `title` and `alt` so the portrait is
@@ -821,15 +814,10 @@ export function renderSpellTome(root, { player }) {
     // three lines rather than a page of scrolling.
     const bandHtml = (role, label, ids, key = '') => {
       const defs = dedupeByName(ids.map(id => unitById.get(id)).filter(Boolean));
-      // A row of five faces reads as "stand all five here" unless something says
-      // otherwise. Every role is a choice of ONE, so say so — but only where
-      // there is a choice to make: "any 1" beside a single portrait is noise.
-      const hint = defs.length > 1 ? TOME_TEXT.litanyAnyOf[lang](defs.length) : '';
       return `
         <div class="litany-row litany-row--${role}">
           ${key ? `<span class="litany-row-key">${escapeHtml(key)}</span>` : ''}
           ${litanyUnitChips(defs)}
-          ${hint ? `<span class="litany-row-any">${escapeHtml(hint)}</span>` : ''}
           ${label ? `<span class="litany-row-role">${escapeHtml(label)}</span>` : ''}
         </div>`;
     };
@@ -909,12 +897,10 @@ export function renderSpellTome(root, { player }) {
         // blow, which on fourteen of the eighteen is that same hero.
         const ids  = cell.role === 'hero' ? (def.hero?.ids || []) : (def.lead?.ids || []);
         const defs = dedupeByName(ids.map(id => unitById.get(id)).filter(Boolean));
-        const hint = defs.length > 1 ? TOME_TEXT.litanyAnyOf[lang](defs.length) : '';
         return `
           <div class="litany-grid-req litany-grid-req--${cell.role}" title="${escapeHtml(roleLabel)}">
             ${keyTag}
             ${litanyUnitChips(defs)}
-            ${hint ? `<span class="litany-row-any">${escapeHtml(hint)}</span>` : ''}
           </div>`;
       };
 

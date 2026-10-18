@@ -10941,13 +10941,6 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 /* "any 5" — the row is a CHOICE, which a line of portraits does not say on its
    own. Accented rather than muted: it changes what the row means, so it has to
    survive a glance that skips the label. */
-.litany-row-any {
-  color: var(--accent-bright);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
 /* The target is the other side's unit, so its band reads as a threat rather
    than as a cell to fill. */
 .litany-row--target {
@@ -10973,7 +10966,6 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
   min-width: 0;
 }
 
