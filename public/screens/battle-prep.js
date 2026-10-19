@@ -69,9 +69,9 @@ const BP_TEXT = {
   toBattle:     { en: 'To Battle',    ru: 'В бой' },
   enterQueue:   { en: 'Enter Queue',  ru: 'В очередь' },
   searching:    { en: 'Searching for an opponent', ru: 'Ищем соперника' },
-  searchingHint:{ en: 'Leave this screen open. If no player turns up within 30 seconds, you will face a bot.',
-                  ru: 'Не закрывайте экран. Если за 30 секунд соперник не найдётся, вы сразитесь с ботом.' },
-  botOpponent:  { en: 'Opponent: {name} · Bot', ru: 'Противник: {name} · Бот' },
+  searchingHint:{ en: 'Leave this screen open. An opponent is usually found within 20 seconds.',
+                  ru: 'Не закрывайте экран. Соперник обычно находится за 20 секунд.' },
+  botOpponent:  { en: 'Opponent: {name}', ru: 'Противник: {name}' },
   leaveQueue:   { en: 'Leave Queue',  ru: 'Выйти из очереди' },
   matchFound:   { en: 'Match found',  ru: 'Соперник найден' },
   // Shown for the moment between being paired and the duel's opening state
