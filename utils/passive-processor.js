@@ -71,6 +71,14 @@ function drainPct(basePct, unit) {
   return Math.max(0, basePct + (unit?._drain_amp_pct ?? 0));
 }
 
+// How much of a drain this particular hit pays. 1 everywhere except the
+// off-target hits of a full-field sweep, where the engine sets the multiplier
+// for the duration of the strike (see DRAIN_SWEEP_TARGETS in battle-engine.js).
+function drainSweepMult(unit) {
+  const m = Number(unit?._drain_sweep_mult);
+  return Number.isFinite(m) && m > 0 ? m : 1;
+}
+
 // Puts a battle-start stat grant on the portrait.
 //
 // Vitality, Iron Will, Horde, Choir, Banquet, Fortify and the resistance auras
@@ -947,7 +955,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
     if ((p.lowest_ally_heal_pct != null || p.lowest_ally_heal_pct_per_tag != null) && !target?._drain_immune) {
       const healPct = pctFor(p, engine, owner.side, "lowest_ally_heal_pct", "lowest_ally_heal_pct_per_tag");
-      const heal = Math.floor(dmg * drainPct(healPct, owner) / 100 * engine.fatigueHealMult());
+      const heal = Math.floor(dmg * drainPct(healPct, owner) / 100 * engine.fatigueHealMult() * drainSweepMult(owner));
       const candidates = engine.combatants.filter(c => c.side === owner.side && c.alive && c.max_hp > c.battle_hp);
       if (candidates.length > 0) {
         const lowest = candidates.reduce((a, b) => {
@@ -988,7 +996,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
     }
     if (p.self_heal_pct != null && !target?._drain_immune) {
-      const heal = Math.floor(dmg * drainPct(p.self_heal_pct, owner) / 100 * engine.fatigueHealMult());
+      const heal = Math.floor(dmg * drainPct(p.self_heal_pct, owner) / 100 * engine.fatigueHealMult() * drainSweepMult(owner));
       const actual = Math.min(engine.absorbWithDecay(owner, heal), owner.max_hp - owner.battle_hp);
       owner.battle_hp += actual;
       if (actual > 0) {
@@ -1008,7 +1016,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       if (target.battle_hp <= 0) { target.alive = false; engine.applyOnDeathPassives(target); }
       // Pure Blood blocks the drink, never the blow.
       if (!target._drain_immune) {
-        const heal   = Math.floor(extra * engine.fatigueHealMult());
+        const heal   = Math.floor(extra * engine.fatigueHealMult() * drainSweepMult(owner));
         const actual = Math.min(engine.absorbWithDecay(owner, heal), owner.max_hp - owner.battle_hp);
         owner.battle_hp += actual;
         if (actual > 0) {

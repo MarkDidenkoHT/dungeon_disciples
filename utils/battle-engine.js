@@ -56,6 +56,13 @@ const POOL_CAP_PCT = 50;
 // armor and resistance deltas.
 const DEFEND_BONUS = 25;
 
+// Drain off a full-field sweep. Lifesteal, Communion and Leech all pay per hit,
+// so an attacker that strikes the whole enemy field drew six drains from one
+// swing while a single-target unit drew one. A sweep this wide keeps the full
+// drain off the unit it actually went for and half off the rest.
+const DRAIN_SWEEP_TARGETS = 6;
+const DRAIN_SWEEP_MULT    = 0.5;
+
 // How each `recordGrantedBuff` type reads on a portrait tooltip. Keyed by the
 // same strings the callers already pass, so a new grant type shows its own name
 // rather than nothing.
@@ -388,6 +395,7 @@ class BattleEngine {
       max_hp:     maxHp,
       _base_max_hp: maxHp,
       _fanaticism_bonus: 0,
+      _drain_sweep_mult: 1,
       armor:      data.armor ?? 0,
       initiative: data.initiative ?? 40,
       alive:      data.alive !== false && battleHp > 0,
@@ -1369,10 +1377,19 @@ class BattleEngine {
       if (maxTargets > 1) {
         actor._empower_used_this_action = (actor._empower_bonus_pct ?? 0) > 0;
         const list = this.getValidTargets(actor).slice(0, maxTargets);
+        // A full-field sweep used to drink a full drain off every unit it
+        // touched: Lifesteal, Communion and Leech are per-hit, so a targets:6
+        // attacker healed six times from one swing. The sweep now pays in full
+        // off the unit it actually went for and at half off the rest.
+        const mainId = (target && list.some(t => t.id === target.id)) ? target.id : list[0]?.id;
+        const halveOffTarget = maxTargets >= DRAIN_SWEEP_TARGETS;
         for (const tgt of list) {
           if (!actor.alive) break;
-          if (tgt.alive) this.strikeTarget(actor, tgt);
+          if (!tgt.alive) continue;
+          actor._drain_sweep_mult = (halveOffTarget && tgt.id !== mainId) ? DRAIN_SWEEP_MULT : 1;
+          this.strikeTarget(actor, tgt);
         }
+        actor._drain_sweep_mult = 1;
         actor.acted_this_round = true;
         return this.afterAction(actor);
       }
