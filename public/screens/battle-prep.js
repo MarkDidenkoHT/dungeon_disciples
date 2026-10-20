@@ -1028,6 +1028,21 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     return out;
   }
 
+  // The oath's max HP, badged in the same row as the formation bonds. It is not
+  // a bond and not a battle effect — the HP is already inside the unit before
+  // anything is placed — but this row is where the player reads a unit's
+  // bonuses off, and the Temple's fifth block had nowhere at all to appear.
+  // Same art and suffix the battle grid uses (see the 'oath' entry in
+  // BUFF_DEFS, screens/battle.js); no bond badges with vitality.jpg, so there
+  // is nothing here to collide with.
+  function withOathBadge(buffs, unit) {
+    const oath = Number(unit?.unit_data?._oath_hp) || 0;
+    if (!oath) return buffs;
+    const out = new Map(buffs ?? []);
+    out.set('vitality.jpg', { icon: 'vitality.jpg', suffix: '', value: oath });
+    return out;
+  }
+
   // The same markup battle uses for its buff column (see stateIconsHtml in
   // screens/battle.js), so a buffed unit looks identical on both screens without
   // prep growing a status system of its own. One entry per stat: a unit reached
@@ -1095,7 +1110,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
           return false;
         });
         const spellDot = spellBuffs.length > 0 ? `<span class="battle-cell-spell-dot">✦</span>` : '';
-        const inspBadge = inspirationBadgeHtml(inspBuffs.get(occ.unitId));
+        const inspBadge = inspirationBadgeHtml(withOathBadge(inspBuffs.get(occ.unitId), unit));
         return `<div class="battle-cell battle-cell--placed ${isHero ? 'battle-cell--hero' : ''} ${isAlive ? '' : 'battle-cell--dead'}"
                      data-i="${i}" style="grid-row:span ${rowSpan};grid-column:span ${colSpan};">
           ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">` : ''}

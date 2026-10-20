@@ -2812,13 +2812,21 @@ function withBonusHp(rosterRows, hpBonus) {
     // own, bought one point at a time on the Temple's page (sql/010). Both are
     // folded in HERE and never written to the row, because every battle rewrites
     // unit_data.max_hp from the unit's definition.
-    const bonus = (hpBonus || 0) + devotionBonusHp(r);
+    const oath  = devotionBonusHp(r);
+    const bonus = (hpBonus || 0) + oath;
     if (!bonus) return r;
     const unit_data = r?.unit_data;
     const maxHp = Number(unit_data?.max_hp);
     if (!Number.isFinite(maxHp)) return r;
     const curHp = Number.isFinite(Number(unit_data.current_hp)) ? Number(unit_data.current_hp) : maxHp;
-    return { ...r, unit_data: { ...unit_data, max_hp: maxHp + bonus, current_hp: Math.min(curHp + bonus, maxHp + bonus) } };
+    const next = { ...unit_data, max_hp: maxHp + bonus, current_hp: Math.min(curHp + bonus, maxHp + bonus) };
+    // The oath's OWN share, carried separately so battle-prep and battle can
+    // show it. Folded into max_hp it is indistinguishable from base HP, and a
+    // player who had just paid 1000 gold for a point of it had no way to tell
+    // the purchase had landed — the whole of the Temple's fifth block was
+    // invisible everywhere except the sheet that sold it.
+    if (oath) next._oath_hp = oath;
+    return { ...r, unit_data: next };
   });
 }
 

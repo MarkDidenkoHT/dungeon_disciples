@@ -396,6 +396,10 @@ class BattleEngine {
       _base_max_hp: maxHp,
       _fanaticism_bonus: 0,
       _drain_sweep_mult: 1,
+      // Max HP bought with oaths at the Temple (data/callings.js). Carried as
+      // its own number purely so the grid can draw a badge for it — the HP
+      // itself is already inside max_hp by the time the roster row gets here.
+      _oath_hp:   Number(data._oath_hp) || 0,
       armor:      data.armor ?? 0,
       initiative: data.initiative ?? 40,
       alive:      data.alive !== false && battleHp > 0,
@@ -627,6 +631,7 @@ class BattleEngine {
   // reverted when the granting unit died and the icon stayed on the portrait
   // forever, advertising a bonus that was no longer there.
   recordGrantedBuff(source, type, targets, value, appliedByTarget = null, def = null, displayField = null) {
+    const gained = [];
     for (const t of targets) {
       const landed = appliedByTarget ? (appliedByTarget.get(t.id) ?? 0) : value;
       if (appliedByTarget && !landed) continue;   // nothing got through the cap
@@ -669,6 +674,7 @@ class BattleEngine {
       }
 
       const total = landed + landedExtra;
+      if (total) gained.push(t);
       if (def && total) {
         const eff = this.registerStatGrantEffect(t, def, total, type);
         // Booked against the grant so the icon comes off with the stat.
@@ -678,7 +684,11 @@ class BattleEngine {
         }
       }
     }
-    this.fireAllyBuffTriggers(source, targets);
+    // Only the units that actually GAINED something. A grant of zero is not a
+    // buff, and plenty are: Vitality with no Caster on the field is
+    // `ally_max_hp_bonus_per_tag * 0`, and it still ran the whole funnel, so a
+    // Fanatic banked power off a buff nobody received.
+    this.fireAllyBuffTriggers(source, gained);
   }
   // NET buff strength for a side: what its own beacons add, minus what the
   // OPPOSING side's Beacon of Despair takes away.
@@ -1167,11 +1177,12 @@ class BattleEngine {
       value: added, total: target._shield,
       ...(atStart ? { at_start: true } : {}),
     });
-    // A ward IS a buff: a shield handed over by an ally feeds Fanaticism the
-    // same way an armor or a power grant does. Shields never ran through
-    // recordGrantedBuff (the pool is not a stat, so there is nothing to revoke
-    // by arithmetic), which is why this trigger had to be fired here.
-    if (source && source.id !== target.id) this.fireAllyBuffTriggers(source, [target]);
+    // No 'on_receive_ally_buff' here, deliberately. A ward is RESTORATION, not
+    // a buff: it hands over HP by another name, the same as a heal, and it
+    // changes no stat on the unit. Fanaticism pays for being MADE STRONGER, and
+    // a line standing under a warder was collecting power every round it was
+    // topped up — which is also why heals do not fire it (see the all-allies
+    // heal in passive-processor.js).
     return added;
   }
 
@@ -3550,6 +3561,7 @@ class BattleEngine {
         intercept_bonus_pct: c.intercept_bonus_pct ?? 0,
         _base_max_hp:     c._base_max_hp ?? c.max_hp,
         _fanaticism_bonus: c._fanaticism_bonus ?? 0,
+        _oath_hp:         c._oath_hp ?? 0,
         // Boss phase state. rehydrate() rebuilds the unit from the saved DEF,
         // which carries the phase the attempt STARTED in — so without these a
         // reload handed a cracked, burning Colossus back as the stone it was an
@@ -3691,6 +3703,9 @@ class BattleEngine {
       c.intercept_bonus_pct = s.intercept_bonus_pct ?? 0;
       c._base_max_hp        = s._base_max_hp ?? c.max_hp;
       c._fanaticism_bonus   = s._fanaticism_bonus ?? 0;
+      // Falls back to what createCombatant read off the saved setup, so a
+      // battle that started before the badge existed still keeps its HP.
+      c._oath_hp            = s._oath_hp ?? c._oath_hp ?? 0;
       // Re-apply the phase the fight had actually reached, silently — the player
       // already watched it happen. applyPhase rewrites the live passives, damage
       // school, kit and body, which is everything the saved def has wrong.

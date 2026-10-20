@@ -2246,6 +2246,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // above 1 it is a buff, below 1 a debuff. It used to exist only as a text
     // chip on the inspect card and never showed on a portrait at all.
     { key: 'empowered',   icon: 'blood_frenzy.jpg',  en: 'Empowered', ru: 'Усиление',   n: c => dmgMultPct(c, 'up'),   unit: 'pct' },
+    // Max HP bought with oaths at the Temple (data/callings.js, block 5). Not a
+    // battle effect at all — it is already inside max_hp before the fight
+    // starts — but it is the only thing an oath buys, and folded into the HP bar
+    // it was invisible: a player could not tell that 1000 gold had done
+    // anything. Borrowed art, the same way Fortify borrows reforge.jpg.
+    { key: 'oath',        icon: 'vitality.jpg',      en: 'Oath',      ru: 'Обет',       n: c => num(c, '_oath_hp'),    unit: 'max_hp' },
   ];
 
   const DEBUFF_DEFS = [

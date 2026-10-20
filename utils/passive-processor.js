@@ -99,6 +99,17 @@ function registerStatGrant(engine, unit, def, amount, detail) {
   return engine.registerStatGrantEffect(unit, def, amount, null, detail);
 }
 
+// An ally buff that never passes through engine.recordGrantedBuff. The aura and
+// grant paths below MOVE A NUMBER on an ally directly — a resistance, a drain
+// amplifier, a status resistance — rather than booking a stat the granter can
+// revoke by arithmetic, so the funnel that fires 'on_receive_ally_buff' never
+// sees them and Fanaticism was blind to every one. Positive and to someone
+// else only: a unit warding itself is not an ally buff.
+function grantAllyBuff(engine, owner, unit, def, amount, detail) {
+  registerStatGrant(engine, unit, def, amount, detail);
+  if (owner && unit && unit.id !== owner.id && amount > 0) engine.fireAllyBuffTriggers(owner, [unit]);
+}
+
 // The ONE way a passive takes hit points off a unit.
 //
 // Invulnerability (Unity's bonded guardian) was checked only on the two direct
@@ -687,7 +698,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         // needs the applied delta back — only the ceiling matters here.
         resists[school] = Math.max(0, Math.min(MITIGATION_CAP_PCT, (resists[school] || 0) + auraVal));
         t.unit_data = { ...t.unit_data, resistances: resists };
-        if (auraVal) registerStatGrant(engine, t, def, auraVal, `+${auraVal} ${school} resistance`);
+        if (auraVal) grantAllyBuff(engine, owner, t, def, auraVal, `+${auraVal} ${school} resistance`);
       }
       if (allies.length) {
         engine.pushLog({
@@ -719,7 +730,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       const allies = engine.combatants.filter(c => c.side === owner.side && c.alive);
       for (const t of allies) {
         t._drain_amp_pct = (t._drain_amp_pct ?? 0) + p.drain_amp_pct;
-        registerStatGrant(engine, t, def, p.drain_amp_pct, `+${p.drain_amp_pct} points of lifesteal and communion`);
+        grantAllyBuff(engine, owner, t, def, p.drain_amp_pct, `+${p.drain_amp_pct} points of lifesteal and communion`);
       }
       if (allies.length) {
         engine.pushLog({
@@ -770,7 +781,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         for (const t of targets) {
           t._status_resist = (t._status_resist ?? 0) + p.grant_status_resist;
           owner._granted_buffs.push({ type: 'status_resist', targetIds: [t.id], value: p.grant_status_resist });
-          registerStatGrant(engine, t, def, p.grant_status_resist, `resists ${p.grant_status_resist} of every affliction`);
+          grantAllyBuff(engine, owner, t, def, p.grant_status_resist, `resists ${p.grant_status_resist} of every affliction`);
         }
         if (targets.length) {
           engine.pushLog({
@@ -1881,7 +1892,12 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       }
     }
 
-    engine.fireAllyBuffTriggers(actor, allies);
+    // No 'on_receive_ally_buff' here, deliberately. A heal is RESTORATION, not a
+    // buff: it moves HP back where it was and changes no stat. This line fired
+    // the trigger on every ally of a party healer, so a Fanatic beside one
+    // banked power every single round of the battle with no buff on it at all —
+    // the bug that had Fanaticism growing out of nothing. Shields were the same
+    // story (see grantShield in battle-engine.js).
   }
 
   // ── Frost Armor ───────────────────────────────────────────────────────────
