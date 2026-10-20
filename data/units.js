@@ -1942,7 +1942,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 40, death: 10, cold: 0, nature: 5 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 4, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'holy_heal',
-      xp: 400, passive: ['divided_flame 1', 'stoicism 1', 'dispel 1'], ability: 'redemption 1',
+      xp: 400, passive: ['inner_fire 1', 'stoicism 1', 'dispel 1'], ability: 'redemption 1',
     },
     battle_guardian: {
       id: 'e821', f: 'e', t: 3,
@@ -1955,7 +1955,7 @@ const UNITS = {
       resistances: { air: 5, fire: 10, life: 40, death: 10, cold: 5, nature: 10 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 5, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'holy_heal',
-      xp: 1560, passive: ['divided_flame 1', 'stoicism 2', 'dispel 1'], ability: 'redemption 2',
+      xp: 1560, passive: ['inner_fire 1', 'stoicism 2', 'dispel 1'], ability: 'redemption 2',
     },
     sister_protector: {
       id: 'e8211', f: 'e', t: 4,
@@ -1968,7 +1968,7 @@ const UNITS = {
       resistances: { air: 10, fire: 15, life: 40, death: 15, cold: 10, nature: 10 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 6, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'holy_heal',
-      xp: 3640, passive: ['divided_flame 1', 'stoicism 2', 'dispel 2'], ability: 'redemption 2',
+      xp: 3640, passive: ['inner_fire 1', 'stoicism 2', 'dispel 2'], ability: 'redemption 2',
     },
     acolyte: {
       id: 'e2', f: 'e', t: 1,
