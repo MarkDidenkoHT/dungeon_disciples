@@ -1180,9 +1180,9 @@ const UNIT_ABILITIES = {
     rank: 3,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'At battle start, gain +2 power and HP and for each Vampire ally on the field.',
-    description_ru: "В начале боя получает +2 к силе и HP за каждого союзного вампира на поле.",
-    params: { tag_required: 'Vampire', power_per_tagged_unit: 2, hp_per_tagged_unit: 2 },
+    description: 'At battle start, gain +1 power, initiative and HP and for each Vampire ally on the field.',
+    description_ru: "В начале боя получает +1 к силе, инициативе и HP за каждого союзного вампира на поле.",
+    params: { tag_required: 'Vampire', power_per_tagged_unit: 1, hp_per_tagged_unit: 2, initiative_per_tagged_unit: 1 },
   },
   'renew 1': {
     id: 'renew 1',
