@@ -18,12 +18,16 @@
 //
 // Equip restrictions (checked in data/item_rules.js, enforced by
 // POST /items/equip and mirrored by the roster UI):
-//   tag_required  unit must carry this tag
+//   tag_required  unit must carry this tag. May be a LIST, and then the unit
+//                 must carry every tag in it — see requiredTags() below.
 // Tag composition:
 //   adds_tag      'Construct'    unit also counts as this tag while worn
 //   removes_tag   'Engineer'     unit STOPS counting as this tag while worn.
 //                 Applied after adds_tag. Enables the exclusivity passives
-//                 ("while this is your only Engineer") to be built for.
+//                 ("while this is your only Engineer") to be built for. A
+//                 stripping item lists the stripped tag in `tag_required` too,
+//                 so it can only go on a unit the strip actually costs
+//                 something.
 //   blocked_tags    ['Construct']  refuse units carrying ANY of these
 //   blocked_actions ['heal']       refuse units whose action is of this kind
 //                                  ('damage' | 'heal' | 'sacrifice' | 'none')
@@ -49,7 +53,7 @@ const ITEM_DEFS = {
     name:         'Broken Sigil',
     name_ru:      'Расколотая Печать',
     faction:      null,
-    tag_required: 'Engineer',
+    tag_required: ['Engineer', 'Construct'],
     adds_tag:     null,
     removes_tag:  'Construct',
     stat_mods:    { hp: 4, armor: 2 },
@@ -65,7 +69,7 @@ const ITEM_DEFS = {
     name:         'Desecrated Plate',
     name_ru:      'Оскверненные Латы',
     faction:      null,
-    tag_required: 'Knight',
+    tag_required: ['Knight', 'Holy'],
     adds_tag:     'Zombie',
     removes_tag:  'Holy',
     stat_mods:    { hp: 3, armor: 5 },
@@ -81,7 +85,7 @@ const ITEM_DEFS = {
     name:         "Blood Of A Saint",
     name_ru:      'Кровь Святого',
     faction:      null,
-    tag_required: 'Spirit',
+    tag_required: ['Spirit', 'Holy'],
     adds_tag:     null,
     removes_tag:  'Holy',
     stat_mods:    { hp: 4, death_resist: 5},
@@ -97,7 +101,7 @@ const ITEM_DEFS = {
     name:         "Bloodless",
     name_ru:      'Обескровленный',
     faction:      null,
-    tag_required: 'Vampire',
+    tag_required: ['Vampire', 'Zombie'],
     adds_tag:     'Skeleton',
     removes_tag:  'Zombie',
     stat_mods:    { hp: 4, life_resist: 5},
@@ -115,6 +119,7 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: 'Holy',
     adds_tag:     'Demon',
+    removes_tag:  'Holy',
     stat_mods:    { hp: 4, fire_resist: 5 },
     passive:      'vow_of_ash 1',
     icon:         'oathbreaker',
@@ -193,8 +198,8 @@ const ITEM_DEFS = {
     name_ru:      'Мощь Непорочных',
     faction:      null,
     tag_required: null,
-    adds_tag:     'Caster',
-    stat_mods:    { cold_resist: 5, death_resist: 5 },
+    adds_tag:     'Knight',
+    stat_mods:    { action_power: 5, death_resist: 5 },
     passive:      'iron_will 2',
     icon:         'might_of_the_pure',
     rarity:       'mythic',
@@ -212,21 +217,6 @@ const ITEM_DEFS = {
     stat_mods:    { hp: 2, armor: 5 },
     passive:      'stoicism 2',
     icon:         'sanctified_bulwark',
-    rarity:       'epic',
-    unique:       true,
-    cost:         { aggrails_signet: 2, Gold: 150, Crystals_Nature: 10  },
-    item_cost:    { iron_armor: 1, orb_of_light: 1 },
-  },
-  champions_belt: {
-    key:          'champions_belt',
-    name:         'Champions Belt',
-    name_ru:      'Пояс Чемпиона',
-    faction:      null,
-    tag_required: null,
-    adds_tag:     'Holy',
-    stat_mods:    { hp: 2, armor: 2 },
-    passive:      'beacon_of_hope 1',
-    icon:         'champions_belt',
     rarity:       'epic',
     unique:       true,
     cost:         { aggrails_signet: 2, Gold: 150, Crystals_Nature: 10  },
@@ -320,21 +310,6 @@ const ITEM_DEFS = {
     unique:       true,
     cost:         { Gold: 150, Crystals_Life: 10, Crystals_Frost: 10, vial_of_pure_blood: 1 },
     item_cost:    { codex_aeternum: 1, vampirics_dagger: 1 },
-  },
-  malgraths_sigil: {
-    key:          'malgraths_sigil',
-    name:         'Malgraths Sigil',
-    name_ru:      'Знак Малграта',
-    faction:      null,
-    tag_required: 'Knight',
-    adds_tag:     'Skeleton',
-    stat_mods:    { action_power: 3, hp: 3, armor: 3 },
-    passive:      'iron_will 1',
-    icon:         'malgraths_sigil',
-    rarity:       'epic',
-    unique:       true,
-    cost:         { Gold: 150, Crystals_Life: 10, Crystals_Frost: 10, grave_dust: 2 },
-    item_cost:    { codex_aeternum: 1, seal_of_power: 2 },
   },
   codex_militarum: {
     key:          'codex_militarum',
@@ -1467,6 +1442,22 @@ function removedTags(spec) {
   return (Array.isArray(spec) ? spec : [spec]).map(canonicalTag).filter(Boolean);
 }
 
+// The tags an item DEMANDS, same shape rules as removedTags — one tag or a list,
+// and a list means ALL of them. The shattered items ask for two: the tag they
+// strip, so the strip actually costs the unit something, plus the tag that makes
+// wearing it worth the loss.
+function requiredTags(spec) {
+  if (!spec) return [];
+  return (Array.isArray(spec) ? spec : [spec]).map(canonicalTag).filter(Boolean);
+}
+
+// Which of them the unit is missing, canonicalised, so the equip endpoint and
+// every screen that greys out a card name the same tags in the same words.
+function missingRequiredTags(spec, unitTags) {
+  const have = new Set((unitTags || []).filter(Boolean).map(t => String(t).toLowerCase()));
+  return requiredTags(spec).filter(t => !have.has(t.toLowerCase()));
+}
+
 // Stat keys that owned rows spell differently from what the loop below reads.
 // Same reason as the tags: `caster_hat` shipped with `power`, so every hat
 // already owned carries `power: 2` and silently granted nothing.
@@ -1648,11 +1639,13 @@ const ITEM_DOWNGRADES = {
 
 export {
   ITEM_DEFS, ITEM_DOWNGRADES, applyItemModifiers, removedTags, STAT_MOD_FLOORS,
+  requiredTags, missingRequiredTags,
   CRAFT_REGION_LABELS, CRAFT_GATE_BY_RARITY,
   craftRequirements, meetsCraftRequirements, craftRequirementText,
 };
 if (typeof module !== 'undefined') module.exports = {
   ITEM_DEFS, ITEM_DOWNGRADES, applyItemModifiers, removedTags, STAT_MOD_FLOORS,
+  requiredTags, missingRequiredTags,
   CRAFT_REGION_LABELS, CRAFT_GATE_BY_RARITY,
   craftRequirements, meetsCraftRequirements, craftRequirementText,
 };

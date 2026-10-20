@@ -969,7 +969,7 @@
       
       if (item.adds_tag) score += 3;
       if (item.passive) score += 5;
-      if (item.tag_required) score -= 0.5;
+      score -= 0.5 * item.tags_required.length;
       if (item.faction) score -= 0.5;
       
       return Math.round(score * 10) / 10;
@@ -1070,6 +1070,7 @@
           faction: data.faction || null,
           rarity: data.rarity || 'common',
           tag_required: data.tag_required || null,
+          tags_required: [].concat(data.tag_required || []),
           adds_tag: data.adds_tag || null,
           stat_mods: data.stat_mods || {},
           passive: data.passive || null,
@@ -1136,7 +1137,7 @@
       flatItems.forEach(item => {
         if (item.faction) factions.add(item.faction);
         if (item.rarity) rarities.add(item.rarity);
-        if (item.tag_required) tags.add(item.tag_required);
+        item.tags_required.forEach(t => tags.add(t));
       });
       itemFactionFilter.innerHTML = '<option value="">All factions</option>' +
         [...factions].sort().map(f => `<option value="${f}">${f}</option>`).join('');
@@ -1178,14 +1179,14 @@
       
       if (fF && item.faction !== fF) return false;
       if (rF && item.rarity !== rF) return false;
-      if (tF && item.tag_required !== tF) return false;
+      if (tF && !item.tags_required.includes(tF)) return false;
       
       const icon = itemIconCache.get(item.key);
       if (iF === 'missing_icon' && icon && icon.exists) return false;
       if (iF === 'has_icon' && (!icon || !icon.exists)) return false;
       
       if (!q) return true;
-      const haystack = [item.name, item.key, item.faction, item.rarity, item.tag_required]
+      const haystack = [item.name, item.key, item.faction, item.rarity, ...item.tags_required]
         .filter(Boolean).join(' ').toLowerCase();
       return haystack.includes(q);
     }
@@ -1645,7 +1646,7 @@
       { label: 'Key', get: d => d.key, numeric: false },
       { label: 'Faction', get: d => d.faction || 'global', numeric: false },
       { label: 'Rarity', get: d => d.rarity, numeric: false },
-      { label: 'Tag Required', get: d => d.tag_required || '—', numeric: false },
+      { label: 'Tag Required', get: d => [].concat(d.tag_required || []).join(', ') || '—', numeric: false },
       { label: 'Adds Tag', get: d => d.adds_tag || '—', numeric: false },
       { label: 'Unique', get: d => d.unique ? 'Yes' : 'No', numeric: false },
       { label: 'HP', get: d => d.stat_mods?.hp, numeric: true, higherBetter: true },

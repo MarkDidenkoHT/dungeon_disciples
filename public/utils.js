@@ -1,7 +1,7 @@
 import { assetUrl } from './asset_base.js';
 import { UNITS }          from '../data/units.js';
 import { UNIT_ABILITIES } from '../data/unit_abilities.js';
-import { applyItemModifiers, ITEM_DEFS } from '../data/items.js';
+import { applyItemModifiers, ITEM_DEFS, missingRequiredTags } from '../data/items.js';
 
 // Localized spell text. For a non-English language, returns ONLY that language's
 // field (e.g. name_ru) — no English fallback, so a missing translation shows up
@@ -1062,14 +1062,14 @@ export function renderItemPassive(stats, opts = {}) {
 export function renderItemTags(stats, opts = {}) {
   const { unitTags = null, showFaction = false } = opts;
   if (!stats) return '';
-  const unmet = stats.tag_required && Array.isArray(unitTags)
-    && !unitTags.includes(stats.tag_required);
+  const unmet = Array.isArray(unitTags)
+    && missingRequiredTags(stats.tag_required, unitTags).length > 0;
   const pill = (cls, label, value) => `
     <span class="item-card-tag${cls ? ' ' + cls : ''}">
       <span class="item-card-tag-label">${label}</span>${value}
     </span>`;
   return [
-    stats.tag_required ? pill(unmet ? 'item-card-tag--unmet' : '', uiText('Requires', 'Требует'), stats.tag_required) : '',
+    stats.tag_required ? pill(unmet ? 'item-card-tag--unmet' : '', uiText('Requires', 'Требует'), tagListLabel(stats.tag_required)) : '',
     stats.adds_tag     ? pill('item-card-tag--adds',    uiText('Grants', 'Даёт'),   stats.adds_tag) : '',
     stats.removes_tag  ? pill('item-card-tag--removes', uiText('Strips', 'Снимает'), tagListLabel(stats.removes_tag)) : '',
     showFaction && stats.faction

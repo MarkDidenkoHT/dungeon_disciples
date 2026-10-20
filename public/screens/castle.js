@@ -30,6 +30,7 @@ import {
   renderItemPassive, renderItemTags, renderHeroSpellSlot,
 } from '../utils.js';
 import { getEquipBlock } from '../../data/item_rules.js';
+import { missingRequiredTags } from '../../data/items.js';
 import { errandRosterIds, maybeShowErrandsIntro } from '../errands.js';
 import { onDailyClose, closeDailyTasks, maybeAutoOpenDaily } from '../daily.js';
 import { buildUnitTree, lineageTo, renderUnitTreeHtml, drawUnitTreeLinks } from '../unit_tree.js';
@@ -1835,7 +1836,7 @@ export function renderCastle(root, params = {}) {
     const def   = resolveUnitDef(unit);
     const tags  = (def?.tags || []).filter(Boolean);
     return (!stats.faction || stats.faction === player.faction)
-        && (!stats.tag_required || tags.includes(stats.tag_required))
+        && !missingRequiredTags(stats.tag_required, tags).length
         && !getEquipBlock(stats, def, UNIT_ABILITIES);
   }
 
@@ -3377,7 +3378,7 @@ export function renderCastle(root, params = {}) {
         if (filter === 'owned') return true;
         const stats     = it.item_stats || {};
         const factionOk = !stats.faction || stats.faction === player.faction;
-        const tagOk     = !stats.tag_required || unitTags.includes(stats.tag_required);
+        const tagOk     = !missingRequiredTags(stats.tag_required, unitTags).length;
         const here      = String(it.equipped_by) === String(rosterId);
         return here || (factionOk && tagOk && it.equipped_by == null);
       });
@@ -3412,7 +3413,7 @@ export function renderCastle(root, params = {}) {
       const here   = String(it.equipped_by) === String(rosterId);
       const elsewhere = it.equipped_by != null && !here;
       const factionOk = !stats.faction || stats.faction === player.faction;
-      const tagOk     = !stats.tag_required || unitTags.includes(stats.tag_required);
+      const tagOk     = !missingRequiredTags(stats.tag_required, unitTags).length;
       // Incoherent pairings are refused with the reason spelled out, matching
       // what POST /items/equip enforces server-side (data/item_rules.js).
       const block     = getEquipBlock(stats, unitDef, UNIT_ABILITIES);

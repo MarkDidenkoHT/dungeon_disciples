@@ -42,7 +42,7 @@ const {
   generateInviteCode, normalizeInviteCode, INVITEE_WELCOME, INVITER_REWARDS,
   INVITER_DAILY_CAP, INVITE_MAX_ACCEPTED,
 } = require('../data/invites');
-const { ITEM_DEFS, applyItemModifiers, meetsCraftRequirements, craftRequirementText } = require('../data/items');
+const { ITEM_DEFS, applyItemModifiers, meetsCraftRequirements, craftRequirementText, missingRequiredTags } = require('../data/items');
 const { UNIT_ABILITIES } = require('../data/unit_abilities');
 const { DEATH_ENABLED } = require('../data/game_flags');
 const { DAILY_TASKS, DAILY_REWARDS, DAILY_REWARDS_BY_ID, dailyTasksForTier } = require('../data/daily_tasks');
@@ -6890,8 +6890,9 @@ router.post('/items/equip', requireAuth, async (req, res) => {
 
     const unitDef  = getUnitByDataId(rosterEntry.unit_data?.unit_id);
     const unitTags = (unitDef?.tags || []).filter(Boolean);
-    if (stats.tag_required && !unitTags.includes(stats.tag_required)) {
-      return res.status(400).json({ error: `This item requires the ${stats.tag_required} tag` });
+    const missingTags = missingRequiredTags(stats.tag_required, unitTags);
+    if (missingTags.length) {
+      return res.status(400).json({ error: `This item requires the ${missingTags.join(' and ')} tag${missingTags.length > 1 ? 's' : ''}` });
     }
 
     // Incoherent pairings — e.g. a passive that only fires on a damaging hit
