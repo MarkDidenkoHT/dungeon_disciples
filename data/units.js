@@ -1165,10 +1165,10 @@ const UNITS = {
       f: 'e', t: 4, size: 'tile',
       tags: ['Knight', 'Holy'],
       pref_position: 'front',
-      hp: 95, armor: 20, initiative: 40,
+      hp: 100, armor: 20, initiative: 40,
       resistances: { air: 10, fire: 10, life: 40, death: 10, cold: 10, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'life', action_power: 24, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
+      damage_source: 'life', action_power: 22, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
       passive: ['mithrails_light 2', 'beacon_of_hope 1', 'iron_will 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
