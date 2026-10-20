@@ -15,6 +15,7 @@ import {
   itemName, itemRarity, CRYSTAL_ICONS, GOLD_ICON, unitName,
   renderItemPassive, renderItemTags, playPageTurnSound, RESOURCE_BAR_SLOTS,
 } from '../utils.js';
+import { mountItemLibrary, matchesStatFilter } from '../item-library.js';
 import { mountTransmutation } from '../transmute.js';
 import { mountEngraving } from '../engrave.js';
 import { ENGRAVING_CURRENCY, ENGRAVING_TOKEN } from '../../data/engravings.js';
@@ -190,7 +191,7 @@ export function renderItems(root, params = {}) {
   let rarity     = 'all';
   let statFilter = 'all';
   let readyOnly  = false;
-  let selected   = 0;
+  let selected   = null;
 
   const itemKeyOf = it => it.item_stats?.key || it.item_stats?.icon;
 
@@ -411,15 +412,7 @@ export function renderItems(root, params = {}) {
   }
 
   // ── The list ──────────────────────────────────────────────────────────────
-  function matchesStat(stats) {
-    if (statFilter === 'all') return true;
-    if (statFilter === 'passive')    return !!stats?.passive;
-    if (statFilter === 'grants_tag') return !!stats?.adds_tag;
-    if (statFilter === 'needs_tag')  return !!stats?.tag_required;
-    const mods = stats?.stat_mods || {};
-    if (statFilter === 'resist') return Object.keys(mods).some(k => k.endsWith('_resist'));
-    return Object.prototype.hasOwnProperty.call(mods, statFilter);
-  }
+  const matchesStat = stats => matchesStatFilter(stats, statFilter);
 
   const matchesRarity = stats => rarity === 'all' || itemRarity(stats) === rarity;
 
@@ -460,17 +453,18 @@ export function renderItems(root, params = {}) {
     return stats.icon || stats.key || 'item';
   }
 
-  function trackCards(list) {
-    if (!list.length) return `<span class="track-empty-hint">${T('nothingMatches')}</span>`;
-    return list.map((entry, i) => `
-      <div class="portrait-card portrait-card--item ${i === selected ? 'portrait-card--selected' : ''}"
-           data-i="${i}" title="${entryName(entry)}">
-        <img class="portrait-art-img" src="${assetUrl(`/assets/icons/items/${entryIcon(entry)}.png`)}"
-             alt="${entryName(entry)}" onerror="this.style.display='none'">
-        ${entry.kind === 'blueprint'
-          ? (entry.owned > 0 ? `<span class="item-track-owned">${entry.owned}</span>` : '')
-          : ((entry.count ?? 1) > 1 ? `<span class="item-track-owned">${entry.count}</span>` : '')}
-      </div>`).join('');
+  function entryTile(entry) {
+    const blueprint = entry.kind === 'blueprint';
+    const count = blueprint ? entry.owned : (entry.count ?? 1);
+    return {
+      iconId: entryIcon(entry),
+      name:   entryName(entry),
+      rarity: itemRarity(entryStats(entry)),
+      badge:  count > (blueprint ? 0 : 1) ? `×${count}` : '',
+      ready:  blueprint && canCraftNow(entry.def),
+      dim:    blueprint && !canCraftNow(entry.def),
+      worn:   !blueprint && entry.item?.equipped_by != null,
+    };
   }
 
   function detailCard(entry) {
@@ -480,50 +474,50 @@ export function renderItems(root, params = {}) {
       : buildOwnedItemCard(entry.item, entry.count ?? 1);
   }
 
+  // The grid, the filter bar and the detail view are the shared library; this
+  // screen supplies the list, the tile and the card with its Craft button.
+  let lib = null;
+
+  function mountLibrary() {
+    lib = mountItemLibrary(host, {
+      present: 'modal',
+      tab: filter,
+      tabs: [
+        { id: 'craft', label: T('tabCraft') },
+        { id: 'owned', label: T('tabOwned') },
+      ],
+      rarities: RARITIES,
+      rarityLabel: r => T(r),
+      anyLabel: T('any'),
+      allLabel: T('all'),
+      statFilters:  STAT_FILTERS.slice(1),
+      traitFilters: TRAIT_FILTERS,
+      statsGroupLabel:  T('groupStats'),
+      traitsGroupLabel: T('groupTraits'),
+      rarityAria: T('filterRarity'),
+      statAria:   T('filterStat'),
+      chip: { label: T('craftableNow'), showFor: ['craft'] },
+      emptyText: T('nothingMatches'),
+      getList: currentList,
+      tileOf: entryTile,
+      renderDetail: detailCard,
+      onTabChange: id => { filter = id; selected = null; showTrophyBar(); },
+      onFilterChange: ({ rarity: r, stat }) => {
+        rarity = r;
+        statFilter = stat;
+        selected = null;
+        showTrophyBar();
+      },
+      onChipToggle: on => { readyOnly = on; selected = null; showTrophyBar(); },
+      // The cost strip follows whatever card is open, and falls back to the
+      // whole trophy stash once the view is closed again.
+      onOpenChange: (_entry, i) => { selected = i; showTrophyBar(); },
+    });
+  }
+
   function render() {
-    const tab = (id, label) =>
-      `<button class="items-tab ${filter === id ? 'items-tab--active' : ''}" data-filter="${id}">${label}</button>`;
-    const opt = (id, label, current) =>
-      `<option value="${id}"${current === id ? ' selected' : ''}>${label}</option>`;
-
-    const list = currentList();
-    if (selected >= list.length) selected = 0;
-
-    host.innerHTML = `
-      <div class="items-tabs">
-        ${tab('craft', T('tabCraft'))}
-        ${tab('owned', T('tabOwned'))}
-      </div>
-
-      <div class="items-filters">
-        <div class="items-filter-row items-filter-row--selects">
-          <select class="items-select items-select--rarity-${rarity}"
-                  id="items-rarity-select" aria-label="${T('filterRarity')}">
-            ${opt('all', T('any'), rarity)}
-            ${RARITIES.map(r => opt(r, T(r), rarity)).join('')}
-          </select>
-
-          <select class="items-select" id="items-stat-select" aria-label="${T('filterStat')}">
-            ${opt('all', T('all'), statFilter)}
-            <optgroup label="${T('groupStats')}">
-              ${STAT_FILTERS.slice(1).map(([id, label]) => opt(id, label, statFilter)).join('')}
-            </optgroup>
-            <optgroup label="${T('groupTraits')}">
-              ${TRAIT_FILTERS.map(([id, label]) => opt(id, label, statFilter)).join('')}
-            </optgroup>
-          </select>
-
-          ${filter === 'craft' ? `
-            <button class="items-chip items-chip--toggle ${readyOnly ? 'items-chip--active' : ''}" id="items-ready-toggle">${T('craftableNow')}</button>` : ''}
-        </div>
-      </div>
-
-      <div class="item-detail" id="item-detail">${detailCard(list[selected])}</div>
-
-      <div class="prep-track-wrap items-track-wrap">
-        <div class="portrait-track" id="items-track">${trackCards(list)}</div>
-      </div>`;
-
+    if (!lib) mountLibrary();
+    else lib.paint();
     showTrophyBar();
   }
 
@@ -547,10 +541,9 @@ export function renderItems(root, params = {}) {
     const list = currentList();
     const idx  = list.findIndex(e => e.kind === 'blueprint' && e.def.key === TUTORIAL_CRAFT_KEY);
     if (idx < 0) return;
-    if (idx !== selected) {
-      selected = idx;
-      refreshList({ keepSelection: true });
-    }
+    // The Craft button lives in the item's own card now, so the lesson opens
+    // that card itself rather than asking the player to find it in the grid.
+    if (idx !== selected) lib?.openAt(idx);
     const btn = host.querySelector('.item-action-btn--craft:not([disabled])');
     if (!btn) return;   // cannot afford it yet; the step waits
     showTutorialSpotlight(player, 'craft_item', btn, {
@@ -558,70 +551,13 @@ export function renderItems(root, params = {}) {
     });
   }
 
-  // Scrolls the TRACK only. scrollIntoView used to do this, but it scrolls every
-  // scrollable ancestor — including the two-page viewport, which is
-  // overflow:hidden yet still scrollable from script. Near the end of the list
-  // the track had no room left to centre the card, so the browser took the
-  // rest from the viewport and slid the Transmutation page into view.
-  function centreSelectedItem(behavior = 'smooth') {
-    const track = host.querySelector('#items-track');
-    const card  = track?.querySelector('.portrait-card--selected');
-    if (!card) return;
-    // Whichever of the track or its wrapper actually overflows is the scroller.
-    const scroller = track.scrollWidth > track.clientWidth ? track : track.parentElement;
-    if (!scroller) return;
-    const c = card.getBoundingClientRect();
-    const s = scroller.getBoundingClientRect();
-    const delta = (c.left + c.width / 2) - (s.left + s.width / 2);
-    if (delta) scroller.scrollBy({ left: delta, behavior });
+  // The grid and the open card are two views of currentList(), so the library
+  // repaints both from it.
+  function refreshList() {
+    lib?.refresh();
   }
-
-  // The detail card and the selector track are two views of currentList(), so
-  // they are always repainted together.
-  function refreshList({ keepSelection = false } = {}) {
-    const list = currentList();
-    if (!keepSelection || selected >= list.length) selected = 0;
-    const detail = host.querySelector('#item-detail');
-    const track  = host.querySelector('#items-track');
-    if (detail) detail.innerHTML = detailCard(list[selected]);
-    if (track)  track.innerHTML  = trackCards(list);
-    centreSelectedItem('auto');
-  }
-
-  host.addEventListener('change', e => {
-    const sel = e.target.closest('select');
-    if (!sel) return;
-    if (sel.id === 'items-rarity-select') {
-      rarity = sel.value;
-      sel.className = `items-select items-select--rarity-${rarity}`;
-      refreshList();
-      return;
-    }
-    if (sel.id === 'items-stat-select') {
-      statFilter = sel.value;
-      refreshList();
-    }
-  });
 
   host.addEventListener('click', async e => {
-    const tabBtn = e.target.closest('[data-filter]');
-    if (tabBtn) { filter = tabBtn.dataset.filter; selected = 0; render(); return; }
-
-    if (e.target.closest('#items-ready-toggle')) { readyOnly = !readyOnly; render(); return; }
-
-    const trackCard = e.target.closest('#items-track .portrait-card');
-    if (trackCard) {
-      selected = Number(trackCard.dataset.i);
-      const list = currentList();
-      host.querySelector('#item-detail').innerHTML = detailCard(list[selected]);
-      host.querySelectorAll('#items-track .portrait-card').forEach((c, ci) =>
-        c.classList.toggle('portrait-card--selected', ci === selected));
-      centreSelectedItem();
-      // The strip below the resource bar tracks whatever is on show.
-      showTrophyBar();
-      return;
-    }
-
     const passiveBtn = e.target.closest('.item-passive');
     if (passiveBtn) {
       const def = resolveAbility(passiveBtn.dataset.abilityKey);

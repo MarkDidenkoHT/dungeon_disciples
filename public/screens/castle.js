@@ -18,6 +18,7 @@ import { DEATH_ENABLED }    from '../../data/game_flags.js';
 // Which regions drop a material — the castle's cost bar uses it to answer
 // "where do I get this?" for a cost the player cannot meet.
 import { REGIONS, getRegionsForMaterial, eventRegionsForMaterial } from '../../data/embark.js';
+import { mountItemLibrary, matchesStatFilter } from '../item-library.js';
 import { renderSpellTome }   from './spell_tome.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
@@ -2172,8 +2173,11 @@ export function renderCastle(root, params = {}) {
     {
       id: 'roster_equip',
       awaits: true,
-      // Only once the picker is actually open, which the step above did.
-      ready:  () => heroNeedsArmour() && !!equipButtonInPicker(),
+      // Only once the picker is actually open, which the step above did. The
+      // Equip button lives in the item's card rather than on the grid, so the
+      // step opens that card itself before pointing at it.
+      ready:  () => heroNeedsArmour() && pickerIsOpen(),
+      open:   () => openTutorialItem?.(),
       target: equipButtonInPicker,
     },
     {
@@ -2288,6 +2292,14 @@ export function renderCastle(root, params = {}) {
   // rather than left pointing at nothing.
   function slotWithBuilding(slot) {
     return slot && structuresRecord?.buildings_data?.[slot]?.building_id ? slot : null;
+  }
+
+  // Set by the open picker so onboarding can put the right item's card up
+  // before it goes looking for the Equip button inside it.
+  let openTutorialItem = null;
+
+  function pickerIsOpen() {
+    return !!getSubSheetBody()?.querySelector('#slot-item-root');
   }
 
   function equipButtonInPicker() {
@@ -3340,7 +3352,6 @@ export function renderCastle(root, params = {}) {
     let filter     = 'equippable';   // 'equippable' | 'owned'
     let rarity     = 'all';
     let statFilter = 'all';
-    let selected   = 0;
 
     const itemKeyOf = it => it.item_stats?.key || it.item_stats?.icon;
     const RARITIES  = ['common', 'rare', 'epic', 'mythic', 'shattered'];
@@ -3357,16 +3368,7 @@ export function renderCastle(root, params = {}) {
       ['needs_tag',  CASTLE_TEXT.traitNeeds[castleLang]],
     ];
 
-    function matchesStat(stats) {
-      if (statFilter === 'all') return true;
-      if (statFilter === 'passive')    return !!stats?.passive;
-      if (statFilter === 'grants_tag') return !!stats?.adds_tag;
-      if (statFilter === 'strips_tag') return !!stats?.removes_tag;
-      if (statFilter === 'needs_tag')  return !!stats?.tag_required;
-      const mods = stats?.stat_mods || {};
-      if (statFilter === 'resist') return Object.keys(mods).some(k => k.endsWith('_resist'));
-      return Object.prototype.hasOwnProperty.call(mods, statFilter);
-    }
+    const matchesStat = stats => matchesStatFilter(stats, statFilter);
 
     const matchesRarity = it => rarity === 'all' || itemRarity(it) === rarity;
 
@@ -3461,133 +3463,76 @@ export function renderCastle(root, params = {}) {
         </div>`;
     }
 
-    function trackCards(list) {
-      if (!list.length) return `<span class="track-empty-hint">${CASTLE_TEXT.nothingMatches[castleLang]}</span>`;
-      return list.map((entry, i) => {
-        const stats = entry.item.item_stats || {};
-        const icon  = stats.icon || stats.key || 'item';
-        const name  = itemName(entry.item, player);
-        return `
-          <div class="portrait-card portrait-card--item ${i === selected ? 'portrait-card--selected' : ''}"
-               data-i="${i}" title="${name}">
-            <img class="portrait-art-img" src="${assetUrl(`/assets/icons/items/${icon}.png`)}" alt="${name}"
-                 onerror="this.style.display='none'">
-            ${entry.count > 1 ? `<span class="item-track-owned">${entry.count}</span>` : ''}
-          </div>`;
-      }).join('');
-    }
-
-    function render() {
-      const tab = (id, label) =>
-        `<button class="items-tab ${filter === id ? 'items-tab--active' : ''}" data-filter="${id}">${label}</button>`;
-      const opt = (id, label, cur) =>
-        `<option value="${id}"${cur === id ? ' selected' : ''}>${label}</option>`;
-
-      const list = currentList();
-      if (selected >= list.length) selected = 0;
-
-      if (!itemsCache.length) {
-        return `<div id="slot-item-root"><p class="modal-empty">${CASTLE_TEXT.noItems[castleLang]}</p></div>`;
-      }
-
-      return `
-        <div class="items-modal" id="slot-item-root">
-          <div class="items-tabs">
-            ${tab('equippable', CASTLE_TEXT.tabEquippable[castleLang])}
-            ${tab('owned', CASTLE_TEXT.tabOwned[castleLang])}
-          </div>
-
-          <div class="items-filters">
-            <div class="items-filter-row items-filter-row--selects">
-              <select class="items-select items-select--rarity-${rarity}"
-                      id="items-rarity-select" aria-label="${CASTLE_TEXT.filterRarity[castleLang]}">
-                ${opt('all', CASTLE_TEXT.any[castleLang], rarity)}
-                ${RARITIES.map(r => opt(r, CASTLE_TEXT[r][castleLang], rarity)).join('')}
-              </select>
-
-              <select class="items-select" id="items-stat-select" aria-label="${CASTLE_TEXT.filterStat[castleLang]}">
-                ${opt('all', CASTLE_TEXT.all[castleLang], statFilter)}
-                <optgroup label="${CASTLE_TEXT.groupStats[castleLang]}">
-                  ${STAT_FILTERS.map(([id, label]) => opt(id, label, statFilter)).join('')}
-                </optgroup>
-                <optgroup label="${CASTLE_TEXT.groupTraits[castleLang]}">
-                  ${TRAIT_FILTERS.map(([id, label]) => opt(id, label, statFilter)).join('')}
-                </optgroup>
-              </select>
-            </div>
-          </div>
-
-          <div class="item-detail" id="item-detail">${itemCard(list[selected])}</div>
-
-          <div class="prep-track-wrap items-track-wrap">
-            <div class="portrait-track" id="items-track">${trackCards(list)}</div>
-          </div>
-        </div>`;
+    function entryTile(entry) {
+      const it    = entry.item;
+      const stats = it.item_stats || {};
+      const here  = String(it.equipped_by) === String(rosterId);
+      const factionOk = !stats.faction || stats.faction === player.faction;
+      const tagOk     = !missingRequiredTags(stats.tag_required, unitTags).length;
+      const blocked   = !factionOk || !tagOk || !!getEquipBlock(stats, unitDef, UNIT_ABILITIES)
+                     || (it.equipped_by != null && !here);
+      return {
+        iconId: stats.icon || stats.key || 'item',
+        name:   itemName(it, player),
+        rarity: itemRarity(it),
+        badge:  entry.count > 1 ? `×${entry.count}` : '',
+        worn:   here,
+        dim:    blocked && !here,
+      };
     }
 
     // The shell is not cosmetic: openSubSheet only replaces the body's
     // innerHTML, so the body element itself survives across opens and listeners
     // bound to it would accumulate — re-opening this picker twice would fire
     // equip twice. Binding to a wrapper created fresh per open ties the
-    // listeners' life to the content, and repaint() only ever swaps what is
-    // INSIDE the shell, so the wrapper (and its listeners) survive a repaint.
-    openSubSheet(CASTLE_TEXT.itemsTitle[castleLang], `<div id="slot-item-shell">${render()}</div>`);
+    // listeners' life to the content, and the library only ever repaints what
+    // is INSIDE the shell, so the wrapper (and its listeners) survive it.
+    openSubSheet(CASTLE_TEXT.itemsTitle[castleLang], itemsCache.length
+      ? `<div id="slot-item-shell"><div class="items-modal" id="slot-item-root"></div></div>`
+      : `<div id="slot-item-shell"><p class="modal-empty">${CASTLE_TEXT.noItems[castleLang]}</p></div>`);
 
-    const shell   = getSubSheetBody()?.querySelector('#slot-item-shell');
-    const rootEl  = () => shell?.querySelector('#slot-item-root');
-    const repaint = () => { if (shell) shell.innerHTML = render(); };
+    const shell  = getSubSheetBody()?.querySelector('#slot-item-shell');
+    const rootEl = shell?.querySelector('#slot-item-root');
 
-    function centreSelected(behavior = 'smooth') {
-      rootEl()?.querySelector('#items-track .portrait-card--selected')
-        ?.scrollIntoView({ block: 'nearest', inline: 'center', behavior });
-    }
+    // Pushed rather than stacked: the picker is already a sub-sheet, and a
+    // modal over it would be a third layer on a phone screen. The item's card
+    // slides over the grid inside the sheet and the back arrow returns.
+    const lib = rootEl ? mountItemLibrary(rootEl, {
+      present: 'push',
+      tab: filter,
+      tabs: [
+        { id: 'equippable', label: CASTLE_TEXT.tabEquippable[castleLang] },
+        { id: 'owned',      label: CASTLE_TEXT.tabOwned[castleLang] },
+      ],
+      rarities: RARITIES,
+      rarityLabel: r => CASTLE_TEXT[r][castleLang],
+      anyLabel: CASTLE_TEXT.any[castleLang],
+      allLabel: CASTLE_TEXT.all[castleLang],
+      statFilters:  STAT_FILTERS,
+      traitFilters: TRAIT_FILTERS,
+      statsGroupLabel:  CASTLE_TEXT.groupStats[castleLang],
+      traitsGroupLabel: CASTLE_TEXT.groupTraits[castleLang],
+      rarityAria: CASTLE_TEXT.filterRarity[castleLang],
+      statAria:   CASTLE_TEXT.filterStat[castleLang],
+      emptyText: CASTLE_TEXT.nothingMatches[castleLang],
+      getList: currentList,
+      tileOf: entryTile,
+      renderDetail: itemCard,
+      onTabChange: id => { filter = id; },
+      onFilterChange: ({ rarity: r, stat }) => { rarity = r; statFilter = stat; },
+    }) : null;
 
-    // Repaint the detail card and the selector track together — two views of
-    // currentList(), so they must not drift apart.
-    function refreshList() {
+    // Onboarding points at the Equip button, which now lives in the item's own
+    // card — so the lesson opens that card before the spotlight looks for it.
+    openTutorialItem = () => {
+      if (!rootEl?.isConnected || lib?.isOpen()) return;
       const list = currentList();
-      if (selected >= list.length) selected = 0;
-      const el = rootEl();
-      const detail = el?.querySelector('#item-detail');
-      const track  = el?.querySelector('#items-track');
-      if (detail) detail.innerHTML = itemCard(list[selected]);
-      if (track)  track.innerHTML  = trackCards(list);
-      centreSelected('auto');
-    }
-
-    shell?.addEventListener('change', e => {
-      const sel = e.target.closest('select');
-      if (!sel) return;
-      if (sel.id === 'items-rarity-select') {
-        rarity = sel.value;
-        // Keeps the closed select tinted with the rarity it is showing.
-        sel.className = `items-select items-select--rarity-${rarity}`;
-        selected = 0;
-        refreshList();
-        return;
-      }
-      if (sel.id === 'items-stat-select') {
-        statFilter = sel.value;
-        selected = 0;
-        refreshList();
-      }
-    });
+      const idx  = list.findIndex(e =>
+        (e.item.item_stats?.key || e.item.item_stats?.icon) === TUTORIAL_ITEM_KEY);
+      if (idx >= 0 || list.length) lib?.openAt(idx >= 0 ? idx : 0);
+    };
 
     shell?.addEventListener('click', async e => {
-      const tabBtn = e.target.closest('[data-filter]');
-      if (tabBtn) { filter = tabBtn.dataset.filter; selected = 0; repaint(); return; }
-
-      const trackCard = e.target.closest('#items-track .portrait-card');
-      if (trackCard) {
-        selected = Number(trackCard.dataset.i);
-        const list = currentList();
-        rootEl().querySelector('#item-detail').innerHTML = itemCard(list[selected]);
-        rootEl().querySelectorAll('#items-track .portrait-card').forEach((c, ci) =>
-          c.classList.toggle('portrait-card--selected', ci === selected));
-        centreSelected();
-        return;
-      }
-
       // The item's passive — same description modal the unit card uses.
       const passiveBtn = e.target.closest('.item-passive');
       if (passiveBtn) {
