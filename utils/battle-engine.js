@@ -396,10 +396,12 @@ class BattleEngine {
       _base_max_hp: maxHp,
       _fanaticism_bonus: 0,
       _drain_sweep_mult: 1,
-      // Max HP bought with oaths at the Temple (data/callings.js). Carried as
-      // its own number purely so the grid can draw a badge for it — the HP
-      // itself is already inside max_hp by the time the roster row gets here.
+      // Max HP from the castle: oaths sworn at the Temple (data/callings.js) and
+      // the Temple's own flat bonus (data/buildings.js). Both carried as their
+      // own numbers purely so the grid can draw a badge for each — the HP itself
+      // is already inside max_hp by the time the roster row gets here.
       _oath_hp:   Number(data._oath_hp) || 0,
+      _temple_hp: Number(data._temple_hp) || 0,
       armor:      data.armor ?? 0,
       initiative: data.initiative ?? 40,
       alive:      data.alive !== false && battleHp > 0,
@@ -3562,6 +3564,7 @@ class BattleEngine {
         _base_max_hp:     c._base_max_hp ?? c.max_hp,
         _fanaticism_bonus: c._fanaticism_bonus ?? 0,
         _oath_hp:         c._oath_hp ?? 0,
+        _temple_hp:       c._temple_hp ?? 0,
         // Boss phase state. rehydrate() rebuilds the unit from the saved DEF,
         // which carries the phase the attempt STARTED in — so without these a
         // reload handed a cracked, burning Colossus back as the stone it was an
@@ -3704,8 +3707,9 @@ class BattleEngine {
       c._base_max_hp        = s._base_max_hp ?? c.max_hp;
       c._fanaticism_bonus   = s._fanaticism_bonus ?? 0;
       // Falls back to what createCombatant read off the saved setup, so a
-      // battle that started before the badge existed still keeps its HP.
-      c._oath_hp            = s._oath_hp ?? c._oath_hp ?? 0;
+      // battle that started before the badges existed still keeps its HP.
+      c._oath_hp            = s._oath_hp   ?? c._oath_hp   ?? 0;
+      c._temple_hp          = s._temple_hp ?? c._temple_hp ?? 0;
       // Re-apply the phase the fight had actually reached, silently — the player
       // already watched it happen. applyPhase rewrites the live passives, damage
       // school, kit and body, which is everything the saved def has wrong.

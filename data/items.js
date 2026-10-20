@@ -194,7 +194,7 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     'Caster',
-    stat_mods:    { action_power: 5, death_resist: 5 },
+    stat_mods:    { cold_resist: 5, death_resist: 5 },
     passive:      'iron_will 2',
     icon:         'might_of_the_pure',
     rarity:       'mythic',

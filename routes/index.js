@@ -2820,12 +2820,16 @@ function withBonusHp(rosterRows, hpBonus) {
     if (!Number.isFinite(maxHp)) return r;
     const curHp = Number.isFinite(Number(unit_data.current_hp)) ? Number(unit_data.current_hp) : maxHp;
     const next = { ...unit_data, max_hp: maxHp + bonus, current_hp: Math.min(curHp + bonus, maxHp + bonus) };
-    // The oath's OWN share, carried separately so battle-prep and battle can
-    // show it. Folded into max_hp it is indistinguishable from base HP, and a
-    // player who had just paid 1000 gold for a point of it had no way to tell
-    // the purchase had landed — the whole of the Temple's fifth block was
-    // invisible everywhere except the sheet that sold it.
+    // Each share carried separately so battle-prep and battle can show it as a
+    // buff of its own. Folded into max_hp they are indistinguishable from base
+    // HP, and a player who had just paid 1000 gold for a point of oath had no
+    // way to tell the purchase had landed — the Temple's fifth block was
+    // invisible everywhere except the sheet that sold it. The Temple's flat HP
+    // had the same problem one level up: it is on every unit in the army, so
+    // the only way to see it at all was to remember what the HP bar said before
+    // the building went up.
     if (oath) next._oath_hp = oath;
+    if (hpBonus) next._temple_hp = hpBonus;
     return { ...r, unit_data: next };
   });
 }

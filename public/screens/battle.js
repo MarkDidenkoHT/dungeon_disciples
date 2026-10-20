@@ -2252,6 +2252,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // it was invisible: a player could not tell that 1000 gold had done
     // anything. Borrowed art, the same way Fortify borrows reforge.jpg.
     { key: 'oath',        icon: 'vitality.jpg',      en: 'Oath',      ru: 'Обет',       n: c => num(c, '_oath_hp'),    unit: 'max_hp' },
+    // The Temple's flat HP, on every unit in the army (data/buildings.js). Same
+    // story as the oath above and shown the same way, because the alternative —
+    // one line somewhere saying it applies to everyone — is not where a player
+    // looks when they are reading one unit. Borrowed art.
+    { key: 'temple',      icon: 'prayer_of_healing.jpg', en: 'Temple', ru: 'Храм',     n: c => num(c, '_temple_hp'),  unit: 'max_hp' },
   ];
 
   const DEBUFF_DEFS = [
