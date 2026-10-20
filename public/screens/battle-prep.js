@@ -1195,12 +1195,30 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     const state = quickBattleState();
     if (!state) { btn.hidden = true; return; }
     btn.hidden   = false;
-    btn.disabled = !state.ok || quickBusy;
+    // Left clickable while a gate is shut: a disabled button swallows the tap,
+    // and the reason only ever reached a hover title - which a phone has no way
+    // to show. Tapping it now says why instead of doing nothing.
+    btn.disabled = quickBusy;
+    btn.setAttribute('aria-disabled', String(!state.ok));
     btn.classList.toggle('battle-prep-enter-btn--ready', state.ok && !quickBusy);
-    // The gate explains itself on the icon rather than in a caption beside it.
     btn.title = state.ok
       ? `${BP_TEXT.quickTitle[L]} — ${BP_TEXT.quickCost[L](QUICK_BATTLE_SUPPLY_COST)}`
       : state.reason;
+  }
+
+  // The gate's reason, under the button, gone on its own. Not a modal: it costs
+  // the player nothing to dismiss and nothing to ignore.
+  let quickNoteTimer = null;
+  function showQuickNote(text) {
+    const header = root.querySelector('.battle-prep-header');
+    if (!header || !text) return;
+    header.querySelectorAll('.quick-note').forEach(n => n.remove());
+    const note = document.createElement('div');
+    note.className = 'quick-note';
+    note.textContent = text;
+    header.appendChild(note);
+    clearTimeout(quickNoteTimer);
+    quickNoteTimer = setTimeout(() => note.remove(), 2600);
   }
 
   // ── Level slider ─────────────────────────
@@ -1291,7 +1309,10 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
   }
 
   async function runQuickBattle() {
-    if (quickBusy || !quickBattleState()?.ok) return;
+    if (quickBusy) return;
+    const gate = quickBattleState();
+    if (!gate) return;
+    if (!gate.ok) { showQuickNote(gate.reason); return; }
     // Three supplies is most of a pool, so it is never spent on a mis-tap: the
     // cost and what is left are put in front of the player first.
     const have = supplyState ? supplyState.amount : '?';
@@ -1304,15 +1325,25 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     renderQuickBattle();
     try {
       const result = await api('/battle/quick', { chat_id: player.chat_id, playerUnitIds, region_id, level: curLevel });
-      resourceCache.invalidate();
-      await refreshResourceBar(player).catch(() => {});
-      const boot = await bootstrapCache.get(player.chat_id).catch(() => null);
-      supplyState = boot?.supplies || null;
+      // The response already holds everything the spoils row shows, so it goes
+      // up at once. The bar and the supply count are refreshed behind it rather
+      // than in front of it: awaiting those two round trips kept the player
+      // staring at a dimmed button long after the payout had landed.
       const spoils = rewardRowHtml({
         gold:     result.gold || 0,
         crystals: result.crystals_gained || {},
         trophies: result.trophies_gained || {},
       });
+      if (supplyState && result.supplies_spent) {
+        supplyState = { ...supplyState, amount: Math.max(0, supplyState.amount - result.supplies_spent) };
+      }
+      resourceCache.invalidate();
+      // One /bootstrap for both: refreshResourceBar and this get share the same
+      // in-flight request (see makeCache).
+      refreshResourceBar(player).catch(() => {});
+      bootstrapCache.get(player.chat_id)
+        .then(boot => { supplyState = boot?.supplies || supplyState; renderQuickBattle(); })
+        .catch(() => {});
       await askBeforeBattle(`${BP_TEXT.quickDone[L]}<div class="quick-spoils">${spoils}</div>`, { confirmOnly: true });
     } catch (err) {
       console.error('Quick battle failed:', err);

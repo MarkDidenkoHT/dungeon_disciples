@@ -2687,6 +2687,9 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .embark-supply-pill {
+  position: sticky;
+  top: 0;
+  z-index: 4;
   display: flex;
   align-items: baseline;
   gap: 8px;
@@ -4858,6 +4861,28 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .battle-prep-header {
   display: flex;
   align-items: center;
+  position: relative;
+}
+
+.quick-note {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  max-width: 88%;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.72rem;
+  line-height: 1.25;
+  text-align: center;
+  white-space: normal;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  animation: bark-toast-in 0.15s ease-out;
 }
 
 .prep-side {

@@ -4669,10 +4669,17 @@ router.post('/battle/quick', requireAuth, async (req, res) => {
   if (!region) return res.status(400).json({ error: 'Invalid region_id' });
   if (!region.difficulties?.[`level_${level}`]) return res.status(400).json({ error: 'Invalid level' });
   try {
-    const existing = await getActiveBattle(chat_id);
+    // Every read this gate needs is independent, and the player is left waiting
+    // on the whole chain before a single reward lands - so they go out together.
+    // The CHECKS below stay in their old order, and all of them still precede
+    // the charge.
+    const [existing, player, squad, inventoryRows] = await Promise.all([
+      getActiveBattle(chat_id),
+      getPlayerByChatId(chat_id),
+      loadSquad(chat_id, playerUnitIds),
+      supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`),
+    ]);
     if (existing) return res.status(400).json({ error: 'A battle is already in progress', code: 'battle_in_progress' });
-
-    const player = await getPlayerByChatId(chat_id);
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
     // CLEARED, not merely unlocked. `progress[region_id]` is the next playable
@@ -4683,7 +4690,6 @@ router.post('/battle/quick', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'That level has not been cleared yet', code: 'not_cleared' });
     }
 
-    const squad = await loadSquad(chat_id, playerUnitIds);
     if (squad.error) return res.status(400).json({ error: squad.error, code: 'invalid_squad' });
 
     const enemies    = getEncounter(region_id, level);
@@ -4716,7 +4722,6 @@ router.post('/battle/quick', requireAuth, async (req, res) => {
     }
 
     const tuned          = getLevelRewards(region_id, level);
-    const inventoryRows  = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
     const payouts        = [];
     const crystalsGained = {};
     let   crystalTotal   = 0;

@@ -216,7 +216,6 @@ const REGION_ENCOUNTERS = {
                    { spell_id: 'boss_glacial_burst', power: 3 }] },
         { key: 'glittering_abyss.rimewarden',     cell: 4 },
         { key: 'glittering_abyss.rime_splinter',  cell: 1 },
-        { key: 'glittering_abyss.rime_splinter',  cell: 3 },
       ],
       rewards: {
         gold: 75, xp: 165,
