@@ -368,19 +368,6 @@ export function renderItems(root, params = {}) {
 
   function buildCatalogItemCard(itemDef, ownedCount) {
     const iconId      = itemDef.icon || itemDef.key || 'item';
-    const factionOk   = !itemDef.faction || itemDef.faction === player.faction;
-    const unlocked    = meetsCraftRequirements(itemDef, progress);
-    const uniqueOwned = !!itemDef.unique && ownedCount > 0;
-    const canCraft    = forgeOpen && factionOk && unlocked && hasCraftMaterials(itemDef) && !uniqueOwned;
-
-    let blocked = '';
-    // The forge gate outranks every other reason: with no Blacksmith nothing on
-    // this page is craftable, so saying so once is clearer than listing each
-    // item's own unmet requirement behind a wall that hides them all anyway.
-    if (!forgeOpen)      blocked = T('noForge');
-    else if (uniqueOwned)     blocked = T('uniqueOwned');
-    else if (!factionOk) blocked = T('wrongFaction');
-    else if (!unlocked)  blocked = `🔒 ${craftRequirementText(itemDef, L)}`;
 
     const countLine = ownedCount > 0 ? `${T('owned')} ×${ownedCount}` : '';
 
@@ -398,16 +385,6 @@ export function renderItems(root, params = {}) {
             <div class="item-card-tags">${renderItemTags(itemDef)}</div>
           </div>
         </div>
-        <div class="item-cost">${costChips(itemDef.cost || {}, itemDef.item_cost || {})}</div>
-        <!-- The reason goes IN the button rather than on a line under it: the
-             button is dead anyway while a reason exists, so its label is free
-             space, and one element cannot disagree with itself about whether the
-             item is craftable. Missing materials stay unlabelled — the cost
-             chips above already say which, and repeating it in the button would
-             be the one case where the reason is longer than the card. -->
-        <button class="item-action-btn item-action-btn--craft${blocked ? ' item-action-btn--blocked' : ''}"
-                data-craft-key="${itemDef.key}" ${canCraft ? '' : 'disabled'}
-                ${blocked ? `title="${blocked}"` : ''}>${blocked || T('craft')}</button>
       </div>`;
   }
 
