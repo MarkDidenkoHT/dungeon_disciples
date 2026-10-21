@@ -210,6 +210,7 @@ const BT = {
   // Per-unit XP block on the victory screen.
   xpGained:       { en: 'Experience',        ru: 'Опыт' },
   maxTier:        { en: 'Max tier',          ru: 'Макс. ранг' },
+  atMaxXp:        { en: 'At max XP',         ru: 'Макс. опыт' },
   readyToUpgrade: { en: 'Ready to upgrade',  ru: 'Готов к улучшению' },
   // Unit detail panel: the generic action labels shown when a unit has no named
   // ability, plus the two empty/failure states of the panel itself.
@@ -3235,11 +3236,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           const name     = unitName(def) || a.unit_id;
           const required = def?.xp ?? null;
           const cur      = a.current_xp ?? 0;
-          // def.xp is the XP needed to upgrade; null means the unit is max tier
-          // and has nothing left to fill a bar toward.
-          const pct      = required ? Math.min(100, Math.floor((cur / required) * 100)) : 100;
-          const ready    = required != null && cur >= required;
-          const meta     = required == null ? BTx('maxTier')
+          // Max tier comes from the server's upgrade-path check. A unit can
+          // still have an XP threshold in its definition after reaching max tier.
+          const pct      = a.max_tier ? 100 : (required ? Math.min(100, Math.floor((cur / required) * 100)) : 100);
+          const ready    = !a.max_tier && required != null && cur >= required;
+          const meta     = a.max_tier ? BTx('atMaxXp')
+                         : required == null ? BTx('maxTier')
                          : ready            ? BTx('readyToUpgrade')
                          : `${cur} / ${required}`;
           return `
@@ -3248,7 +3250,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
               <div class="reward-xp-body">
                 <div class="reward-xp-top">
                   <span class="reward-xp-name">${name}</span>
-                  <span class="reward-xp-gain">+${a.xp_gained}</span>
+                  <span class="reward-xp-gain">${a.max_tier ? '' : `+${a.xp_gained}`}</span>
                 </div>
                 <div class="reward-xp-bar"><div class="reward-xp-fill${ready ? ' reward-xp-fill--ready' : ''}" style="width:${pct}%"></div></div>
                 <div class="reward-xp-meta${ready ? ' reward-xp-meta--ready' : ''}">${meta}</div>

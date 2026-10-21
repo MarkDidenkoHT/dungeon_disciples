@@ -942,29 +942,27 @@ function getFactionForUnit(unitDataId) {
   return null;
 }
 
+function isMaxTierUnit(unitId) {
+  if (!unitId || !getUnitByDataId(unitId)) return false;
+  const faction = getFactionForUnit(unitId);
+  const paths = faction ? UNIT_UPGRADE_PATHS[faction]?.[unitId] : null;
+  return !Array.isArray(paths) || paths.length === 0;
+}
+
 // A unit is max tier when it has no outgoing entry in UNIT_UPGRADE_PATHS. Its
 // XP threshold is unrelated: terminal units can still show "Ready to upgrade."
-// Redirect 25% of max-tier participants' XP shares to participants with a path.
+// They gain no XP; 25% of their normal shares goes to participants with a path.
 function xpSharesWithMaxTierRedirect(rows, recipientIds, earnedXp) {
   const recipients = (rows || []).filter(row => recipientIds.includes(String(row.id)));
   const shares = new Map(recipients.map(row => [String(row.id), earnedXp]));
-  const isMaxTier = row => {
-    const unitId = row.unit_data?.unit_id;
-    if (!unitId || !getUnitByDataId(unitId)) return false;
-    const faction = getFactionForUnit(unitId);
-    const paths = faction ? UNIT_UPGRADE_PATHS[faction]?.[unitId] : null;
-    return !Array.isArray(paths) || paths.length === 0;
-  };
-  const nonMaxed = recipients.filter(row => !isMaxTier(row));
+  const maxed = recipients.filter(row => isMaxTierUnit(row.unit_data?.unit_id));
+  const nonMaxed = recipients.filter(row => !isMaxTierUnit(row.unit_data?.unit_id));
+  for (const row of maxed) shares.set(String(row.id), 0);
   if (!nonMaxed.length) return shares;
 
   let redirected = 0;
-  for (const row of recipients) {
-    if (isMaxTier(row)) {
-      const transfer = Math.floor(earnedXp * 0.25);
-      shares.set(String(row.id), earnedXp - transfer);
-      redirected += transfer;
-    }
+  for (const row of maxed) {
+    redirected += Math.floor(earnedXp * 0.25);
   }
 
   const each = Math.floor(redirected / nonMaxed.length);
@@ -6303,6 +6301,7 @@ async function grantPvpWinXp(chat_id, battle_data, side) {
       xp_gained:  xpGained,
       current_xp: unitData.current_xp,
       alive:      unitData.alive !== false,
+      max_tier:   isMaxTierUnit(unitData.unit_id),
     });
     await supabase(`/roster?id=eq.${encodeURIComponent(row.id)}`, { method: 'PATCH', body: JSON.stringify({ unit_data: unitData }) });
   }));
@@ -6585,16 +6584,19 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
         let unitData  = row.unit_data || {};
         let changed   = false;
 
-        if (xpEach > 0 && xpRecipients.includes(rosterId)) {
+        if (xpRecipients.includes(rosterId)) {
           const xpGained = xpShares.get(rosterId) ?? xpEach;
-          unitData = { ...unitData, current_xp: (unitData.current_xp ?? 0) + xpGained };
-          changed  = true;
+          if (xpGained > 0) {
+            unitData = { ...unitData, current_xp: (unitData.current_xp ?? 0) + xpGained };
+            changed  = true;
+          }
           xpAwards.push({
             roster_id:  rosterId,
             unit_id:    unitData.unit_id,
             xp_gained:  xpGained,
             current_xp: unitData.current_xp,
             alive:      unitData.alive !== false,
+            max_tier:   isMaxTierUnit(unitData.unit_id),
           });
         }
 
