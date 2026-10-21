@@ -268,9 +268,9 @@ const TOME_TEXT = {
     en: name => `any unit sworn to ${name}`,
     ru: name => `любой боец, принявший призвание «${name}»`,
   },
-  litanyAllAliveChorus: {
-    en: (key, name) => `all living allies except the lead${name ? `; ${key} must be sworn to ${name}` : ''}`,
-    ru: (key, name) => `все живые союзники, кроме героя, наносящего удар${name ? `; ${key} — боец призвания «${name}»` : ''}`,
+  litanyNoAnchor: {
+    en: 'no unit required in this cell',
+    ru: 'в этой клетке не требуется отдельный боец',
   },
   litanyHeroHint: {
     en: 'your hero, in person',
@@ -883,22 +883,19 @@ export function renderSpellTome(root, { player }) {
         const roleLabel = TOME_TEXT.litanyRoles[cell.role]?.[lang] || cap(cell.role || '');
         const keyTag = cell.key
           ? `<span class="litany-row-key">${escapeHtml(cell.key)}</span>` : '';
-        // A CHORUS cell names a calling and no ids at all — the player decides
-        // who may stand there, so there are no faces to draw. The word is the
-        // requirement; "any unit sworn to it" rides on `title`.
+        // A chorus cell's calling is its formation requirement. `all_alive`
+        // changes who speaks, not what must occupy the marked cell.
         if (cell.role === 'chorus') {
-          if (cell.all_alive) {
-            const calling = cell.calling ? getCalling(cell.calling) : null;
-            const callingName = calling ? (lang === 'ru' ? calling.name_ru : calling.name) : null;
+          const calling = cell.calling ? getCalling(cell.calling) : null;
+          if (!calling) {
+            if (!cell.all_alive) return '';
             return `
             <div class="litany-grid-req litany-grid-req--chorus"
                  title="${escapeHtml(roleLabel)}">
               ${keyTag}
-              <span class="litany-calling-name">${escapeHtml(TOME_TEXT.litanyAllAliveChorus[lang](cell.key, callingName))}</span>
+              <span class="litany-calling-name">${escapeHtml(t('litanyNoAnchor'))}</span>
             </div>`;
           }
-          const calling = getCalling(cell.calling);
-          if (!calling) return '';
           const name = lang === 'ru' ? calling.name_ru : calling.name;
           return `
             <div class="litany-grid-req litany-grid-req--chorus"
