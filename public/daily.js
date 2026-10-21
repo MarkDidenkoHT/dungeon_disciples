@@ -233,9 +233,7 @@ function sortQuests(quests) {
 }
 
 function questsBodyHtml(state, player) {
-  const claimable = state.quests.filter(q => q.claimable).length;
   return `
-    ${claimable ? `<div class="quest-actions"><button class="quest-btn quest-btn--claim" data-claim-all>${T('Claim all', 'Забрать все')} (${claimable})</button></div>` : ''}
     <div class="quest-list">${sortQuests(state.quests).map(q => questHtml(q, state.faction_crystal, player)).join('')}</div>`;
 }
 
@@ -275,7 +273,10 @@ export function openDailyTasks(player, { tab } = {}) {
             ${T('Quests', 'Задания')}<span class="daily-tab-dot"></span>
           </button>
         </div>
-        <button class="daily-close" aria-label="Close">✕</button>
+        <div class="daily-header-actions">
+          <button class="quest-btn quest-btn--claim daily-claim-all" data-claim-all hidden>${T('Claim', 'Забрать')}</button>
+          <button class="daily-close" aria-label="Close">✕</button>
+        </div>
       </div>
       <div class="daily-list"><p class="modal-empty">…</p></div>
     </div>`;
@@ -284,6 +285,10 @@ export function openDailyTasks(player, { tab } = {}) {
 
   overlay.querySelector('.daily-close').addEventListener('click', closeDailyTasks);
   overlay.addEventListener('click', e => { if (e.target === overlay) closeDailyTasks(); });
+  overlay.addEventListener('click', e => {
+    const btn = e.target.closest('[data-claim-all]');
+    if (btn && !btn.disabled) claimAllQuests(btn);
+  });
 
   const list = overlay.querySelector('.daily-list');
 
@@ -298,6 +303,8 @@ export function openDailyTasks(player, { tab } = {}) {
       .classList.toggle('daily-tab-dot--on', !!boot?.daily?.claimable);
     overlay.querySelector('[data-tab="quests"] .daily-tab-dot')
       .classList.toggle('daily-tab-dot--on', (boot?.quests_claimable || 0) > 0);
+    const claimAllBtn = overlay.querySelector('[data-claim-all]');
+    claimAllBtn.hidden = activeTab !== 'quests' || !(boot?.quests_claimable > 0);
   }
 
   overlay.querySelectorAll('.daily-tab').forEach(btn => {
@@ -313,8 +320,6 @@ export function openDailyTasks(player, { tab } = {}) {
   list.addEventListener('click', e => {
     const reward = e.target.closest('.daily-reward');
     if (reward && !reward.disabled) return claimDaily(reward.dataset.reward, reward);
-    const claimAllBtn = e.target.closest('[data-claim-all]');
-    if (claimAllBtn && !claimAllBtn.disabled) return claimAllQuests(claimAllBtn);
     const claimBtn = e.target.closest('[data-claim]');
     if (claimBtn && !claimBtn.disabled) return claimQuest(claimBtn.dataset.claim, claimBtn);
     const goBtn = e.target.closest('[data-go]');

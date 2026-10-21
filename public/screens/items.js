@@ -13,6 +13,7 @@ import {
   openSheet, closeSheet, getSheetBody,
   applyBackground, buildAbilityModalParts,
   itemName, itemRarity, CRYSTAL_ICONS, GOLD_ICON, unitName,
+  itemName, itemRarity, CRYSTAL_ICONS, GOLD_ICON, unitName, buildStatDescription, escapeHtml,
   renderItemPassive, renderItemTags, playPageTurnSound, RESOURCE_BAR_SLOTS,
 } from '../utils.js';
 import { mountItemLibrary, matchesStatFilter } from '../item-library.js';
@@ -368,6 +369,8 @@ export function renderItems(root, params = {}) {
 
   function buildCatalogItemCard(itemDef, ownedCount) {
     const iconId      = itemDef.icon || itemDef.key || 'item';
+    const passiveDef  = itemDef.passive ? resolveAbility(itemDef.passive) : null;
+    const passiveDesc = passiveDef ? buildStatDescription(passiveDef, 'passive') : '';
 
     const countLine = ownedCount > 0 ? `${T('owned')} ×${ownedCount}` : '';
 
@@ -382,6 +385,8 @@ export function renderItems(root, params = {}) {
             <div class="item-card-name">${itemName(itemDef, player)}</div>
             <div class="item-card-stats">${formatStatMods(itemDef.stat_mods)}</div>
             ${renderItemPassive(itemDef)}
+            ${renderItemPassive(itemDef, { interactive: false })}
+            ${passiveDesc ? `<div class="item-modal-passive-desc">${escapeHtml(passiveDesc)}</div>` : ''}
             <div class="item-card-tags">${renderItemTags(itemDef)}</div>
           </div>
         </div>

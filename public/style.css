@@ -1148,7 +1148,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 20px;
+  padding: 10px;
   border-bottom: 1px solid var(--border);
   background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.10), transparent 70%);
 }
@@ -1160,7 +1160,6 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 .daily-tabs {
   display: flex;
-  gap: 6px;
   min-width: 0;
 }
 .daily-tab {
@@ -1168,7 +1167,7 @@ button:active:not(:disabled) { opacity: 0.75; }
   background: transparent;
   border: 1px solid transparent;
   border-radius: 10px;
-  padding: 7px 14px;
+  padding: 6px;
   font-weight: 800;
   font-size: 1.1rem;
   letter-spacing: 0.02em;
@@ -1192,6 +1191,8 @@ button:active:not(:disabled) { opacity: 0.75; }
   display: none;
 }
 .daily-tab-dot--on { display: block; }
+.daily-header-actions { display: flex; align-items: center; gap: 8px; }
+.daily-claim-all[hidden] { display: none; }
 .daily-close {
   background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border);
   color: var(--muted); border-radius: 9px;
