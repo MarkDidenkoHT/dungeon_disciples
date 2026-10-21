@@ -777,7 +777,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // playback for LITANY_VERSE_MS; performed verses hold for the same time,
   // including their animation. The lethal verse holds for nothing because the
   // killing blow follows immediately after it in the log.
-  const LITANY_VERSE_MS = 1200;
+  const LITANY_VERSE_MS = 1800;
   const LITANY_TOAST_MS = 4500;
 
   // `leadIn` holds the board on screen before the FIRST turn plays. Only the

@@ -631,15 +631,16 @@ Rulings:
 
 ### 5.5 Playback and pacing
 
-Target: **~3.5–4 s** from the first verse to the corpse. Client
+Target: **~5–6 s** from the first verse to the corpse. Client
 ([public/screens/battle.js](../public/screens/battle.js)):
 
 | t | What |
 |---|---|
 | 0 ms | first verse toast on its cell + that unit's own animation: at the victim for a fighter, over its own side for a supporter |
-| ~1200 ms | second verse toast + the same for that cell |
-| ~2400 ms | last verse toast on the lead + the real killing blow, damage number, death |
-| ~3600 ms | toasts clear; the reward line appears in the log |
+| ~1800 ms | second verse toast + the same for that cell |
+| ~3600 ms | last verse toast on the lead + the real killing blow, damage number, death |
+| immediately after the blow | reward line appears in the log |
+| ~8100 ms | the final toast clears if no later verse replaces it |
 
 - Verse toasts use `bark-toast--litany` and do **not** dismiss on tap mid-sequence;
   earlier verses stay up while later ones appear, so the three read as one chant.

@@ -160,7 +160,7 @@ export class BattleSystem {
   }
 
   calcDamage(actor, target) {
-    return calcDamageWithPassives(actor, target, UNIT_ABILITIES);
+    return calcDamageWithPassives(actor, target, UNIT_ABILITIES, this);
   }
 
   calcHeal(actor) {

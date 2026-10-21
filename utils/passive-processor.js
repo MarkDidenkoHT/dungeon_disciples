@@ -53,7 +53,10 @@ const INSPIRATION_DISPLAY_FIELD = {
 // "per Zombie / per Demon / per Holy" passive, so they all count the same way:
 // the owner counts itself when it carries the tag, and the dead never count.
 function tagCount(engine, side, tag) {
-  return engine?.tagCountFor ? engine.tagCountFor(side, tag) : 0;
+  if (engine?.tagCountFor) return engine.tagCountFor(side, tag);
+  return (engine?.combatants || []).filter(c =>
+    c.alive && c.side === side && (c.unit_data?.tags ?? c.tags ?? []).includes(tag)
+  ).length;
 }
 
 // A percentage that may be flat or scaled per tag. Returns 0 when neither is
@@ -1563,12 +1566,11 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
   }
 }
-// ── Ward: the defender takes less damage of ONE school, per ally tag ──────────
+// ── Warding: living warders reduce enemy damage per allied tag ────────────────
 //
-// The defensive mirror of the vs_tag slayer family above. Reads the TARGET's
-// passives, so the unit that owns the passive is the one protected, and counts
-// the tag live on the target's own side — an ally dying mid-round weakens it on
-// the very next hit.
+// A Warding passive is an aura for its whole side: while its owner is alive,
+// enemy damage against that side is reduced by the count of living tagged allies.
+// An ally dying weakens the aura on the very next hit.
 //
 // Params (all four are data, so a new ward is an entry in unit_abilities.js and
 // nothing here):
@@ -1578,23 +1580,25 @@ function dispatchPassive(trigger, owner, def, ctx) {
 //   ward_reduction_pct_per_tag  points per counted ally
 //   ward_reduction_pct          flat points, when there is no scaling
 //   ward_reduction_pct_max      optional cap (defaults to MITIGATION_CAP_PCT)
-function wardReductionFor(target, damageSource, UNIT_ABILITIES, engine) {
-  if (!target) return { pct: 0, source: null };
-  const defs = resolvePassiveDefs(target, UNIT_ABILITIES);
+function wardReductionFor(attacker, target, damageSource, UNIT_ABILITIES, engine) {
+  if (!attacker || !target || !engine || attacker.side === target.side) return { pct: 0, source: null };
   let pct = 0;
   let source = null;
-  for (const def of defs) {
-    const p = def.params || {};
-    if (p.ward_reduction_pct_per_tag == null && p.ward_reduction_pct == null) continue;
-    if (p.ward_damage_source && damageSource && p.ward_damage_source !== damageSource) continue;
-    const raw = p.ward_reduction_pct_per_tag != null
-      ? p.ward_reduction_pct_per_tag * tagCount(engine, target.side, p.ward_ally_tag)
-      : p.ward_reduction_pct;
-    const cap = p.ward_reduction_pct_max ?? MITIGATION_CAP_PCT;
-    const own = Math.max(0, Math.min(cap, raw ?? 0));
-    if (own <= 0) continue;
-    pct += own;
-    source = source ?? (p.ward_damage_source ?? null);
+  const warders = engine.combatants.filter(c => c.alive && c.side === target.side);
+  for (const warder of warders) {
+    for (const def of resolvePassiveDefs(warder, UNIT_ABILITIES)) {
+      const p = def.params || {};
+      if (p.ward_reduction_pct_per_tag == null && p.ward_reduction_pct == null) continue;
+      if (p.ward_damage_source && damageSource && p.ward_damage_source !== damageSource) continue;
+      const raw = p.ward_reduction_pct_per_tag != null
+        ? p.ward_reduction_pct_per_tag * tagCount(engine, target.side, p.ward_ally_tag)
+        : p.ward_reduction_pct;
+      const cap = p.ward_reduction_pct_max ?? MITIGATION_CAP_PCT;
+      const own = Math.max(0, Math.min(cap, raw ?? 0));
+      if (own <= 0) continue;
+      pct += own;
+      source = source ?? (p.ward_damage_source ?? null);
+    }
   }
   return { pct: Math.max(0, Math.min(MITIGATION_CAP_PCT, pct)), source };
 }
@@ -1656,7 +1660,7 @@ function calcDamageWithPassives(actor, target, UNIT_ABILITIES, engine) {
     const resistance = effectiveResist(target, damageSource);
     dmg = Math.floor(rawDmg * (1 - resistance / 100));
   }
-  const ward = wardReductionFor(target, damageSource, UNIT_ABILITIES, engine);
+  const ward = wardReductionFor(actor, target, damageSource, UNIT_ABILITIES, engine);
   if (ward.pct) dmg = Math.floor(dmg * (1 - ward.pct / 100));
   return { dmg: Math.max(1, dmg), rawDmg };
 }
