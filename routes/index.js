@@ -942,6 +942,39 @@ function getFactionForUnit(unitDataId) {
   return null;
 }
 
+// A missing XP threshold means the unit has reached the end of its upgrade
+// line. When XP is awarded, return each participant's retained share after
+// redirecting 25% of max-tier participants' shares to non-maxed participants.
+function xpSharesWithMaxTierRedirect(rows, recipientIds, earnedXp) {
+  const recipients = (rows || []).filter(row => recipientIds.includes(String(row.id)));
+  const shares = new Map(recipients.map(row => [String(row.id), earnedXp]));
+  const nonMaxed = recipients.filter(row => {
+    const unitId = row.unit_data?.unit_id;
+    const def = unitId ? getUnitByDataId(unitId) : null;
+    return !def || def.xp != null;
+  });
+  if (!nonMaxed.length) return shares;
+
+  let redirected = 0;
+  for (const row of recipients) {
+    const unitId = row.unit_data?.unit_id;
+    const def = unitId ? getUnitByDataId(unitId) : null;
+    if (def && def.xp == null) {
+      const transfer = Math.floor(earnedXp * 0.25);
+      shares.set(String(row.id), earnedXp - transfer);
+      redirected += transfer;
+    }
+  }
+
+  const each = Math.floor(redirected / nonMaxed.length);
+  let remainder = redirected % nonMaxed.length;
+  for (const row of nonMaxed) {
+    const id = String(row.id);
+    shares.set(id, shares.get(id) + each + (remainder-- > 0 ? 1 : 0));
+  }
+  return shares;
+}
+
 function makeUnitData(unitId, buildingSlot) {
   const def = getUnitByDataId(unitId);
   const hp  = def?.hp ?? 50;
@@ -6259,12 +6292,14 @@ async function grantPvpWinXp(chat_id, battle_data, side) {
     : [];
 
   const xp_awards = [];
+  const xpShares = xpSharesWithMaxTierRedirect(rows, rows.map(row => String(row.id)), PVP_WIN_XP);
   await Promise.all(rows.map(async row => {
-    const unitData = { ...(row.unit_data || {}), current_xp: ((row.unit_data || {}).current_xp ?? 0) + PVP_WIN_XP };
+    const xpGained = xpShares.get(String(row.id)) ?? PVP_WIN_XP;
+    const unitData = { ...(row.unit_data || {}), current_xp: ((row.unit_data || {}).current_xp ?? 0) + xpGained };
     xp_awards.push({
       roster_id:  String(row.id),
       unit_id:    unitData.unit_id,
-      xp_gained:  PVP_WIN_XP,
+      xp_gained:  xpGained,
       current_xp: unitData.current_xp,
       alive:      unitData.alive !== false,
     });
@@ -6532,6 +6567,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       const xpEach = xpRecipients.length > 0
         ? Math.round(Math.floor(rewards.xp / xpRecipients.length) * (1 + embarkBonus.xp_pct / 100))
         : 0;
+      const xpShares = xpSharesWithMaxTierRedirect(participantRows, xpRecipients, xpEach);
       result.xp_granted = xpEach;
 
       // Per-unit XP detail for the victory screen. The single xp_granted figure
@@ -6549,12 +6585,13 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
         let changed   = false;
 
         if (xpEach > 0 && xpRecipients.includes(rosterId)) {
-          unitData = { ...unitData, current_xp: (unitData.current_xp ?? 0) + xpEach };
+          const xpGained = xpShares.get(rosterId) ?? xpEach;
+          unitData = { ...unitData, current_xp: (unitData.current_xp ?? 0) + xpGained };
           changed  = true;
           xpAwards.push({
             roster_id:  rosterId,
             unit_id:    unitData.unit_id,
-            xp_gained:  xpEach,
+            xp_gained:  xpGained,
             current_xp: unitData.current_xp,
             alive:      unitData.alive !== false,
           });

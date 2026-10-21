@@ -36,6 +36,7 @@
 //                                  targets. Put it on per-hit effects (bleed,
 //                                  burn, poison) so an AoE unit cannot apply
 //                                  them to the whole enemy line at once.
+//   allowed_unit_ids ['e1']        only these exact unit definitions may equip it
 // The last three are only needed for special cases: an item whose `passive`
 // declares a trigger that requires attacking (on_hit / on_kill /
 // preemptive_strike) or healing (on_heal) is ALREADY refused automatically on a
@@ -169,8 +170,9 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
-    stat_mods:    { fire_resist: 8, death_resist: 8 },
-    passive:      'radiance 1',
+    stat_mods:    { hp: 5, fire_resist: 5, death_resist: 5 },
+    passive:      'radiance 3',
+    allowed_unit_ids: ['e2121', 'e212'],
     icon:         'aegis_of_the_first_ward',
     rarity:       'mythic',
     unique:       true,

@@ -14,6 +14,7 @@
 //                                         burn, poison…) that would otherwise
 //                                         multiply on an AoE unit — a targets:6
 //                                         caster applies the effect six times.
+//        allowed_unit_ids: ['e1']         exact unit definitions allowed to equip
 //      Use these when an item is a special case the derived layer cannot know
 //      about. They always win over the derived rules.
 //
@@ -79,6 +80,14 @@ function getEquipBlock(itemStats, unitDef, unitAbilities = {}) {
 
   const tags = (unitDef.tags || []).filter(Boolean);
   const kind = unitActionKind(unitDef);
+
+  if (Array.isArray(stats.allowed_unit_ids) && !stats.allowed_unit_ids.includes(unitDef.id)) {
+    return {
+      code: 'unit_not_allowed',
+      reason:    'Only specific units can equip this item',
+      reason_ru: 'Этот предмет могут экипировать только определённые бойцы',
+    };
+  }
 
   const statMods = stats.stat_mods || {};
   if (kind === 'empower' && Number(statMods.action_power ?? statMods.power) > 0) {

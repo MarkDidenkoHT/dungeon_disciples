@@ -2299,6 +2299,18 @@ const UNIT_ABILITIES = {
     params: { radiance_pct: 40 },
     effect_name: 'radiance',
   },
+  'radiance 3': {
+    id: 'radiance 3',
+    name: 'Radiance',
+    name_ru: "Сияние",
+    rank: 3,
+    type: 'passive',
+    trigger: 'on_healed',
+    description: 'When this unit is healed, deals damage equal to 40% of the amount healed to adjacent enemies.',
+    description_ru: "Когда этот юнит исцеляется, наносит соседним врагам урон, равный 40% исцелённого количества.",
+    params: { radiance_pct: 50 },
+    effect_name: 'radiance',
+  },
   'light_of_dawn 1': {
     id: 'light_of_dawn 1',
     name: 'Light of Dawn',
