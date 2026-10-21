@@ -372,7 +372,7 @@ export function renderItems(root, params = {}) {
     const countLine = ownedCount > 0 ? `${T('owned')} ×${ownedCount}` : '';
 
     return `
-      <div class="item-card item-card--catalog item-card--rarity-${itemRarity(itemDef)} ${canCraft ? 'item-card--available' : ''}">
+      <div class="item-card item-card--catalog item-card--rarity-${itemRarity(itemDef)}">
         <div class="item-card-body">
           ${itemAsideHtml({
             iconId, name: itemName(itemDef, player), rarity: itemRarity(itemDef),
