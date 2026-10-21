@@ -222,16 +222,19 @@ const LITANY_TARGETS = [
 
 const LITANIES = [
 
-  // ── Empire: Argent Hammer (Inquisitor) and Duty Eternal (Paladin) ────────────
+  // ── Empire: Argent Hammer (Inquisitor or Paladin) and Duty Eternal (Paladin) ─
   {
     id:    'profane_chorus',
     name:  'Argent Hammer',
     name_ru: 'Серебряный Молот',
-    // A and C are Crusade callers; the Inquisitor lead may stand in either
-    // column of row 1. The merged B cell on the page shows those two choices.
+    // A and C are Crusade callers; either a Paladin or Inquisitor may lead from
+    // either column of row 1. The merged B cell shows the two position choices.
     //
-    // Lead: Inquisitor, every tier of both paths (moved from Cinder Verdict).
+    // Leads: Paladin and Inquisitor, every tier of both paths. The Inquisitor
+    // lead moved here from Cinder Verdict; the Paladin lead remains eligible.
     lead: { ids: [
+      'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
+      'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212',
       'h_e_2', 'h_e_2_a2', 'h_e_2_a3', 'h_e_2_a41', 'h_e_2_a42',
       'h_e_2_b2', 'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42',
     ] },
