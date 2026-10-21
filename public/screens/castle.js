@@ -3678,6 +3678,16 @@ export function renderCastle(root, params = {}) {
       // old portrait until the screen was re-mounted.
       await reloadFromBootstrap(result.structures);
     } catch (err) {
+      if (err.code === 'respec_stale') {
+        try {
+          const fresh = await bootstrapCache.refresh(player.chat_id);
+          closeModal();
+          await reloadFromBootstrap(null, fresh);
+          return;
+        } catch (refreshErr) {
+          console.warn('Could not refresh the castle after a stale respec choice:', refreshErr);
+        }
+      }
       alert(err.message || 'Respec failed');
     }
   }

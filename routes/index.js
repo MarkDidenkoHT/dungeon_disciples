@@ -4128,7 +4128,10 @@ router.post('/structures/respec', requireAuth, async (req, res) => {
       target = getCrossBranchRespecOptions(faction, current.building_id).find(o => o.id === building_id);
       if (target) sigilsRequired = target.sigils_required;
     }
-    if (!target) return res.status(400).json({ error: 'That building is not a valid respec for this slot' });
+    if (!target) return res.status(400).json({
+      error: 'That building is not a valid respec for this slot',
+      code: 'respec_stale',
+    });
 
     const bill = { crossroad_sigil: sigilsRequired };
 
