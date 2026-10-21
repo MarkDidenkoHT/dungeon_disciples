@@ -5454,7 +5454,7 @@ router.post('/colossus/attack', requireAuth, async (req, res) => {
 // turn clock; the bot moves inside the player's own requests, as a region
 // encounter does.
 
-const BOT_FALLBACK_MS = 20000;
+const BOT_FALLBACK_MS = 30000;
 
 // The template ids of this player's last bot battles, newest first, for faction
 // rotation. Read from the records so a restart does not reset it.
