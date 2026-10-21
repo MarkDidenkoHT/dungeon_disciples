@@ -368,6 +368,7 @@ export function renderItems(root, params = {}) {
 
   function buildCatalogItemCard(itemDef, ownedCount) {
     const iconId      = itemDef.icon || itemDef.key || 'item';
+    const canCraft    = canCraftNow(itemDef);
     const passiveDef  = itemDef.passive ? resolveAbility(itemDef.passive) : null;
     const passiveDesc = passiveDef ? buildStatDescription(passiveDef, 'passive') : '';
 
@@ -388,6 +389,8 @@ export function renderItems(root, params = {}) {
             <div class="item-card-tags">${renderItemTags(itemDef)}</div>
           </div>
         </div>
+        <button class="item-action-btn item-action-btn--craft" data-craft-key="${itemDef.key}"
+                ${canCraft ? '' : 'disabled'}>${T('craft')}</button>
       </div>`;
   }
 
