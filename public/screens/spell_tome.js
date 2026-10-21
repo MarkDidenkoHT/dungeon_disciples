@@ -247,6 +247,7 @@ const TOME_TEXT = {
   // A `row`-sized unit stands in both columns at once, so the cell it fills has
   // no single column to name.
   litanyColBoth:   { en: 'both',  ru: 'обе' },
+  litanyColEither: { en: 'back or front', ru: 'тыл или фронт' },
   // A litany places each cell itself, front column or back, so the label has to
   // read the placement out rather than assert one. Cells arrive already in key
   // order ("A: back column, row 1").
@@ -280,7 +281,7 @@ const TOME_TEXT = {
     // The Russian is NOT a translation of the English here. "Хор" is the faction
     // and the ability of that name, and "Вождь" is a chieftain — both read as
     // something else on this page. "Свита" also covers the cells that fight:
-    // eight of the eighteen litanies have a chorus that swings rather than sings.
+    // Some litanies have a chorus that swings rather than sings.
     chorus: { en: 'Chorus', ru: 'Свита' },
     lead:   { en: 'Lead',   ru: 'Инициатор' },
     // Only on the four whose hero is a healer and so cannot land the blow: the
@@ -805,7 +806,7 @@ export function renderSpellTome(root, { player }) {
       (def.lead?.ids || []).some(id => factionOfUnitId.get(id) === player.faction);
 
     // Only the litanies this player could actually stage. A Choir player has no
-    // Paladin to lead profane_chorus and never will, so listing it would be a
+    // Inquisitor to lead Argent Hammer and never will, so listing it would be a
     // page of units they cannot recruit — staging the execution of their own
     // heroes, at that.
     const performable = LITANIES.filter(canPerform);
@@ -841,7 +842,7 @@ export function renderSpellTome(root, { player }) {
         .sort((a, b) => String(a.key).localeCompare(String(b.key)));
       const squaresOf = c => {
         const size = c.size || 'tile';
-        if (size === 'row')    return [`${c.row}:back`, `${c.row}:front`];
+        if (size === 'row' || c.col === 'either') return [`${c.row}:back`, `${c.row}:front`];
         if (size === 'column') return [`${c.row}:${c.col}`, `${c.row + 1}:${c.col}`];
         return [`${c.row}:${c.col}`];
       };
@@ -871,7 +872,7 @@ export function renderSpellTome(root, { player }) {
       const gridArea = c => {
         const col = c.col === 'back' ? 1 : 2;
         const row = (c.row ?? 0) + 1;
-        if (c.size === 'row')    return `grid-area: ${row} / 1 / span 1 / span 2`;
+        if (c.size === 'row' || c.col === 'either') return `grid-area: ${row} / 1 / span 1 / span 2`;
         if (c.size === 'column') return `grid-area: ${row} / ${col} / span 2 / span 1`;
         return `grid-area: ${row} / ${col}`;
       };
@@ -905,7 +906,7 @@ export function renderSpellTome(root, { player }) {
             </div>`;
         }
         // 'hero' is the litany's own hero line; 'lead' is whoever lands the
-        // blow, which on fourteen of the eighteen is that same hero.
+        // blow, which on most litanies is that same hero.
         const ids  = cell.role === 'hero' ? (def.hero?.ids || []) : (def.lead?.ids || []);
         const defs = dedupeByName(ids.map(id => unitById.get(id)).filter(Boolean));
         return `
@@ -930,6 +931,7 @@ export function renderSpellTome(root, { player }) {
                cells.map(c => TOME_TEXT.litanyGridCellAria[lang](
                  c.key,
                  t(c.size === 'row' ? 'litanyColBoth'
+                   : c.col === 'either' ? 'litanyColEither'
                    : c.col === 'back' ? 'litanyColBack' : 'litanyColFront'),
                  c.size === 'column' ? `${(c.row ?? 0) + 1}-${(c.row ?? 0) + 2}` : (c.row ?? 0) + 1)).join('; ')))}">
           <div class="litany-grid">
@@ -981,7 +983,7 @@ export function renderSpellTome(root, { player }) {
         </details>`;
     }).join('');
 
-    // Whose death a litany is staged around — the same answer for all eighteen
+    // Whose death a litany is staged around — the same answer for all seventeen
     // (LITANY_TARGETS in data/litanies.js), so it is drawn ONCE for the page.
     // It used to be a section on every card, which was the same twelve faces
     // repeated six times and read as if each litany had a quarrel of its own.

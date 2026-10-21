@@ -4319,7 +4319,7 @@ class BattleEngine {
   //
   // A cell is as big as the unit that stands in it. `size` says which:
   //
-  //   'tile'    one cell, at (row, col).
+  //   'tile'    one cell, at (row, col); col 'either' accepts either column.
   //   'row'     both columns of `row` — `col` is 'both' and is not read.
   //   'column'  (row, col) and the row BELOW it, so `row` is the TOP of the two.
   //
@@ -4327,12 +4327,22 @@ class BattleEngine {
   // footprint, whole: a Golden Lion fills two cells and a litany that wants one
   // has to say so. Matching an anchor index instead would have let a two-cell
   // unit answer for a one-cell cell and left the other half of it unexamined.
-  litanyCellFootprint(cell, front) {
-    const col = cell.col === 'back' ? 1 - front : front;
+  litanyCellFootprints(cell, front) {
     const size = cell.size ?? 'tile';
-    if (size === 'row')    return [cellIndex(cell.row, 0), cellIndex(cell.row, 1)];
-    if (size === 'column') return [cellIndex(cell.row, col), cellIndex(cell.row + 1, col)];
-    return [cellIndex(cell.row, col)];
+    if (size === 'row') return [[cellIndex(cell.row, 0), cellIndex(cell.row, 1)]];
+    if (cell.col === 'either') return [[cellIndex(cell.row, 0)], [cellIndex(cell.row, 1)]];
+    const col = cell.col === 'back' ? 1 - front : front;
+    if (size === 'column') return [[cellIndex(cell.row, col), cellIndex(cell.row + 1, col)]];
+    return [[cellIndex(cell.row, col)]];
+  }
+
+  litanyOccupantForCell(cell, side, front, preferred = null) {
+    const wants = new Set(this.litanyCellFootprints(cell, front)
+      .map(footprint => footprint.slice().sort((a, b) => a - b).join(',')));
+    const matches = c =>
+      c.side === side && c.alive &&
+      wants.has(this.getFootprint(c).slice().sort((a, b) => a - b).join(','));
+    return (preferred && matches(preferred) ? preferred : null) || this.combatants.find(matches);
   }
 
   litanySpeakers(def, actor) {
@@ -4342,10 +4352,7 @@ class BattleEngine {
     for (const cell of def.formation.cells) {
       if (cell.role === 'chorus' && cell.all_alive) {
         if (cell.calling) {
-          const want = this.litanyCellFootprint(cell, front).slice().sort((a, b) => a - b).join(',');
-          const anchor = this.combatants.find(c =>
-            c.side === actor.side && c.alive &&
-            this.getFootprint(c).slice().sort((a, b) => a - b).join(',') === want);
+          const anchor = this.litanyOccupantForCell(cell, actor.side, front);
           if (!anchor || anchor._calling !== cell.calling || taken.has(anchor.id)) return null;
           taken.add(anchor.id);
         }
@@ -4355,10 +4362,8 @@ class BattleEngine {
         speakers.all_alive = chorus;
         continue;
       }
-      const want = this.litanyCellFootprint(cell, front).slice().sort((a, b) => a - b).join(',');
-      const occ = this.combatants.find(c =>
-        c.side === actor.side && c.alive &&
-        this.getFootprint(c).slice().sort((a, b) => a - b).join(',') === want);
+      const occ = this.litanyOccupantForCell(cell, actor.side, front,
+        cell.role === 'lead' ? actor : null);
       if (!occ) return null;
       // One unit cannot answer for two cells. Cells that overlap on the board are
       // an authoring mistake rather than a state the engine can reach, so this is
@@ -4392,7 +4397,7 @@ class BattleEngine {
     // with the ordinary kill and death barks the litany would have replaced.
     if (actor.side === 'player' && !this.litaniesUnlocked) return null;
     // Only a CHAMPION is worth the rite, and the list of them is ONE list shared
-    // by all eighteen litanies (LITANY_TARGETS in data/litanies.js) — no litany
+    // by all seventeen litanies (LITANY_TARGETS in data/litanies.js) — no litany
     // carries a target of its own, so this is checked once, ahead of the loop,
     // and an ordinary trooper's death never reaches it.
     if (!LITANY_TARGETS.includes(this.litanyUnitId(target))) return null;

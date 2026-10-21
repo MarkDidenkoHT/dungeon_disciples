@@ -20,22 +20,23 @@
 // object and nothing else can be affected by it.
 //
 // THE ONE EXCEPTION IS THE TARGET, which is LITANY_TARGETS below and is the same
-// for all eighteen. A litany is staged over the death of the other side's CHAMPION,
+// for all seventeen. A litany is staged over the death of the other side's CHAMPION,
 // and that is the whole of the condition: who is worth the rite does not change
-// from one litany to the next, so writing a per-litany list eighteen times only
-// gave eighteen places for the same answer to drift.
+// from one litany to the next, so writing a per-litany list seventeen times only
+// gave seventeen places for the same answer to drift.
 //
-// EIGHTEEN litanies: two for each of the nine heroes, six per faction.
+// SEVENTEEN litanies: five for the Empire, six for each other faction.
 //
 // ── The formation ─────────────────────────────────────────────────────────────
 //
 // `cells` is a list of PLACES on the acting side's own half of the board. Each
 // cell carries its own letter, its grid row (0 top, 2 bottom), its column
-// ('front' / 'back', relative to that side) and its `size` - because a cell is as
+// ('front' / 'back' / 'either', relative to that side) and its `size` - because a cell is as
 // big as the unit that stands in it:
 //
 //   'tile'    one square, at (row, col).
 //   'row'     BOTH columns of `row`. `col` is 'both' and is not read.
+//   col 'either' on a tile lead means one unit may fill either square in that row.
 //   'column'  (row, col) and the square BELOW it, so `row` is the TOP of the two.
 //
 // A two-cell unit is ONE speaker standing in two places: a Golden Lion, a
@@ -180,7 +181,7 @@
 // board satisfies both and the player only ever sees the earlier one.
 
 // Every champion a litany may be staged over. ONE list, read by fireLitany for
-// all eighteen - see "The target" above.
+// all seventeen - see "The target" above.
 const LITANY_TARGETS = [
 
   // ── The heroes ──────────────────────────────────────────────────────────────
@@ -221,26 +222,24 @@ const LITANY_TARGETS = [
 
 const LITANIES = [
 
-  // ── Empire: the Paladin's litanies ────────────────────────────────────────────────
+  // ── Empire: Argent Hammer (Inquisitor) and Duty Eternal (Paladin) ────────────
   {
     id:    'profane_chorus',
-    name:  'Profane Chorus',
-    name_ru: 'Нечестивый Хор',
-    // Back column left, front right - the board as the Litanies page draws it:
-    //   . A
-    //   . B
-    //   . C
+    name:  'Argent Hammer',
+    name_ru: 'Серебряный Молот',
+    // A and C are Crusade callers; the Inquisitor lead may stand in either
+    // column of row 1. The merged B cell on the page shows those two choices.
     //
-    // Lead: Paladin, every tier of both paths.
+    // Lead: Inquisitor, every tier of both paths (moved from Cinder Verdict).
     lead: { ids: [
-      'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
-      'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212',
+      'h_e_2', 'h_e_2_a2', 'h_e_2_a3', 'h_e_2_a41', 'h_e_2_a42',
+      'h_e_2_b2', 'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42',
     ] },
     formation: { cells: [
       // A: a Crusade - like the other, so the whole reward lands on the enemy side.
       { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'crusade' },
-      // B: the lead - the only cell that kills. Its own list is `lead` below.
-      { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
+      // B: the lead kills from either front or back in the middle row.
+      { key: 'B', row: 1, col: 'either', size: 'tile', role: 'lead' },
       // C: a Crusade - like the other, so the whole reward lands on the enemy side.
       { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'crusade' },
     ] },
@@ -305,44 +304,6 @@ const LITANIES = [
   },
 
   // ── Empire: the Inquisitor's litanies ─────────────────────────────────────────────
-  {
-    id:    'cinder_verdict',
-    name:  'The Cinder Verdict',
-    name_ru: 'Приговор угля',
-    // Back column left, front right - the board as the Litanies page draws it:
-    //   . A
-    //   B .
-    //   . C
-    //
-    // Lead: Inquisitor, every tier of both paths.
-    lead: { ids: [
-      'h_e_2', 'h_e_2_a2', 'h_e_2_a3', 'h_e_2_a41', 'h_e_2_a42',
-      'h_e_2_b2', 'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42',
-    ] },
-    formation: { cells: [
-      // A: a Crusade - like the other, so the whole reward lands on the enemy side.
-      { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'crusade' },
-      // B: the lead - the only cell that kills. Its own list is `lead` below.
-      { key: 'B', row: 1, col: 'back', size: 'tile', role: 'lead' },
-      // C: a Crusade - like the other, so the whole reward lands on the enemy side.
-      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'crusade' },
-    ] },
-    verses: [
-      { speaker: 'A', strike: 'visual',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'C', strike: 'visual',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'B', strike: 'lethal',
-        line: ['placeholder', 'текст'] },
-    ],
-    reward: {
-      enemy_damage_flat: 5,
-      enemy_initiative_flat: 5,
-      message:    'Enemies take 5 damage and lose 5 initiative.',
-      message_ru: 'Враги получают 5 урона и теряют 5 инициативы.',
-    },
-    once_per: 'battle',
-  },
   {
     id:    'winter_sermon',
     name:  'The Winter Sermon',
