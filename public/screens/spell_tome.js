@@ -983,7 +983,7 @@ export function renderSpellTome(root, { player }) {
         </details>`;
     }).join('');
 
-    // Whose death a litany is staged around — the same answer for all seventeen
+    // Whose death a litany is staged around — the same answer for all fifteen
     // (LITANY_TARGETS in data/litanies.js), so it is drawn ONCE for the page.
     // It used to be a section on every card, which was the same twelve faces
     // repeated six times and read as if each litany had a quarrel of its own.

@@ -20,12 +20,12 @@
 // object and nothing else can be affected by it.
 //
 // THE ONE EXCEPTION IS THE TARGET, which is LITANY_TARGETS below and is the same
-// for all seventeen. A litany is staged over the death of the other side's CHAMPION,
+// for all fifteen. A litany is staged over the death of the other side's CHAMPION,
 // and that is the whole of the condition: who is worth the rite does not change
-// from one litany to the next, so writing a per-litany list seventeen times only
-// gave seventeen places for the same answer to drift.
+// from one litany to the next, so writing a per-litany list fifteen times only
+// gave fifteen places for the same answer to drift.
 //
-// SEVENTEEN litanies: five for the Empire, six for each other faction.
+// FIFTEEN litanies: three for the Empire, six for each other faction.
 //
 // ── The formation ─────────────────────────────────────────────────────────────
 //
@@ -167,7 +167,7 @@
 // fireLitany takes the FIRST match in this array. Each hero's two litanies are
 // mutually exclusive, and for each pair it is one of three things that does it:
 //
-//   the LEAD is in a different place        (iron_sentence / last_volley,
+//   the LEAD is in a different place        (iron_sentence,
 //                                            taken_breath / ash_antiphon)
 //   a shared square wants different SIZES   a tile cell and half of a row or
 //                                           column unit cannot both be filled
@@ -181,7 +181,7 @@
 // board satisfies both and the player only ever sees the earlier one.
 
 // Every champion a litany may be staged over. ONE list, read by fireLitany for
-// all seventeen - see "The target" above.
+// all fifteen - see "The target" above.
 const LITANY_TARGETS = [
 
   // ── The heroes ──────────────────────────────────────────────────────────────
@@ -271,15 +271,18 @@ const LITANIES = [
     // A and C are both required Vigil anchors; C sits on the bottom front cell
     // to keep this distinct from Profane Chorus, which needs Crusade in C. The
     // speaking chorus itself is every living ally except the lead.
+    // Both Paladin and Inquisitor may lead, from either middle-row column.
     lead: { ids: [
       'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
       'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212',
+      'h_e_2', 'h_e_2_a2', 'h_e_2_a3', 'h_e_2_a41', 'h_e_2_a42',
+      'h_e_2_b2', 'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42',
     ] },
     formation: { cells: [
       // A: required Vigil on the top back cell.
       { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'vigil' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
-      { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
+      { key: 'B', row: 1, col: 'either', size: 'tile', role: 'lead' },
       // C: Vigil anchor distinguishes this from Profane Chorus; everyone joins.
       { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'vigil', all_alive: true },
     ] },
@@ -302,46 +305,6 @@ const LITANIES = [
       ally_shield_flat: 5,
       message:    'Allies are healed for 5 HP and gain a 5 shield.',
       message_ru: 'Союзники лечатся на 5 HP и получают щит 5.',
-    },
-    once_per: 'battle',
-  },
-
-  // ── Empire: the Inquisitor's litanies ─────────────────────────────────────────────
-  {
-    id:    'winter_sermon',
-    name:  'The Winter Sermon',
-    name_ru: 'Зимняя проповедь',
-    // Back column left, front right - the board as the Litanies page draws it:
-    //   A .
-    //   B C
-    //   . C
-    //
-    // Lead: Inquisitor, every tier of both paths.
-    lead: { ids: [
-      'h_e_2', 'h_e_2_a2', 'h_e_2_a3', 'h_e_2_a41', 'h_e_2_a42',
-      'h_e_2_b2', 'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42',
-    ] },
-    formation: { cells: [
-      // A: a Vigil - the ally half of the reward.
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'vigil' },
-      // B: the lead - the only cell that kills. Its own list is `lead` below.
-      { key: 'B', row: 1, col: 'back', size: 'tile', role: 'lead' },
-      // C: a Crusade - the enemy half of the reward.
-      { key: 'C', row: 1, col: 'front', size: 'column', role: 'chorus', calling: 'crusade' },
-    ] },
-    verses: [
-      { speaker: 'A', strike: 'support',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'C', strike: 'visual',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'B', strike: 'lethal',
-        line: ['placeholder', 'текст'] },
-    ],
-    reward: {
-      ally_shield_flat: 5,
-      enemy_damage_flat: 5,
-      message:    'Allies gain a 5 shield and enemies take 5 damage.',
-      message_ru: 'Союзники получают щит 5, враги получают 5 урона.',
     },
     once_per: 'battle',
   },
@@ -392,52 +355,6 @@ const LITANIES = [
     },
     once_per: 'battle',
   },
-  {
-    id:    'last_volley',
-    name:  'The Last Volley',
-    name_ru: 'Последний залп',
-    // Back column left, front right - the board as the Litanies page draws it:
-    //   B .
-    //   B .
-    //   A C
-    //
-    // Lead: Siege Engine to Siege Leviathan: a TWO-CELL gun carriage in the back
-    // column, cannon shot.
-    // The hero of this litany, for the cell marked role: 'hero'. The Artificer
-    // cannot be the lead - a healer lands no blows - so the hero line is named
-    // here, apart from the lead, and sings from a cell of its own.
-    hero: { ids: [
-      'h_e_3', 'h_e_3_a2', 'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42',
-      'h_e_3_b2', 'h_e_3_b3', 'h_e_3_b41', 'h_e_3_b42',
-    ] },
-    lead: { ids: [
-      'e32', 'e321', 'e3211',
-    ] },
-    formation: { cells: [
-      // B: the lead - the only cell that kills. Its own list is `lead` below.
-      { key: 'B', row: 0, col: 'back', size: 'column', role: 'lead' },
-      // A: the Artificer. She repairs, so she cannot land the blow - B does.
-      { key: 'A', row: 2, col: 'back', size: 'tile', role: 'hero' },
-      // C: a Vigil - the ally half of the reward.
-      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'vigil' },
-    ] },
-    verses: [
-      { speaker: 'A', strike: 'support',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'C', strike: 'support',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'B', strike: 'lethal',
-        line: ['placeholder', 'текст'] },
-    ],
-    reward: {
-      ally_heal_flat: 5,
-      ally_shield_flat: 5,
-      message:    'Allies are healed for 5 HP and gain a 5 shield.',
-      message_ru: 'Союзники лечатся на 5 HP и получают щит 5.',
-    },
-    once_per: 'battle',
-  },
-
   // ── Grail of Sorrow: the Grail Warden's litanies ──────────────────────────────────
   {
     id:    'clean_passage',

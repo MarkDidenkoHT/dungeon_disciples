@@ -4397,7 +4397,7 @@ class BattleEngine {
     // with the ordinary kill and death barks the litany would have replaced.
     if (actor.side === 'player' && !this.litaniesUnlocked) return null;
     // Only a CHAMPION is worth the rite, and the list of them is ONE list shared
-    // by all seventeen litanies (LITANY_TARGETS in data/litanies.js) — no litany
+    // by all fifteen litanies (LITANY_TARGETS in data/litanies.js) — no litany
     // carries a target of its own, so this is checked once, ahead of the loop,
     // and an ordinary trooper's death never reaches it.
     if (!LITANY_TARGETS.includes(this.litanyUnitId(target))) return null;
