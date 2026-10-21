@@ -4293,10 +4293,11 @@ class BattleEngine {
     return c?.unit_data?.unit_id ?? c?.unit_data?.id ?? null;
   }
 
-  // The speakers a litany's formation demands, keyed by the cell's own letter
-  // ({ A, B, C }), or null if a required cell is wrong. An all_alive chorus cell
-  // collects every living ally but the lead; when it names a calling, that cell
-  // still requires a matching anchor at its drawn position.
+  // The speakers a litany's formation demands, keyed by cell letter ({ A, B, C })
+  // or by `all_alive` for the full living chorus, or null if a required cell is
+  // wrong. An all_alive chorus cell collects every living ally but the lead;
+  // when it names a calling, that cell still requires a matching anchor at its
+  // drawn position.
   //
   // THREE KINDS OF CELL, and what each one demands of its occupant:
   //
@@ -4351,6 +4352,7 @@ class BattleEngine {
         const chorus = this.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
         if (!chorus.length) return null;
         speakers[cell.key] = chorus;
+        speakers.all_alive = chorus;
         continue;
       }
       const want = this.litanyCellFootprint(cell, front).slice().sort((a, b) => a - b).join(',');

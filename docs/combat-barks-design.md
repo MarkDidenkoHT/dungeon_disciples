@@ -429,7 +429,8 @@ const LITANY_LEAD_IDS = ['h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
   trigger: 'lethal',                 // the lead's attack is ABOUT to kill (§5.2)
   lead:    { ids: LITANY_LEAD_IDS },
   // The formation IS the condition: named CELLS, each with its own letter, row and
-  // column. Hardcoded cells, not a count. A verse names its speaker by letter.
+  // column. Hardcoded cells, not a count. A verse names a cell by letter, or
+  // uses `speaker: 'all_alive'` to name the full living chorus explicitly.
   formation: {
     cells: [                         // col: front is col 1 for a player, col 0 for an enemy
       { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', ids: LITANY_CHORUS_IDS },
@@ -662,8 +663,8 @@ Target: **~3.5–4 s** from the first verse to the corpse. Client
 - Two sets with the same id count both defining one key for one unit.
 - A key holding more than 2 pairs.
 - A line over the length limits in the style guide.
-- A litany whose `verses` count does not equal its `formation` cell count, or whose
-  `speaker` names a cell letter the formation does not define.
+- A litany whose `speaker` names a cell letter the formation does not define, or uses
+  `speaker: 'all_alive'` without an all-alive chorus cell.
 - A litany verse whose `strike` disagrees with what its unit does: `'support'` for an
   enemy-targeted attacker, `'visual'` for an ally-targeted healer or shielder.
 - A litany with no verse marked `strike: 'lethal'`, or with more than one, or whose

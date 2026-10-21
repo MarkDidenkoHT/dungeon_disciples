@@ -100,8 +100,9 @@
 //
 // ── The verses ────────────────────────────────────────────────────────────────
 //
-// `speaker` is a cell letter. `strike` is what that speaker DOES, and it must
-// match what the unit actually does in data/units.js:
+// `speaker` is a cell letter, or `all_alive` for every living ally except the
+// lead when the formation has an all_alive chorus cell. `strike` is what that
+// speaker DOES, and it must match what the unit actually does in data/units.js:
 //
 //   'visual'   an attacker's blow or a decayer's touch, played at the victim.
 //              Cosmetic - no damage, no triggers, no turn spent - and range is
@@ -265,14 +266,16 @@ const LITANIES = [
     id:    'unbroken_banner',
     name:  'Duty Eternal',
     name_ru: 'Вечный долг',
-    // The lead stands in B; C is a Vigil anchor on the bottom front cell. That
-    // keeps this distinct from Profane Chorus, which needs Crusade in C. The
+    // A and C are both required Vigil anchors; C sits on the bottom front cell
+    // to keep this distinct from Profane Chorus, which needs Crusade in C. The
     // speaking chorus itself is every living ally except the lead.
     lead: { ids: [
       'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
       'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212',
     ] },
     formation: { cells: [
+      // A: required Vigil on the top back cell.
+      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'vigil' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
       // C: Vigil anchor distinguishes this from Profane Chorus; everyone joins.
@@ -281,15 +284,15 @@ const LITANIES = [
     verses: [
       { speaker: 'B', strike: 'line',
         line: ['What is your duty!', 'В чём ваш долг!'] },
-      { speaker: 'C', strike: 'line',
+      { speaker: 'all_alive', strike: 'line',
         line: ['To serve Mithrails will.', 'Служить воле Митраила.'] },
       { speaker: 'B', strike: 'line',
         line: ['What is Mithrails will!', 'Какова воля Митраила!'] },
-      { speaker: 'C', strike: 'line',
+      { speaker: 'all_alive', strike: 'line',
         line: ['That we fight and die.', 'Сражаться и умирать.'] },
       { speaker: 'B', strike: 'line',
         line: ['What is death!', 'Что есть смерть!'] },
-      { speaker: 'C', strike: 'line',
+      { speaker: 'all_alive', strike: 'line',
         line: ['It is our Duty!', 'Это наш долг!'] },
     ],
     reward: {
