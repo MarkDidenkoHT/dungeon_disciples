@@ -942,24 +942,25 @@ function getFactionForUnit(unitDataId) {
   return null;
 }
 
-// A missing XP threshold means the unit has reached the end of its upgrade
-// line. When XP is awarded, return each participant's retained share after
-// redirecting 25% of max-tier participants' shares to non-maxed participants.
+// A unit is max tier when it has no outgoing entry in UNIT_UPGRADE_PATHS. Its
+// XP threshold is unrelated: terminal units can still show "Ready to upgrade."
+// Redirect 25% of max-tier participants' XP shares to participants with a path.
 function xpSharesWithMaxTierRedirect(rows, recipientIds, earnedXp) {
   const recipients = (rows || []).filter(row => recipientIds.includes(String(row.id)));
   const shares = new Map(recipients.map(row => [String(row.id), earnedXp]));
-  const nonMaxed = recipients.filter(row => {
+  const isMaxTier = row => {
     const unitId = row.unit_data?.unit_id;
-    const def = unitId ? getUnitByDataId(unitId) : null;
-    return !def || def.xp != null;
-  });
+    if (!unitId || !getUnitByDataId(unitId)) return false;
+    const faction = getFactionForUnit(unitId);
+    const paths = faction ? UNIT_UPGRADE_PATHS[faction]?.[unitId] : null;
+    return !Array.isArray(paths) || paths.length === 0;
+  };
+  const nonMaxed = recipients.filter(row => !isMaxTier(row));
   if (!nonMaxed.length) return shares;
 
   let redirected = 0;
   for (const row of recipients) {
-    const unitId = row.unit_data?.unit_id;
-    const def = unitId ? getUnitByDataId(unitId) : null;
-    if (def && def.xp == null) {
+    if (isMaxTier(row)) {
       const transfer = Math.floor(earnedXp * 0.25);
       shares.set(String(row.id), earnedXp - transfer);
       redirected += transfer;

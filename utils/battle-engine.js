@@ -1963,21 +1963,25 @@ class BattleEngine {
     // Skipped entirely rather than logged as zero — a tick that cannot land is
     // not an event worth a line in the battle log.
     if (unit._invulnerable) return;
-    const tick = (amount, passive, actorName, extra = {}, school = null) => {
+    const tick = (amount, passive, actorName, extra = {}, school = null, shieldable = false) => {
+      const damage = shieldable ? this.absorbWithShield(unit, amount) : amount;
       const before = unit.battle_hp;
-      unit.battle_hp = Math.max(0, unit.battle_hp - amount);
+      unit.battle_hp = Math.max(0, unit.battle_hp - damage);
       if (school) this.tallyDamage(unit, before - unit.battle_hp, school);
-      this.pushLog({ type: 'passive', passive, actorName, targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: amount, heal: false, ...extra });
+      if (damage > 0) {
+        this.pushLog({ type: 'passive', passive, actorName, targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: damage, heal: false, ...extra });
+      }
       if (unit.battle_hp <= 0) { unit.alive = false; this.applyOnDeathPassives(unit); }
     };
-    // Withering — after wither_start_round, every unit loses a % of its max HP as
-    // true damage at the start of its turn (can kill; both sides). Forces a
-    // resolution when heals + reduced healing still aren't ending the fight.
+    // Withering — after wither_start_round, every unit takes a % of its max HP
+    // at the start of its turn. Its damage is absorbed by shields first and can
+    // kill once it reaches HP. Forces a resolution when heals + reduced healing
+    // still aren't ending the fight.
     // A `wither_immune` unit (the Faction Colossus) is the one exception: there
     // the Withering is the attempt's timer, wearing down only the attackers.
     if (this.round > BATTLE_FATIGUE.wither_start_round && !unit.unit_data?.wither_immune) {
       const wither = Math.max(1, Math.floor(unit.max_hp * this.witherPctForRound() / 100));
-      tick(wither, 'Withering', '🥀', { dot_kind: 'wither' });
+      tick(wither, 'Withering', '🥀', { dot_kind: 'wither' }, null, true);
       if (!unit.alive) return;
     }
     if (unit._deferred_dmg > 0) {
