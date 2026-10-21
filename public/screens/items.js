@@ -12,7 +12,6 @@ import {
   resolveUnitDef, resolveAbility,
   openSheet, closeSheet, getSheetBody,
   applyBackground, buildAbilityModalParts,
-  itemName, itemRarity, CRYSTAL_ICONS, GOLD_ICON, unitName,
   itemName as getItemName, itemRarity, CRYSTAL_ICONS, GOLD_ICON, unitName, buildStatDescription, escapeHtml,
   renderItemPassive, renderItemTags, playPageTurnSound, RESOURCE_BAR_SLOTS,
 } from '../utils.js';
@@ -284,12 +283,10 @@ export function renderItems(root, params = {}) {
       <div class="item-card item-card--rarity-${itemRarity(item)} ${holderName ? 'item-card--equipped' : ''}">
         <div class="item-card-body">
           ${itemAsideHtml({
-            iconId, name: itemName(item, player), rarity: itemRarity(item),
             iconId, name: getItemName(item, player), rarity: itemRarity(item),
             unique: !!stats.unique, countLine,
           })}
           <div class="item-card-main">
-            <div class="item-card-name">${itemName(item, player)}</div>
             <div class="item-card-name">${getItemName(item, player)}</div>
             <div class="item-card-stats">${formatStatMods(stats.stat_mods)}</div>
             ${renderItemPassive(stats)}
@@ -317,7 +314,6 @@ export function renderItems(root, params = {}) {
   }
 
   function materialName(key) {
-    if (ITEM_DEFS[key]) return itemName(ITEM_DEFS[key], player);
     if (ITEM_DEFS[key]) return getItemName(ITEM_DEFS[key], player);
     if (key === 'Gold') return 'Gold';
     if (key.startsWith('Crystals_')) return `${key.replace('Crystals_', '')} Crystals`;
@@ -381,15 +377,12 @@ export function renderItems(root, params = {}) {
       <div class="item-card item-card--catalog item-card--rarity-${itemRarity(itemDef)}">
         <div class="item-card-body">
           ${itemAsideHtml({
-            iconId, name: itemName(itemDef, player), rarity: itemRarity(itemDef),
             iconId, name: getItemName(itemDef, player), rarity: itemRarity(itemDef),
             unique: !!itemDef.unique, countLine,
           })}
           <div class="item-card-main">
-            <div class="item-card-name">${itemName(itemDef, player)}</div>
             <div class="item-card-name">${getItemName(itemDef, player)}</div>
             <div class="item-card-stats">${formatStatMods(itemDef.stat_mods)}</div>
-            ${renderItemPassive(itemDef)}
             ${renderItemPassive(itemDef, { interactive: false })}
             ${passiveDesc ? `<div class="item-modal-passive-desc">${escapeHtml(passiveDesc)}</div>` : ''}
             <div class="item-card-tags">${renderItemTags(itemDef)}</div>
@@ -433,7 +426,6 @@ export function renderItems(root, params = {}) {
     return entry?.kind === 'blueprint' ? entry.def : (entry?.item?.item_stats || {});
   }
   function entryName(entry) {
-    return entry?.kind === 'blueprint' ? itemName(entry.def, player) : itemName(entry.item, player);
     return entry?.kind === 'blueprint' ? getItemName(entry.def, player) : getItemName(entry.item, player);
   }
   function entryIcon(entry) {
@@ -448,7 +440,6 @@ export function renderItems(root, params = {}) {
       iconId: entryIcon(entry),
       name:   entryName(entry),
       rarity: itemRarity(entryStats(entry)),
-      badge:  blueprint ? `×${count}` : (count > 1 ? `×${count}` : ''),
       badge:  blueprint && filter === 'craft' && count === 0
         ? '×0'
         : (count > (blueprint ? 0 : 1) ? `×${count}` : ''),
