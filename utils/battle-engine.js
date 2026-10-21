@@ -1344,6 +1344,8 @@ class BattleEngine {
       if (previousPct > 0) this.clearEmpower(target);
       const bonusPct = Math.max(0, Number(actor.unit_data?.action_power ?? actor.unit_data?.action?.value ?? 0)) * 10;
       target._empower_bonus_pct = bonusPct;
+      const targetPower = Math.max(0, Number(target.unit_data?.action_power ?? target.unit_data?.action?.value ?? 0));
+      this.creditDeed(actor, Math.floor(targetPower * bonusPct / 100));
       this.pushLog({
         type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
         targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
