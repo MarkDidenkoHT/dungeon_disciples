@@ -460,9 +460,8 @@ export function renderItems(root, params = {}) {
       iconId: entryIcon(entry),
       name:   entryName(entry),
       rarity: itemRarity(entryStats(entry)),
-      badge:  count > (blueprint ? 0 : 1) ? `×${count}` : '',
+      badge:  blueprint ? `×${count}` : (count > 1 ? `×${count}` : ''),
       ready:  blueprint && canCraftNow(entry.def),
-      dim:    blueprint && !canCraftNow(entry.def),
       worn:   !blueprint && entry.item?.equipped_by != null,
     };
   }
