@@ -4294,8 +4294,9 @@ class BattleEngine {
   }
 
   // The speakers a litany's formation demands, keyed by the cell's own letter
-  // ({ A, B, C }), or null if a single cell of it is wrong. All-or-nothing: no
-  // substitutes, no shorter version.
+  // ({ A, B, C }), or null if a required cell is wrong. An all_alive chorus cell
+  // collects every living ally but the lead; when it names a calling, that cell
+  // still requires a matching anchor at its drawn position.
   //
   // THREE KINDS OF CELL, and what each one demands of its occupant:
   //
@@ -4305,10 +4306,8 @@ class BattleEngine {
   //             four whose hero is a healer and so cannot lead: the hero sings
   //             from here while something of its own lands the blow.
   //   'chorus'  any unit the PLAYER gave this cell's `calling` to
-  //             (data/callings.js). No id list - that is the whole change: a
-  //             chorus cell asks who you committed, not who you recruited. A
-  //             unit with no calling (a mercenary, an encounter's own troops)
-  //             fills no chorus cell.
+  //             (data/callings.js), or every living ally except the lead when
+  //             `all_alive` is true.
   //
   // A formation is a list of CELLS, each naming its row AND its column, so a
   // litany can put its lead on the line and its singers behind it — a priest
@@ -4340,6 +4339,20 @@ class BattleEngine {
     const speakers = {};
     const taken = new Set();
     for (const cell of def.formation.cells) {
+      if (cell.role === 'chorus' && cell.all_alive) {
+        if (cell.calling) {
+          const want = this.litanyCellFootprint(cell, front).slice().sort((a, b) => a - b).join(',');
+          const anchor = this.combatants.find(c =>
+            c.side === actor.side && c.alive &&
+            this.getFootprint(c).slice().sort((a, b) => a - b).join(',') === want);
+          if (!anchor || anchor._calling !== cell.calling || taken.has(anchor.id)) return null;
+          taken.add(anchor.id);
+        }
+        const chorus = this.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
+        if (!chorus.length) return null;
+        speakers[cell.key] = chorus;
+        continue;
+      }
       const want = this.litanyCellFootprint(cell, front).slice().sort((a, b) => a - b).join(',');
       const occ = this.combatants.find(c =>
         c.side === actor.side && c.alive &&
@@ -4388,7 +4401,9 @@ class BattleEngine {
       if (!speakers) continue;
       this.litaniesFired.push(`${def.id}:${actor.side}`);
       def.verses.forEach((v, i) => {
-        const sp = speakers[v.speaker];
+        const named = speakers[v.speaker];
+        const chorus = Array.isArray(named) ? named : null;
+        const sp = chorus ? chorus[0] : named;
         if (!sp) return;
         // DERIVED, not authored, for every verse but the lethal one. A chorus
         // cell no longer knows which unit will stand in it — a Vigil may be a
@@ -4397,12 +4412,14 @@ class BattleEngine {
         // ally performs over its own side ('support'); everything else swings at
         // the victim ('visual'). The authored `strike` is kept as the fallback
         // and is what the lethal verse always uses.
-        const strike = v.strike === 'lethal'
-          ? 'lethal'
+        const strike = v.strike === 'lethal' || v.strike === 'line'
+          ? v.strike
           : (this.isHealer(sp) ? 'support' : 'visual');
         this.pushLog({
           type: 'litany', litany: def.id, i, n: def.verses.length, strike,
-          actorId: sp.id, actorName: sp.unit_name, actorCell: sp.cellIndex,
+          ...(chorus
+            ? { chorus: true, chorusActorIds: chorus.map(c => c.id), actorName: 'Chorus' }
+            : { actorId: sp.id, actorName: sp.unit_name, actorCell: sp.cellIndex }),
           targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
           text: v.line[0], text_ru: v.line[1],
         });

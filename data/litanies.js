@@ -1,15 +1,16 @@
 // Litanies - scripted multi-speaker executions. See docs/combat-barks-design.md §5.
 //
 // Unlike a bark, a litany is NOT cosmetic: it stages the killing blow (the
-// chorus performs first, for show only) and pays a mechanical reward. It fires
-// only when the exact formation below is standing on the board.
+// chorus speaks and may perform for show) and pays a mechanical reward. Its
+// required positions and speakers are defined by its formation below.
 //
-// A CHORUS CELL NAMES A CALLING; A LEAD CELL NAMES UNITS. Still no tags and no
-// filters: a tag does not describe a role well enough for a scripted moment, and
-// the Choir Regent is not tagged Demon and is still a heretic to be purged. But a
-// CALLING is not a tag - it is the one decision about a unit that belongs to the
-// player (data/callings.js), bought with 500 gold and resettable - so a cell
-// naming one is an instruction to the player, which is what a formation is for.
+// A CHORUS CELL MAY NAME A CALLING OR MARK `all_alive`; A LEAD CELL NAMES UNITS.
+// Still no tags and no filters: a tag does not describe a role well enough for a
+// scripted moment, and the Choir Regent is not tagged Demon and is still a heretic
+// to be purged. A CALLING is not a tag - it is the one decision about a unit that
+// belongs to the player (data/callings.js), bought with 500 gold and resettable -
+// so a cell naming one is an instruction to the player, which is what a formation
+// is for.
 //
 // That is what replaced 298 hardcoded ids. Who may LAND THE BLOW is still an
 // authoring decision, made by name; who may SING is the player's.
@@ -78,10 +79,11 @@
 //   role: 'hero'    this litany's own hero, `def.hero.ids`. Only on the four
 //                   whose hero is a healer and so cannot lead - it sings from
 //                   here while something of its own takes the blow.
-//   role: 'chorus'  `calling`, one id from data/callings.js. Whoever the player
-//                   gave that calling to may stand here - there is no unit list
-//                   and there is not meant to be one. A unit with no calling (a
-//                   mercenary, an encounter's own troops) fills no chorus cell.
+//   role: 'chorus'  `calling`, one id from data/callings.js, unless the cell has
+//                   `all_alive: true`, in which case every living ally except
+//                   the lead speaks together. A calling on that cell still
+//                   requires its placed anchor to have that calling; the
+//                   calling only distinguishes the formation, not the chorus.
 //
 // A cell's calling must be one of the TWO its faction has. A litany led by the
 // Empire naming `hunger` is a litany that can never fire, and nothing at run
@@ -107,6 +109,7 @@
 //   'support'  a healer's or shielder's own rite, played over its own side
 //              instead of at the corpse. Priests, Standart Bearers, menders and
 //              the ash singers perform; they do not swing.
+//   'line'     the speaker says the line without performing an action.
 //   'lethal'   the lead's verse. The real killing blow follows it in the log.
 //
 // A unit with no `action_animation` cannot perform: its verse would be a silent
@@ -260,33 +263,34 @@ const LITANIES = [
   },
   {
     id:    'unbroken_banner',
-    name:  'The Unbroken Banner',
-    name_ru: 'Несломленное знамя',
-    // Back column left, front right - the board as the Litanies page draws it:
-    //   A C
-    //   . B
-    //   . .
-    //
-    // Lead: Paladin, every tier of both paths.
+    name:  'Duty Eternal',
+    name_ru: 'Вечный долг',
+    // The lead stands in B; C is a Vigil anchor on the bottom front cell. That
+    // keeps this distinct from Profane Chorus, which needs Crusade in C. The
+    // speaking chorus itself is every living ally except the lead.
     lead: { ids: [
       'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
       'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212',
     ] },
     formation: { cells: [
-      // A: a Vigil - like the other, so the whole reward lands on the ally side.
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'vigil' },
-      // C: a Vigil - like the other, so the whole reward lands on the ally side.
-      { key: 'C', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'vigil' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
+      // C: Vigil anchor distinguishes this from Profane Chorus; everyone joins.
+      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'vigil', all_alive: true },
     ] },
     verses: [
-      { speaker: 'A', strike: 'support',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'C', strike: 'support',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'B', strike: 'lethal',
-        line: ['placeholder', 'текст'] },
+      { speaker: 'B', strike: 'line',
+        line: ['What is your duty!', 'В чём ваш долг!'] },
+      { speaker: 'C', strike: 'line',
+        line: ['To serve Mithrails will.', 'Служить воле Митраила.'] },
+      { speaker: 'B', strike: 'line',
+        line: ['What is Mithrails will!', 'Какова воля Митраила!'] },
+      { speaker: 'C', strike: 'line',
+        line: ['That we fight and die.', 'Сражаться и умирать.'] },
+      { speaker: 'B', strike: 'line',
+        line: ['What is death!', 'Что есть смерть!'] },
+      { speaker: 'C', strike: 'line',
+        line: ['It is our Duty!', 'Это наш долг!'] },
     ],
     reward: {
       ally_heal_flat: 5,

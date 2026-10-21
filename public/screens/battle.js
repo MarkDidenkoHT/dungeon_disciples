@@ -405,6 +405,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (!text) return;
     const cell = root.querySelector(`.battle-cell[data-id="${actorId}"]`);
     if (!cell) return;
+    // A speaker may have several consecutive verses (and every chorus unit
+    // speaks each chorus line). Replace its previous litany toast so the lines
+    // read in sequence instead of stacking on top of one another.
+    cell.querySelector('.bark-toast--litany')?.__dismissLitany?.();
     cell.classList.add('battle-cell--bark-active');
     // The grid has to come above its own frame art for the toast to be visible
     // at all — see .battle-grid--bark in style.css.
@@ -428,6 +432,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       document.removeEventListener('click', dismiss, true);
       document.removeEventListener('touchstart', dismiss, true);
     };
+    if (opts.litany) toast.__dismissLitany = dismiss;
     // Any interaction anywhere closes it - deferred so the click that triggered
     // this render (e.g. the action button press) doesn't instantly dismiss it.
     if (!opts.litany) {
@@ -709,9 +714,15 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   //              priests is exactly what the Unbroken Banner is.
   //   'lethal'   the lead's verse. No animation of its own: the killing blow it
   //              belongs to follows immediately after it in the log.
+  //   'line'     the speaker speaks only; no unit action or animation plays.
   async function playLitanyVerse(entry) {
     const t0 = Date.now();
-    showBarkToast(entry.actorId, barkText(entry), { litany: true });
+    const chorusIds = entry.chorusActorIds || [];
+    if (chorusIds.length) {
+      for (const id of chorusIds) showBarkToast(id, barkText(entry), { litany: true });
+    } else {
+      showBarkToast(entry.actorId, barkText(entry), { litany: true });
+    }
     if (entry.strike === 'visual' || entry.strike === 'support') {
       const support    = entry.strike === 'support';
       const speaker    = state.combatants.find(u => u.id === entry.actorId);
@@ -740,6 +751,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       }
       const rest = LITANY_VERSE_MS - (Date.now() - t0);
       if (rest > 0) await new Promise(r => setTimeout(r, rest));
+    } else if (entry.strike === 'line') {
+      await new Promise(r => setTimeout(r, LITANY_VERSE_MS));
     }
   }
 
@@ -760,10 +773,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   const ENEMY_TURN_PREVIEW_MS = 350;
   // The beat between player-controlled turns in a playback batch.
   const TURN_GAP_MS = 450;
-  // Litany pacing (docs/combat-barks-design.md §5.5). A chorus verse holds the
-  // playback for LITANY_VERSE_MS including its own strike animation; the lead's
-  // verse holds for nothing, because the killing blow it belongs to follows
-  // immediately after it in the log.
+  // Litany pacing (docs/combat-barks-design.md §5.5). Spoken-only lines hold
+  // playback for LITANY_VERSE_MS; performed verses hold for the same time,
+  // including their animation. The lethal verse holds for nothing because the
+  // killing blow follows immediately after it in the log.
   const LITANY_VERSE_MS = 1200;
   const LITANY_TOAST_MS = 4500;
 
@@ -1813,7 +1826,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     }
     if (entry.type === 'litany') {
       if (player?.settings?.barks_enabled === false) return '';
-      return `<div class="log-entry log-entry--bark log-entry--litany">${actor()}: "${barkText(entry)}"</div>`;
+      const chorus = entry.chorusActorIds?.length
+        ? (player?.settings?.language === 'ru' ? 'Хор' : 'Chorus')
+        : actor();
+      return `<div class="log-entry log-entry--bark log-entry--litany">${chorus}: "${barkText(entry)}"</div>`;
     }
     if (entry.type === 'notice') {
       const lang = player?.settings?.language;

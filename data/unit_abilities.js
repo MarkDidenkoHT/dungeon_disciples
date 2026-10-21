@@ -1315,10 +1315,10 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'At battle start, gain a 5-point Shield for each Spirit ally on the field.',
-    description_ru: "В начале боя получает щит на 5 единиц за каждого союзного Духа на поле.",
+    description: 'At battle start, gain a 4-point Shield for each Spirit ally on the field.',
+    description_ru: "В начале боя получает щит на 4 единиц за каждого союзного Духа на поле.",
     dispellable: false,
-    params: { shield_per_tagged_unit: 5, tag_required: 'Spirit' },
+    params: { shield_per_tagged_unit: 4, tag_required: 'Spirit' },
     effect_name: 'shield_ward',
   },
   'aura_of_decay 1': {
