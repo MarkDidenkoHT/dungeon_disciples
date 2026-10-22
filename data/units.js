@@ -4062,7 +4062,7 @@ const UNITS = {
         resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 20, nature: 20 },
         action: 'none', target_type: 'ally', targets: 1, range: 3,
         damage_source: null, action_power: 14,
-        xp: 1099, passive: ['Unity 1', 'vitality 2', 'warding 2'], ability: null,
+        xp: 1099, passive: ['Unity 1', 'vitality 2', 'unwavering_faith 2'], ability: null,
       },
       wailing_ghost: {
         id: 'dm_e3', f: 'dm', t: 1,

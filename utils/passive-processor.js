@@ -893,6 +893,23 @@ function dispatchPassive(trigger, owner, def, ctx) {
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: heal });
       if (actual > 0) engine.fireHealTriggers(owner, owner, actual);
     }
+    if (p.lowest_ally_heal_per_tag != null) {
+      const healBase = p.lowest_ally_heal_per_tag * tagCount(engine, owner.side, p.tag_required)
+        + (p.lowest_ally_heal_bonus_per_tag != null
+          ? p.lowest_ally_heal_bonus_per_tag * tagCount(engine, owner.side, p.bonus_tag_required)
+          : 0);
+      const candidates = engine.combatants.filter(c => c.side === owner.side && c.alive && c.max_hp > c.battle_hp);
+      if (candidates.length > 0) {
+        const lowest = candidates.reduce((a, b) => a.battle_hp <= b.battle_hp ? a : b);
+        const heal = engine.absorbWithDecay(lowest, Math.floor(healBase * engine.fatigueHealMult()));
+        const actual = Math.min(heal, lowest.max_hp - lowest.battle_hp);
+        if (actual > 0) {
+          lowest.battle_hp += actual;
+          engine.fireHealTriggers(owner, lowest, actual);
+          engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: lowest.unit_name, targetId: lowest.id, targetCell: lowest.cellIndex, value: actual, heal: true });
+        }
+      }
+    }
     // Bleed, burn, poison, chill, Renew and Recuperate's deferred damage are
     // ticks any unit can carry, so they run in engine.applyTurnStartTicks — not
     // here, where the block only executes for units that own an on_turn_start
