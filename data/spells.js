@@ -135,24 +135,21 @@ const SPELLS = {
     {
       id: 'e_spell_9',
       name: 'Wrath of Heaven',
-      name_ru: 'Гнев небес',
+      name_ru: 'Гнев Небес',
       category: 'debuff',
       tier: 1,
       type: 'combat',
       effect_icon: 'light_of_dawn',
-      // Was a round-3 delayed hit — which only made sense when the spell was
-      // chosen before the battle began. Cast reactively, a nuke that lands two
-      // rounds later is strictly worse than one that lands now.
-      description: 'Light falls on the whole enemy line for 15 life damage, +5 per extra power.',
-      description_ru: 'Свет обрушивается на весь вражеский строй: 15 урона жизнью, +5 за каждую доп. силу.',
+      description: 'Light falls on the whole enemy line for 15 life damage, +4 per extra power. Heals your whole line for 5, +2 per extra power.',
+      description_ru: 'Свет обрушивается на весь вражеский строй: 15 урона жизнью, +4 за каждую доп. силу. Исцеляет весь ваш строй на 5, +2 за доп. силу.',
       cost: { crystals: { Crystals_Life: 10, Crystals_Fire: 5 } },
       power_cost: 1,
-      scaling: { damage_flat: 5 },
+      scaling: { damage_flat: 4, heal_flat: 2 },
       effect_type: 'damage',
       class: 'enemy',
       target_scope: 'all_enemies',
       effect_name: 'wrath_of_heaven',
-      params: { damage_flat: 15, damage_type: 'life' },
+      params: { damage_flat: 15, damage_type: 'life', heal_flat: 5, heal_all_allies: true },
     },
     {
       id: 'e_spell_10',
@@ -198,6 +195,23 @@ const SPELLS = {
   ],
 
   choir_of_the_cursed: [
+    {
+      id: 'd_spell_4',
+      name: 'Eternal Pyre',
+      name_ru: 'Вечный Костёр',
+      category: 'debuff',
+      tier: 1,
+      type: 'combat',
+      effect_icon: 'burn',
+      description: 'Make the target enemy’s current burn permanent. Costs 2 power.',
+      description_ru: 'Делает текущий ожог цели постоянным. Стоит 2 силы.',
+      cost: { crystals: { Crystals_Fire: 10 } },
+      power_cost: 2,
+      effect_type: 'debuff',
+      class: 'enemy',
+      target_scope: 'single_enemy',
+      params: { make_burn_permanent: true },
+    },
     {
       id: 'd_spell_1',
       name: 'Rite of Return',
@@ -348,6 +362,23 @@ const SPELLS = {
   ],
 
   grail_of_sorrow: [
+    {
+      id: 'g_spell_4',
+      name: 'Unending Wound',
+      name_ru: 'Незаживающая Рана',
+      category: 'debuff',
+      tier: 1,
+      type: 'combat',
+      effect_icon: 'bleed',
+      description: 'Make the target enemy’s current bleed permanent. Costs 2 power.',
+      description_ru: 'Делает текущее кровотечение цели постоянным. Стоит 2 силы.',
+      cost: { crystals: { Crystals_Death: 10 } },
+      power_cost: 2,
+      effect_type: 'debuff',
+      class: 'enemy',
+      target_scope: 'single_enemy',
+      params: { make_bleed_permanent: true },
+    },
     {
       id: 'g_spell_1',
       name: 'Mourning Rite',

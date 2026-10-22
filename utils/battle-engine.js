@@ -2761,9 +2761,9 @@ class BattleEngine {
       const foes = targets.filter(c => c.side !== actor.side);
       return foes.length ? this.aiPickActionTarget(actor, foes) : null;
     }
-    if (p.make_chill_permanent === true || p.make_bleed_permanent === true) {
-      const amt  = c => (p.make_chill_permanent === true ? (c._chill_dmg ?? 0) : (c._bleed_dmg ?? 0));
-      const perm = c => (p.make_chill_permanent === true ? (c._chill_permanent ?? 0) : (c._bleed_permanent ?? 0));
+    if (p.make_chill_permanent === true || p.make_bleed_permanent === true || p.make_burn_permanent === true) {
+      const amt  = c => (p.make_chill_permanent === true ? (c._chill_dmg ?? 0) : p.make_bleed_permanent === true ? (c._bleed_dmg ?? 0) : (c.dot_dmg ?? 0));
+      const perm = c => (p.make_chill_permanent === true ? (c._chill_permanent ?? 0) : p.make_bleed_permanent === true ? (c._bleed_permanent ?? 0) : (c._dot_permanent ?? 0));
       return targets
         .filter(c => c.side !== actor.side && amt(c) > 0 && perm(c) <= 0)
         .sort((a, b) => (amt(b) - amt(a)) || (b.battle_hp - a.battle_hp))[0] || null;
@@ -3019,6 +3019,8 @@ class BattleEngine {
     const p = def.params || {};
     if (p.decay_amount && targets.every(c => (c._decay ?? 0) > 0)) return false;
     if (p.heal_pct && !p.resurrect_hp_pct && targets.every(c => c.battle_hp >= c.max_hp)) return false;
+    if (p.make_bleed_permanent && targets.every(c => !(c._bleed_dmg > 0) || c._bleed_permanent > 0)) return false;
+    if (p.make_burn_permanent && targets.every(c => !(c.dot_dmg > 0) || c._dot_permanent > 0)) return false;
     if (p.armor_boost && targets.every(c => (c.armor ?? 0) >= MITIGATION_CAP_PCT)) return false;
     return true;
   }
@@ -3885,6 +3887,19 @@ class BattleEngine {
   // buff usually needs no new code here at all.
   applySpellParams(targets, params = {}) {
     const duration = params.duration_rounds || 0;
+    if (params.make_bleed_permanent === true || params.make_burn_permanent === true) {
+      for (const c of targets) {
+        if (params.make_bleed_permanent && (c._bleed_dmg ?? 0) > 0) c._bleed_permanent = c._bleed_dmg;
+        if (params.make_burn_permanent && (c.dot_dmg ?? 0) > 0) c._dot_permanent = c.dot_dmg;
+      }
+    }
+    if (params.heal_all_allies && params.heal_flat > 0 && params._caster_side) {
+      for (const c of this.combatants.filter(unit => unit.side === params._caster_side && unit.alive && !unit._untargetable)) {
+        const healed = Math.min(this.absorbWithDecay(c, params.heal_flat), Math.max(0, c.max_hp - c.battle_hp));
+        c.battle_hp += healed;
+        if (healed > 0) this.pushLog({ type: 'spell', targetName: c.unit_name, targetId: c.id, targetCell: c.cellIndex, value: healed, heal: true, message: `${c.unit_name} heals for ${healed}` });
+      }
+    }
     // Who a boon actually landed on, so the ally-buff trigger can be fired once
     // the loop is done. A spell buff never fired it at all: every blessing in
     // the game — Chorus of Wrath, Fury of the Choir, a resistance ward — left
@@ -4176,6 +4191,7 @@ class BattleEngine {
     // the log; it is never read as a gameplay param.
     this.applySpellParams(targets, {
       ...scaled,
+      _caster_side: casterSide,
       _spell_name: spellDef.name,
       _spell_id:   spellDef.id,
       // The portrait badge, from the ABILITIES icon set — not the spell's own
