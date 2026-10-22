@@ -405,10 +405,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (!text) return;
     const cell = root.querySelector(`.battle-cell[data-id="${actorId}"]`);
     if (!cell) return;
-    // A speaker may have several consecutive verses (and every chorus unit
-    // speaks each chorus line). Replace its previous litany toast so the lines
-    // read in sequence instead of stacking on top of one another.
-    cell.querySelector('.bark-toast--litany')?.__dismissLitany?.();
     cell.classList.add('battle-cell--bark-active');
     // The grid has to come above its own frame art for the toast to be visible
     // at all — see .battle-grid--bark in style.css.
@@ -717,6 +713,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   //   'line'     the speaker speaks only; no unit action or animation plays.
   async function playLitanyVerse(entry) {
     const t0 = Date.now();
+    // A verse replaces the previous phrase across the whole formation. The
+    // lead and chorus speak from different cells, so clearing only the current
+    // speaker's cell leaves both sides of a call-and-response visible at once.
+    root.querySelectorAll('.bark-toast--litany').forEach(toast => {
+      toast.__dismissLitany?.();
+    });
     const chorusIds = entry.chorusActorIds || [];
     if (chorusIds.length) {
       for (const id of chorusIds) showBarkToast(id, barkText(entry), { litany: true });
