@@ -341,11 +341,14 @@ const LITANIES = [
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
-        line: ['placeholder', 'текст'] },
+        line: ['The unclean may break our iron. They will not break our purpose.',
+               'Нечисть может сломать наше железо. Но не нашу волю.'] },
       { speaker: 'C', strike: 'visual',
-        line: ['placeholder', 'текст'] },
+        line: ['No shape but man has leave to live beneath this sun.',
+               'Под этим солнцем жить дозволено лишь человеку.'] },
       { speaker: 'B', strike: 'lethal',
-        line: ['placeholder', 'текст'] },
+        line: ['By Mithrail’s sentence: extinction.',
+               'Приговором Митраила — истребление.'] },
     ],
     reward: {
       ally_heal_flat: 5,
