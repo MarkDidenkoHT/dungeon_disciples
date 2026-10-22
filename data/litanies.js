@@ -20,12 +20,12 @@
 // object and nothing else can be affected by it.
 //
 // THE ONE EXCEPTION IS THE TARGET, which is LITANY_TARGETS below and is the same
-// for all fifteen. A litany is staged over the death of the other side's CHAMPION,
+// for all twelve. A litany is staged over the death of the other side's CHAMPION,
 // and that is the whole of the condition: who is worth the rite does not change
-// from one litany to the next, so writing a per-litany list fifteen times only
-// gave fifteen places for the same answer to drift.
+// from one litany to the next, so writing a per-litany list twelve times only
+// gave twelve places for the same answer to drift.
 //
-// FIFTEEN litanies: three for the Empire, six for each other faction.
+// TWELVE litanies: three each for the Empire and Grail, six for the Choir.
 //
 // ── The formation ─────────────────────────────────────────────────────────────
 //
@@ -146,7 +146,7 @@
 //                                                 / the stagger fields
 //
 // Two cells of one calling put the whole reward on that side; one of each pays
-// both. A 'hero' cell is one of the four healer heroes, so it pays the ally side
+// both. A 'hero' cell belongs to a healer hero, so it pays the ally side
 // like any other rite. This replaced "the reward is what the chorus DID", which
 // could not survive a cell that no longer knows which unit will fill it.
 //
@@ -164,24 +164,21 @@
 //
 // ── Which one fires ──────────────────────────────────────────────────────────
 //
-// fireLitany takes the FIRST match in this array. Each hero's two litanies are
-// mutually exclusive, and for each pair it is one of three things that does it:
+// fireLitany takes the FIRST match in this array. Where a lead has multiple
+// litanies, their formations are mutually exclusive:
 //
-//   the LEAD is in a different place        (iron_sentence,
-//                                            taken_breath / ash_antiphon)
+//   the LEAD is in a different place        (taken_breath / ash_antiphon)
 //   a shared square wants different SIZES   a tile cell and half of a row or
 //                                           column unit cannot both be filled
 //   a shared square wants different CALLINGS
-//                                           (profane_chorus / unbroken_banner,
-//                                            clean_passage / carried_cup,
-//                                            long_wailing / mothers_answer)
+//                                           (profane_chorus / unbroken_banner)
 //
 // The third is the one to keep in mind when editing: two chorus cells on the
-// same square of a hero's two litanies MUST name different callings, or a rich
+// same square of two litanies under one lead MUST name different callings, or a rich
 // board satisfies both and the player only ever sees the earlier one.
 
 // Every champion a litany may be staged over. ONE list, read by fireLitany for
-// all fifteen - see "The target" above.
+// all twelve - see "The target" above.
 const LITANY_TARGETS = [
 
   // ── The heroes ──────────────────────────────────────────────────────────────
@@ -360,43 +357,6 @@ const LITANIES = [
   },
   // ── Grail of Sorrow: the Grail Warden's litanies ──────────────────────────────────
   {
-    id:    'clean_passage',
-    name:  'The Clean Passage',
-    name_ru: 'Чистый переход',
-    // Back column left, front right - the board as the Litanies page draws it:
-    //   . A
-    //   . B
-    //   . C
-    //
-    // Lead: Grail Warden, every tier of both paths.
-    lead: { ids: [
-      'h_g_2', 'h_g_2_a2', 'h_g_2_a3', 'h_g_2_a41', 'h_g_2_a42',
-      'h_g_2_b2', 'h_g_2_b3', 'h_g_2_b41', 'h_g_2_b42',
-    ] },
-    formation: { cells: [
-      // A: a Acceptance - like the other, so the whole reward lands on the enemy side.
-      { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'acceptance' },
-      // B: the lead - the only cell that kills. Its own list is `lead` below.
-      { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
-      // C: a Acceptance - like the other, so the whole reward lands on the enemy side.
-      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'acceptance' },
-    ] },
-    verses: [
-      { speaker: 'A', strike: 'visual',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'C', strike: 'visual',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'B', strike: 'lethal',
-        line: ['placeholder', 'текст'] },
-    ],
-    reward: {
-      enemy_initiative_flat: 10,
-      message:    'Enemies lose 10 initiative.',
-      message_ru: 'Враги теряют 10 инициативы.',
-    },
-    once_per: 'battle',
-  },
-  {
     id:    'carried_cup',
     name:  'The Carried Cup',
     name_ru: 'Несомая чаша',
@@ -455,16 +415,22 @@ const LITANIES = [
       { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'acceptance' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
-      // C: a Acceptance - like the other, so the whole reward lands on the enemy side.
-      { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', calling: 'acceptance' },
+      // C: Acceptance anchor; the whole living chorus answers as in Duty Eternal.
+      { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', calling: 'acceptance', all_alive: true },
     ] },
     verses: [
-      { speaker: 'A', strike: 'visual',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'C', strike: 'visual',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'B', strike: 'lethal',
-        line: ['placeholder', 'текст'] },
+      { speaker: 'B', strike: 'line',
+        line: ['Your flesh.', 'Твоя плоть.'] },
+      { speaker: 'all_alive', strike: 'line',
+        line: ['Is ours.', 'Наша.'] },
+      { speaker: 'B', strike: 'line',
+        line: ['Your blood.', 'Твоя кровь.'] },
+      { speaker: 'all_alive', strike: 'line',
+        line: ['Is ours.', 'Наша.'] },
+      { speaker: 'B', strike: 'line',
+        line: ['Your life.', 'Твоя жизнь.'] },
+      { speaker: 'all_alive', strike: 'line',
+        line: ['Is ours.', 'Наша.'] },
     ],
     reward: {
       enemy_damage_flat: 5,
@@ -474,84 +440,7 @@ const LITANIES = [
     },
     once_per: 'battle',
   },
-  {
-    id:    'pale_procession',
-    name:  'The Pale Procession',
-    name_ru: 'Бледная процессия',
-    // Back column left, front right - the board as the Litanies page draws it:
-    //   A .
-    //   . B
-    //   C C
-    //
-    // Lead: Mourning Prophet, every tier of both paths.
-    lead: { ids: [
-      'h_g_1', 'h_g_1_a2', 'h_g_1_a3', 'h_g_1_a41', 'h_g_1_a42',
-      'h_g_1_b2', 'h_g_1_b3', 'h_g_1_b41', 'h_g_1_b42',
-    ] },
-    formation: { cells: [
-      // A: a Denial - the ally half of the reward.
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'denial' },
-      // B: the lead - the only cell that kills. Its own list is `lead` below.
-      { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
-      // C: a Acceptance - the enemy half of the reward.
-      { key: 'C', row: 2, col: 'both', size: 'row', role: 'chorus', calling: 'acceptance' },
-    ] },
-    verses: [
-      { speaker: 'A', strike: 'support',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'C', strike: 'visual',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'B', strike: 'lethal',
-        line: ['placeholder', 'текст'] },
-    ],
-    reward: {
-      ally_heal_flat: 5,
-      enemy_damage_flat: 5,
-      message:    'Allies are healed for 5 HP and enemies take 5 damage.',
-      message_ru: 'Союзники лечатся на 5 HP, враги получают 5 урона.',
-    },
-    once_per: 'battle',
-  },
-
   // ── Grail of Sorrow: Mother's Voice's litanies ────────────────────────────────────
-  {
-    id:    'long_wailing',
-    name:  'The Long Wailing',
-    name_ru: 'Долгий плач',
-    // Back column left, front right - the board as the Litanies page draws it:
-    //   A .
-    //   B .
-    //   . C
-    //
-    // Lead: Mother's Voice, every tier of both paths.
-    lead: { ids: [
-      'h_g_3', 'h_g_3_a2', 'h_g_3_a3', 'h_g_3_a41', 'h_g_3_a42',
-      'h_g_3_b2', 'h_g_3_b3', 'h_g_3_b41', 'h_g_3_b42',
-    ] },
-    formation: { cells: [
-      // A: a Acceptance - like the other, so the whole reward lands on the enemy side.
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'acceptance' },
-      // B: the lead - the only cell that kills. Its own list is `lead` below.
-      { key: 'B', row: 1, col: 'back', size: 'tile', role: 'lead' },
-      // C: a Acceptance - like the other, so the whole reward lands on the enemy side.
-      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'acceptance' },
-    ] },
-    verses: [
-      { speaker: 'A', strike: 'visual',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'C', strike: 'visual',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'B', strike: 'lethal',
-        line: ['placeholder', 'текст'] },
-    ],
-    reward: {
-      enemy_damage_flat: 5,
-      enemy_decay_flat: 5,
-      message:    'Enemies take 5 damage and gain 5 decay.',
-      message_ru: 'Враги получают 5 урона и 5 Тлена.',
-    },
-    once_per: 'battle',
-  },
   {
     id:    'mothers_answer',
     name:  "Mother's Answer",
