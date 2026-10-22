@@ -36,7 +36,7 @@ const { SPELLS } = require('../data/spells');
 const { CALLINGS, CALLING_CHANGE_COST, callingsForFaction, newCallingFor,
         DEVOTION_BLOCKS, OATH_BASE_GOLD, OATH_STEP_GOLD, OATH_BONUS, oathPrice,
         devotionOf, oathsSworn, devotionBonusHp, blockDone, blockFor,
-        devotionState, resetDevotionDeeds } = require('../data/callings');
+        devotionState, preserveDevotionProgress } = require('../data/callings');
 const { telegramWebhookHandler, notifyAdminNewPlayer, notifyAdminPvpQueue, getBotUsername, takePendingInvite } = require('../utils/telegram');
 const {
   generateInviteCode, normalizeInviteCode, INVITEE_WELCOME, INVITER_REWARDS,
@@ -1081,16 +1081,13 @@ async function applyAutoLevelUps(rows, buildingsData) {
   await Promise.all((rows || []).map(async row => {
     const result = resolveAutoLevelUp(row, buildingsData);
     if (!result) return;
-    // Most level-ups come through here rather than the manual endpoint, so the
-    // Temple's reset belongs here too: a unit that advances walks the chain
-    // again from the first block.
-    //
-    // Only when the row actually carries `devotion`. Some callers select a
-    // narrower set of columns, and writing a reset computed from a field that
-    // was never read would wipe the oaths and the HP they bought.
+    // Preserve calling progress when the unit advances. Only when the row
+    // actually carries `devotion`: some callers select a narrower set of
+    // columns, and writing a value from a field that was never read would
+    // overwrite progress that was not loaded.
     const patch = { unit_data: result.unitData };
     if (Object.prototype.hasOwnProperty.call(row, 'devotion')) {
-      patch.devotion = resetDevotionDeeds(row);
+      patch.devotion = preserveDevotionProgress(row);
     }
     await supabase(`/roster?id=eq.${encodeURIComponent(row.id)}`, {
       method: 'PATCH', body: JSON.stringify(patch),
@@ -4088,19 +4085,12 @@ router.post('/roster/levelup', requireAuth, async (req, res) => {
       newUnitData.current_hp = Math.min(newUnitData.max_hp, oldHp);
     }
     newUnitData.alive = unitData.alive !== false;
-    // LEVELLING UP WIPES THE TEMPLE'S DEEDS. The unit that comes out the other
-    // side is a new unit as far as the Temple is concerned, and it walks the
-    // chain again from the first block — which is the point: the deeds are
-    // errands, then fighting, then litanies, and a unit that keeps advancing
-    // keeps being sent back round every corner of the game.
-    //
-    // What survives is what was BOUGHT: `oaths` (it sets the next price) and
-    // `bonus` (the HP that gold already paid for). Only an oath may move a stat,
-    // and nothing may take one back.
+    // Calling progress belongs to the roster entry, so keep all deed counters
+    // and purchased oath bonuses when its unit advances.
     const updatePromises = [
       supabase(`/roster?id=eq.${roster_id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ unit_data: newUnitData, devotion: resetDevotionDeeds(entry) }),
+        body: JSON.stringify({ unit_data: newUnitData, devotion: preserveDevotionProgress(entry) }),
       }),
     ];
     if (!entry.is_hero && buildingSlot) {

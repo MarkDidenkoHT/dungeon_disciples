@@ -134,12 +134,10 @@ instant the first one lands and the Temple stops being a reason to go and do the
 thing it is asking for. Enforced in `bumpDevotion` ([routes/index.js](../routes/index.js)),
 which resolves the live block before it writes.
 
-**Levelling up wipes the deeds and the unit walks the chain again.** That is the
-point of the whole system: the deeds are errands, then fighting, then litanies, so a
-unit that keeps advancing keeps being sent back round every corner of the game. What
-survives a reset is what was *bought* — `oaths` (it sets the next price) and `bonus`
-(HP that gold already paid for). Applied on both the manual endpoint and
-`applyAutoLevelUps`, which is where most level-ups actually happen.
+**Levelling up preserves all calling progress.** Deed counters are lifetime totals,
+and purchased `oaths` and `bonus` remain on the roster entry as the unit advances.
+Applied on both the manual endpoint and `applyAutoLevelUps`, which is where most
+level-ups happen.
 
 Blocks 2–4 pay nothing yet; they count. Only the oath grants a stat, and the stat
 is stored (`devotion.bonus`) rather than recomputed from the count, so raising the
