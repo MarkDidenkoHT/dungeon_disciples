@@ -536,6 +536,8 @@ export function renderEmbark(root, params = {}) {
     if (!overlay || !modalBody || !modalTitle) return;
     modalTitle.textContent = title;
     modalBody.innerHTML = bodyHtml;
+    overlay.classList.remove('modal-overlay--reconnect');
+    overlay.querySelector('.modal')?.classList.remove('modal--reconnect');
     modalClosable = closable;
     if (modalCloseBtn) {
       modalCloseBtn.style.display = closable ? '' : 'none';
@@ -548,6 +550,8 @@ export function renderEmbark(root, params = {}) {
   function closeModal(force = false) {
     if (!overlay || (!modalClosable && !force)) return;
     overlay.classList.add('hidden');
+    overlay.classList.remove('modal-overlay--reconnect');
+    overlay.querySelector('.modal')?.classList.remove('modal--reconnect');
     document.body.style.overflow = '';
     modalClosable = true;
   }
@@ -838,20 +842,31 @@ export function renderEmbark(root, params = {}) {
   if (hostVisible) loadColossusPage();
 
   function showReconnectModal(battle_id, battle_data) {
+    const battleRegion = REGION_DEFS.find(region => region.id === battle_data?.region_id);
+    const artId = battleRegion?.id || 'colossus';
     openModal(UI_TEXT.reconnectTitle[L], `
-      <div style="display:flex;flex-direction:column;gap:1rem;">
-        <div style="color:var(--muted);font-size:.95rem;line-height:1.4;">
+      <div class="reconnect-content">
+        <div class="reconnect-art" style="background-image:linear-gradient(180deg,rgba(12,10,9,.04) 20%,rgba(12,10,9,.88) 100%),url('${assetUrl(`/assets/embark/${artId}.jpg`)}')">
+          <span class="reconnect-art-kicker">${L === 'ru' ? 'НЕЗАВЕРШЁННЫЙ БОЙ' : 'BATTLE IN PROGRESS'}</span>
+          <h2>${UI_TEXT.reconnectTitle[L]}</h2>
+        </div>
+        <div class="reconnect-copy">
+          <div class="reconnect-description">
           ${UI_TEXT.reconnectBody[L]}
+          </div>
+          <div class="reconnect-warning">
+            <span class="reconnect-warning-mark" aria-hidden="true">!</span>
+            <span>${UI_TEXT.abandonWarning[L]}</span>
+          </div>
         </div>
-        <div style="color:var(--danger);font-size:.85rem;line-height:1.4;">
-          ${UI_TEXT.abandonWarning[L]}
-        </div>
-        <div style="display:flex;justify-content:flex-end;gap:.75rem;flex-wrap:wrap;">
+        <div class="reconnect-actions">
           <button id="modal-abandon-btn" class="action-btn action-btn--cancel" type="button">${UI_TEXT.abandon[L]}</button>
-          <button id="modal-reconnect-btn" class="action-btn" type="button">${UI_TEXT.reconnect[L]}</button>
+          <button id="modal-reconnect-btn" class="action-btn reconnect-primary" type="button">${UI_TEXT.reconnect[L]} <span aria-hidden="true">→</span></button>
         </div>
       </div>
     `, { closable: false });
+    overlay.classList.add('modal-overlay--reconnect');
+    overlay.querySelector('.modal')?.classList.add('modal--reconnect');
 
     root.querySelector('#modal-reconnect-btn')?.addEventListener('click', async () => {
       const region_id = battle_data.region_id;

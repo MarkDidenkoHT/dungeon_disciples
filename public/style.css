@@ -1846,6 +1846,111 @@ button.cost-bar-item:active { transform: scale(0.9); }
   flex-direction: column;
 }
 
+/* Reconnect is a blocking decision, so give it a centered, illustrated panel
+   rather than the standard bottom sheet used by the other embark dialogs. */
+.modal-overlay--reconnect {
+  align-items: center;
+  padding: 20px;
+  background: rgba(8, 7, 8, .78);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+.modal--reconnect {
+  width: min(100%, 440px);
+  max-height: min(90vh, 700px);
+  border: 1px solid rgba(212, 169, 91, .5);
+  border-radius: 18px;
+  border-bottom: 1px solid rgba(212, 169, 91, .5);
+  background: #191714;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .7), 0 0 32px rgba(180, 119, 44, .12);
+  animation: reconnect-modal-in .24s cubic-bezier(.2,.75,.25,1);
+}
+.modal--reconnect .modal-header { display: none; }
+.modal--reconnect .modal-body { overflow-y: auto; }
+.reconnect-content { display: flex; flex-direction: column; }
+.reconnect-art {
+  position: relative;
+  min-height: 205px;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 24px 26px 20px;
+  background-position: center 42%;
+  background-size: cover;
+  border-bottom: 1px solid rgba(212, 169, 91, .28);
+}
+.reconnect-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 1px rgba(255,255,255,.08);
+}
+.reconnect-art-kicker {
+  color: #e7bc76;
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 8px #000;
+}
+.reconnect-art h2 {
+  margin: 0;
+  color: #fff5e5;
+  font-family: var(--font-display, inherit);
+  font-size: clamp(1.45rem, 6vw, 1.85rem);
+  line-height: 1.1;
+  text-shadow: 0 2px 14px #000;
+}
+.reconnect-copy { display: flex; flex-direction: column; gap: 16px; padding: 22px 26px 18px; }
+.reconnect-description { color: var(--text); font-size: .93rem; line-height: 1.55; }
+.reconnect-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid rgba(192, 91, 73, .28);
+  border-radius: 10px;
+  background: rgba(111, 42, 34, .16);
+  color: #d6a49a;
+  font-size: .78rem;
+  line-height: 1.45;
+}
+.reconnect-warning-mark {
+  flex: 0 0 18px;
+  height: 18px;
+  border: 1px solid rgba(220, 136, 111, .55);
+  border-radius: 50%;
+  color: #e49a83;
+  font-size: .72rem;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+}
+.reconnect-actions {
+  display: flex;
+  gap: 10px;
+  padding: 0 26px 24px;
+}
+.reconnect-actions .action-btn { flex: 1; min-height: 46px; }
+.reconnect-primary { box-shadow: 0 5px 18px rgba(194, 139, 53, .18); }
+.reconnect-primary span { margin-left: 5px; font-size: 1.1em; }
+@keyframes reconnect-modal-in {
+  from { opacity: 0; transform: translateY(10px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (max-width: 420px) {
+  .modal-overlay--reconnect { padding: 14px; }
+  .reconnect-art { min-height: 170px; padding: 20px; }
+  .reconnect-copy { padding: 18px 20px 16px; }
+  .reconnect-actions { padding: 0 20px 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal--reconnect { animation: none; }
+}
+
 .modal-empty { color: var(--muted); font-size: 0.9rem; }
 
 .modal-level-badge {
