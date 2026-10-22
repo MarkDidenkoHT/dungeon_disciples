@@ -209,8 +209,8 @@ const FORMATION_SYNERGIES = {
     label: 'Inspiration', label_ru: 'Вдохновение',
   },
 
-  // The other two Inspirations are the same bond with a different payload, so
-  // they are the same row with a different icon. They deliberately share
+  // The other Inspiration auras share this bond pattern with a different
+  // payload and icon. They deliberately share
   // INSPIRATION_FX: two of these can live on ONE unit (see units.js, where a
   // couple of captains carry damage and max HP together), which means one
   // source bonding twice to the same neighbour. A single flash colour is what
@@ -243,10 +243,23 @@ const FORMATION_SYNERGIES = {
     label: 'Inspiration', label_ru: 'Вдохновение',
   },
 
+  inspiration_armor: {
+    id: 'inspiration_armor',
+    source:   { ability: 'inspiration_armor' },
+    partner:  {},
+    relation: 'column_adjacent',
+    multi:    true,
+    present:  'flash',
+    effect:   'inspiration_flash',
+    fx: INSPIRATION_FX,
+    buff: { icon: 'inspiration_armor.jpg', suffix: '', valueParam: 'inspiration_value_per_tag' },
+    label: 'Inspiration', label_ru: 'Вдохновение',
+  },
+
   // ── Cross-tag bonds ────────────────────────────────────────────────────────
   //
-  // The three above pay a tag its own kind. These pay a DIFFERENT kind, so a
-  // list of one tag cannot trigger them at all — the mix is the cost.
+  // The Inspiration auras above pay a tag its own kind. These pay a DIFFERENT
+  // kind, so a list of one tag cannot trigger them at all — the mix is the cost.
 
   // Grail. A Zombie opens a vein for the Vampire beside it, every round, and
   // pays for it out of its own body — the horde keeps the bloodline standing.
@@ -321,30 +334,7 @@ const FORMATION_SYNERGIES = {
     label: 'Sanctified Ordnance', label_ru: 'Освящённый боеприпас',
   },
 
-  // Empire. An Artificer keeping the machines beside it running. Same reach as
-  // Inspiration — one row above and below, in each column the source occupies —
-  // but it pays only Constructs, and it scales off Engineers, so neither tag is
-  // worth fielding alone.
-  fortify: {
-    id: 'fortify',
-    source:   { ability: 'fortify' },
-    partner:  { tag: 'Construct' },
-    relation: 'column_adjacent',
-    multi:    true,
-    present:  'flash',
-    effect:   'fortify_flash',
-    fx: {
-      glow: 0x9fb4c9,      // cold worked steel
-      core: 0xe6f0fa,
-    },
-    buff: { icon: 'reforge.jpg', suffix: '', valueParam: 'inspiration_value_per_tag' },
-    label: 'Fortify', label_ru: 'Укрепление',
-  },
 };
-
-// inspiration_armor exists in data/unit_abilities.js but no unit carries it and
-// it has no icon, so it is deliberately absent here. Adding it is one more row
-// once something actually has it.
 
 // ── Resolver ─────────────────────────────────────────────────────────────────
 //

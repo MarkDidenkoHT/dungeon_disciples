@@ -84,7 +84,7 @@ function drainSweepMult(unit) {
 
 // Puts a battle-start stat grant on the portrait.
 //
-// Vitality, Iron Will, Horde, Choir, Banquet, Fortify and the resistance auras
+// Vitality, Iron Will, Horde, Choir, Banquet, Inspiration Armor and resistance auras
 // all MOVE A NUMBER and then leave no trace: they set no `_flag` field, so the
 // BUFF_DEFS table in battle.js — which reads fixed combatant fields — has
 // nothing to draw, and the buff was invisible on the grid no matter how large
@@ -160,7 +160,7 @@ function dotAmount(dmg, pct, def, target) {
 //
 // Armor and every resistance are read as "1 point = 1% less damage", and NOTHING
 // used to stop that climbing. Stack Aegis, Frost Armor, Stone Form, Defend, an
-// item and a Fortify bond on one Construct and it passed 100 — at which point
+// item and an Inspiration Armor bond on one Construct and it passed 100 — at which point
 // the target healed off every physical hit, and the only thing standing between
 // the game and that was `Math.max(1, ...)` on some of the paths but not others.
 //
@@ -477,7 +477,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
     if (p.ally_armor_bonus != null || p.ally_armor_bonus_per_tag != null) {
       // `ally_tag_required` narrows WHO RECEIVES the armor — distinct from
       // `tag_required`, which elsewhere scales HOW MUCH. Omit it and every ally
-      // is covered, as before. Fortify uses it to plate only Constructs.
+      // is covered.
       //
       // Three dials, and they are deliberately independent:
       //   ally_tag_required  who gets it        (Bone Armor: Casters)
@@ -636,9 +636,8 @@ function dispatchPassive(trigger, owner, def, ctx) {
         ? p.inspiration_value_per_tag * tagCount(engine, owner.side, p.tag_required)
         : p.inspiration_value;
       let targets = inspVal > 0 ? engine.getInspirationTargets(owner) : [];
-      // Fortify reaches the same cells as any Inspiration but pays only one kind
-      // of ally. Without this the Engineer would armour whatever happened to
-      // stand beside it, which is not what the ability says.
+      // An optional target tag can narrow who receives this Inspiration. The
+      // armor Inspiration omits it, so every adjacent ally can benefit.
       if (p.inspiration_target_tag) {
         targets = targets.filter(t => (t.unit_data?.tags ?? []).includes(p.inspiration_target_tag));
       }

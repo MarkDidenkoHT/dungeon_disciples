@@ -51,8 +51,8 @@ const SRC_TARGET_FX = new Set([
 // entry (`targetIds`, see passive-processor.js). A side-wide wash would have lit
 // units the plating never reached.
 //
-// Inspiration and Fortify look like they belong here and do NOT: both are
-// registry entries in data/formation_synergies.js, drawn as bonds by
+// Inspiration auras look like they belong here and do NOT: they are registry
+// entries in data/formation_synergies.js, drawn as bonds by
 // syncFormationSynergies off the combatants, in prep as well as in battle.
 // Adding them here would play the same grant twice on the same cells.
 const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_blessing', 'pale_embrace', 'blood_mist', 'dragons_breath', 'verse_of_cataclysm', 'wrath_of_heaven', 'pyre_requiem', 'condemn', 'glacial_burst',
@@ -2253,10 +2253,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     { key: 'inspiration', icon: 'inspiration_initiative.jpg', en: 'Inspiration', ru: 'Вдохновение', n: c => num(c, '_inspiration_initiative'), unit: 'initiative' },
     { key: 'inspiration-dmg', icon: 'inspiration_damage.jpg', en: 'Inspiration', ru: 'Вдохновение', n: c => num(c, '_inspiration_damage'), unit: 'power' },
     { key: 'inspiration-hp',  icon: 'inspiration_max_hp.jpg', en: 'Inspiration', ru: 'Вдохновение', n: c => num(c, '_inspiration_max_hp'),  unit: 'max_hp' },
-    // Cross-tag bonds. Fortify borrows reforge.jpg — an Engineer working on a
-    // Construct is the same picture — and Chorus borrows command.jpg. Neither
-    // has art of its own yet.
-    { key: 'fortify',     icon: 'reforge.jpg', en: 'Fortify',       ru: 'Укрепление', n: c => num(c, '_inspiration_armor'), unit: 'armor' },
+    { key: 'inspiration-armor', icon: 'inspiration_armor.jpg', en: 'Inspiration', ru: 'Вдохновение', n: c => num(c, '_inspiration_armor'), unit: 'armor' },
+    // Chorus borrows command.jpg; it has no art of its own yet.
     { key: 'chorus',      icon: 'command.jpg', en: 'Chorus of War', ru: 'Хор Войны',  n: c => num(c, '_chorus_power'),      unit: 'power' },
     // _dmg_mult is a multiplier, not a stack, so it is printed as the percentage
     // it actually moves damage by and split across the two tables by direction:
@@ -2267,7 +2265,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // battle effect at all — it is already inside max_hp before the fight
     // starts — but it is the only thing an oath buys, and folded into the HP bar
     // it was invisible: a player could not tell that 1000 gold had done
-    // anything. Borrowed art, the same way Fortify borrows reforge.jpg.
+    // anything.
     { key: 'oath',        icon: 'vitality.jpg',      en: 'Oath',      ru: 'Обет',       n: c => num(c, '_oath_hp'),    unit: 'max_hp' },
     // The Temple's flat HP, on every unit in the army (data/buildings.js). Same
     // story as the oath above and shown the same way, because the alternative —

@@ -36,8 +36,8 @@ const HERO_FLAVOR = {
     ru: 'Инквизитор. Его атака бьёт по шести целям на расстоянии — по всему вражескому строю, каждый ход, но слабее по каждому. Остальное делает Экзорцизм. Держите его за стеной: он создан доставать, а не быть достанутым.',
   },
   h_e_3: {
-    en: 'Artificer. He does not attack — his action is Repair, mending an ally from three tiles back, and Fortify armors the party for free. He is the reason the wall is still standing, so choose his spells for the damage he lacks.',
-    ru: 'Артефактор. Он не атакует: его действие — Починка, которая лечит союзника с трёх клеток, а Укрепление даёт отряду броню даром. Он причина, по которой стена ещё стоит, — а урон подберите ему заклинаниями.',
+    en: 'Artificer. He does not attack — his action is Repair, mending an ally from three tiles back, while Inspiration armors nearby allies. He is the reason the wall is still standing, so choose his spells for the damage he lacks.',
+    ru: 'Артефактор. Он не атакует: его действие — Починка, которая лечит союзника с трёх клеток, а Вдохновение укрепляет соседних союзников. Он причина, по которой стена ещё стоит, — а урон подберите ему заклинаниями.',
   },
   h_d_1: {
     en: 'Black Castellan. Melee, and he wants to be hit: Rage turns every wound he takes into damage he gives back. Put him where the blows land, and let the enemy make him dangerous for you.',

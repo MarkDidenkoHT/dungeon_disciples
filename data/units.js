@@ -1309,7 +1309,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 40, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 10, action_icon: 'repair.jpg', action_animation: 'repair',
-      passive: 'fortify 1', ability: null,
+      passive: 'inspiration_armor 1', ability: null,
       building_slot: 'slot_0', xp: 100
     },
     artificer_path_a_t2: {
@@ -1323,7 +1323,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 40, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 15, action_icon: 'repair.jpg', action_animation: 'repair',
-      passive: ['fortify 1', 'unbreakable 1'], ability: null,
+      passive: ['inspiration_armor 1', 'unbreakable 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
     artificer_path_a_t3: {
@@ -1337,7 +1337,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 40, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 20, action_icon: 'repair.jpg', action_animation: 'repair',
-      passive: ['fortify 2', 'unbreakable 1'], ability: null,
+      passive: ['inspiration_armor 2', 'unbreakable 1'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
     artificer_path_a_t4: {
@@ -1351,7 +1351,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 40, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25, action_icon: 'repair.jpg', action_animation: 'repair',
-      passive: ['fortify 2', 'unbreakable 1', 'recuperate 1' ], ability: null,
+      passive: ['inspiration_armor 2', 'unbreakable 1', 'recuperate 1' ], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
     artificer_path_a_t4_alt: {
@@ -1365,7 +1365,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 40, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25, action_icon: 'repair.jpg', action_animation: 'repair',
-      passive: ['fortify 2', 'unbreakable 2'], ability: null,
+      passive: ['inspiration_armor 2', 'unbreakable 2'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
     artificer_path_b_t2: {
@@ -1379,7 +1379,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 40, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 15, action_icon: 'repair.jpg', action_animation: 'repair',
-      passive: ['fortify 1', 'shield 1'], ability: null,
+      passive: ['inspiration_armor 1', 'shield 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
     artificer_path_b_t3: {
@@ -1393,7 +1393,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 40, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 20, action_icon: 'repair.jpg', action_animation: 'repair',
-      passive: ['fortify 2', 'shield 1'], ability: null,
+      passive: ['inspiration_armor 2', 'shield 1'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
     artificer_path_b_t4: {
@@ -1407,7 +1407,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 40, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25, action_icon: 'repair.jpg', action_animation: 'repair',
-      passive: ['fortify 2', 'shield 1', 'command 1'], ability: null,
+      passive: ['inspiration_armor 2', 'shield 1', 'command 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
     artificer_path_b_t4_alt: {
@@ -1421,7 +1421,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 40, death: 0, cold: 0, nature: 0 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 25, action_icon: 'repair.jpg', action_animation: 'repair',
-      passive: ['fortify 2', 'shield 1', 'inspiration_armor 1'], ability: null,
+      passive: ['inspiration_armor 2', 'shield 1', 'inspiration_armor 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
     conscript: {
@@ -1708,7 +1708,7 @@ const UNITS = {
       resistances: { air: 0, fire: 5, life: 40, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 8, action_icon: 'repair.jpg', action_animation: 'repair',
-      xp: 100, passive: ['fortify 1', 'scavenger 1'], ability: 'reforge 1',
+      xp: 100, passive: ['inspiration_armor 1', 'scavenger 1'], ability: 'reforge 1',
     },
     mechanic: {
       id: 'e61', f: 'e', t: 2,
@@ -1721,7 +1721,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 40, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 12, action_icon: 'repair.jpg', action_animation: 'repair',
-      xp: 480, passive: ['fortify 2', 'scavenger 1'], ability: 'reforge 1',
+      xp: 480, passive: ['inspiration_armor 2', 'scavenger 1'], ability: 'reforge 1',
     },
     master_mechanic: {
       id: 'e611', f: 'e', t: 3,
@@ -1734,7 +1734,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 40, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 16, action_icon: 'repair.jpg', action_animation: 'repair',
-      xp: 1560, passive: ['fortify 2', 'scavenger 1', 'shield 1'], ability: 'reforge 2',
+      xp: 1560, passive: ['inspiration_armor 2', 'scavenger 1', 'shield 1'], ability: 'reforge 2',
     },
     grand_machinist: {
       id: 'e6111', f: 'e', t: 4,
@@ -1747,7 +1747,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 40, death: 0, cold: 0, nature: 5 },
       action: 'repair', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 20, action_icon: 'repair.jpg', action_animation: 'repair',
-      xp: 1690, passive: ['fortify 2', 'scavenger 1', 'shield 2'], ability: 'reforge 2',
+      xp: 1690, passive: ['inspiration_armor 2', 'scavenger 1', 'shield 2'], ability: 'reforge 2',
     },
     armsmaster: {
       id: 'e6112', f: 'e', t: 4,
@@ -3824,7 +3824,7 @@ const UNITS = {
         resistances: { air: 10, fire: 10, life: 10, death: 10, cold: 30, nature: 10 },
         action: 'repair', target_type: 'ally', targets: 1, range: 3,
         damage_source: null, action_power: 10, action_icon: 'repair.jpg', action_animation: 'repair',
-        xp: 130, passive: 'fortify 1', ability: null,
+        xp: 130, passive: 'inspiration_armor 1', ability: null,
       },
       glaciron: {
         id: 'mv_e11', f: 'mv', t: 2,
@@ -3837,7 +3837,7 @@ const UNITS = {
         resistances: { air: 15, fire: 15, life: 15, death: 15, cold: 30, nature: 15 },
         action: 'repair', target_type: 'ally', targets: 1, range: 3,
         damage_source: null, action_power: 15, action_icon: 'repair.jpg', action_animation: 'repair',
-        xp: 540, passive: ['fortify 1', 'recuperate 1', 'magic_attunement 1'], ability: null,
+        xp: 540, passive: ['inspiration_armor 1', 'recuperate 1', 'magic_attunement 1'], ability: null,
       },
       arctyx: {
         id: 'mv_e111', f: 'mv', t: 3,
@@ -3850,7 +3850,7 @@ const UNITS = {
         resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 40, nature: 20 },
         action: 'repair', target_type: 'ally', targets: 1, range: 3,
         damage_source: null, action_power: 20, action_icon: 'repair.jpg', action_animation: 'repair',
-        xp: 1560, passive: ['fortify 1', 'recuperate 2', 'magic_attunement 1'], ability: null,
+        xp: 1560, passive: ['inspiration_armor 1', 'recuperate 2', 'magic_attunement 1'], ability: null,
       },
       frostshard: {
         id: 'mv_e2', f: 'mv', t: 1,

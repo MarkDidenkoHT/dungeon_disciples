@@ -5811,7 +5811,7 @@ const divided_flame    = traitFlash({ glow: 0xff5a12, core: 0xffd79a }, 'flame')
 const vampires_vigil   = traitFlash({ glow: 0x8a0c1e, core: 0xff9aa8 }, 'drop');
 
 // ── battle-start grants ───────────────────────────────────────────────────────
-// The Wards, Inspiration/Fortify and Bone Armor. Traits above say what a unit
+// The Wards, Inspiration auras and Bone Armor. Traits above say what a unit
 // IS; these say what it GIVES, so all three are drawn as something leaving the
 // carrier and arriving somewhere else, and all three are dispatched with the
 // cells they reached — SIDE_WIDE_FX for a Ward, which covers the whole line, and
@@ -7155,8 +7155,7 @@ export const EFFECTS = {
   dragons_breath,
   verse_of_cataclysm,
   blessing_of_protection,
-  // Battle-start grants. The six Wards are one factory in six palettes;
-  // Fortify is Inspiration under another name.
+  // Battle-start grants. The six Wards are one factory in six palettes.
   resist_aura_fire,
   resist_aura_air,
   resist_aura_cold,
