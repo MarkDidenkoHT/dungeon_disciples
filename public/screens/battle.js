@@ -2188,22 +2188,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   const st = (occ, field) => occ?.[field] ?? occ?.buffs?.[field];
   const num = (occ, field) => Number(st(occ, field) ?? 0) || 0;
 
-  // Hits still to come before this unit's next dodge, or 0 when it has no dodge
-  // passive at all (which hides the badge). Mirrors the engine's rule exactly —
-  // `_dodge_count % dodge_every === 0` avoids the blow, see executeAction and
-  // strikeTarget in utils/battle-engine.js — so the countdown cannot drift from
-  // what actually happens. Only PHYSICAL attacks are counted there, which is why
-  // this badge can sit still through a whole volley of spell damage.
-  function dodgeCountdown(occ) {
-    const source = occ?.unit_data?.native_passive ?? occ?.unit_data?.passive;
-    const keys   = Array.isArray(source) ? source : (source ? [source] : []);
-    const every  = keys
-      .map(k => resolveAbility(k)?.params?.dodge_every)
-      .find(v => v != null);
-    if (!every) return 0;
-    return every - (num(occ, '_dodge_count') % every);
-  }
-
   // How far _dmg_mult has moved this unit's damage, as a percentage, in the
   // direction asked for — 0 in the other direction so only one of the two
   // icons is ever active.
@@ -2234,12 +2218,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     { key: 'blessing',    icon: 'mothers_blessing.jpg', en: "Mother's Blessing", ru: 'Благословение Матери', n: c => (st(c, '_mothers_blessing') ? 1 : 0) },
     { key: 'kiss',        icon: 'communion.jpg',        en: "Mother's Kiss",   ru: 'Поцелуй Матери',  n: c => (st(c, '_mothers_kiss') ? 1 : 0) },
     { key: 'parry',       icon: 'duelist.jpg',          en: 'Parry ready',     ru: 'Парирование готово', n: c => (st(c, '_parry_available') ? 1 : 0) },
-    // _dodge_count is a running tally of physical hits TAKEN, not stacks of
-    // anything: the engine dodges when it divides evenly by the passive's
-    // dodge_every. Printed raw it climbed all battle and never reset, so the
-    // badge read "Dodge: 6" — six of what? It now counts down the hits until
-    // the next dodge, which is the only number a player can act on.
-    { key: 'dodge',       icon: 'dodge.jpg',            en: 'Dodge',           ru: 'Уклонение',      n: c => dodgeCountdown(c), unit: 'hits', alwaysNum: true },
     // Ward (damage reduction per ally tag). The percentage is recomputed
     // server-side every time the battle state is sent, so the chip falls as the
     // counted allies die.
@@ -2283,7 +2261,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     { key: 'terror',  icon: 'terror.jpg',  en: 'Terror',           ru: 'Ужас',           n: c => num(c, '_terror_rounds'),      unit: 'rounds' },
     { key: 'fear',    icon: 'fear.jpg',    en: 'Fear',             ru: 'Страх',          n: c => num(c, '_fear_dmg_reduction'), unit: 'pct' },
     { key: 'infect',  icon: 'infect.jpg',  en: 'Healing reduced',  ru: 'Лечение снижено', n: c => num(c, '_healing_reduction'), unit: 'pct' },
-    { key: 'taunt',   icon: 'taunt.jpg',   en: 'Taunted',          ru: 'Спровоцирован',  n: c => (st(c, '_taunted_by_id') ? 1 : 0) },
     { key: 'sorrow',  icon: 'sorrow.jpg',  en: 'Sorrow',           ru: 'Скорбь',         n: c => (st(c, '_sorrow_source_ids') || []).length },
     // The pool left, not a percentage: it is how much healing this unit will
     // lose before any reaches its HP.
@@ -2305,7 +2282,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     initiative: { en: 'initiative', ru: 'инициативы' },
     max_hp:     { en: 'max HP',    ru: 'макс. HP' },
     power:      { en: 'power',     ru: 'силы' },
-    hits:   { en: 'hits until the next dodge', ru: 'ударов до уклонения' },
     heal:        { en: 'healing absorbed', ru: 'исцеления поглотит' },
     dmg_absorb:  { en: 'damage absorbed',  ru: 'урона поглотит' },
   };

@@ -472,7 +472,6 @@ class BattleEngine {
       _actives_locked:  false,
       _passives_locked_rounds: 0,
       _actives_locked_rounds:  0,
-      _taunted_by_id:      null,
       _clear_shot_active:  false,
       _clear_shot_initiative_amt: 0,
       _clear_shot_dmg_amt: 0,
@@ -976,22 +975,10 @@ class BattleEngine {
   }
   getValidTargets(actor, forAbility = false) {
     if (forAbility) {
-      if (actor._taunted_by_id != null) return [];
       return getAbilityTargets(actor, this.combatants, this.ABILITIES);
     }
     const isHeal    = this.isHealer(actor);
     const actionKey = this.getActionKey(actor);
-
-    if (actor._taunted_by_id != null) {
-      const taunter = this.combatants.find(c => c.id === actor._taunted_by_id && c.alive);
-      if (!taunter) {
-        actor._taunted_by_id = null;
-      } else if (isHeal || actionKey === 'sacrifice') {
-        return [];
-      } else {
-        return [taunter];
-      }
-    }
 
     if (actionKey === 'sacrifice') {
       return this.combatants.filter(t => t.alive && t.side === actor.side && t.id !== actor.id);
@@ -1124,6 +1111,7 @@ class BattleEngine {
   // Multiplier applied to EVERY point of HP restored while fatigue is active.
   // Call this at each heal site so no heal source (heal, lifesteal, HoT, drain)
   // can dodge the reduction.
+  // can bypass the reduction.
   fatigueHealMult() {
     return 1 - this.fatigueHealReductionPct() / 100;
   }
@@ -1277,11 +1265,11 @@ class BattleEngine {
   // opts.consumesTurn defaults true. Pass false for a BORROWED strike — Blood
   // Craze and Infernal Mandate spend the COMMANDER's turn to make an ally swing,
   // so the striker is only lending a blow: it keeps its own action this round,
-  // its turn-start passives do not fire, it earns no power for the lent hit and
-  // it keeps whatever taunt is on it. afterAction puts all of that back.
+  // its turn-start passives do not fire, and it earns no power for the lent hit.
+  // afterAction restores its prior acted state.
   executeAction(actor, target = null, actionType = 'attack', opts = {}) {
     if (opts.consumesTurn === false) {
-      actor._borrowed_turn = { acted: actor.acted_this_round, taunt: actor._taunted_by_id };
+      actor._borrowed_turn = { acted: actor.acted_this_round };
       actor._skip_power_gain = true;
     } else {
       this.fireTrigger('on_turn_start', { actor, target: actor, dmg: 0, dying: null });
@@ -1388,6 +1376,7 @@ class BattleEngine {
       // enemy field. All current multi-target units are ranged, so the melee-only
       // parry/duelist reactions below don't apply to them; strikeTarget still
       // runs per-target dodge and all the on-hit machinery.
+      // runs per-target damage and all the on-hit machinery.
       const maxTargets = Math.max(1, Number(actor.unit_data?.targets ?? 1));
       if (maxTargets > 1) {
         actor._empower_used_this_action = (actor._empower_bonus_pct ?? 0) > 0;
@@ -1531,6 +1520,7 @@ class BattleEngine {
 
   // Applies one physical/typed strike from actor to a single target: protector
   // intercept, per-target dodge, damage, martyrdom/recuperate, and all on-hit
+  // intercept, damage, martyrdom/recuperate, and all on-hit
   // triggers. Does NOT set acted_this_round or call afterAction — the caller owns
   // turn flow. Used by the multi-target attack path; the single-target path still
   // inlines this same sequence alongside its melee-only parry/duelist reactions.
@@ -2269,7 +2259,6 @@ class BattleEngine {
       const borrowed = actor._borrowed_turn;
       actor._borrowed_turn   = null;
       actor.acted_this_round = borrowed.acted;
-      actor._taunted_by_id   = borrowed.taunt;
       actor._skip_power_gain = false;
       const won = this.checkWin();
       if (won) { this.done = true; this.winner = won; }
@@ -2280,7 +2269,6 @@ class BattleEngine {
     // the one exception, and it opts out by flagging the actor.
     if (!actor?._skip_power_gain) this.gainPower(actor);
     actor._skip_power_gain = false;
-    actor._taunted_by_id = null;
     // Before the win check: a boss that has just been pushed into a new phase
     // should announce it, and one that died is skipped by maybeAdvancePhases.
     this.maybeAdvancePhases();
@@ -2605,8 +2593,8 @@ class BattleEngine {
   // The hardest single hit `foe` could land on the other side right now, and the
   // school it would land in. Reach is asked of getValidTargets — the same
   // function the unit's own turn uses — so a melee attacker that cannot make
-  // contact this round threatens nobody, and a taunted one threatens only its
-  // taunter. Returns 0 for healers and for anything with no target.
+  // contact this round threatens nobody. Returns 0 for healers and for anything
+  // with no target.
   aiBestHitOf(foe) {
     const school = this.aiDamageSchool(foe);
     if (!school || !foe.alive) return { dmg: 0, school: null };
@@ -3669,7 +3657,6 @@ class BattleEngine {
           _passives_locked_rounds: c._passives_locked_rounds ?? 0,
           _actives_locked_rounds:  c._actives_locked_rounds ?? 0,
           _actives_locked:     c._actives_locked  ?? false,
-          _taunted_by_id:      c._taunted_by_id ?? null,
           _clear_shot_active:  c._clear_shot_active ?? false,
           _clear_shot_initiative_amt: c._clear_shot_initiative_amt ?? 0,
           _clear_shot_dmg_amt: c._clear_shot_dmg_amt ?? 0,
@@ -3807,7 +3794,6 @@ class BattleEngine {
       c._passives_locked_rounds = b._passives_locked_rounds ?? 0;
       c._actives_locked_rounds  = b._actives_locked_rounds  ?? 0;
       c._actives_locked    = b._actives_locked    ?? false;
-      c._taunted_by_id      = b._taunted_by_id ?? null;
       c._clear_shot_active  = b._clear_shot_active ?? false;
       c._clear_shot_initiative_amt = b._clear_shot_initiative_amt ?? 0;
       c._clear_shot_dmg_amt = b._clear_shot_dmg_amt ?? 0;

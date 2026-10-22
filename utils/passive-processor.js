@@ -2309,11 +2309,6 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       });
     }
   }
-  if (p.taunt === true && target && def.target === 'enemy_front') {
-    target._taunted_by_id = actor.id;
-    target._actives_locked = true;
-    engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — ${target.unit_name} is forced to attack ${actor.unit_name} on their next turn` });
-  }
   return true;
 }
 if (typeof module !== 'undefined' && module.exports) {
