@@ -810,19 +810,6 @@ const UNIT_ABILITIES = {
     description_ru: "Наносит на 11% больше урона целям-демонам за каждого святого союзника на поле.",
     params: { vs_tag: 'Demon', vs_tag_dmg_bonus_pct_per_tag: 11, tag_required: 'Holy' },
   },
-  // ── Warding: enemies deal less damage of ONE school per allied tag ──────────
-  //
-  // A living Warding owner reduces enemy damage to its whole side. The reduction
-  // scales with living allies carrying the named tag; a new ward is data-only.
-  //   ward_damage_source          school it blunts ('physical', 'death',
-  //                               'nature', 'fire', 'cold', 'life', 'air');
-  //                               omit the key to blunt every school
-  //   ward_ally_tag               which living allies are counted
-  //   ward_reduction_pct_per_tag  points per counted ally
-  //   ward_reduction_pct_max      optional cap (defaults to the mitigation cap)
-  // Use ward_reduction_pct instead of the per-tag key for a flat ward.
-  // The count is of LIVING allies on the owner's own side. The ward weakens as
-  // they fall, and applies to attacks against any ally while its owner survives.
   'warding 1': {
     id: 'warding 1',
     name: 'Warding',
@@ -3104,11 +3091,6 @@ const UNIT_ABILITIES = {
     params: { passive_lock_immune: true },
     effect_name: 'clear_mind',
   },
-  // Eternal Hunger — an aura over the whole party that makes every drain bite
-  // deeper. PERCENTAGE POINTS on the drain's own rate, not a multiplier on the
-  // heal: rank 1 turns Lifesteal 2's 45% into 55% and Communion 1's 25% into
-  // 35%. It raises a rate that is already there rather than granting a drain,
-  // so a party with no drinker in it gains nothing. Two carriers stack.
   'eternal_hunger 1': {
     id: 'eternal_hunger 1',
     name: 'Eternal Hunger',
@@ -3229,13 +3211,6 @@ const UNIT_ABILITIES = {
     params: { grant_status_resist: 3, tag_required: 'Engineer', grant_target_tag: 'Construct' },
     effect_name: 'sole_artificer',
   },
-
-  // ── Tag-combo passives ────────────────────────────────────────────────────
-  //
-  // Both hand their bonus to OTHER units, on the three independent dials the
-  // battle-start armor block reads: who receives it (ally_tag_required), what
-  // scales it (tag_required), and what switches it off (tag_exclusive).
-
   'vampires_vigil 1': {
     id: 'vampires_vigil 1',
     name: "Vampire's Vigil",
@@ -3284,20 +3259,6 @@ const UNIT_ABILITIES = {
     params: { ally_armor_bonus_per_tag: 3, tag_required: 'Skeleton', ally_tag_required: 'Caster' },
     effect_name: 'bone_armor',
   },
-
-  // ── Vows ──────────────────────────────────────────────────────────────────
-  //
-  // A Vow does not buff its carrier. It sets a rule over the WHOLE BATTLEFIELD,
-  // both sides included, and its carrier lives under that rule too — which is
-  // what makes a Vow a tactical counter rather than a stat stick, and why the
-  // engine keeps their charges on itself (BattleEngine.vows) rather than on the
-  // unit.
-  //
-  // Vows STACK across carriers, enemy ones included: two Vows of the Grave on
-  // the field mean the next TWO resurrections fail, whoever brought them and
-  // whoever they would have saved. Bring the mirror of your opponent's vow and
-  // you have doubled the tax you are both paying.
-
   'vow_of_the_grave 1': {
     id: 'vow_of_the_grave 1',
     name: 'Vow of the Grave',
@@ -3334,11 +3295,6 @@ const UNIT_ABILITIES = {
     params: { vow_ash_initiative_per_demon: 2, vow_ash_tags: ['Holy', 'Demon'] },
     effect_name: 'vow_of_ash',
   },
-
-  // ── Conflagration ─────────────────────────────────────────────────────────
-  // Not a nuke: it writes a Burn straight onto the target, sized by how many
-  // Casters are standing. Burn STACKS onto whatever is already there, so it
-  // feeds Mark of Ash and Fellfire rather than competing with them.
   'conflagration 1': {
     id: 'conflagration 1',
     name: 'Conflagration',
@@ -3372,12 +3328,6 @@ const UNIT_ABILITIES = {
     description_ru: "Поджигает врага: 5 горения за каждого союзника-Заклинателя на поле.",
     params: { burn_per_tag: 5, tag_required: 'Caster' },
   },
-
-  // ── Hemorrhage ─────────────────────────────────────────────────────────────
-  // Conflagration's shape in another school: a Bleed written straight onto
-  // the target and sized by the Caster line behind it. Stacks onto whatever is
-  // already there, so it feeds the Bleed-hungry passives instead of
-  // competing with them.
   'hemorrhage 1': {
     id: 'hemorrhage 1',
     name: 'Hemorrhage',
@@ -3414,12 +3364,6 @@ const UNIT_ABILITIES = {
     params: { bleed_per_tag: 5, tag_required: 'Caster' },
     effect_name: 'blood_bolt',
   },
-
-  // ── Blight ─────────────────────────────────────────────────────────────────
-  // Conflagration's shape in another school: a Poison written straight onto
-  // the target and sized by the Caster line behind it. Stacks onto whatever is
-  // already there, so it feeds the Poison-hungry passives instead of
-  // competing with them.
   'blight 1': {
     id: 'blight 1',
     name: 'Blight',
@@ -3456,10 +3400,6 @@ const UNIT_ABILITIES = {
     params: { poison_per_tag: 5, tag_required: 'Caster' },
     effect_name: 'poison_dart',
   },
-
-  // ── Ember Shroud ──────────────────────────────────────────────────────────
-  // Stone Form's shape with fire resistance in place of armor: a panic button
-  // for a caster that has no armor worth hardening in the first place.
   'ember_shroud 1': {
     id: 'ember_shroud 1',
     name: 'Ember Shroud',
@@ -3467,9 +3407,9 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'active',
     target: 'self',
-    description: 'Wrap in embers: +25 fire resistance for 2 rounds and regenerate 15% of max HP.',
-    description_ru: "Окутывается углями: +25 к сопротивлению огню на 2 раунда и восстанавливает 15% максимального здоровья.",
-    params: { ember_shroud_resist: 25, ember_shroud_resist_type: 'fire', ember_shroud_heal_pct: 15, duration_rounds: 2 },
+    description: 'Wrap in embers: +25 fire resistance for 2 rounds and regenerate 25% of max HP.',
+    description_ru: "Окутывается углями: +25 к сопротивлению огню на 2 раунда и восстанавливает 25% максимального здоровья.",
+    params: { ember_shroud_resist: 25, ember_shroud_resist_type: 'fire', ember_shroud_heal_pct: 25, duration_rounds: 2 },
   },
   'ember_shroud 2': {
     id: 'ember_shroud 2',
@@ -3478,9 +3418,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'active',
     target: 'self',
-    description: 'Wrap in embers: +35 fire resistance for 2 rounds and regenerate 20% of max HP.',
-    description_ru: "Окутывается углями: +35 к сопротивлению огню на 2 раунда и восстанавливает 20% максимального здоровья.",
-    params: { ember_shroud_resist: 35, ember_shroud_resist_type: 'fire', ember_shroud_heal_pct: 20, duration_rounds: 2 },
+    description: 'Wrap in embers: +35 fire resistance for 2 rounds and regenerate 40% of max HP.',
+    description_ru: "Окутывается углями: +35 к сопротивлению огню на 2 раунда и восстанавливает 40% максимального здоровья.",
+    params: { ember_shroud_resist: 35, ember_shroud_resist_type: 'fire', ember_shroud_heal_pct: 40, duration_rounds: 2 },
   },
   'ember_shroud 3': {
     id: 'ember_shroud 3',
@@ -3489,15 +3429,11 @@ const UNIT_ABILITIES = {
     rank: 3,
     type: 'active',
     target: 'self',
-    description: 'Wrap in embers: +45 fire resistance for 2 rounds and regenerate 25% of max HP.',
-    description_ru: "Окутывается углями: +45 к сопротивлению огню на 2 раунда и восстанавливает 25% максимального здоровья.",
-    params: { ember_shroud_resist: 45, ember_shroud_resist_type: 'fire', ember_shroud_heal_pct: 25, duration_rounds: 2 },
+    description: 'Wrap in embers: +45 fire resistance for 2 rounds and regenerate 50% of max HP.',
+    description_ru: "Окутывается углями: +45 к сопротивлению огню на 2 раунда и восстанавливает 50% максимального здоровья.",
+    params: { ember_shroud_resist: 45, ember_shroud_resist_type: 'fire', ember_shroud_heal_pct: 50, duration_rounds: 2 },
   },
 
-  // ── Dragon's Breath ───────────────────────────────────────────────────────
-  // Pick an enemy; the breath takes the whole ROW it stands in — both cells if
-  // both are held, one if only one is. Scaled twice over: the bulk of it comes
-  // from Knights, a smaller bonus from Dragons.
   'dragons_breath 1': {
     id: 'dragons_breath 1',
     name: "Dragon's Breath",
@@ -3505,9 +3441,9 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'active',
     target: 'enemy',
-    description: "Breathe fire down an enemy row: 3 fire damage per Knight ally, plus 1 per Dragon ally, to every enemy standing in that row.",
-    description_ru: "Выдыхает пламя вдоль вражеского ряда: 3 урона огнём за каждого союзника-Рыцаря и ещё 1 за каждого союзника-Дракона всем врагам в этом ряду.",
-    params: { row_damage_per_tag: 3, tag_required: 'Knight', row_damage_bonus_per_tag: 1, bonus_tag_required: 'Dragon', damage_type: 'fire' },
+    description: "Breathe fire down an enemy row: 3 fire damage per Dragon ally, plus 1 per Caster ally, to every enemy standing in that row.",
+    description_ru: "Выдыхает пламя вдоль вражеского ряда: 3 урона огнём за каждого союзника-Драконы и ещё 1 за каждого союзника-Кастера всем врагам в этом ряду.",
+    params: { row_damage_per_tag: 3, tag_required: 'Dragon', row_damage_bonus_per_tag: 1, bonus_tag_required: 'Caster', damage_type: 'fire' },
   },
   'dragons_breath 2': {
     id: 'dragons_breath 2',
@@ -3516,9 +3452,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'active',
     target: 'enemy',
-    description: "Breathe fire down an enemy row: 4 fire damage per Knight ally, plus 2 per Dragon ally, to every enemy standing in that row.",
-    description_ru: "Выдыхает пламя вдоль вражеского ряда: 4 урона огнём за каждого союзника-Рыцаря и ещё 2 за каждого союзника-Дракона всем врагам в этом ряду.",
-    params: { row_damage_per_tag: 4, tag_required: 'Knight', row_damage_bonus_per_tag: 2, bonus_tag_required: 'Dragon', damage_type: 'fire' },
+    description: "Breathe fire down an enemy row: 4 fire damage per Dragon ally, plus 2 per Caster ally, to every enemy standing in that row.",
+    description_ru: "Выдыхает пламя вдоль вражеского ряда: 4 урона огнём за каждого союзника-Драконы и ещё 2 за каждого союзника-Кастера всем врагам в этом ряду.",
+    params: { row_damage_per_tag: 4, tag_required: 'Dragon', row_damage_bonus_per_tag: 2, bonus_tag_required: 'Caster', damage_type: 'fire' },
   },
   'dragons_breath 3': {
     id: 'dragons_breath 3',
@@ -3527,14 +3463,10 @@ const UNIT_ABILITIES = {
     rank: 3,
     type: 'active',
     target: 'enemy',
-    description: "Breathe fire down an enemy row: 5 fire damage per Knight ally, plus 3 per Dragon ally, to every enemy standing in that row.",
-    description_ru: "Выдыхает пламя вдоль вражеского ряда: 5 урона огнём за каждого союзника-Рыцаря и ещё 3 за каждого союзника-Дракона всем врагам в этом ряду.",
-    params: { row_damage_per_tag: 5, tag_required: 'Knight', row_damage_bonus_per_tag: 3, bonus_tag_required: 'Dragon', damage_type: 'fire' },
+    description: "Breathe fire down an enemy row: 5 fire damage per Dragon ally, plus 2 per Caster ally, to every enemy standing in that row.",
+    description_ru: "Выдыхает пламя вдоль вражеского ряда: 5 урона огнём за каждого союзника-Драконы и ещё 2 за каждого союзника-Кастера всем врагам в этом ряду.",
+    params: { row_damage_per_tag: 5, tag_required: 'Dragon', row_damage_bonus_per_tag: 2, bonus_tag_required: 'Caster', damage_type: 'fire' },
   },
-
-  // ── Verse of Cataclysm ────────────────────────────────────────────────────
-  // The unit ends itself. Death runs the normal path, so Last Verse and every
-  // other on-death passive fire on top of this — which is the whole point.
   'verse_of_cataclysm 1': {
     id: 'verse_of_cataclysm 1',
     name: 'Verse of Cataclysm',
@@ -3571,11 +3503,6 @@ const UNIT_ABILITIES = {
     description_ru: "Боец гибнет на месте, нанося 15 урона огнём каждому врагу.",
     params: { self_kill: true, cataclysm_damage: 15, damage_type: 'fire' },
   },
-
-  // ── Blessing of Protection ────────────────────────────────────────────────
-  // Targets any ally INCLUDING the caster, so a lone protector can bless itself
-  // and a support caster can hand it to the front line. Turns the intercept
-  // lottery into a certainty for two rounds and pays armor on top.
   'blessing_of_protection 1': {
     id: 'blessing_of_protection 1',
     name: 'Blessing of Protection',
