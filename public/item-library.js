@@ -211,8 +211,8 @@ export function mountItemLibrary(host, opts = {}) {
     if (tabBtn) {
       tab = tabBtn.dataset.libTab;
       openIdx = null;
-      paint();
       onTabChange(tab);
+      paint();
       return;
     }
 
