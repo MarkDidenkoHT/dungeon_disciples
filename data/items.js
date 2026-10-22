@@ -200,7 +200,7 @@ const ITEM_DEFS = {
     name_ru:      'Мощь Непорочных',
     faction:      null,
     tag_required: null,
-    adds_tag:     'Knight',
+    adds_tag:     'Caster',
     stat_mods:    { action_power: 5, death_resist: 5 },
     passive:      'iron_will 2',
     icon:         'might_of_the_pure',

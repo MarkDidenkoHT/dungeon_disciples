@@ -3195,9 +3195,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: "Adds 20 percentage points to every ally's Lifesteal and Communion.",
-    description_ru: "Добавляет 20 процентных пунктов к Похищению жизни и Причастию всех союзников.",
-    params: { drain_amp_pct: 20 },
+    description: "Adds 15 percentage points to every ally's Lifesteal and Communion.",
+    description_ru: "Добавляет 15 процентных пунктов к Похищению жизни и Причастию всех союзников.",
+    params: { drain_amp_pct: 15 },
     effect_name: 'eternal_hunger',
   },
   'eternal_hunger 3': {
@@ -3208,8 +3208,8 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_battle_start',
     description: "Adds 20 percentage points to every ally's Lifesteal and Communion.",
-    description_ru: "Добавляет 30 процентных пунктов к Похищению жизни и Причастию всех союзников.",
-    params: { drain_amp_pct: 30 },
+    description_ru: "Добавляет 20 процентных пунктов к Похищению жизни и Причастию всех союзников.",
+    params: { drain_amp_pct: 20 },
     effect_name: 'eternal_hunger',
   },
   'essence_of_power 1': {
