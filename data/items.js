@@ -201,13 +201,13 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     'Caster',
-    stat_mods:    { action_power: 5, death_resist: 5 },
+    stat_mods:    { action_power: 2, death_resist: 5 },
     passive:      'iron_will 2',
     icon:         'might_of_the_pure',
     rarity:       'mythic',
     unique:       true,
-    cost:         { shard_of_might: 10, vial_of_pure_blood: 2, Gold: 350, Crystals_Life: 25, Crystals_Death: 25 },
-    item_cost:    { death_resistance_potion: 2, mace: 1, seal_of_power: 1}
+    cost:         { shard_of_might: 12, vial_of_pure_blood: 2, Gold: 350, Crystals_Life: 25 },
+    item_cost:    { death_resistance_potion: 2, mace: 2}
   },
   sanctified_bulwark: {
     key:          'sanctified_bulwark',
@@ -1334,7 +1334,7 @@ const ITEM_DEFS = {
     name_ru:         'Касание Митраила',
     faction:         'empire',
     tag_required:    'Holy',
-    adds_tag:        'Caster',
+    adds_tag:         'Caster',
     requires_action: 'damage',
     max_targets:     1,
     stat_mods:       { action_power: 2, hp: 5, fire_resist: 5 },
