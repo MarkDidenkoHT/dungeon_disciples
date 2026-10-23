@@ -61,7 +61,9 @@ const UI_TEXT = {
   supplyNextIn:    { en: 'Next in',   ru: 'Следующий через' },
   supplyFull:      { en: 'Full',      ru: 'Полно' },
   supplyMin:       { en: 'min',       ru: 'мин' },
-  pvpSoon:         { en: 'Soon',      ru: 'Скоро' },
+  // The badge on anything not open yet — an unbuilt arena mode or a region
+  // whose encounter tables are not written.
+  soonBadge:       { en: 'Soon',      ru: 'Скоро' },
   tourneyLoading:  { en: 'Loading…',        ru: 'Загрузка…' },
   tourneyToday:    { en: 'Today',           ru: 'Сегодня' },
   tourneyNext:     { en: 'Next',            ru: 'Следующий' },
@@ -122,6 +124,20 @@ export const REGIONS = [
     description_ru: 'Затопленные склепы неупокоенных мёртвых — проклятые рыцари, бредущие ужасы и Малграт Неумирающий, что уже умирал однажды.',
     crystal: 'Death & Nature',
     crystal_ru: 'Смерти и Природы',
+  },
+  {
+    id: 'darkwood',
+    label: 'Darkwood',
+    label_ru: 'Темнолесье',
+    icon: '🌲',
+    description: 'Black pines with no road through them. Every hunt sent into the deep has been counted among the lost.',
+    description_ru: 'Чёрные сосны, через которые нет дороги. Каждую охоту, ушедшую в чащу, записали в пропавшие.',
+    crystal: null,
+    // The art and the blurb are here; the encounter tables in data/embark.js are
+    // not, so there is nothing to enter. Drawn dimmed with a Soon badge and no
+    // level row (see .embark-card--coming-soon), and skipped by the card tap
+    // handler — it has a data-id but no level to depart for.
+    comingSoon: true,
   },
   {
     id: 'colossus',
@@ -636,7 +652,7 @@ export function renderEmbark(root, params = {}) {
               <span class="embark-card-label">${label}</span>
               <span class="embark-card-desc">${m.tourney ? tourneyLine() : desc}</span>
             </div>
-            ${m.tourney ? tourneyBadgeHtml() : (m.live ? '' : `<span class="embark-card-badge embark-card-badge--soon">${UI_TEXT.pvpSoon[L]}</span>`)}
+            ${m.tourney ? tourneyBadgeHtml() : (m.live ? '' : `<span class="embark-card-badge embark-card-badge--soon">${UI_TEXT.soonBadge[L]}</span>`)}
           </div>
           ${m.tourney ? tourneyBoardHtml() : ''}
         </div>`;
@@ -920,6 +936,19 @@ export function renderEmbark(root, params = {}) {
       activeCheck = null;
 
       root.querySelector('#embark-regions').innerHTML = supplyPillHtml() + REGIONS.map(r => {
+        if (r.comingSoon) {
+          return `
+            <div class="embark-region-block embark-region-block--coming-soon">
+              <div class="embark-card embark-card--coming-soon" data-id="${r.id}" style="${regionBgStyle(r)}">
+                <div class="embark-card-info">
+                  <span class="embark-card-label">${rLabel(r)}</span>
+                  <span class="embark-card-desc">${rDesc(r)}</span>
+                </div>
+                <span class="embark-card-badge embark-card-badge--soon">${UI_TEXT.soonBadge[L]}</span>
+              </div>
+            </div>
+          `;
+        }
         if (r.toColossus) {
           return `
             <div class="embark-region-block embark-region-block--arena">
