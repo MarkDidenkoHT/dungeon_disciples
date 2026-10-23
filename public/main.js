@@ -4,7 +4,7 @@ import { renderWelcome }    from './screens/welcome.js';
 import { needsConsent, applyAnalyticsConsent } from './analytics.js';
 import { renderCastle }     from './screens/castle.js';
 import { renderItems }      from './screens/items.js';
-import { renderEmbark }     from './screens/embark.js';
+import { renderEmbark, REGIONS as EMBARK_REGIONS } from './screens/embark.js';
 import { renderSettings, lang } from './screens/settings.js';
 import { renderBattlePrep } from './screens/battle-prep.js';
 import { destroyBattleFx } from './battle-fx.js';
@@ -41,7 +41,8 @@ const SHELL_TEXT = {
   errands:  { en: 'Errands',     ru: 'Поручения' },
 };
 
-// The boot-time reconnect modal duplicated embark's, but in English only.
+// Boot can discover a pending battle before the embark screen is mounted, so
+// keep its reconnect copy here while matching the embark modal's presentation.
 const BOOT_TEXT = {
   title:     { en: 'Unfinished Battle', ru: 'Незавершённый бой' },
   body:      {
@@ -54,6 +55,7 @@ const BOOT_TEXT = {
   },
   abandon:   { en: 'Abandon',   ru: 'Бросить' },
   reconnect: { en: 'Reconnect', ru: 'Вернуться' },
+  kicker:    { en: 'BATTLE IN PROGRESS', ru: 'НЕЗАВЕРШЁННЫЙ БОЙ' },
 };
 
 const NAV_LABELS = {
@@ -443,21 +445,28 @@ setNavigate(navigate);
 
 function showReconnectModal(player, battle_id, battle_data) {
   const BL = lang(player);
+  const region = EMBARK_REGIONS.find(item => item.id === battle_data?.region_id);
+  const regionName = region ? (BL === 'ru' ? region.label_ru : region.label) : BOOT_TEXT.title[BL];
+  const artId = region?.id || 'colossus';
   const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
+  overlay.className = 'modal-overlay modal-overlay--reconnect';
   overlay.innerHTML = `
-    <div class="modal-sheet">
-      <div class="modal-header"><span class="modal-title">${BOOT_TEXT.title[BL]}</span></div>
-      <div class="modal-body" style="display:flex;flex-direction:column;gap:1rem;">
-        <div style="color:var(--muted);font-size:.95rem;line-height:1.4;">
-          ${BOOT_TEXT.body[BL]}
+    <div class="modal modal--reconnect" role="dialog" aria-modal="true" aria-labelledby="boot-reconnect-title">
+      <div class="reconnect-content">
+        <div class="reconnect-art" style="background-image:linear-gradient(180deg,rgba(12,10,9,.04) 20%,rgba(12,10,9,.88) 100%),url('${assetUrl(`/assets/embark/${artId}.jpg`)}')">
+          <span class="reconnect-art-kicker">${BOOT_TEXT.kicker[BL]}</span>
+          <h2 id="boot-reconnect-title">${regionName}</h2>
         </div>
-        <div style="color:var(--danger);font-size:.85rem;line-height:1.4;">
-          ${BOOT_TEXT.warning[BL]}
+        <div class="reconnect-copy">
+          <div class="reconnect-description">${BOOT_TEXT.body[BL]}</div>
+          <div class="reconnect-warning">
+            <span class="reconnect-warning-mark" aria-hidden="true">!</span>
+            <span>${BOOT_TEXT.warning[BL]}</span>
+          </div>
         </div>
-        <div style="display:flex;justify-content:flex-end;gap:.75rem;flex-wrap:wrap;">
-          <button id="boot-abandon-btn" class="action-btn action-btn--cancel">${BOOT_TEXT.abandon[BL]}</button>
-          <button id="boot-reconnect-btn" class="action-btn">${BOOT_TEXT.reconnect[BL]}</button>
+        <div class="reconnect-actions">
+          <button id="boot-abandon-btn" class="action-btn action-btn--cancel" type="button">${BOOT_TEXT.abandon[BL]}</button>
+          <button id="boot-reconnect-btn" class="action-btn reconnect-primary" type="button">${BOOT_TEXT.reconnect[BL]} <span aria-hidden="true">→</span></button>
         </div>
       </div>
     </div>

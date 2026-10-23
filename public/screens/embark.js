@@ -843,12 +843,14 @@ export function renderEmbark(root, params = {}) {
 
   function showReconnectModal(battle_id, battle_data) {
     const battleRegion = REGION_DEFS.find(region => region.id === battle_data?.region_id);
+    const area = REGIONS.find(region => region.id === battle_data?.region_id);
     const artId = battleRegion?.id || 'colossus';
+    const areaName = area ? (L === 'ru' ? area.label_ru : area.label) : UI_TEXT.reconnectTitle[L];
     openModal(UI_TEXT.reconnectTitle[L], `
       <div class="reconnect-content">
         <div class="reconnect-art" style="background-image:linear-gradient(180deg,rgba(12,10,9,.04) 20%,rgba(12,10,9,.88) 100%),url('${assetUrl(`/assets/embark/${artId}.jpg`)}')">
           <span class="reconnect-art-kicker">${L === 'ru' ? 'НЕЗАВЕРШЁННЫЙ БОЙ' : 'BATTLE IN PROGRESS'}</span>
-          <h2>${UI_TEXT.reconnectTitle[L]}</h2>
+          <h2>${areaName}</h2>
         </div>
         <div class="reconnect-copy">
           <div class="reconnect-description">
