@@ -2,6 +2,8 @@ import { filterByTagRules } from '../utils/tag-rules.js';
 import { UNIT_ABILITIES } from '../data/unit_abilities.js';
 import { runTrigger, calcDamageWithPassives, getAbilityTargets, executeActiveAbility } from './passive-processor.js';
 
+const DUAL_TARGET_ACTIONS = new Set(['holy_shock', 'artificer_shock', 'choir_shock']);
+
 const ROWS = 3;
 const COLS = 2;
 
@@ -135,6 +137,12 @@ export class BattleSystem {
       return this.combatants.filter(t => t.alive && t.side === actor.side && t.id !== actor.id);
     }
 
+    if (DUAL_TARGET_ACTIONS.has(actionKey)) {
+      return this.combatants.filter(t => t.alive && (t.side === actor.side
+        ? filterByTagRules([t], actionKey).length > 0
+        : (actor.unit_data?.range ?? 1) > 1 || cellCol(t.cellIndex) === (t.side === 'enemy' ? 0 : 1)));
+    }
+
     return this.combatants.filter(t => {
       if (!t.alive) return false;
 
@@ -177,7 +185,9 @@ export class BattleSystem {
     if (actionType === 'sacrifice') return this.doSacrifice(actor, target);
     if (!target) return false;
 
-    if (this.isHealer(actor)) {
+    const actionKey = this.getActionKey(actor);
+    const dualActionHeal = DUAL_TARGET_ACTIONS.has(actionKey) && target.side === actor.side;
+    if (this.isHealer(actor) || dualActionHeal) {
       const raw    = this.calcHeal(actor);
       const factor = 1 - (target._healing_reduction ?? 0) / 100;
       const heal   = Math.floor(Math.min(raw * factor, target.max_hp - target.battle_hp));

@@ -9,6 +9,9 @@ const { COMBAT_BARKS, BARK_CHANCES, HEAL_BARK_THRESHOLD_PCT } = require('../data
 const { LITANIES, LITANY_TARGETS } = require('../data/litanies');
 const { callingIdOf } = require('../data/callings');
 
+// These actions let the player choose a valid ally to mend or an enemy to hit.
+const DUAL_TARGET_ACTIONS = new Set(['holy_shock', 'artificer_shock', 'choir_shock']);
+
 // Anti-stalemate / anti-heal-abuse pressure. Environmental — applies to BOTH
 // sides equally, so it also works for PvP later. All tunable here.
 //   Battle Fatigue: from the round AFTER fatigue_start_round, every point of HP
@@ -990,15 +993,13 @@ class BattleEngine {
       );
     }
 
-    // Holy Shock is the only action that reaches BOTH sides: an ally is mended,
-    // an enemy is struck. Allies are filtered by the heal tag rules (a Construct
-    // or Zombie cannot be mended); enemies use the unit's normal reach.
-    if (actionKey === 'holy_shock') {
+    // Dual-purpose actions reach both sides. The action-specific tag rule keeps
+    // each hero's ally mend as narrow as its original Repair or Song of Ash.
+    if (DUAL_TARGET_ACTIONS.has(actionKey)) {
       return this.combatants.filter(t => {
         if (!t.alive || t._untargetable) return false;
         if (t.side === actor.side) {
-          if (t.id === actor.id) return false;
-          return filterByTagRules([t], 'heal').length > 0;
+          return filterByTagRules([t], actionKey).length > 0;
         }
         const range = actor.unit_data?.range ?? 1;
         return range === 1 ? this.meleeCanReach(actor, t) : true;
@@ -1288,8 +1289,8 @@ class BattleEngine {
     // not by the action. Pointed at an ally it runs the heal branch below; at an
     // enemy it falls through to the ordinary attack path, so intercepts, parry,
     // resistances and every on-hit passive behave exactly as for a normal strike.
-    const holyShockHeal = this.getActionKey(actor) === 'holy_shock' &&
-                          target && target.side === actor.side;
+    const dualActionHeal = DUAL_TARGET_ACTIONS.has(this.getActionKey(actor)) &&
+                           target && target.side === actor.side;
     if (actionType === 'none')    return this.doNone(actor);
     if (actionType === 'defend')  return this.doDefend(actor);
     if (actionType === 'ability') return this.doAbility(actor, target);
@@ -1348,7 +1349,7 @@ class BattleEngine {
       return this.afterAction(actor);
     }
 
-    if (this.isHealer(actor) || holyShockHeal) {
+    if (this.isHealer(actor) || dualActionHeal) {
       if (actor._mothers_kiss) {
         return this.doMothersKiss(actor);
       }
@@ -1357,9 +1358,9 @@ class BattleEngine {
       // the first of them. getValidTargets has already applied the action's tag
       // rules, so a Spirit-only mend reaches Spirits and nobody else.
       //
-      // Holy Shock is excluded on purpose: its heal half is aimed at ONE ally by
+      // Dual-purpose shocks are excluded on purpose: their heal half is aimed at ONE ally by
       // the player's tap, and it is not a `targets`-driven action.
-      const maxHealTargets = holyShockHeal ? 1 : Math.max(1, Number(actor.unit_data?.targets ?? 1));
+      const maxHealTargets = dualActionHeal ? 1 : Math.max(1, Number(actor.unit_data?.targets ?? 1));
       if (maxHealTargets > 1) {
         const list = this.getValidTargets(actor).slice(0, maxHealTargets);
         for (const tgt of list) {
@@ -2650,7 +2651,7 @@ class BattleEngine {
     // Holy Shock can go either way, so the AI decides by need: mend the most
     // hurt ally once someone is meaningfully wounded, otherwise strike. Without
     // this it would fall into the attacker branch and never heal.
-    if (this.getActionKey(actor) === 'holy_shock') {
+    if (DUAL_TARGET_ACTIONS.has(this.getActionKey(actor))) {
       const wounded = targets
         .filter(c => c.side === actor.side && c.battle_hp / c.max_hp <= 0.6)
         .sort((a, b) => (a.battle_hp / a.max_hp) - (b.battle_hp / b.max_hp))[0];
@@ -4305,9 +4306,9 @@ class BattleEngine {
   //
   //   'lead'    the acting unit itself, and its id must be in `def.lead.ids`.
   //             The only cell that kills.
-  //   'hero'    the litany's own hero line (`def.hero.ids`). Exists only on the
-  //             four whose hero is a healer and so cannot lead: the hero sings
-  //             from here while something of its own lands the blow.
+  //   'hero'    the litany's own hero line (`def.hero.ids`). On four litanies
+  //             the hero sings here while its faction's designated lead lands
+  //             the blow.
   //   'chorus'  any unit the PLAYER gave this cell's `calling` to
   //             (data/callings.js), or every living ally except the lead when
   //             `all_alive` is true.
@@ -4389,11 +4390,9 @@ class BattleEngine {
   // caller can pay the reward and suppress the ordinary kill/death barks), or
   // null.
   //
-  // The lead is whoever LANDS THE BLOW, which is not always the litany's hero: a
-  // healer cannot kill, so the Artificer and the Choir Regent sing from a chorus
-  // cell and one of their own constructs or choristers leads. A lead list whose
-  // units do not attack is a litany that can never fire — see the lead check in
-  // data/litanies.js.
+  // The lead is whoever LANDS THE BLOW, which is not always the litany's hero.
+  // The Artificer and Choir Regent can mend or strike, while their current
+  // faction litanies keep their designated unit as lead (see data/litanies.js).
   fireLitany(actor, target) {
     // Not yet drilled. The blow still lands — it is simply an ordinary kill,
     // with the ordinary kill and death barks the litany would have replaced.

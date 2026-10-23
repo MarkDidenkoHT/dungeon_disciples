@@ -5,6 +5,9 @@ const TAG_RULES = {
   repair: {
     targetRequireTags: ['Construct'],
   },
+  artificer_shock: {
+    targetRequireTags: ['Construct'],
+  },
   'mend flesh': {
    targetRequireTags: ['Zombie'],
   },
@@ -15,6 +18,9 @@ const TAG_RULES = {
   // The Choir's mend. The song is in a tongue only the damned answer to, so it
   // reaches Demons and nothing else — not the Court, not the Constructs.
   song_of_ash: {
+    targetRequireTags: ['Demon'],
+  },
+  choir_shock: {
     targetRequireTags: ['Demon'],
   },
 }

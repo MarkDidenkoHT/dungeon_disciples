@@ -36,16 +36,16 @@ const HERO_FLAVOR = {
     ru: 'Инквизитор. Его атака бьёт по шести целям на расстоянии — по всему вражескому строю, каждый ход, но слабее по каждому. Остальное делает Экзорцизм. Держите его за стеной: он создан доставать, а не быть достанутым.',
   },
   h_e_3: {
-    en: 'Artificer. He does not attack — his action is Repair, mending an ally from three tiles back, while Inspiration armors nearby allies. He is the reason the wall is still standing, so choose his spells for the damage he lacks.',
-    ru: 'Артефактор. Он не атакует: его действие — Починка, которая лечит союзника с трёх клеток, а Вдохновение укрепляет соседних союзников. Он причина, по которой стена ещё стоит, — а урон подберите ему заклинаниями.',
+    en: 'Artificer. His Arc mends an allied Construct or strikes an enemy from three tiles back. Inspiration armors nearby allies; choose where his action is needed most.',
+    ru: 'Артефактор. Его дуга чинит союзного Конструкта или поражает врага с расстояния в три клетки. Вдохновение защищает соседей — решайте, где его действие нужнее.',
   },
   h_d_1: {
     en: 'Black Castellan. Melee, and he wants to be hit: Rage turns every wound he takes into damage he gives back. Put him where the blows land, and let the enemy make him dangerous for you.',
     ru: 'Чёрный Кастелян. Ближний бой, и он хочет, чтобы били его: Ярость обращает каждую полученную рану в урон. Ставьте его туда, куда приходятся удары, — пусть враг сам сделает его опасным.',
   },
   h_d_2: {
-    en: 'Choir Regent. He strikes at range and rules from the back, where Inspiration feeds extra damage to the allies stacked in his column. Build the column around him — the Court sings, it does not brawl.',
-    ru: 'Регент Хора. Бьёт на расстоянии и правит из тыла, где Вдохновение добавляет урон союзникам в его колонне. Стройте колонну вокруг него: Двор поёт, а не дерётся.',
+    en: 'Choir Regent. His Ashen Refrain mends a Demon or strikes an enemy from the back line. Inspiration feeds extra damage to allies stacked in his column.',
+    ru: 'Регент Хора. Пепельный рефрен лечит Демона или поражает врага с задней линии. Вдохновение усиливает союзников в его колонне.',
   },
   h_d_3: {
     en: 'Infernal Ascendant. Ranged, and everything he does spreads. Fellfire splashes every burning enemy each time he strikes, scaling with the Casters at his side. Set something on fire first and his attacks stop being single-target.',

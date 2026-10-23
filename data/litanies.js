@@ -77,9 +77,9 @@
 //
 //   role: 'lead'    the unit that lands the real blow. `def.lead.ids`, a unit
 //                   LINE written out by name. The only cell that kills.
-//   role: 'hero'    this litany's own hero, `def.hero.ids`. Only on the four
-//                   whose hero is a healer and so cannot lead - it sings from
-//                   here while something of its own takes the blow.
+//   role: 'hero'    this litany's own hero, `def.hero.ids`. On four litanies the
+//                   hero sings from here while its faction's designated lead
+//                   takes the blow.
 //   role: 'chorus'  `calling`, one id from data/callings.js, unless the cell has
 //                   `all_alive: true`, in which case every living ally except
 //                   the lead speaks together. A calling on that cell still
@@ -92,12 +92,10 @@
 //
 // ── The lead ──────────────────────────────────────────────────────────────────
 //
-// The lead is whoever LANDS THE BLOW, and that is not always the hero. A unit
-// whose action targets an ALLY cannot kill (isHealer in utils/battle-engine.js),
-// which rules out two heroes outright: the Artificer repairs, and the Choir
-// Regent's song is a heal. Both sing from a chorus cell in their own litanies
-// while something of theirs leads - the Artificer's own constructs, the Regent's
-// Choristers. A lead list of healers is a litany that can never fire.
+// The lead is whoever LANDS THE BLOW, and that is not always the hero. The
+// Artificer and Choir Regent can choose to mend an ally or strike an enemy;
+// their litanies still place them in a hero cell while their faction's
+// designated lead unit lands the killing blow.
 //
 // ── The verses ────────────────────────────────────────────────────────────────
 //
@@ -318,9 +316,8 @@ const LITANIES = [
     //
     // Lead: Sentinel to Golden Lion: a TWO-CELL construct in the front column,
     // shield_bash. The Artificer keeps it standing; it does the killing.
-    // The hero of this litany, for the cell marked role: 'hero'. The Artificer
-    // cannot be the lead - a healer lands no blows - so the hero line is named
-    // here, apart from the lead, and sings from a cell of its own.
+    // The Artificer sings from the hero cell while the designated Sentinel
+    // lands the litany's blow.
     hero: { ids: [
       'h_e_3', 'h_e_3_a2', 'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42',
       'h_e_3_b2', 'h_e_3_b3', 'h_e_3_b41', 'h_e_3_b42',
@@ -329,7 +326,7 @@ const LITANIES = [
       'e3', 'e31', 'e311', 'e3111',
     ] },
     formation: { cells: [
-      // A: the Artificer. She repairs, so she cannot land the blow - B does.
+      // A: the Artificer; B remains this litany's designated lead.
       { key: 'A', row: 0, col: 'back', size: 'tile', role: 'hero' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 1, col: 'front', size: 'column', role: 'lead' },
@@ -492,9 +489,8 @@ const LITANIES = [
     //
     // Lead: Chorister to Doomchanter: a TWO-CELL singer in the back column that
     // throws fire and, at Doomchanter, haunts. The Regent sings; this kills.
-    // The hero of this litany, for the cell marked role: 'hero'. The Choir Regent
-    // cannot be the lead - a healer lands no blows - so the hero line is named
-    // here, apart from the lead, and sings from a cell of its own.
+    // The Choir Regent sings from the hero cell while the designated Chorister
+    // lands the blow.
     hero: { ids: [
       'h_d_2', 'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42',
       'h_d_2_b2', 'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42',
@@ -505,7 +501,7 @@ const LITANIES = [
     formation: { cells: [
       // B: the lead - the only cell that kills. Its own list is `lead` below.
       { key: 'B', row: 0, col: 'back', size: 'column', role: 'lead' },
-      // A: the Choir Regent. His song is a heal, so he cannot land the blow - B does.
+      // A: the Choir Regent; B remains this litany's designated lead.
       { key: 'A', row: 2, col: 'back', size: 'tile', role: 'hero' },
       // C: a Hunger - the enemy half of the reward.
       { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'hunger' },
@@ -536,9 +532,8 @@ const LITANIES = [
     //   . B
     //
     // Lead: Imp to Conqueror: a TWO-CELL demon in the front column, claws.
-    // The hero of this litany, for the cell marked role: 'hero'. The Choir Regent
-    // cannot be the lead - a healer lands no blows - so the hero line is named
-    // here, apart from the lead, and sings from a cell of its own.
+    // The Choir Regent sings from the hero cell while the designated Imp lands
+    // the blow.
     hero: { ids: [
       'h_d_2', 'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42',
       'h_d_2_b2', 'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42',
@@ -547,7 +542,7 @@ const LITANIES = [
       'd1', 'd11', 'd111', 'd1111',
     ] },
     formation: { cells: [
-      // A: the Choir Regent. His song is a heal, so he cannot land the blow - B does.
+      // A: the Choir Regent; B remains this litany's designated lead.
       { key: 'A', row: 0, col: 'back', size: 'tile', role: 'hero' },
       // C: a Hunger - the enemy half of the reward.
       { key: 'C', row: 1, col: 'back', size: 'tile', role: 'chorus', calling: 'hunger' },

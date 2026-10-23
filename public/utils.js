@@ -135,6 +135,20 @@ export const ACTION_INFO = {
       ru: 'Восстанавливает HP союзному конструкту или машине на величину Силы.',
     },
   },
+  'artificer shock': {
+    name: { en: 'Artificer’s Arc', ru: 'Дуга артефактора' },
+    desc: {
+      en: 'Mends one allied Construct or strikes one enemy for the unit’s Power.',
+      ru: 'Восстанавливает HP одному союзному Конструкту или наносит урон врагу на величину Силы.',
+    },
+  },
+  'choir shock': {
+    name: { en: 'Ashen Refrain', ru: 'Пепельный рефрен' },
+    desc: {
+      en: 'Mends one allied Demon or strikes one enemy for the unit’s Power.',
+      ru: 'Восстанавливает HP одному союзному Демону или наносит урон врагу на величину Силы.',
+    },
+  },
   'pale_embrace': {
     name: { en: 'Pale Embrace', ru: 'Бледные объятия' },
     desc: {
@@ -362,6 +376,8 @@ export function getActionLabel(actionKey) {
     attack:       'Attack',
     heal:         'Heal',
     repair:       'Repair',
+    artificer_shock: 'Artificer’s Arc',
+    choir_shock:    'Ashen Refrain',
     empower:      'Empower',
     'mend flesh': 'Mend Flesh',
     sacrifice:    'Sacrifice',
@@ -1144,10 +1160,9 @@ export function lookupActionInfo(...keys) {
   return null;
 }
 
-// Which side an action may pick. The data says 'enemy' or 'ally', but Holy
-// Shock reaches BOTH -- getValidTargets in utils/battle-engine.js has its own
-// branch for it -- so the action id decides, not target_type.
-const DUAL_TARGET_ACTIONS = new Set(['holy_shock', 'holy shock']);
+// Which side an action may pick. Dual-target actions reach both sides, so the
+// action id decides this label instead of target_type.
+const DUAL_TARGET_ACTIONS = new Set(['holy_shock', 'holy shock', 'artificer_shock', 'choir_shock']);
 export function actionTargetSide(actionKey, targetType) {
   if (DUAL_TARGET_ACTIONS.has(String(actionKey ?? '').toLowerCase())) {
     return uiText('Any', 'Любая');

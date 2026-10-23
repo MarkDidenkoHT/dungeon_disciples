@@ -216,6 +216,8 @@ const BT = {
   // ability, plus the two empty/failure states of the panel itself.
   actSacrifice:  { en: 'Sacrifice',     ru: 'Жертва' },
   actHolyShock:  { en: 'Holy Shock',    ru: 'Священный удар' },
+  actArtificerShock: { en: 'Artificer’s Arc', ru: 'Дуга артефактора' },
+  actChoirShock: { en: 'Ashen Refrain', ru: 'Пепельный рефрен' },
   actShield:     { en: 'Shield',        ru: 'Щит' },
   actDecay:      { en: 'Decay',         ru: 'Тлен' },
   actMothersKiss:{ en: "Mother's Kiss", ru: 'Поцелуй матери' },
@@ -1178,6 +1180,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const key = typeof actionKey === 'string' ? actionKey : actionKey?.id;
     if (key === 'sacrifice') return BTx('actSacrifice');
     if (key === 'holy_shock') return BTx('actHolyShock');
+    if (key === 'artificer_shock') return BTx('actArtificerShock');
+    if (key === 'choir_shock') return BTx('actChoirShock');
     if (key === 'shield')    return BTx('actShield');
     if (key === 'decay')     return BTx('actDecay');
     if (key === 'empower')   return BTx('actEmpower');
@@ -1222,9 +1226,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   const TARGET_TAG_RULES = {
     heal:           { exclude: ['Construct', 'Zombie'] },
     repair:         { require: ['Construct'] },
+    artificer_shock:{ require: ['Construct'] },
     'mend flesh':   { require: ['Zombie'] },
     pale_embrace:   { require: ['Spirit'] },
     song_of_ash:    { require: ['Demon'] },
+    choir_shock:    { require: ['Demon'] },
   };
 
   function passesTagRules(unit, actionKey) {
@@ -1252,17 +1258,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       return targets;
     }
 
-    // Holy Shock reaches both sides — tapping an ally mends, tapping an enemy
-    // strikes. Allies are added here; enemies fall through to the shared reach
-    // logic at the bottom, so melee reach stays in ONE place and keeps mirroring
-    // meleeCanReach() on the server.
-    const isHolyShock = actionKey === 'holy_shock';
-    if (isHolyShock) {
+    // Dual-target actions reach both sides — tapping an eligible ally mends,
+    // tapping an enemy strikes. Allies are added here; enemies fall through to
+    // the shared reach logic at the bottom, keeping melee reach in one place.
+    const isDualTargetAction = ['holy_shock', 'artificer_shock', 'choir_shock'].includes(actionKey);
+    if (isDualTargetAction) {
       state.combatants
-        // Mending, so the heal rules apply: Holy Shock cannot mend a Construct
-        // or a Zombie either. Matches getValidTargets in battle-engine.js, which
-        // filters this branch by the 'heal' rules specifically.
-        .filter(c => c.alive && c.side === actor.side && c.id !== actor.id && passesTagRules(c, 'heal'))
+        // Keep each action's ally restrictions aligned with the server.
+        .filter(c => c.alive && c.side === actor.side && passesTagRules(c, actionKey))
         .forEach(c => targets.add(c.id));
     }
 
@@ -1273,7 +1276,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const tagReq = def?.params?.tag_required ?? null;
       let cands = [];
       // 'any' — both sides are legal; the ability decides heal vs damage from
-      // the side of whoever is tapped (Holy Shock).
+      // the side of whoever is tapped.
       if      (ttype === 'any')        cands = state.combatants.filter(c => c.alive);
       else if (ttype === 'self')       cands = [actor];
       else if (ttype === 'enemy')      cands = state.combatants.filter(c => c.side !== actor.side && c.alive);
@@ -1287,7 +1290,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       return targets;
     }
 
-    if (isHeal && !isHolyShock) {
+    if (isHeal && !isDualTargetAction) {
       state.combatants
         .filter(c => c.side === actor.side && c.alive && passesTagRules(c, actionKey))
         .forEach(c => targets.add(c.id));
