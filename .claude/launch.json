@@ -24,6 +24,18 @@
         "public"
       ],
       "port": 4179
+    },
+    {
+      "name": "game-root",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4180",
+        "--directory",
+        "."
+      ],
+      "port": 4180
     }
   ]
 }

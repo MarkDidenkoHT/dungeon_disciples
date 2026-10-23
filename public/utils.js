@@ -2,6 +2,7 @@ import { assetUrl } from './asset_base.js';
 import { UNITS }          from '../data/units.js';
 import { UNIT_ABILITIES } from '../data/unit_abilities.js';
 import { applyItemModifiers, ITEM_DEFS, missingRequiredTags } from '../data/items.js';
+import { callingIdOf, callingName, callingTint } from '../data/callings.js';
 
 // Localized spell text. For a non-English language, returns ONLY that language's
 // field (e.g. name_ru) — no English fallback, so a missing translation shows up
@@ -444,18 +445,47 @@ export function renderHeroSpellSlot(opts = {}) {
     </button>`;
 }
 
+// The calling a unit-like object is carrying, wherever it happens to keep it:
+// a combatant has `_calling` (battle-engine.js), a roster row has `calling`,
+// and a blueprint has neither. A mercenary, an encounter's troops and every
+// unit the Temple has not reached answer null, which draws nothing.
+export function unitCallingId(unitLike) {
+  if (!unitLike) return null;
+  return callingIdOf({ calling: unitLike._calling })
+      ?? callingIdOf(unitLike)
+      ?? callingIdOf(unitLike.unit_data)
+      ?? null;
+}
+
+// What a tinted portrait needs: the inline custom property every calling rule
+// hangs off, or '' when the unit has no calling, so nothing is themed by
+// accident. Same property name the castle's Temple page uses, so the two
+// screens cannot drift apart.
+export function callingTintStyle(callingId) {
+  const tint = callingId ? callingTint(callingId) : null;
+  return tint ? ` style="--calling-tint:${tint}"` : '';
+}
+
 export function renderUnitPortrait(unit, opts = {}) {
   // `overlayHtml` is drawn INSIDE the portrait, above the art and below the tag
   // row: the battle screen uses it for the buff/debuff columns down the two
   // sides. Empty everywhere else, so no other card changes shape.
-  const { badge = '', overlayHtml = '' } = opts;
+  //
+  // `calling` is the player's own decision about this unit (data/callings.js).
+  // It tints the portrait's edge and names itself in a strip along the bottom:
+  // the tags across the TOP are what a unit IS and are read from its
+  // definition, so the one thing the player chose is kept away from them.
+  const { badge = '', overlayHtml = '', calling = null } = opts;
   const tags     = (unit.tags || []).filter(Boolean);
   const tagsHtml = tags.map(t => `<span class="unit-tag">${t}</span>`).join('');
   const portraitId = unit.id.match(/^(h_[a-z]_\d)/)?.[1] ?? unit.id;
   const portrait = assetUrl(`/assets/character_art/${portraitId}.png`);
 
+  const callId   = calling ?? unitCallingId(unit);
+  const callLabel = callId ? callingName(callId, _uiLang) : '';
+
   return `
-    <div class="unit-portrait">
+    <div class="unit-portrait${callId ? ' unit-portrait--calling' : ''}"${callingTintStyle(callId)}>
       <img
         src="${portrait}"
         alt="${unitName(unit)}"
@@ -472,6 +502,10 @@ export function renderUnitPortrait(unit, opts = {}) {
         ${badge ? `<span class="detail-unit-badge">${badge}</span>` : ''}
       </div>` : ''}
       ${overlayHtml}
+      ${callLabel ? `
+      <div class="unit-portrait-bottom">
+        <span class="unit-calling-tag">${callLabel}</span>
+      </div>` : ''}
     </div>`;
 }
 
@@ -853,7 +887,7 @@ export function renderUnitProgressRow(progress, opts = {}) {
 }
 
 export function buildUnitCard(unit, opts = {}) {
-  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', activeSlotHtml = '', progress = null, reserveProgress = false, tome = null, potion = null, artUrl = '', desc = '', portraitOverlayHtml = '' } = opts;
+  const { buildingLabel = '', compareUnit = null, badge = '', itemSlotHtml = '', extraSlotHtml = '', activeSlotHtml = '', progress = null, reserveProgress = false, tome = null, potion = null, artUrl = '', desc = '', portraitOverlayHtml = '', calling = null } = opts;
 
   if (!unit) {
     return `
@@ -874,7 +908,7 @@ export function buildUnitCard(unit, opts = {}) {
     <div class="unit-card">
       <div class="unit-main-row">
         ${renderUnitCoreStatsColumn(unit, { compareUnit })}
-        ${renderUnitPortrait(unit, { badge, overlayHtml: portraitOverlayHtml })}
+        ${renderUnitPortrait(unit, { badge, overlayHtml: portraitOverlayHtml, calling })}
         ${renderUnitResistColumn(unit, compareUnit)}
       </div>
       <div class="unit-info">

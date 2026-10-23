@@ -3536,6 +3536,38 @@ button.cost-bar-item:active { transform: scale(0.9); }
   pointer-events: none;
 }
 
+/* The calling, as the Temple page draws it: the edge carries its colour and a
+   strip along the bottom of the art names it. The tags ride the TOP and are
+   what the unit IS; this is the one thing the player chose, so it is kept at
+   the other end of the portrait rather than mixed in with them. */
+.unit-portrait--calling {
+  outline: 2px solid var(--calling-tint, transparent);
+  outline-offset: -2px;
+  box-shadow: inset 0 0 16px -6px var(--calling-tint, transparent);
+}
+
+.unit-portrait-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  padding: 14px 8px 5px;
+  background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.72) 55%);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.unit-calling-tag {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--calling-tint, var(--text));
+  text-shadow: 0 1px 4px #000;
+}
+
 .unit-identity-tags {
   display: flex;
   flex-wrap: wrap;
@@ -4615,7 +4647,10 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .up-states {
   position: absolute;
   top: 34px;
-  bottom: 8px;
+  /* Clear of .unit-portrait-bottom: these tiles are z-index 3 and the strip is
+     2, so a unit carrying enough states used to wrap a column down over the
+     calling's name. */
+  bottom: 26px;
   display: flex;
   flex-flow: column wrap;
   align-content: flex-start;
@@ -5150,6 +5185,23 @@ button.cost-bar-item:active { transform: scale(0.9); }
   position: relative;
   overflow: hidden;
   padding: 0;
+}
+
+/* The same tint on the small portraits - the board, the initiative queue and
+   the prep track. No word here: the colour is the whole signal, and the big
+   card is where it is named. */
+.battle-cell.battle-cell--calling {
+  /* Two classes on purpose: .battle-cell--placed and --enemy set their own
+     outline-color further down the file and would otherwise win on order.
+     The transient states (--acting, --targetable) carry !important and still
+     beat this, which is right: whose turn it is outranks what it is sworn to. */
+  outline: 2px solid var(--calling-tint, var(--border));
+  outline-offset: -2px;
+}
+
+.portrait-card--calling {
+  border-color: var(--calling-tint, var(--border));
+  box-shadow: inset 0 0 10px -4px var(--calling-tint, transparent);
 }
 
 .battle-cell--bark-active {

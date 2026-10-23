@@ -35,6 +35,7 @@ import {
   renderItemSlotIcon, buildItemModalParts, buildAbilityModalParts, calcUnitPower,
   itemFromDefKey, combatantItem,
   spellName, spellDesc, withEquippedItem, unitName, cellFootprint,
+  unitCallingId, callingTintStyle,
 } from '../utils.js';
 
 const BP_TEXT = {
@@ -487,7 +488,9 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     const deadHtml = alive ? '' : `<div class="battle-prep-dead-label">${BP_TEXT.dead[L]}</div>`;
     const itemSlotHtml  = renderItemSlotIcon(equippedItem, unit.id, { interactive: false, player });
 
-    return buildUnitCard(liveUnit, { badge, itemSlotHtml }) + deadHtml;
+    // The calling lives on the ROSTER ROW rather than in unit_data, which is
+    // rebuilt from the definition on every level-up (data/callings.js).
+    return buildUnitCard(liveUnit, { badge, itemSlotHtml, calling: unitCallingId(unit) }) + deadHtml;
   }
 
   function enemyDetailHtml(e) {
@@ -1433,8 +1436,9 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
         <div class="portrait-card
                     ${isHero     ? 'portrait-card--hero'     : ''}
                     ${isSelected ? 'portrait-card--selected' : ''}
-                    ${locked     ? 'portrait-card--locked'   : ''}"
-             data-id="${u.id}" title="${name}">
+                    ${locked     ? 'portrait-card--locked'   : ''}
+                    ${unitCallingId(u) ? 'portrait-card--calling' : ''}"
+             data-id="${u.id}" title="${name}"${callingTintStyle(unitCallingId(u))}>
           ${portraitUrl ? `<img class="portrait-art-img" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">` : `<div class="portrait-art">${isHero ? '★' : unitTypeIcon(u)}</div>`}
         </div>
       `;

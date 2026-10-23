@@ -28,7 +28,7 @@ import {
   renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
   handleUnitInspect, unitName, buildingLabel, enableTrackSwipe, escapeHtml,
   playAdPlaceholder as playAd,
-  renderItemPassive, renderItemTags, renderHeroSpellSlot,
+  renderItemPassive, renderItemTags, renderHeroSpellSlot, unitCallingId,
 } from '../utils.js';
 import { getEquipBlock } from '../../data/item_rules.js';
 import { missingRequiredTags } from '../../data/items.js';
@@ -3043,6 +3043,9 @@ export function renderCastle(root, params = {}) {
     const cardHtml = `
       <div class="castle-unit-card-wrap">
         ${buildUnitCard(liveUnit, {
+          // Same field the Temple page reads, so the slot sheet and the
+          // calling page cannot disagree about what a unit is sworn to.
+          calling: unitCallingId(rosterUnit),
           buildingLabel: levelLabelFor(def, slotLevel),
           itemSlotHtml, extraSlotHtml: treeBtnHtml, activeSlotHtml: spellSlotHtml, progress,
           tome: tomeForUnit(rosterUnit),

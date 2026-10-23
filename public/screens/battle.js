@@ -1,8 +1,9 @@
 import { api, navigate, itemsCache, bootstrapCache } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
-import { resolveAbility, abilityName, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, getSheetBody, handleUnitInspect, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem, withEquippedItem, unitName, cellFootprint, spellName } from '../utils.js';
+import { resolveAbility, abilityName, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, getSheetBody, handleUnitInspect, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem, withEquippedItem, unitName, cellFootprint, spellName, unitCallingId, callingTintStyle } from '../utils.js';
 import { initBattleFx, reattachBattleFx, destroyBattleFx, EFFECTS } from '../battle-fx.js';
 import { FORMATION_SYNERGIES } from '../../data/formation_synergies.js';
+import { callingTint } from '../../data/callings.js';
 import { syncFormationSynergies } from '../formation-synergy-view.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 import { initSfx, playAbilitySound } from '../sfx.js';
@@ -1431,7 +1432,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       ? renderItemSlotIcon(equippedItem, c._rosterId, { interactive: false, player })
       : (c.side === 'player' ? renderItemSlotIcon(null, c._rosterId, { interactive: false, player }) : '');
 
-    return `<div class="battle-unit-detail" data-roster-id="${c._rosterId ?? ''}">${buildUnitCard(liveUnit, { badge, itemSlotHtml, compareUnit: baseUnit, portraitOverlayHtml: portraitStatesHtml(c) })}${statusHtml}</div>`;
+    // The calling is the engine's `_calling` (battle-engine.js), not anything the
+    // blueprint knows, so it is handed over rather than resolved from liveUnit.
+    return `<div class="battle-unit-detail" data-roster-id="${c._rosterId ?? ''}">${buildUnitCard(liveUnit, { badge, itemSlotHtml, compareUnit: baseUnit, portraitOverlayHtml: portraitStatesHtml(c), calling: unitCallingId(c) })}${statusHtml}</div>`;
   }
 
   // ── Combat log rendering ────────────────────────────────────────────────────
@@ -2515,7 +2518,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
         const aegisLevel = aegisLevelFor(occ);   // see aegisLevelFor above
 
-        let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''} ${aegisLevel ? 'battle-cell--aegis' : ''}`;
+        // The calling tints the cell's edge, as it tints the portrait on the
+        // card and the block on the Temple page. Null for a mercenary or an
+        // encounter's own troops, which adds no class and draws nothing.
+        const callId = unitCallingId(occ);
+        let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''} ${aegisLevel ? 'battle-cell--aegis' : ''}${callId ? ' battle-cell--calling' : ''}`;
         if (isActor)              cls += isEnemyActor ? ' battle-cell--acting battle-cell--acting--enemy' : ' battle-cell--acting';
         else if (isTarget)        cls += ' battle-cell--targetable';
         else if (isSelected)      cls += ' battle-cell--selected';
@@ -2523,7 +2530,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         else                      cls += ' battle-cell--enemy';
 
         html.push(`
-          <div class="${cls}" data-id="${occ.id}" style="${spanStyle}${aegisLevel ? `--aegis-level:${aegisLevel};` : ''}">
+          <div class="${cls}" data-id="${occ.id}" style="${spanStyle}${aegisLevel ? `--aegis-level:${aegisLevel};` : ''}${callId ? `--calling-tint:${callingTint(callId)};` : ''}">
             ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${cName(occ)}" onerror="this.style.display='none'">` : ''}
             <div class="bc-debuff-icons">${debuffIconsHtml(occ)}</div>
             <div class="bc-buff-icons">${buffIconsHtml(occ)}</div>
@@ -2558,8 +2565,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const hpPct = Math.max(0, Math.min(1, (c.battle_hp ?? 0) / (c.max_hp || 1)));
       return `
         <div class="portrait-card portrait-card--init portrait-card--${side}
-                    ${isActive ? 'portrait-card--selected' : ''}"
-             data-id="${c.id}" role="button" tabindex="0"
+                    ${isActive ? 'portrait-card--selected' : ''}
+                    ${unitCallingId(c) ? 'portrait-card--calling' : ''}"
+             data-id="${c.id}" role="button" tabindex="0"${callingTintStyle(unitCallingId(c))}
              title="${cName(c)}">
           ${portrait
             ? `<img class="portrait-art-img" src="${portrait}" alt="${cName(c)}" onerror="this.style.display='none'">`
