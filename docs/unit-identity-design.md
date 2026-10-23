@@ -77,7 +77,7 @@ can hand it, and **which litany cells the unit can stand in**.
 
 **Litanies read the calling.** A litany's chorus cells no longer name unit ids - they
 name a calling, and the unit standing there has to have it
-([combat-barks-design.md](combat-barks-design.md) §5, "A chorus cell names a CALLING").
+(see the header of [data/litanies.js](../data/litanies.js)).
 That is the calling's first visible, in-battle payoff and the reason it is a tactical
 choice rather than only a stat track: a *Vigil* and a *Crusade* in the right squares are
 what stages the execution. It also cuts 298 hardcoded ids out of

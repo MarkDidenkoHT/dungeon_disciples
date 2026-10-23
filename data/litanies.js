@@ -1,4 +1,4 @@
-// Litanies - scripted multi-speaker executions. See docs/combat-barks-design.md §5.
+// Litanies - scripted multi-speaker executions.
 //
 // Unlike a bark, a litany is NOT cosmetic: it stages the killing blow (the
 // chorus speaks and may perform for show) and pays a mechanical reward. Its
@@ -20,12 +20,16 @@
 // object and nothing else can be affected by it.
 //
 // THE ONE EXCEPTION IS THE TARGET, which is LITANY_TARGETS below and is the same
-// for all twelve. A litany is staged over the death of the other side's CHAMPION,
+// for all nine. A litany is staged over the death of the other side's CHAMPION,
 // and that is the whole of the condition: who is worth the rite does not change
-// from one litany to the next, so writing a per-litany list twelve times only
-// gave twelve places for the same answer to drift.
+// from one litany to the next, so writing a per-litany list nine times only
+// gave nine places for the same answer to drift.
 //
-// TWELVE litanies: three each for the Empire and Grail, six for the Choir.
+// NINE litanies, three to a faction. EVERY lead is a HERO line: a litany is a
+// champion felling a champion, and a rite a rank-and-file unit could land was a
+// rite the player never staged on purpose. A hero may carry more than one (the
+// Paladin and the Inquisitor share two), and every hero line carries at least
+// one.
 //
 // ── The formation ─────────────────────────────────────────────────────────────
 //
@@ -73,13 +77,10 @@
 // Reliquary Titan is deliberately out: the Colossus is its own daily activity
 // rather than a region's boss.
 //
-// ── The three kinds of cell ───────────────────────────────────────────────────
+// ── The two kinds of cell ─────────────────────────────────────────────────────
 //
-//   role: 'lead'    the unit that lands the real blow. `def.lead.ids`, a unit
-//                   LINE written out by name. The only cell that kills.
-//   role: 'hero'    this litany's own hero, `def.hero.ids`. On four litanies the
-//                   hero sings from here while its faction's designated lead
-//                   takes the blow.
+//   role: 'lead'    the unit that lands the real blow. `def.lead.ids`, a HERO
+//                   line written out by name. The only cell that kills.
 //   role: 'chorus'  `calling`, one id from data/callings.js, unless the cell has
 //                   `all_alive: true`, in which case every living ally except
 //                   the lead speaks together. A calling on that cell still
@@ -92,10 +93,13 @@
 //
 // ── The lead ──────────────────────────────────────────────────────────────────
 //
-// The lead is whoever LANDS THE BLOW, and that is not always the hero. The
-// Artificer and Choir Regent can choose to mend an ally or strike an enemy;
-// their litanies still place them in a hero cell while their faction's
-// designated lead unit lands the killing blow.
+// The lead is whoever LANDS THE BLOW, and it is ALWAYS a HERO line of the
+// faction that stages the rite. A hero that can mend as well as strike (the
+// Artificer, the Choir Regent) leads with the strike: every hero line has a real
+// attack at every tier, so no litany has to borrow a killer.
+//
+// There used to be a third cell role, 'hero', for the four litanies where the
+// hero sang while a rank-and-file unit took the blow. Nothing uses it now.
 //
 // ── The verses ────────────────────────────────────────────────────────────────
 //
@@ -144,9 +148,9 @@
 //                                                 / the stagger fields
 //
 // Two cells of one calling put the whole reward on that side; one of each pays
-// both. A 'hero' cell belongs to a healer hero, so it pays the ally side
-// like any other rite. This replaced "the reward is what the chorus DID", which
-// could not survive a cell that no longer knows which unit will fill it.
+// both. The lead's own cell pays nothing - it kills. This replaced "the reward
+// is what the chorus DID", which could not survive a cell that no longer knows
+// which unit will fill it.
 //
 // Nothing in the engine enforces it - a reward that does not match its callings
 // is a bug here.
@@ -165,7 +169,7 @@
 // fireLitany takes the FIRST match in this array. Where a lead has multiple
 // litanies, their formations are mutually exclusive:
 //
-//   the LEAD is in a different place        (taken_breath / ash_antiphon)
+//   the LEAD is in a different place
 //   a shared square wants different SIZES   a tile cell and half of a row or
 //                                           column unit cannot both be filled
 //   a shared square wants different CALLINGS
@@ -176,7 +180,7 @@
 // board satisfies both and the player only ever sees the earlier one.
 
 // Every champion a litany may be staged over. ONE list, read by fireLitany for
-// all twelve - see "The target" above.
+// all nine - see "The target" above.
 const LITANY_TARGETS = [
 
   // ── The heroes ──────────────────────────────────────────────────────────────
@@ -304,7 +308,7 @@ const LITANIES = [
     once_per: 'battle',
   },
 
-  // ── Empire: the Artificer's litanies — the Artificer sings, its construct leads ───
+  // ── Empire: the Artificer's litany — the Artificer leads, its construct sings ───
   {
     id:    'iron_sentence',
     name:  'The Iron Sentence',
@@ -323,10 +327,9 @@ const LITANIES = [
     formation: { cells: [
       // A: the Artificer now leads from the back cell.
       { key: 'A', row: 0, col: 'back', size: 'tile', role: 'lead' },
-      // B: Sentinel to Golden Lion, a two-cell construct in the front column.
-      { key: 'B', row: 1, col: 'front', size: 'column', role: 'chorus', ids: [
-      'e3', 'e31', 'e311', 'e3111',
-      ] },
+      // B: a Vigil - the ally half of the reward. Two cells of the front
+      // column, which the Artificer's own Sentinel line fills.
+      { key: 'B', row: 1, col: 'front', size: 'column', role: 'chorus', calling: 'vigil' },
       // C: a Crusade - the enemy half of the reward.
       { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', calling: 'crusade' },
     ] },
@@ -474,7 +477,7 @@ const LITANIES = [
     once_per: 'battle',
   },
 
-  // ── Choir of the Cursed: the Choir Regent's litanies — the Regent sings, a Chorister leads ───
+  // ── Choir of the Cursed: the Choir Regent's litany ────────────────────────────────
   {
     id:    'taken_breath',
     name:  'The Taken Breath',
@@ -484,31 +487,32 @@ const LITANIES = [
     //   B .
     //   A C
     //
-    // Lead: Chorister to Doomchanter: a TWO-CELL singer in the back column that
-    // throws fire and, at Doomchanter, haunts. The Regent sings; this kills.
-    // The Choir Regent sings from the hero cell while the designated Chorister
-    // lands the blow.
-    hero: { ids: [
+    // Lead: Choir Regent, every tier of both paths. The Regent used to sing this
+    // from a hero cell while a Chorister landed the blow; it kills here now, as
+    // every lead does. `choir_shock` is a real attack at every tier, so the
+    // lethal verse is the Regent's own action rather than a borrowed one.
+    lead: { ids: [
       'h_d_2', 'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42',
       'h_d_2_b2', 'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42',
     ] },
-    lead: { ids: [
-      'd12', 'd121', 'd1211', 'd1212',
-    ] },
     formation: { cells: [
-      // B: the lead - the only cell that kills. Its own list is `lead` below.
-      { key: 'B', row: 0, col: 'back', size: 'column', role: 'lead' },
-      // A: the Choir Regent; B remains this litany's designated lead.
-      { key: 'A', row: 2, col: 'back', size: 'tile', role: 'hero' },
+      // B: a Descant - the ally half of the reward. The Chorister that used to
+      // lead still fits it: a TWO-CELL singer in the back column.
+      { key: 'B', row: 0, col: 'back', size: 'column', role: 'chorus', calling: 'descant' },
+      // A: the lead - the only cell that kills. Its own list is `lead` above.
+      // The Regent is a tile and prefers the back column (data/units.js).
+      { key: 'A', row: 2, col: 'back', size: 'tile', role: 'lead' },
       // C: a Hunger - the enemy half of the reward.
       { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'hunger' },
     ] },
     verses: [
-      { speaker: 'A', strike: 'support',
+      // The Chorister throws fire rather than mending, so its verse is a blow
+      // played for show - a Descant cell pays the ally side whatever it does.
+      { speaker: 'B', strike: 'visual',
         line: ['placeholder', 'текст'] },
       { speaker: 'C', strike: 'visual',
         line: ['placeholder', 'текст'] },
-      { speaker: 'B', strike: 'lethal',
+      { speaker: 'A', strike: 'lethal',
         line: ['placeholder', 'текст'] },
     ],
     reward: {
@@ -519,51 +523,7 @@ const LITANIES = [
     },
     once_per: 'battle',
   },
-  {
-    id:    'ash_antiphon',
-    name:  'The Ash Antiphon',
-    name_ru: 'Пепельный антифон',
-    // Back column left, front right - the board as the Litanies page draws it:
-    //   A .
-    //   C B
-    //   . B
-    //
-    // Lead: Imp to Conqueror: a TWO-CELL demon in the front column, claws.
-    // The Choir Regent sings from the hero cell while the designated Imp lands
-    // the blow.
-    hero: { ids: [
-      'h_d_2', 'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42',
-      'h_d_2_b2', 'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42',
-    ] },
-    lead: { ids: [
-      'd1', 'd11', 'd111', 'd1111',
-    ] },
-    formation: { cells: [
-      // A: the Choir Regent; B remains this litany's designated lead.
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'hero' },
-      // C: a Hunger - the enemy half of the reward.
-      { key: 'C', row: 1, col: 'back', size: 'tile', role: 'chorus', calling: 'hunger' },
-      // B: the lead - the only cell that kills. Its own list is `lead` below.
-      { key: 'B', row: 1, col: 'front', size: 'column', role: 'lead' },
-    ] },
-    verses: [
-      { speaker: 'A', strike: 'support',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'C', strike: 'visual',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'B', strike: 'lethal',
-        line: ['placeholder', 'текст'] },
-    ],
-    reward: {
-      ally_heal_flat: 5,
-      enemy_damage_flat: 5,
-      message:    'Allies are healed for 5 HP and enemies take 5 damage.',
-      message_ru: 'Союзники лечатся на 5 HP, враги получают 5 урона.',
-    },
-    once_per: 'battle',
-  },
-
-  // ── Choir of the Cursed: the Black Castellan's litanies ───────────────────────────
+  // ── Choir of the Cursed: the Black Castellan's litany ─────────────────────────────
   {
     id:    'iron_homily',
     name:  'The Iron Homily',
@@ -602,46 +562,7 @@ const LITANIES = [
     },
     once_per: 'battle',
   },
-  {
-    id:    'shut_gate',
-    name:  'The Shut Gate',
-    name_ru: 'Затворённые врата',
-    // Back column left, front right - the board as the Litanies page draws it:
-    //   A A
-    //   . B
-    //   . C
-    //
-    // Lead: Black Castellan, every tier of both paths.
-    lead: { ids: [
-      'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
-      'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42',
-    ] },
-    formation: { cells: [
-      // A: a Hunger - like the other, so the whole reward lands on the enemy side.
-      { key: 'A', row: 0, col: 'both', size: 'row', role: 'chorus', calling: 'hunger' },
-      // B: the lead - the only cell that kills. Its own list is `lead` below.
-      { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
-      // C: a Hunger - like the other, so the whole reward lands on the enemy side.
-      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'hunger' },
-    ] },
-    verses: [
-      { speaker: 'A', strike: 'visual',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'C', strike: 'visual',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'B', strike: 'lethal',
-        line: ['placeholder', 'текст'] },
-    ],
-    reward: {
-      enemy_damage_flat: 5,
-      enemy_initiative_flat: 5,
-      message:    'Enemies take 5 damage and lose 5 initiative.',
-      message_ru: 'Враги получают 5 урона и теряют 5 инициативы.',
-    },
-    once_per: 'battle',
-  },
-
-  // ── Choir of the Cursed: the Infernal Ascendant's litanies ────────────────────────
+  // ── Choir of the Cursed: the Infernal Ascendant's litany ──────────────────────────
   {
     id:    'kindling_creed',
     name:  'The Kindling Creed',
@@ -677,44 +598,6 @@ const LITANIES = [
       enemy_armor_flat: 5,
       message:    'Enemies take 5 damage and lose 5 armor.',
       message_ru: 'Враги получают 5 урона и теряют 5 брони.',
-    },
-    once_per: 'battle',
-  },
-  {
-    id:    'seventh_ember',
-    name:  'The Seventh Ember',
-    name_ru: 'Седьмой уголь',
-    // Back column left, front right - the board as the Litanies page draws it:
-    //   A .
-    //   B .
-    //   C C
-    //
-    // Lead: Infernal Ascendant, every tier of both paths.
-    lead: { ids: [
-      'h_d_3', 'h_d_3_a2', 'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42',
-      'h_d_3_b2', 'h_d_3_b3', 'h_d_3_b41', 'h_d_3_b42',
-    ] },
-    formation: { cells: [
-      // A: a Descant - the ally half of the reward.
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'descant' },
-      // B: the lead - the only cell that kills. Its own list is `lead` below.
-      { key: 'B', row: 1, col: 'back', size: 'tile', role: 'lead' },
-      // C: a Hunger - the enemy half of the reward.
-      { key: 'C', row: 2, col: 'both', size: 'row', role: 'chorus', calling: 'hunger' },
-    ] },
-    verses: [
-      { speaker: 'A', strike: 'support',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'C', strike: 'visual',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'B', strike: 'lethal',
-        line: ['placeholder', 'текст'] },
-    ],
-    reward: {
-      ally_heal_flat: 5,
-      enemy_damage_flat: 5,
-      message:    'Allies are healed for 5 HP and enemies take 5 damage.',
-      message_ru: 'Союзники лечатся на 5 HP, враги получают 5 урона.',
     },
     once_per: 'battle',
   },

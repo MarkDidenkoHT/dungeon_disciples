@@ -4292,7 +4292,7 @@ class BattleEngine {
   // ── Litanies ───────────────────────────────────────────────────────────────
   // A scripted execution: the chorus strikes for show, the lead lands the real
   // blow on the last verse, and the survivors pay for it. See
-  // docs/combat-barks-design.md §5 and data/litanies.js.
+  // data/litanies.js.
   //
   // Everything is matched by UNIT DEFINITION ID, never by tag or faction.
   litanyUnitId(c) {
@@ -4305,13 +4305,10 @@ class BattleEngine {
   // when it names a calling, that cell still requires a matching anchor at its
   // drawn position.
   //
-  // THREE KINDS OF CELL, and what each one demands of its occupant:
+  // TWO KINDS OF CELL, and what each one demands of its occupant:
   //
-  //   'lead'    the acting unit itself, and its id must be in `def.lead.ids`.
-  //             The only cell that kills.
-  //   'hero'    the litany's own hero line (`def.hero.ids`). On four litanies
-  //             the hero sings here while its faction's designated lead lands
-  //             the blow.
+  //   'lead'    the acting unit itself, and its id must be in `def.lead.ids`,
+  //             which is always a HERO line. The only cell that kills.
   //   'chorus'  any unit the PLAYER gave this cell's `calling` to
   //             (data/callings.js), or every living ally except the lead when
   //             `all_alive` is true.
@@ -4377,8 +4374,6 @@ class BattleEngine {
       if (taken.has(occ.id)) return null;
       if (cell.role === 'lead') {
         if (occ !== actor) return null;
-      } else if (cell.role === 'hero') {
-        if (!(def.hero?.ids || []).includes(this.litanyUnitId(occ))) return null;
       } else if (!cell.calling || occ._calling !== cell.calling) {
         return null;
       }
@@ -4393,15 +4388,14 @@ class BattleEngine {
   // caller can pay the reward and suppress the ordinary kill/death barks), or
   // null.
   //
-  // The lead is whoever LANDS THE BLOW, which is not always the litany's hero.
-  // The Artificer and Choir Regent can mend or strike, while their current
-  // faction litanies keep their designated unit as lead (see data/litanies.js).
+  // The lead is whoever LANDS THE BLOW, and that is always one of the faction's
+  // own hero lines — three litanies per faction, nine in all (data/litanies.js).
   fireLitany(actor, target) {
     // Not yet drilled. The blow still lands — it is simply an ordinary kill,
     // with the ordinary kill and death barks the litany would have replaced.
     if (actor.side === 'player' && !this.litaniesUnlocked) return null;
     // Only a CHAMPION is worth the rite, and the list of them is ONE list shared
-    // by all fifteen litanies (LITANY_TARGETS in data/litanies.js) — no litany
+    // by all nine litanies (LITANY_TARGETS in data/litanies.js) — no litany
     // carries a target of its own, so this is checked once, ahead of the loop,
     // and an ordinary trooper's death never reaches it.
     if (!LITANY_TARGETS.includes(this.litanyUnitId(target))) return null;

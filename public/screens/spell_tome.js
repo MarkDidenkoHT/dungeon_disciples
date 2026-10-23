@@ -905,9 +905,9 @@ export function renderSpellTome(root, { player }) {
               <span class="litany-calling-name">${escapeHtml(name)}</span>
             </div>`;
         }
-        // 'hero' is the litany's own hero line; 'lead' is whoever lands the
-        // blow, which on most litanies is that same hero.
-        const ids  = cell.role === 'hero' ? (def.hero?.ids || []) : (def.lead?.ids || []);
+        // 'lead' is whoever lands the blow, always one of the faction's hero
+        // lines. It is the only cell drawn as units rather than as a calling.
+        const ids  = def.lead?.ids || [];
         const defs = dedupeByName(ids.map(id => unitById.get(id)).filter(Boolean));
         return `
           <div class="litany-grid-req litany-grid-req--${cell.role}" title="${escapeHtml(roleLabel)}">

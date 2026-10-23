@@ -1,5 +1,5 @@
 // Callings - the one decision about a unit that belongs to the player.
-// See docs/unit-identity-design.md §2 and docs/combat-barks-design.md §5.
+// See docs/unit-identity-design.md §2.
 //
 // Each faction has exactly TWO, and every unit in that faction is offered the
 // same pair, so there is no profile detection and no unit left with a track it

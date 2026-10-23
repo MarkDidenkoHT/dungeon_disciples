@@ -1,7 +1,7 @@
 # Combat Barks — Style Guide
 
 Status: **draft for agreement.** Last updated 2026-09-17.
-Companion doc: [combat-barks-design.md](combat-barks-design.md) — how lines are chosen. This doc is what they say.
+This doc is what the lines say; `data/litanies.js` and `data/combat_barks.js` are how they are chosen.
 
 A bark is a sentence shouted across a battle line by someone who is busy. Everything
 below follows from that.

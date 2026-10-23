@@ -700,7 +700,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // One verse of a litany: the speaker's toast, and the speaker DOING what it
   // does. Cosmetic either way — no damage, no heal, no triggers, no turn spent
   // (the engine never rolled one), and the litany's own reward is what actually
-  // pays out. See docs/combat-barks-design.md §5.3.
+  // pays out. See data/litanies.js.
   //
   //   'visual'   a fighter's blow, played at the victim. Range is not checked:
   //              a mace swing plays on a back-column target just the same.
@@ -776,7 +776,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   const ENEMY_TURN_PREVIEW_MS = 350;
   // The beat between player-controlled turns in a playback batch.
   const TURN_GAP_MS = 450;
-  // Litany pacing (docs/combat-barks-design.md §5.5). Spoken-only lines hold
+  // Litany pacing. Spoken-only lines hold
   // playback for LITANY_VERSE_MS; performed verses hold for the same time,
   // including their animation. The lethal verse holds for nothing because the
   // killing blow follows immediately after it in the log.
