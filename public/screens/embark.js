@@ -47,6 +47,8 @@ const UI_TEXT = {
   abandonWarning:  {
     en: 'Abandoning costs you the field: the fallen stay dead, and every survivor walks away at 1 HP.',
     ru: 'Бросить бой — значит уступить поле: павшие остаются мёртвыми, а выжившие уходят с 1 HP.',
+    en: 'Abandoning costs you the field: your whole party leaves at 1 HP.',
+    ru: 'Бросить бой — значит уступить поле: весь отряд уйдёт с 1 HP.',
   },
   abandon:         { en: 'Abandon',   ru: 'Бросить' },
   reconnect:       { en: 'Reconnect', ru: 'Вернуться' },

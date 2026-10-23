@@ -156,15 +156,15 @@ const BT = {
   yourTurn:     { en: 'Your turn',          ru: 'Ваш ход' },
   concede:      { en: 'Concede',            ru: 'Сдаться' },
   concedeAsk:   {
-    en: 'Concede the duel? Your fallen stay dead and every survivor leaves at 1 HP.',
-    ru: 'Сдать бой? Павшие останутся мёртвыми, а выжившие уйдут с 1 HP.',
+    en: 'Concede the duel? Your whole party leaves at 1 HP.',
+    ru: 'Сдаться? Весь отряд уйдёт с 1 HP.',
   },
   concedeYes:   { en: 'Concede',            ru: 'Сдаться' },
   concedeNo:    { en: 'Keep fighting',      ru: 'Продолжить бой' },
   retreat:      { en: 'Retreat',            ru: 'Отступить' },
   retreatAsk:   {
-    en: 'Retreat from this fight? Your fallen stay dead and every survivor leaves at 1 HP.',
-    ru: 'Отступить из этого боя? Павшие останутся мёртвыми, а выжившие уйдут с 1 HP.',
+    en: 'Retreat from this fight? Your whole party leaves at 1 HP.',
+    ru: 'Отступить из этого боя? Весь отряд уйдёт с 1 HP.',
   },
   retreatYes:   { en: 'Retreat',            ru: 'Отступить' },
   theirTurn:    { en: 'Opponent',           ru: 'Соперник' },
@@ -2581,7 +2581,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
   // ── Leaving the fight ─────────────────────────────────────────────────────
   // One route for both modes, because the server already applies one set of
-  // terms: the fallen stay dead, survivors are written back at 1 HP, and in a
+  // terms: the whole party is written back at 1 HP, and in a
   // duel the player still on the field is given the win. Nothing is escaped by
   // leaving. Only the wording differs — a duel is CONCEDED to someone, a region
   // fight is RETREATED from.
