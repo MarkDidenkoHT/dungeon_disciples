@@ -186,7 +186,7 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
       const def = resolveUnitDef(row);
       const id  = def?.id || '';
       const portraitId = id.match(/^(h_[a-z]_\d)/)?.[1] ?? id;
-      const name = escapeHtml(unitName(def || {}, player));
+      const name = escapeHtml(unitName(row, player));
       const on = String(row.id) === String(rosterId);
       return `
         <div class="portrait-card ${on ? 'portrait-card--selected' : ''} ${row.is_hero ? 'portrait-card--hero' : ''}"
@@ -238,7 +238,7 @@ export function mountEngraving(host, { player, getUnits, getItems, getResources,
     }
     return `
       <div class="eg-current">
-        <span class="eg-current-name">${escapeHtml(unitName(def || {}, player))}</span>
+        <span class="eg-current-name">${escapeHtml(unitName(row, player))}</span>
         <span class="eg-current-label">${t('current')}:</span>
         ${tierDef ? `<span class="eg-chip eg-chip--tier eg-chip--${tierDef.id}">${tierName(tierDef)}</span>` : ''}
         ${chips || `<span class="eg-chip eg-chip--none">${t('none')}</span>`}

@@ -1,7 +1,7 @@
 import { assetUrl } from './asset_base.js';
 import { UNITS }          from '../data/units.js';
 import { UNIT_ABILITIES } from '../data/unit_abilities.js';
-import { applyItemModifiers, ITEM_DEFS } from '../data/items.js';
+import { applyItemModifiers, ITEM_DEFS, missingRequiredTags } from '../data/items.js';
 
 // Localized spell text. For a non-English language, returns ONLY that language's
 // field (e.g. name_ru) — no English fallback, so a missing translation shows up
@@ -40,7 +40,9 @@ export function itemName(item, player) {
 // English word rather than an anonymous portrait.
 export function unitName(unit, player) {
   if (!unit) return '';
-  const src  = unit.name || unit.name_ru ? unit : (unit.unit_data || unit);
+  const src = unit.name || unit.name_ru
+    ? unit
+    : (resolveUnitDef(unit) || unit.unit_data || unit);
   const lang = player?.settings?.language ?? (_uiLang === 'ru' ? 'ru' : 'en');
   if (lang === 'ru') return src?.name_ru || src?.name || unit.unit_name || '';
   return src?.name || unit.unit_name || '';
@@ -83,61 +85,11 @@ export function setUiLanguage(language) {
 }
 export function uiText(en, ru) { return _uiLang === 'ru' ? ru : en; }
 
-// Unit tags are authored in English in data/units.js and data/items.js, because
-// they are also lookup keys — an ability that counts Vampire allies matches on
-// the string. Printing that key straight onto a card left the Russian UI saying
-// "Требует: Vampire". The key stays English; only the label is translated.
-//
-// The Russian words are the ones the ability descriptions in
-// data/unit_abilities.js already use, so an item that requires a Vampire and a
-// passive that counts Vampires say the same word.
-export const TAG_LABELS = {
-  Archer:    { en: 'Archer',    ru: 'Лучник' },
-  Boss:      { en: 'Boss',      ru: 'Босс' },
-  Caster:    { en: 'Caster',    ru: 'Заклинатель' },
-  Construct: { en: 'Construct', ru: 'Конструкт' },
-  Court:     { en: 'Court',     ru: 'Придворный' },
-  Demon:     { en: 'Demon',     ru: 'Демон' },
-  Dragon:    { en: 'Dragon',    ru: 'Дракон' },
-  Engineer:  { en: 'Engineer',  ru: 'Инженер' },
-  Holy:      { en: 'Holy',      ru: 'Святой' },
-  Knight:    { en: 'Knight',    ru: 'Рыцарь' },
-  Skeleton:  { en: 'Skeleton',  ru: 'Скелет' },
-  Spirit:    { en: 'Spirit',    ru: 'Дух' },
-  Treefolk:  { en: 'Treefolk',  ru: 'Древолюд' },
-  Vampire:   { en: 'Vampire',   ru: 'Вампир' },
-  Warrior:   { en: 'Warrior',   ru: 'Воин' },
-  Zombie:    { en: 'Zombie',    ru: 'Зомби' },
-};
-
-// An unknown tag prints as authored rather than as a blank — a tag added to the
-// data before it is added here should look untranslated, not missing.
-export function tagLabel(tag) {
-  if (!tag) return '';
-  const entry = TAG_LABELS[tag];
-  return entry ? uiText(entry.en, entry.ru) : String(tag);
-}
-
-// The three banners, by their data ids. Same reason as the tags: the id is a
-// key, the label is text. These match the names on the Colossus page.
-export const FACTION_LABELS = {
-  empire:              { en: 'Empire of Aurex',      ru: 'Империя Аурекс' },
-  choir_of_the_cursed: { en: 'Choir of the Cursed',  ru: 'Хор Проклятых' },
-  grail_of_sorrow:     { en: 'Grail of Sorrow',      ru: 'Грааль Скорби' },
-};
-
-export function factionLabel(faction) {
-  if (!faction) return '';
-  const entry = FACTION_LABELS[faction];
-  if (entry) return uiText(entry.en, entry.ru);
-  return cap(String(faction).replace(/_/g, ' '));
-}
-
 // `removes_tag` (and anything else tag-shaped) may be authored as one tag or as
 // a list. One label rule, so the item card, the castle equip sheet and the item
 // screen all print the same thing.
 export function tagListLabel(spec) {
-  return (Array.isArray(spec) ? spec : [spec]).filter(Boolean).map(tagLabel).join(', ');
+  return (Array.isArray(spec) ? spec : [spec]).filter(Boolean).join(', ');
 }
 
 // The faction's accent palette is a set of CSS variables hung off the BODY (see
@@ -181,6 +133,20 @@ export const ACTION_INFO = {
     desc: {
       en: 'Restores HP to one allied construct or machine, equal to the unit\'s Power.',
       ru: 'Восстанавливает HP союзному конструкту или машине на величину Силы.',
+    },
+  },
+  'artificer shock': {
+    name: { en: 'Artificer’s Arc', ru: 'Дуга артефактора' },
+    desc: {
+      en: 'Mends one allied Construct or strikes one enemy for the unit’s Power.',
+      ru: 'Восстанавливает HP одному союзному Конструкту или наносит урон врагу на величину Силы.',
+    },
+  },
+  'choir shock': {
+    name: { en: 'Ashen Refrain', ru: 'Пепельный рефрен' },
+    desc: {
+      en: 'Mends one allied Demon or strikes one enemy for the unit’s Power.',
+      ru: 'Восстанавливает HP одному союзному Демону или наносит урон врагу на величину Силы.',
     },
   },
   'pale_embrace': {
@@ -265,6 +231,10 @@ export const CRYSTAL_ICONS = {
 };
 
 export const GOLD_ICON = `<img src="${assetUrl('/assets/icons/recources/gold.png')}" class="res-icon-img" alt="Gold">`;
+export const CROSSROAD_SIGIL_ICON = `<img src="${assetUrl('/assets/icons/recources/crossroad_sigil.svg')}" class="res-icon-img" alt="Crossroad Sigil">`;
+export const CROSSROAD_SIGIL_SLOT = {
+  key: 'crossroad_sigil', label: 'Crossroad Sigil', icon: CROSSROAD_SIGIL_ICON, item_type: 'token',
+};
 
 // The resource strip's slots, in the order they are drawn. Anything that has to
 // line up COLUMN-WISE with that strip — the build-cost bar under it — renders
@@ -406,6 +376,9 @@ export function getActionLabel(actionKey) {
     attack:       'Attack',
     heal:         'Heal',
     repair:       'Repair',
+    artificer_shock: 'Artificer’s Arc',
+    choir_shock:    'Ashen Refrain',
+    empower:      'Empower',
     'mend flesh': 'Mend Flesh',
     sacrifice:    'Sacrifice',
     holy_shock:   'Holy Shock',   // heals an ally OR strikes an enemy — see getValidTargets
@@ -477,7 +450,7 @@ export function renderUnitPortrait(unit, opts = {}) {
   // sides. Empty everywhere else, so no other card changes shape.
   const { badge = '', overlayHtml = '' } = opts;
   const tags     = (unit.tags || []).filter(Boolean);
-  const tagsHtml = tags.map(t => `<span class="unit-tag">${tagLabel(t)}</span>`).join('');
+  const tagsHtml = tags.map(t => `<span class="unit-tag">${t}</span>`).join('');
   const portraitId = unit.id.match(/^(h_[a-z]_\d)/)?.[1] ?? unit.id;
   const portrait = assetUrl(`/assets/character_art/${portraitId}.png`);
 
@@ -1062,6 +1035,64 @@ function itemStatChip(key, val) {
           </span>`;
 }
 
+// Ranks are shown as numerals so a rank-2 passive cannot be mistaken for the
+// rank-1 one of the same name: the item card used to print only the ability
+// name, which made `iron_will 2` and `iron_will 1` the same line of text.
+const RANK_NUMERALS = ['', 'I', 'II', 'III', 'IV', 'V'];
+export function abilityRankLabel(key) {
+  const rank = abilityRank(key);
+  return RANK_NUMERALS[rank] || (rank ? String(rank) : '');
+}
+
+// The passive an item grants, and the tags it requires or changes. Shared by the
+// items screen, the castle equip sheet and the item modal (buildItemCard below)
+// so an item reads the same in all three: three near-identical copies had
+// already drifted apart on which of them showed the rank.
+//
+// `interactive` off renders a div instead of a button, for the modal that is
+// already showing the passive's description underneath.
+export function renderItemPassive(stats, opts = {}) {
+  const { interactive = true } = opts;
+  const key = stats?.passive;
+  if (!key) return '';
+  const def = resolveAbility(key);
+  // abilityName, not def.name: the Russian name lives on the definition as
+  // name_ru, so reading .name directly left every item-granted passive in
+  // English while the rest of the card translated.
+  const label   = abilityName(def) || String(key).replace(/\s+\d+$/, '').replace(/_/g, ' ');
+  const rank    = abilityRankLabel(key);
+  const fileKey = String(key).replace(/\s+/g, '_').replace(/_\d+$/, '');
+  const inner = `
+    <img class="item-passive-icon-img" src="${assetUrl(`/assets/icons/abilities/${fileKey}.jpg`)}"
+         alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">
+    <span class="item-passive-icon" style="display:none;">✦</span>
+    <span class="item-passive-name">${label}</span>
+    ${rank ? `<span class="item-passive-rank">${rank}</span>` : ''}`;
+  return interactive
+    ? `<button class="item-passive" data-ability-key="${key}" data-ability-type="passive">${inner}</button>`
+    : `<div class="item-passive item-passive--static">${inner}</div>`;
+}
+
+// `unitTags` marks an unmet requirement on the chip itself, so the reason line
+// underneath never has to repeat it. `showFaction` is the item modal only.
+export function renderItemTags(stats, opts = {}) {
+  const { unitTags = null, showFaction = false } = opts;
+  if (!stats) return '';
+  const unmet = Array.isArray(unitTags)
+    && missingRequiredTags(stats.tag_required, unitTags).length > 0;
+  const pill = (cls, label, value) => `
+    <span class="item-card-tag${cls ? ' ' + cls : ''}">
+      <span class="item-card-tag-label">${label}</span>${value}
+    </span>`;
+  return [
+    stats.tag_required ? pill(unmet ? 'item-card-tag--unmet' : '', uiText('Requires', 'Требует'), tagListLabel(stats.tag_required)) : '',
+    stats.adds_tag     ? pill('item-card-tag--adds',    uiText('Grants', 'Даёт'),   stats.adds_tag) : '',
+    stats.removes_tag  ? pill('item-card-tag--removes', uiText('Strips', 'Снимает'), tagListLabel(stats.removes_tag)) : '',
+    showFaction && stats.faction
+      ? pill('', uiText('Faction', 'Фракция'), cap(String(stats.faction).replace(/_/g, ' '))) : '',
+  ].join('');
+}
+
 export function buildItemCard(item, player) {
   const stats  = item.item_stats || item || {};
   const iconId = stats.icon || stats.key || 'item';
@@ -1073,18 +1104,11 @@ export function buildItemCard(item, player) {
   const passiveDef  = stats.passive ? resolveAbility(stats.passive) : null;
   const passiveDesc = passiveDef ? buildStatDescription(passiveDef, 'passive') : '';
   const passiveHtml = passiveDef
-    ? `<div class="item-passive item-passive--static">
-         <span class="item-passive-icon">✦</span>${abilityName(passiveDef)}
-       </div>
+    ? `${renderItemPassive(stats, { interactive: false })}
        ${passiveDesc ? `<div class="item-modal-passive-desc">${escapeHtml(passiveDesc)}</div>` : ''}`
     : '';
 
-  const tagsHtml = [
-    stats.tag_required ? `<span class="item-card-tag">${uiText('Requires', 'Требует')}: ${tagLabel(stats.tag_required)}</span>` : '',
-    stats.adds_tag     ? `<span class="item-card-tag item-card-tag--adds">${uiText('Grants tag', 'Даёт метку')}: ${tagLabel(stats.adds_tag)}</span>` : '',
-    stats.removes_tag  ? `<span class="item-card-tag item-card-tag--removes">${uiText('Strips tag', 'Снимает метку')}: ${tagListLabel(stats.removes_tag)}</span>` : '',
-    stats.faction      ? `<span class="item-card-tag">${uiText('Faction', 'Фракция')}: ${factionLabel(stats.faction)}</span>` : '',
-  ].join('');
+  const tagsHtml = renderItemTags(stats, { showFaction: true });
 
   return `
     <div class="item-card item-card--rarity-${rarity} item-card--modal">
@@ -1136,10 +1160,9 @@ export function lookupActionInfo(...keys) {
   return null;
 }
 
-// Which side an action may pick. The data says 'enemy' or 'ally', but Holy
-// Shock reaches BOTH -- getValidTargets in utils/battle-engine.js has its own
-// branch for it -- so the action id decides, not target_type.
-const DUAL_TARGET_ACTIONS = new Set(['holy_shock', 'holy shock']);
+// Which side an action may pick. Dual-target actions reach both sides, so the
+// action id decides this label instead of target_type.
+const DUAL_TARGET_ACTIONS = new Set(['holy_shock', 'holy shock', 'artificer_shock', 'choir_shock']);
 export function actionTargetSide(actionKey, targetType) {
   if (DUAL_TARGET_ACTIONS.has(String(actionKey ?? '').toLowerCase())) {
     return uiText('Any', 'Любая');

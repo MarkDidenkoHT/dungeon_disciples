@@ -100,6 +100,141 @@ export function mountFactionTabs(el) {
       window.parent.postMessage({ type: 'sc-faction', faction: btn.dataset.faction }, '*');
       return;
     }
-    location.search = `?lang=${L}&faction=${btn.dataset.faction}`;
+    // Keeps ?demo= — the frame is one page serving every demo, so dropping it
+    // would reload this one as no demo at all.
+    const q = new URLSearchParams(location.search);
+    q.set('lang', L);
+    q.set('faction', btn.dataset.faction);
+    location.search = `?${q}`;
   });
 }
+
+// ── The demos ───────────────────────────────────────────────────────────────
+// Every demo used to be its own .html file, and the eight of them were the same
+// document eight times over: the same head, the same stylesheet pair, the same
+// .demo-root, differing only in the handful of elements the screen mounts into
+// and in which module was loaded at the bottom. They are that handful of
+// elements now, and `demo.html?demo=<name>` is the one page that serves them.
+//
+// `title` is the frame's document title; the landing page labels the <iframe>
+// itself, so this is only ever read by assistive tech that reaches inside.
+// `shell` is what goes inside .demo-root — the game's own classes throughout,
+// because the point of a framed demo is that style.css is used verbatim.
+export const DEMOS = {
+  castle: {
+    title: 'Castle',
+    shell: `
+      <div class="demo-tabs" id="factions"></div>
+      <div class="screen screen-castle">
+        <main class="castle-main">
+          <div class="castle-grounds">
+            <button class="castle-layer-arrow castle-layer-arrow--prev" id="layer-prev" type="button" aria-label="Previous"><span>&lsaquo;</span></button>
+            <div class="castle-layer-viewport">
+              <div class="castle-layer-track" id="castle-layer-track">
+                <div class="castle-layer" data-layer="1">
+                  <div class="castle-grid-wrap">
+                    <div class="outer-ring" id="outer-ring"></div>
+                    <div class="center-slot" id="center-slot"></div>
+                  </div>
+                </div>
+                <div class="castle-layer" data-layer="2">
+                  <div class="castle-grid-wrap castle-grid-wrap--upgrades">
+                    <div class="upgrade-col" id="hall-col"></div>
+                    <div class="upgrade-col" id="merc-col"></div>
+                    <div class="upgrade-col" id="barracks-col"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button class="castle-layer-arrow castle-layer-arrow--next" id="layer-next" type="button" aria-label="Next"><span>&rsaquo;</span></button>
+          </div>
+        </main>
+      </div>`,
+  },
+
+  heroes: {
+    title: 'Heroes',
+    shell: `
+      <div class="demo-tabs" id="factions"></div>
+      <div class="screen">
+        <div class="demo-scroll">
+          <div class="faction-slide-content">
+            <div id="hero-card"></div>
+            <p class="faction-slide-desc" id="hero-flavor"></p>
+          </div>
+        </div>
+      </div>
+      <div class="prep-track-wrap branch-track-wrap">
+        <div class="portrait-track" id="hero-track"></div>
+      </div>`,
+  },
+
+  evolve: {
+    title: 'Unit evolution',
+    shell: `
+      <div class="demo-tabs" id="factions"></div>
+      <div class="screen">
+        <div class="demo-scroll" id="tree-host"></div>
+      </div>
+      <div class="prep-track-wrap branch-track-wrap">
+        <div class="portrait-track" id="line-track"></div>
+      </div>`,
+  },
+
+  embark: {
+    title: 'Embark',
+    shell: `
+      <div class="screen screen-embark">
+        <main class="embark-main">
+          <div class="demo-scroll">
+            <div class="embark-regions-grid" id="regions"></div>
+          </div>
+        </main>
+      </div>`,
+  },
+
+  items: {
+    title: 'Items',
+    shell: `
+      <div class="demo-tabs" id="tabs"></div>
+      <div class="demo-scroll">
+        <div class="demo-grid" id="grid"></div>
+      </div>`,
+  },
+
+  // The tome layers are the game's own item-screen chrome: engraving and
+  // transmutation are both mounted into a layer of it.
+  transmute: {
+    title: 'Transmutation',
+    shell: `
+      <div class="screen"><main class="items-main"><div class="tome-layers">
+        <div class="tome-layer-viewport"><div class="tome-layer-track">
+          <div class="tome-layer tome-layer--active" id="host"></div>
+        </div></div>
+      </div></main></div>`,
+  },
+
+  // The Valor row above the tome: in the game it belongs to the app shell
+  // rather than to any screen, and a framed screen has no shell to inherit it
+  // from, so demo-boot renders it (`renderValorBar`).
+  engrave: {
+    title: 'Engraving',
+    shell: `
+      <div id="valor-bar"></div>
+      <div class="screen"><main class="items-main"><div class="tome-layers">
+        <div class="tome-layer-viewport"><div class="tome-layer-track">
+          <div class="tome-layer tome-layer--active" id="host"></div>
+        </div></div>
+      </div></main></div>`,
+  },
+
+  colossus: {
+    title: 'Colossus',
+    shell: `
+      <div class="screen">
+        <div class="demo-scroll">
+          <div class="colossus-page" id="host"></div>
+        </div>
+      </div>`,
+  },
+};

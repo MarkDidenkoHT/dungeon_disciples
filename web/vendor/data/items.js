@@ -18,12 +18,16 @@
 //
 // Equip restrictions (checked in data/item_rules.js, enforced by
 // POST /items/equip and mirrored by the roster UI):
-//   tag_required  unit must carry this tag
+//   tag_required  unit must carry this tag. May be a LIST, and then the unit
+//                 must carry every tag in it — see requiredTags() below.
 // Tag composition:
 //   adds_tag      'Construct'    unit also counts as this tag while worn
 //   removes_tag   'Engineer'     unit STOPS counting as this tag while worn.
 //                 Applied after adds_tag. Enables the exclusivity passives
-//                 ("while this is your only Engineer") to be built for.
+//                 ("while this is your only Engineer") to be built for. A
+//                 stripping item lists the stripped tag in `tag_required` too,
+//                 so it can only go on a unit the strip actually costs
+//                 something.
 //   blocked_tags    ['Construct']  refuse units carrying ANY of these
 //   blocked_actions ['heal']       refuse units whose action is of this kind
 //                                  ('damage' | 'heal' | 'sacrifice' | 'none')
@@ -32,6 +36,7 @@
 //                                  targets. Put it on per-hit effects (bleed,
 //                                  burn, poison) so an AoE unit cannot apply
 //                                  them to the whole enemy line at once.
+//   allowed_unit_ids ['e1']        only these exact unit definitions may equip it
 // The last three are only needed for special cases: an item whose `passive`
 // declares a trigger that requires attacking (on_hit / on_kill /
 // preemptive_strike) or healing (on_heal) is ALREADY refused automatically on a
@@ -49,7 +54,7 @@ const ITEM_DEFS = {
     name:         'Broken Sigil',
     name_ru:      'Расколотая Печать',
     faction:      null,
-    tag_required: 'Engineer',
+    tag_required: ['Engineer', 'Construct'],
     adds_tag:     null,
     removes_tag:  'Construct',
     stat_mods:    { hp: 4, armor: 2 },
@@ -65,10 +70,10 @@ const ITEM_DEFS = {
     name:         'Desecrated Plate',
     name_ru:      'Оскверненные Латы',
     faction:      null,
-    tag_required: 'Knight',
+    tag_required: ['Knight', 'Holy'],
     adds_tag:     'Zombie',
     removes_tag:  'Holy',
-    stat_mods:    { hp: 5, armor: 5 },
+    stat_mods:    { hp: 3, armor: 5 },
     passive:      'essence_of_power 1',
     icon:         'desecrated_plate',
     rarity:       'shattered',
@@ -81,10 +86,10 @@ const ITEM_DEFS = {
     name:         "Blood Of A Saint",
     name_ru:      'Кровь Святого',
     faction:      null,
-    tag_required: 'Holy',
+    tag_required: ['Spirit', 'Holy'],
     adds_tag:     null,
-    removes_tag:  'Spirit',
-    stat_mods:    { hp: 5, death_resist: 5},
+    removes_tag:  'Holy',
+    stat_mods:    { hp: 4, death_resist: 5},
     passive:      'inner_fire 1',
     icon:         'blood_of_a_saint',
     rarity:       'shattered',
@@ -97,10 +102,10 @@ const ITEM_DEFS = {
     name:         "Bloodless",
     name_ru:      'Обескровленный',
     faction:      null,
-    tag_required: null,
+    tag_required: ['Vampire', 'Zombie'],
     adds_tag:     'Skeleton',
     removes_tag:  'Zombie',
-    stat_mods:    { hp: 5, life_resist: 5},
+    stat_mods:    { hp: 4, life_resist: 5},
     passive:      'vampires_vigil 1',
     icon:         'bloodless',
     rarity:       'shattered',
@@ -115,7 +120,8 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: 'Holy',
     adds_tag:     'Demon',
-    stat_mods:    { hp: 5, fire_resist: 5 },
+    removes_tag:  'Holy',
+    stat_mods:    { hp: 4, fire_resist: 5 },
     passive:      'vow_of_ash 1',
     icon:         'oathbreaker',
     rarity:       'shattered',
@@ -164,8 +170,9 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: 'Knight',
     adds_tag:     null,
-    stat_mods:    { fire_resist: 8, death_resist: 8 },
-    passive:      'radiance 1',
+    stat_mods:    { hp: 5, fire_resist: 5, death_resist: 5 },
+    passive:      'radiance 3',
+    allowed_unit_ids: ['e2121', 'e212'],
     icon:         'aegis_of_the_first_ward',
     rarity:       'mythic',
     unique:       true,
@@ -193,14 +200,14 @@ const ITEM_DEFS = {
     name_ru:      'Мощь Непорочных',
     faction:      null,
     tag_required: null,
-    adds_tag:     'Knight',
-    stat_mods:    { action_power: 5, death_resist: 5 },
+    adds_tag:     'Caster',
+    stat_mods:    { action_power: 2, death_resist: 5 },
     passive:      'iron_will 2',
     icon:         'might_of_the_pure',
     rarity:       'mythic',
     unique:       true,
-    cost:         { shard_of_might: 10, vial_of_pure_blood: 2, Gold: 350, Crystals_Life: 25, Crystals_Death: 25 },
-    item_cost:    { death_resistance_potion: 2, mace: 1, seal_of_power: 1}
+    cost:         { shard_of_might: 12, vial_of_pure_blood: 2, Gold: 350, Crystals_Life: 25 },
+    item_cost:    { death_resistance_potion: 2, mace: 2}
   },
   sanctified_bulwark: {
     key:          'sanctified_bulwark',
@@ -217,6 +224,21 @@ const ITEM_DEFS = {
     cost:         { aggrails_signet: 2, Gold: 150, Crystals_Nature: 10  },
     item_cost:    { iron_armor: 1, orb_of_light: 1 },
   },
+  champions_belt: {
+    key:          'champions_belt',
+    name:         'Champions Belt',
+    name_ru:      'Пояс Чемпиона',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     'Holy',
+    stat_mods:    { hp: 2, armor: 2 },
+    passive:      'beacon_of_hope 1',
+    icon:         'champions_belt',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { aggrails_signet: 2, Gold: 150, Crystals_Nature: 10  },
+    item_cost:    { iron_armor: 1, orb_of_light: 1 },
+  },
   divine_circlet: {
     key:          'divine_circlet',
     name:         'Divine Circlet',
@@ -225,7 +247,7 @@ const ITEM_DEFS = {
     tag_required: null,
     adds_tag:     'Spirit',
     blocked_tags: ['Skeleton', 'Zombie'],
-    stat_mods:    { hp: 5, action_power: 2 },
+    stat_mods:    { hp: 3, action_power: 2 },
     passive:      'pure_blood 1',
     icon:         'divine_circlet',
     rarity:       'epic',
@@ -288,7 +310,7 @@ const ITEM_DEFS = {
     passive:      'inspiration_max_hp 1',
     icon:         'codex_aeternum',
     rarity:       'rare',
-    cost:         { Gold: 50, Crystals_Life: 25 },
+    cost:         { Gold: 50, Crystals_Life: 25, vial_of_pure_blood: 1 },
     item_cost:    { padded_armor: 1 },
   },
   gift_of_eternity: {
@@ -298,13 +320,28 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     'Vampire',
-    stat_mods:    { action_power: 3, hp: 3, armor: 3 },
+    stat_mods:    { action_power: 2, hp: 3, armor: 3 },
     passive:      'inspiration_max_hp 1',
     icon:         'gift_of_eternity',
     rarity:       'epic',
     unique:       true,
-    cost:         { Gold: 150, Crystals_Life: 10, Crystals_Frost: 10 },
+    cost:         { Gold: 150, Crystals_Life: 10, Crystals_Frost: 10, vial_of_pure_blood: 1 },
     item_cost:    { codex_aeternum: 1, vampirics_dagger: 1 },
+  },
+  malgraths_sigil: {
+    key:          'malgraths_sigil',
+    name:         'Malgraths Sigil',
+    name_ru:      'Знак Малграта',
+    faction:      null,
+    tag_required: 'Knight',
+    adds_tag:     'Skeleton',
+    stat_mods:    { action_power: 2, hp: 3, armor: 3 },
+    passive:      'iron_will 1',
+    icon:         'malgraths_sigil',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { Gold: 150, Crystals_Life: 10, Crystals_Frost: 10, grave_dust: 2 },
+    item_cost:    { codex_aeternum: 1, seal_of_power: 2 },
   },
   codex_militarum: {
     key:          'codex_militarum',
@@ -317,14 +354,14 @@ const ITEM_DEFS = {
     passive:      'inspiration_damage 1',
     icon:         'codex_militarum',
     rarity:       'rare',
-    cost:         { Gold: 90, Crystals_Life: 25 },
+    cost:         { Gold: 90, Crystals_Life: 25, crystal_dust: 1 },
   },
   court_regalia: {
     key:          'court_regalia',
     name:         'Court Regalia',
     name_ru:      'Придворные Регалии',
     faction:      'choir_of_the_cursed',
-    tag_required: 'Court',
+    tag_required: null,
     adds_tag:     null,
     stat_mods:    { hp: 3 },
     passive:      'choir 1',
@@ -340,7 +377,7 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     'Dragon',
-    stat_mods:    { armor: 2, hp: 4, fire_resist: 8 },
+    stat_mods:    { armor: 4, hp: 5, fire_resist: 8 },
     passive:      'volcanic_skin 1',
     icon:         'dragon_skin',
     rarity:       'mythic',
@@ -355,7 +392,7 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     'Demon',
-    stat_mods:    { armor: 3, hp: 3, death_resist: 5},
+    stat_mods:    { armor: 5, hp: 3, death_resist: 8},
     passive:      'beacon_of_despair 1',
     icon:         'aldras_devotion',
     rarity:       'mythic',
@@ -371,7 +408,7 @@ const ITEM_DEFS = {
     tag_required: null,
     adds_tag:     'Demon',
     stat_mods:    { action_power: 5, death_resist: 5},
-    passive:      'aggrails_blessing 1',
+    passive:      'aggrails_blessing 2',
     icon:         'aldras_patience',
     rarity:       'mythic',
     unique:       true,
@@ -404,7 +441,7 @@ const ITEM_DEFS = {
     passive:      'banquet 1',
     icon:         'mothers_gift',
     rarity:       'rare',
-    cost:         { Gold: 50, Crystals_Death: 20, Crystals_Frost: 10, Crystals_Air: 10 },
+    cost:         { Gold: 50, Crystals_Death: 20, Crystals_Frost: 10, Crystals_Air: 10, grave_dust: 1 },
     requires:     { region: 'any', level: 1 },
   },
   shadow_robe: {
@@ -419,7 +456,7 @@ const ITEM_DEFS = {
     icon:         'shadow_robe',
     unique:       true,
     rarity:       'epic',
-    cost:         { Gold: 150, Crystals_Death: 20, Crystals_Frost: 10, Crystals_Nature: 20 },
+    cost:         { Gold: 150, Crystals_Death: 20, Crystals_Frost: 10, Crystals_Nature: 20, grave_dust: 1 },
     item_cost:    { mothers_gift: 1},
     requires:     { region: 'any', level: 1 },
   },
@@ -435,7 +472,7 @@ const ITEM_DEFS = {
     icon:         'dark_determination',
     rarity:       'rare',
     unique:       true,
-    cost:         { Gold: 50, Crystals_Death: 20, Crystals_Nature: 20 },
+    cost:         { Gold: 50, Crystals_Death: 20, Crystals_Nature: 20, grave_dust: 1 },
     requires:     { region: 'any', level: 1 },
   },
   vampirics_dagger: {
@@ -450,7 +487,7 @@ const ITEM_DEFS = {
     icon:         'vampirics_dagger',
     rarity:       'rare',
     unique:       true,
-    cost:         { Gold: 40, Crystals_Death: 15, Crystals_Life: 15 },
+    cost:         { Gold: 40, Crystals_Death: 15, Crystals_Life: 15, vial_of_pure_blood: 1 },
     requires:     { region: 'any', level: 1 },
     item_cost:    { life_charm: 1 }
   },
@@ -466,8 +503,7 @@ const ITEM_DEFS = {
     passive:      'stoicism 1',
     icon:         'orb_of_light',
     rarity:       'rare',
-    unique:       true,
-    cost:         { Gold: 40, Crystals_Life: 30 },
+    cost:         { Gold: 40, Crystals_Life: 30, vial_of_pure_blood: 1 },
     requires:     { region: 'any', level: 1 },
     item_cost:    { life_charm: 1 }
   },
@@ -482,7 +518,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'padded_armor',
     rarity:       'common',
-    cost:         { Gold: 50 },
+    cost:         { Gold: 50, crystal_dust: 1 },
   },
   iron_armor: {
     key:          'iron_armor',
@@ -496,7 +532,7 @@ const ITEM_DEFS = {
     blocked_tags: ['Spirit', 'Caster'],
     icon:         'iron_armor',
     rarity:       'rare',
-    cost:         { Gold: 40, Crystals_Frost: 15, Crystals_Fire: 15 },
+    cost:         { Gold: 40, Crystals_Frost: 15, Crystals_Fire: 15, crystal_dust: 1 },
     item_cost:    { padded_armor: 1 },
   },
   rimeheart: {
@@ -511,7 +547,7 @@ const ITEM_DEFS = {
     blocked_tags: ['Spirit', 'Caster'],
     icon:         'rimeheart',
     rarity:       'epic',
-    cost:         { Gold: 150, Crystals_Frost: 25 },
+    cost:         { Gold: 150, Crystals_Frost: 25, crystal_dust: 1 },
     item_cost:    { iron_armor: 1, cold_resistance_potion: 1 },
   },
   everliving_stalk: {
@@ -526,7 +562,7 @@ const ITEM_DEFS = {
     blocked_tags: ['Demon', 'Zombie'],
     icon:         'everliving_stalk',
     rarity:       'epic',
-    cost:         { Gold: 200, Crystals_Life: 20, Crystals_Death: 20, Crystals_Nature: 20, Crystals_Air: 20, Crystals_Fire: 20 },
+    cost:         { Gold: 200, Crystals_Life: 40, Crystals_Death: 20, Crystals_Nature: 20, Crystals_Fire: 20, grave_dust: 1 },
   },
   fire_resistance_potion: {
     key:          'fire_resistance_potion',
@@ -539,7 +575,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'fire_resistance_potion',
     rarity:       'common',
-    cost:         { Gold: 30, Crystals_Fire: 10 },
+    cost:         { Gold: 30, Crystals_Fire: 10, crystal_dust: 1 },
     requires:     { region: 'any', level: 1 },
   },
   orb_of_fire: {
@@ -555,7 +591,7 @@ const ITEM_DEFS = {
     blocked_tags: ['Spirit', 'Zombie'],
     icon:         'orb_of_fire',
     rarity:       'rare',
-    cost:         { Gold: 50, Crystals_Fire: 25 },
+    cost:         { Gold: 50, Crystals_Fire: 25, crystal_dust: 1 },
     item_cost:    { fire_resistance_potion: 1 },
   },
   fire_staff: {
@@ -602,7 +638,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'dragon_scale',
     rarity:       'common',
-    cost:         { Gold: 20, Crystals_Fire: 15 },
+    cost:         { Gold: 20, Crystals_Fire: 15, crystal_dust: 1 },
   },
   frost_cloak: {
     key:          'frost_cloak',
@@ -616,7 +652,7 @@ const ITEM_DEFS = {
     icon:         'frost_cloak',
     rarity:       'rare',
     unique:       true,
-    cost:         { Crystals_Life: 5, Crystals_Death: 5, Crystals_Nature: 5, Crystals_Air: 5, Crystals_Fire: 5 },
+    cost:         { Crystals_Life: 5, Crystals_Death: 5, Crystals_Nature: 5, Crystals_Air: 5, Crystals_Fire: 5, crystal_dust: 1 },
     requires:     { region: 'any', level: 2 },
     item_cost:    { cold_resistance_potion: 2 }
   },
@@ -632,7 +668,7 @@ const ITEM_DEFS = {
     icon:         'ember_mantle',
     rarity:       'rare',
     unique:       true,
-    cost:         { Gold: 30, Crystals_Fire: 15, Crystals_Life: 5 },
+    cost:         { Gold: 30, Crystals_Fire: 15, Crystals_Life: 5, vial_of_pure_blood: 1 },
     item_cost:    { fire_resistance_potion: 2 },
   },
   mossweave_cloak: {
@@ -647,7 +683,7 @@ const ITEM_DEFS = {
     icon:         'mossweave_cloak',
     rarity:       'rare',
     unique:       true,
-    cost:         { Gold: 30, Crystals_Nature: 15, Crystals_Air: 5 },
+    cost:         { Gold: 30, Crystals_Nature: 15, Crystals_Air: 5, grave_dust: 1 },
     item_cost:    { nature_resistance_potion: 2 },
   },
   caster_hat: {
@@ -663,7 +699,7 @@ const ITEM_DEFS = {
     icon:         'caster_hat',
     rarity:       'rare',
     unique:       true,
-    cost:         { Crystals_Frost: 5, Crystals_Air: 5  },
+    cost:         { Crystals_Frost: 5, Crystals_Air: 5, crystal_dust: 1 },
     requires:     { region: 'any', level: 2 },
     item_cost:    { seal_of_power: 1, life_charm: 1}
   },
@@ -681,7 +717,7 @@ const ITEM_DEFS = {
     icon:         'arcane_staff',
     rarity:       'epic',
     unique:       true,
-    cost:         { Gold: 150, Crystals_Frost: 10, Crystals_Air: 10, Crystals_Nature: 10, Crystals_Fire: 10, Crystals_Life: 10, Crystals_Death: 10  },
+    cost:         { Gold: 150, Crystals_Frost: 15, Crystals_Air: 15, Crystals_Nature: 15, Crystals_Fire: 15, crystal_dust: 1 },
     requires:     { region: 'any', level: 2 },
     item_cost:    { caster_hat: 1 }
   },
@@ -696,7 +732,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'death_resistance_potion',
     rarity:       'common',
-    cost:         { Gold: 30, Crystals_Death: 10 },
+    cost:         { Gold: 30, Crystals_Death: 10, grave_dust: 1 },
   },
   cold_resistance_potion: {
     key:          'cold_resistance_potion',
@@ -709,7 +745,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'cold_resistance_potion',
     rarity:       'common',
-    cost:         { Gold: 30, Crystals_Frost: 10 },
+    cost:         { Gold: 30, Crystals_Frost: 10, crystal_dust: 1 },
     requires:     { region: 'any', level: 1 },
   },
   life_resistance_potion: {
@@ -723,7 +759,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'life_resistance_potion',
     rarity:       'common',
-    cost:         { Gold: 30, Crystals_Life: 10 },
+    cost:         { Gold: 30, Crystals_Life: 10, vial_of_pure_blood: 1 },
     requires:     { region: 'any', level: 1 },
   },
   nature_resistance_potion: {
@@ -737,7 +773,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'nature_resistance_potion',
     rarity:       'common',
-    cost:         { Gold: 30, Crystals_Nature: 10 },
+    cost:         { Gold: 30, Crystals_Nature: 10, grave_dust: 1 },
     requires:     { region: 'any', level: 1 },
   },
   air_resistance_potion: {
@@ -751,7 +787,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'air_resistance_potion',
     rarity:       'common',
-    cost:         { Gold: 30, Crystals_Air: 10 },
+    cost:         { Gold: 30, Crystals_Air: 10, crystal_dust: 1 },
     requires:     { region: 'any', level: 1 },
   },
   crude_sword: {
@@ -766,7 +802,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'crude_sword',
     rarity:       'common',
-    cost:         { Gold: 25, Crystals_Death: 5, Crystals_Fire: 5 },
+    cost:         { Gold: 25, Crystals_Death: 5, Crystals_Fire: 5, grave_dust: 1 },
   },
   iron_sword: {
     key:          'iron_sword',
@@ -780,7 +816,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'iron_sword',
     rarity:       'rare',
-    cost:         { Gold: 40, Crystals_Fire: 15, Crystals_Nature: 15 },
+    cost:         { Gold: 40, Crystals_Fire: 15, Crystals_Nature: 15, crystal_dust: 1 },
     item_cost:    { crude_sword: 1 },
   },
   crystal_sword: {
@@ -843,7 +879,7 @@ const ITEM_DEFS = {
     icon:         'burning_fury',
     rarity:       'epic',
     unique:       true,
-    cost:         { Gold: 190, Crystals_Air: 15, Crystals_Frost: 15 },
+    cost:         { Gold: 190, Crystals_Air: 15, Crystals_Frost: 15, crystal_dust: 1 },
     item_cost:    { iron_sword: 1 },
   },
   mace: {
@@ -859,7 +895,7 @@ const ITEM_DEFS = {
     icon:         'mace',
     rarity:       'common',
     unique:       true,
-    cost:         { Gold: 30, Crystals_Death: 5, Crystals_Air: 5 },
+    cost:         { Gold: 30, Crystals_Death: 5, Crystals_Air: 5, grave_dust: 1 },
   },
   morning_star: {
     key:          'morning_star',
@@ -900,6 +936,7 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     requires_action: 'damage',
+    max_targets:       1,
     adds_tag:     null,
     stat_mods:    { action_power: 5, initiative: 2 },
     passive:      'aggrails_blessing 2',
@@ -920,7 +957,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'seal_of_power',
     rarity:       'common',
-    cost:         { Gold: 50 },
+    cost:         { Gold: 50, crystal_dust: 1 },
   },
   lion_signet: {
     key:          'lion_signet',
@@ -929,7 +966,7 @@ const ITEM_DEFS = {
     faction:      'empire',
     tag_required: null,
     adds_tag:     null,
-    stat_mods:    { action_power: 3, hp: 3 },
+    stat_mods:    { action_power: 2, hp: 3 },
     passive:      null,
     icon:         'lion_signet',
     rarity:       'rare',
@@ -947,7 +984,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'life_charm',
     rarity:       'common',
-    cost:         { Gold: 10, Crystals_Life: 10, Crystals_Death: 10 },
+    cost:         { Gold: 10, Crystals_Life: 10, Crystals_Death: 10, vial_of_pure_blood: 1 },
   },
   orb_of_pure_blood: {
     key:          'orb_of_pure_blood',
@@ -1008,7 +1045,7 @@ const ITEM_DEFS = {
     passive:      'poison 1',
     icon:         'poisonous_dagger',
     rarity:       'common',
-    cost:         { Gold: 30, Crystals_Nature: 10  },
+    cost:         { Gold: 30, Crystals_Nature: 10, crystal_dust: 1 },
   },
   frost_lance: {
     key:          'frost_lance',
@@ -1017,7 +1054,7 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     null,
-    stat_mods:    { action_power: 2 },
+    stat_mods:    { action_power: 3 },
     passive:      'chill 1',
     icon:         'frost_lance',
     rarity:       'rare',
@@ -1061,26 +1098,28 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     null,
-    stat_mods:    { death_resist: 10, hp: 3 },
+    stat_mods:    { death_resist: 8, hp: 3 },
     passive:      'resist_aura_death 2',
     icon:         'reliquary_of_dawn',
     rarity:       'epic',
     unique:       true,
-    cost:         { Gold: 210, Crystals_Life: 25, Crystals_Death: 10 },
-    item_cost:    { life_resistance_potion: 3 },
+    cost:         { Gold: 210, Crystals_Life: 25, Crystals_Death: 10, vial_of_pure_blood: 1 },
+    item_cost:    { life_resistance_potion: 2, death_resistance_potion: 2 },
   },
-  cloak_of_evasion: {
-    key:          'cloak_of_evasion',
-    name:         "Cloak Of Evasion",
-    name_ru:      'Плащ Уклонения',
-    faction:      null,
-    tag_required: null,
-    adds_tag:     null,
-    stat_mods:    null,
-    passive:      'dodge 1',
-    icon:         'cloak_of_evasion',
-    rarity:       'common',
-    cost:         { Gold: 10, Crystals_Air: 10, Crystals_Nature: 10  },
+  sanctified_reliquary_of_dawn: {
+    key:          'sanctified_reliquary_of_dawn',
+    name:         'Sanctified Reliquary Of Dawn',
+    name_ru:      'Освещенный Реликварий Рассвета',
+    faction:      'empire',
+    tag_required: 'Holy',
+    adds_tag:     'Caster',
+    stat_mods:    { death_resist: 10, hp: 5 },
+    passive:      'resist_aura_death 2',
+    icon:         'sanctified_reliquary_of_dawn',
+    rarity:       'mythic',
+    unique:       true,
+    cost:         { Gold: 610, Crystals_Life: 125, Crystals_Death: 10, vial_of_pure_blood: 1 },
+    item_cost:    { reliquary_of_dawn: 1, death_resistance_potion: 2 },
   },
   travelers_bedroll: {
     key:          'travelers_bedroll',
@@ -1094,7 +1133,7 @@ const ITEM_DEFS = {
     icon:         'travelers_bedroll',
     rarity:       'rare',
     unique:       true,
-    cost:         { Gold: 100, Crystals_Life: 15, Crystals_Frost: 10 },
+    cost:         { Gold: 100, Crystals_Life: 15, Crystals_Frost: 10, vial_of_pure_blood: 1 },
   },
   veterans_medal: {
     key:          'veterans_medal',
@@ -1108,7 +1147,7 @@ const ITEM_DEFS = {
     icon:         'veterans_medal',
     rarity:       'rare',
     unique:       true,
-    cost:         { Gold: 100, Crystals_Fire: 15, Crystals_Air: 10 },
+    cost:         { Gold: 100, Crystals_Fire: 15, Crystals_Air: 10, vial_of_pure_blood: 1 },
   },
   shackle_of_servitude: {
     key:          'shackle_of_servitude',
@@ -1122,7 +1161,7 @@ const ITEM_DEFS = {
     icon:         'shackle_of_servitude',
     rarity:       'rare',
     unique:       true,
-    cost:         { Gold: 100, Crystals_Death: 15, Crystals_Life: 10 },
+    cost:         { Gold: 100, Crystals_Death: 15, Crystals_Life: 10, grave_dust: 1 },
   },
   scavengers_satchel: {
     key:          'scavengers_satchel',
@@ -1136,7 +1175,7 @@ const ITEM_DEFS = {
     icon:         'scavengers_satchel',
     rarity:       'rare',
     unique:       true,
-    cost:         { Gold: 100, Crystals_Nature: 15, Crystals_Fire: 10 },
+    cost:         { Gold: 100, Crystals_Nature: 15, Crystals_Fire: 10, crystal_dust: 1 },
   },
   attuned_focus: {
     key:          'attuned_focus',
@@ -1150,7 +1189,7 @@ const ITEM_DEFS = {
     icon:         'attuned_focus',
     rarity:       'rare',
     unique:       true,
-    cost:         { Gold: 100, Crystals_Air: 15, Crystals_Frost: 10 },
+    cost:         { Gold: 100, Crystals_Air: 15, Crystals_Frost: 10, crystal_dust: 1 },
   },
   striders: {
     key:          'striders',
@@ -1163,7 +1202,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'striders',
     rarity:       'common',
-    cost:         { Gold: 20, Crystals_Air: 15 },
+    cost:         { Gold: 20, Crystals_Air: 15, crystal_dust: 1 },
   },
   ranger_boots: {
     key:          'ranger_boots',
@@ -1176,7 +1215,7 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'ranger_boots',
     rarity:       'rare',
-    cost:         { Gold: 25, Crystals_Nature: 10 },
+    cost:         { Gold: 25, Crystals_Nature: 10, grave_dust: 1 },
     item_cost:    { striders: 1}
   },
   dragon_step: {
@@ -1191,7 +1230,7 @@ const ITEM_DEFS = {
     icon:         'dragon_step',
     rarity:       'epic',
     unique:       true,
-    cost:         { Gold: 200, Crystals_Nature: 15, Crystals_Fire: 15, Crystals_Life: 15 },
+    cost:         { Gold: 200, Crystals_Nature: 15, Crystals_Fire: 15, Crystals_Life: 15, crystal_dust: 1 },
     item_cost:    { ranger_boots: 1, dragon_scale: 1}
   },
   glimmering_steps: {
@@ -1206,7 +1245,7 @@ const ITEM_DEFS = {
     icon:         'glimmering_steps',
     rarity:       'mythic',
     unique:       true,
-    cost:         { Gold: 225, Crystals_Nature: 10, Crystals_Fire: 10 },
+    cost:         { Gold: 225, Crystals_Nature: 10, Crystals_Fire: 10, crystal_dust: 1 },
     item_cost:    { dragon_step: 1, dragon_scale: 1}
   },
   stormglass_diadem: {
@@ -1221,7 +1260,7 @@ const ITEM_DEFS = {
     icon:         'stormglass_diadem',
     rarity:       'mythic',
     unique:       true,
-    cost:         { Gold: 325, Crystals_Air: 30 },
+    cost:         { Gold: 325, Crystals_Air: 30, crystal_dust: 1 },
     item_cost:    { air_resistance_potion: 2, seal_of_power: 1 },
   },
   iron_greaves: {
@@ -1236,7 +1275,7 @@ const ITEM_DEFS = {
     icon:         'iron_greaves',
     rarity:       'rare',
     unique:       true,
-    cost:         { Gold: 50, Crystals_Nature: 15, Crystals_Life: 15 },
+    cost:         { Gold: 50, Crystals_Nature: 15, Crystals_Life: 15, vial_of_pure_blood: 1 },
     item_cost:    { striders: 1}
   },
   healers_staff: {
@@ -1253,14 +1292,14 @@ const ITEM_DEFS = {
     icon:            'healers_staff',
     rarity:          'epic',
     unique:          true,
-    cost:            { Gold: 200, Crystals_Life: 25, Crystals_Air: 15 },
+    cost:            { Gold: 200, Crystals_Life: 25, Crystals_Air: 15, vial_of_pure_blood: 1 },
     item_cost:       { orb_of_pure_blood: 1, orb_of_light: 1 },
   },
   hunger: {
     key:             'hunger',
     name:            "Hunger",
     name_ru:         'Голод',
-    faction:         null,
+    faction:         'grail_of_sorrow',
     tag_required:    'Vampire',
     requires_action: 'damage',
     max_targets:     1,
@@ -1295,9 +1334,9 @@ const ITEM_DEFS = {
     name_ru:         'Касание Митраила',
     faction:         'empire',
     tag_required:    'Holy',
+    adds_tag:         'Caster',
     requires_action: 'damage',
     max_targets:     1,
-    adds_tag:        null,
     stat_mods:       { action_power: 2, hp: 5, fire_resist: 5 },
     passive:         'mithrails_light 2',
     icon:            'mithrails_touch',
@@ -1420,6 +1459,22 @@ function canonicalTag(tag) {
 function removedTags(spec) {
   if (!spec) return [];
   return (Array.isArray(spec) ? spec : [spec]).map(canonicalTag).filter(Boolean);
+}
+
+// The tags an item DEMANDS, same shape rules as removedTags — one tag or a list,
+// and a list means ALL of them. The shattered items ask for two: the tag they
+// strip, so the strip actually costs the unit something, plus the tag that makes
+// wearing it worth the loss.
+function requiredTags(spec) {
+  if (!spec) return [];
+  return (Array.isArray(spec) ? spec : [spec]).map(canonicalTag).filter(Boolean);
+}
+
+// Which of them the unit is missing, canonicalised, so the equip endpoint and
+// every screen that greys out a card name the same tags in the same words.
+function missingRequiredTags(spec, unitTags) {
+  const have = new Set((unitTags || []).filter(Boolean).map(t => String(t).toLowerCase()));
+  return requiredTags(spec).filter(t => !have.has(t.toLowerCase()));
 }
 
 // Stat keys that owned rows spell differently from what the loop below reads.
@@ -1603,11 +1658,13 @@ const ITEM_DOWNGRADES = {
 
 export {
   ITEM_DEFS, ITEM_DOWNGRADES, applyItemModifiers, removedTags, STAT_MOD_FLOORS,
+  requiredTags, missingRequiredTags,
   CRAFT_REGION_LABELS, CRAFT_GATE_BY_RARITY,
   craftRequirements, meetsCraftRequirements, craftRequirementText,
 };
 if (typeof module !== 'undefined') module.exports = {
   ITEM_DEFS, ITEM_DOWNGRADES, applyItemModifiers, removedTags, STAT_MOD_FLOORS,
+  requiredTags, missingRequiredTags,
   CRAFT_REGION_LABELS, CRAFT_GATE_BY_RARITY,
   craftRequirements, meetsCraftRequirements, craftRequirementText,
 };
