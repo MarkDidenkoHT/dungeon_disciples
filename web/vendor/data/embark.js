@@ -216,7 +216,6 @@ const REGION_ENCOUNTERS = {
                    { spell_id: 'boss_glacial_burst', power: 3 }] },
         { key: 'glittering_abyss.rimewarden',     cell: 4 },
         { key: 'glittering_abyss.rime_splinter',  cell: 1 },
-        { key: 'glittering_abyss.rime_splinter',  cell: 3 },
       ],
       rewards: {
         gold: 75, xp: 165,
@@ -484,9 +483,8 @@ function getEncounter(region_id, level) {
 }
 
 // ── Where does X drop? ──────────────────────────────────────────────────────
-// material -> region ids, so tapping a crafting ingredient can say where to go.
-// Materials are crystal names ('Crystals_Fire'), trophy ids ('grave_dust'), or
-// 'Gold'.
+// material -> region ids, so tapping a shortfall can say where to go. Materials
+// include crystals, trophies, 'Gold', and tokens awarded on first clears.
 let _dropIndex = null;
 function buildDropIndex() {
   const index = {};
@@ -503,6 +501,7 @@ function buildDropIndex() {
       if (rw.gold) add('Gold', region.id);
       for (const c of rw.crystals) add(c.type, region.id);
       for (const id of Object.keys(rw.trophies)) add(id, region.id);
+      for (const id of Object.keys(getFirstClearTokens(level) || {})) add(id, region.id);
     }
   }
   return Object.fromEntries(Object.entries(index).map(([k, v]) => [k, [...v]]));
@@ -566,6 +565,12 @@ const FIRST_CLEAR_TOKENS = {
   9: { tome_of_knowledge: 1 },
 };
 
+// Quick Battle: a cleared level resolved instantly for its resources alone.
+// Three supplies rather than the one a real embark costs, and only when the
+// squad outweighs the encounter by more than this margin.
+const QUICK_BATTLE_SUPPLY_COST  = 3;
+const QUICK_BATTLE_POWER_MARGIN = 100;
+
 // XP a single Tome of Knowledge pours into one unit.
 const TOME_XP = 100;
 
@@ -581,9 +586,9 @@ const TOKEN_DEFS = {
     id:   'crossroad_sigil',
     name: 'Crossroad Sigil',
     icon: '✦',
-    art:  'assets/icons/recources/crossroad_sigil.png',
-    desc: 'Respec a building into a branch it did not come from, at the same tier. The normal respec cost still applies.',
-    where:'First clear of level 3 in any region.',
+    art:  'assets/icons/recources/crossroad_sigil.svg',
+    desc: 'Respec a building into a different branch at the same tier. Every swap costs Crossroad Sigils; deeper branch swaps cost more.',
+    where:'First clear of levels 3 and 7 in any region.',
   },
   tome_of_knowledge: {
     id:   'tome_of_knowledge',
@@ -613,5 +618,5 @@ function getFactionHomeRegion(faction) {
   return regions[0] || REGIONS.find(r => !r.comingSoon)?.id || null;
 }
 
-export { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, eventRegionsForMaterial, getFactionHomeRegion, FIRST_CLEAR_TOKENS, getFirstClearTokens, TOME_XP, TOKEN_DEFS };
-if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, eventRegionsForMaterial, getFactionHomeRegion, FIRST_CLEAR_TOKENS, getFirstClearTokens, TOME_XP, TOKEN_DEFS };
+export { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, eventRegionsForMaterial, getFactionHomeRegion, FIRST_CLEAR_TOKENS, getFirstClearTokens, TOME_XP, TOKEN_DEFS, QUICK_BATTLE_SUPPLY_COST, QUICK_BATTLE_POWER_MARGIN };
+if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, eventRegionsForMaterial, getFactionHomeRegion, FIRST_CLEAR_TOKENS, getFirstClearTokens, TOME_XP, TOKEN_DEFS, QUICK_BATTLE_SUPPLY_COST, QUICK_BATTLE_POWER_MARGIN };

@@ -255,7 +255,7 @@ for (const img of document.querySelectorAll('img[data-src]')) {
 // than it needs to be and still correct; after the first one the stylesheet and
 // the data modules are served from cache.
 function demoSrc(name) {
-  return `demos/${name}.html?lang=${lang}&faction=${faction}`;
+  return `demos/demo.html?demo=${name}&lang=${lang}&faction=${faction}`;
 }
 
 for (const frame of document.querySelectorAll('iframe[data-demo]')) {

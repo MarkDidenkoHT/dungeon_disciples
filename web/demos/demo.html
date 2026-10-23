@@ -1,3 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo</title>
+<link rel="stylesheet" href="../vendor/public/style.css">
+<style>
+/* The frame's own styles, inline because there is exactly one demo page and a
+   second request for 200 lines is a request this page can do without. The
+   game's stylesheet above does the real work; everything here either undoes a
+   desktop habit the game never has (a visible scrollbar) or belongs to the
+   handful of elements the demos add on top of the game's own markup. */
 html, body {
   height: 100%;
   overflow: hidden;
@@ -212,3 +225,36 @@ body {
 .demo-grid .item-card {
   cursor: default;
 }
+</style>
+</head>
+<body>
+<div class="demo-root" id="demo-root"></div>
+<script type="module">
+// One page for all eight demos. The query picks which: `?demo=castle`, plus the
+// `?lang=` and `?faction=` every frame is loaded with (demo-boot reads those).
+//
+// The markup is injected before the demo's own module is imported, because a
+// screen mounts into elements it expects to already be there. The module is
+// loaded dynamically and only for the demo that was asked for, which is what
+// keeps a frame from paying for the others' data: the castle alone pulls the
+// whole building table, embark pulls every encounter.
+import { DEMOS } from './demo-boot.js';
+
+const name = new URLSearchParams(location.search).get('demo');
+const demo = DEMOS[name];
+
+if (!demo) {
+  // Only reachable by hand-editing the URL; the landing page only ever asks for
+  // a name it has. Say so rather than showing an empty frame.
+  document.getElementById('demo-root').innerHTML =
+    `<p class="demo-note">Unknown demo. Try ${Object.keys(DEMOS).map(k => `<a href="?demo=${k}">${k}</a>`).join(', ')}.</p>`;
+} else {
+  document.title = demo.title;
+  document.getElementById('demo-root').innerHTML = demo.shell;
+  // `name` is a key of DEMOS, checked above — never anything the URL supplied
+  // verbatim.
+  await import(`./${name}.js`);
+}
+</script>
+</body>
+</html>

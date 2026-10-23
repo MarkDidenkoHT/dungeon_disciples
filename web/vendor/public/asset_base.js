@@ -80,10 +80,11 @@ export function assetUrl(path) {
   return ASSET_BASE + p.replace(/^\/assets/, '');
 }
 
-// The nine background images in style.css cannot call assetUrl, so each one is
+// The background images in style.css cannot call assetUrl, so each one is
 // a CSS variable declared with a CDN URL. On fallback they are rewritten here.
 const CSS_IMAGE_VARS = [
   ['--img-battle-grid',        '/assets/icons/ui/battle_grid.png'],
+  ['--img-combat-log',         '/assets/icons/ui/combat_log.jpg'],
   ['--img-nav-active',         '/assets/icons/ui/bottom-nav-active.png'],
   ['--img-nav',                '/assets/icons/ui/bottom-nav.png'],
   ['--img-bottom-ui',          '/assets/icons/ui/bottom_ui.jpg'],
@@ -92,6 +93,7 @@ const CSS_IMAGE_VARS = [
   ['--img-formation-highlight','/assets/icons/ui/formation_highligt.png'],
   ['--img-resource-bar',       '/assets/icons/ui/recource_bar.png'],
   ['--img-battle-prep-bg',     '/assets/screens/battle_prep_bg.jpeg'],
+  ['--img-action-panel',       '/assets/icons/ui/action_panel.png'],
 ];
 
 function remember(useFallback) {

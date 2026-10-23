@@ -257,7 +257,7 @@ export async function renderColossusPage(host, state, { player, L, onAttack, onR
         <div class="colossus-muted">${restingRows.length ? CT.resting[L](restingRows.length) : CT.restingNone[L]}</div>
         ${restingRows.length ? `
           <div class="colossus-resting">${restingRows.map(u => {
-            const name = esc(unitName(resolveUnitDef(u) || u.unit_data || {}, player));
+            const name = esc(unitName(u, player));
             return `
               <div class="colossus-rest-unit">
                 <img src="${portraitUrl(u.unit_data?.unit_id)}" alt="${name}" title="${name}" onerror="this.style.visibility='hidden'">
@@ -321,7 +321,7 @@ export async function renderColossusPage(host, state, { player, L, onAttack, onR
       const id  = String(btn.dataset.roster || '');
       const row = restingRows.find(u => String(u.id) === id);
       // resolveUnitDef dereferences unit_data, so it is never handed a missing row.
-      const name = unitName(resolveUnitDef(row || {}) || row?.unit_data || {}, player);
+      const name = unitName(row, player);
       wake(btn, [id], CT.wakeAsk[L](name, refreshCostText(1, L)));
     });
   }
