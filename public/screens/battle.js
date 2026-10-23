@@ -398,10 +398,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return entry.text ?? '';
   }
 
-  // opts.litany: a verse of a litany. Those hold until the whole chant has
-  // played (they are meant to be read as one), so they get their own style, a
-  // longer life and NO tap-to-dismiss — a tap mid-chant would clear a line the
-  // next one is answering.
+  // opts.litany: a verse of a litany. Barks and litany phrases share the same
+  // toast style; verses hold until the whole chant has played and cannot be
+  // dismissed by a tap, which would clear a line the next one is answering.
   function showBarkToast(actorId, text, opts = {}) {
     if (player?.settings?.barks_enabled === false) return;
     if (!text) return;
