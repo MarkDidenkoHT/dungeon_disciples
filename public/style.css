@@ -5173,7 +5173,12 @@ button.cost-bar-item:active { transform: scale(0.9); }
   border: 1px solid #e0bb62;
   border-radius: 8px;
   padding: 4px;
-  font-size: 0.55rem;
+  /* A cell is 78px across on a 375px phone, which leaves 61px of text once the
+     inset, the border and the padding are paid. At 0.55rem the long single
+     words were missing it by a letter - "Oathbreaker!" measured 63px,
+     "responsibility" 65px, "Инквизитор!" 64px - and `overflow-wrap: anywhere`
+     below broke each of them one letter from the end. 0.5rem fits all three. */
+  font-size: 0.5rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   line-height: 1.2;

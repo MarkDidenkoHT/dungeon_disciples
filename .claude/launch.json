@@ -4,8 +4,26 @@
     {
       "name": "web-landing",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "4178", "--directory", "web"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4178",
+        "--directory",
+        "web"
+      ],
       "port": 4178
+    },
+    {
+      "name": "game-static",
+      "runtimeExecutable": "python",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4179",
+        "--directory",
+        "public"
+      ],
+      "port": 4179
     }
   ]
 }
