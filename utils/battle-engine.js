@@ -1458,16 +1458,17 @@ class BattleEngine {
           // blow and the body.
           if (remaining > 0) remaining = this.absorbWithShield(target, remaining);
           if (remaining > 0) {
-            // Decided BEFORE the blow is logged: a litany's chorus verses and
-            // their cosmetic strikes have to be in the log ahead of the kill
-            // they are staging (docs/combat-barks-design.md §5.2).
-            const litany = (target.battle_hp - remaining) <= 0
-              ? this.fireLitany(actor, target) : null;
             target.battle_hp = Math.max(0, target.battle_hp - remaining);
             this.tallyDamage(target, remaining, actor.unit_data?.damage_source);
             this.creditDeed(actor, remaining);
             const dead = target.battle_hp <= 0;
             if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
+            // Stage a litany only after death passives resolve. Some champions
+            // survive a lethal blow (for example Malgrath's Undying), so HP
+            // reaching zero alone is not enough to earn the kill-triggered rite.
+            // Keep this before the action log so a real kill's verses still lead it.
+            const litany = dead && !target.alive
+              ? this.fireLitany(actor, target) : null;
             this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - remaining, killed: !target.alive });
             this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
             this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });
@@ -1556,14 +1557,16 @@ class BattleEngine {
     if (remaining > 0) remaining = this.applyRecuperate(target, remaining);
     if (remaining > 0) remaining = this.absorbWithShield(target, remaining);
     if (remaining > 0) {
-      // See the same check in executeAction — the chorus speaks before the kill.
-      const litany = (target.battle_hp - remaining) <= 0
-        ? this.fireLitany(actor, target) : null;
       target.battle_hp = Math.max(0, target.battle_hp - remaining);
       this.tallyDamage(target, remaining, actor.unit_data?.damage_source);
       this.creditDeed(actor, remaining);
       const dead = target.battle_hp <= 0;
       if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
+      // Match executeAction: a lethal hit is not a kill if a death passive
+      // brings the target back. Decide whether the litany fires from the final
+      // alive state, while still logging its verses before the killing blow.
+      const litany = dead && !target.alive
+        ? this.fireLitany(actor, target) : null;
       this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - remaining, killed: !target.alive });
       this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
       this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });

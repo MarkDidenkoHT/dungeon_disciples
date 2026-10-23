@@ -285,11 +285,11 @@ const LITANIES = [
       { speaker: 'B', strike: 'line',
         line: ['What is your duty!', 'В чём ваш долг!'] },
       { speaker: 'all_alive', strike: 'line',
-        line: ['To serve Mithrails will.', 'Служить воле Митраила.'] },
+        line: ['To serve Mithrails will.', 'Служить воле Митраила!'] },
       { speaker: 'B', strike: 'line',
         line: ['What is Mithrails will!', 'Какова воля Митраила!'] },
       { speaker: 'all_alive', strike: 'line',
-        line: ['That we fight and die.', 'Сражаться и умирать.'] },
+        line: ['That we fight and die.', 'Сражаться и умирать!'] },
       { speaker: 'B', strike: 'line',
         line: ['What is death!', 'Что есть смерть!'] },
       { speaker: 'all_alive', strike: 'line',
@@ -314,33 +314,30 @@ const LITANIES = [
     //   . B
     //   C B
     //
-    // Lead: Sentinel to Golden Lion: a TWO-CELL construct in the front column,
-    // shield_bash. The Artificer keeps it standing; it does the killing.
-    // The Artificer sings from the hero cell while the designated Sentinel
-    // lands the litany's blow.
-    hero: { ids: [
+    // The Artificer leads and lands the killing blow; its Sentinel construct
+    // stands with it in the front column as chorus.
+    lead: { ids: [
       'h_e_3', 'h_e_3_a2', 'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42',
       'h_e_3_b2', 'h_e_3_b3', 'h_e_3_b41', 'h_e_3_b42',
     ] },
-    lead: { ids: [
-      'e3', 'e31', 'e311', 'e3111',
-    ] },
     formation: { cells: [
-      // A: the Artificer; B remains this litany's designated lead.
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'hero' },
-      // B: the lead - the only cell that kills. Its own list is `lead` below.
-      { key: 'B', row: 1, col: 'front', size: 'column', role: 'lead' },
+      // A: the Artificer now leads from the back cell.
+      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'lead' },
+      // B: Sentinel to Golden Lion, a two-cell construct in the front column.
+      { key: 'B', row: 1, col: 'front', size: 'column', role: 'chorus', ids: [
+      'e3', 'e31', 'e311', 'e3111',
+      ] },
       // C: a Crusade - the enemy half of the reward.
       { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', calling: 'crusade' },
     ] },
     verses: [
-      { speaker: 'A', strike: 'support',
+      { speaker: 'B', strike: 'visual',
         line: ['The unclean may break our iron. They will not break our purpose.',
                'Нечисть может сломать наше железо. Но не нашу волю.'] },
       { speaker: 'C', strike: 'visual',
         line: ['No shape but man has leave to live beneath this sun.',
                'Под этим солнцем жить дозволено лишь человеку.'] },
-      { speaker: 'B', strike: 'lethal',
+      { speaker: 'A', strike: 'lethal',
         line: ['By Mithrail’s sentence: extinction.',
                'Приговором Митраила — истребление.'] },
     ],
