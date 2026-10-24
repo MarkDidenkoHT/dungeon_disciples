@@ -2111,7 +2111,8 @@ export function renderCastle(root, params = {}) {
     // The second hall in the same page: the point is that this layer is a whole
     // shelf of buildings, not one tutorial button. The Infirmary is the one
     // worth raising immediately — without it wounds do not heal between
-    // battles — and level 1 costs nothing, so this step can never wall.
+    // battles — and level 1 is 10 gold, which one battle pays for several times
+    // over, so this step can never wall.
     {
       id: 'build_infirmary',
       awaits: true,

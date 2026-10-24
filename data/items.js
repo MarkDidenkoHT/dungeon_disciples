@@ -560,7 +560,15 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'padded_armor',
     rarity:       'common',
-    cost:         { Gold: 50, crystal_dust: 1 },
+    // THE ONLY MATERIAL-FREE BLUEPRINT, and deliberately so: this is the item
+    // onboarding forges (TUTORIAL_CRAFT_KEY in public/screens/items.js). It
+    // used to cost a crystal_dust, which drops in glittering_abyss and nowhere
+    // else — while the tutorial sends the player to crimson_basilica level 1,
+    // whose rewards contain none. The Craft button stayed disabled, the
+    // craft_item spotlight silently never appeared, and the four equip steps
+    // behind it (all gated on heroNeedsArmour) never ran. Gold only, so the
+    // step can be reached from the path the tutorial actually walks.
+    cost:         { Gold: 50 },
   },
   iron_armor: {
     key:          'iron_armor',

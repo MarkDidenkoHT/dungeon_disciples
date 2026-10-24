@@ -299,7 +299,8 @@ const TUTORIAL_STEPS = {
   // The second build on the same page: it proves the layer holds more than the
   // one building the tutorial asked for, and it turns on between-battle healing,
   // which a player who skips it will miss without ever knowing it existed.
-  // Level 1 is free, so this step cannot wall a player who spent their gold.
+  // Level 1 of every hall is 10 gold, so this step cannot wall a player who
+  // spent their gold: one battle more than pays for it.
   build_blacksmith: {
     en: {
       title: 'The Blacksmith',
@@ -323,21 +324,21 @@ const TUTORIAL_STEPS = {
   craft_item: {
     en: {
       title: 'Forge Your First Item',
-      text: 'This is everything you can make. Padded Armor is the cheapest of it — 50 gold, no materials needed — and it grants +2 HP and +2 Armor. Tap Craft to forge it.',
+      text: 'This is everything you can make. Most of it needs materials your embarks bring back, but Padded Armor asks for nothing but 50 gold — and it grants +2 HP and +2 Armor. Tap Craft to forge it.',
     },
     ru: {
       title: 'Выкуйте первый предмет',
-      text: 'Здесь всё, что вы можете создать. Стёганый доспех — самый дешёвый: 50 золота и никаких материалов, а даёт +2 к здоровью и +2 к броне. Нажмите «Создать», чтобы выковать его.',
+      text: 'Здесь всё, что вы можете создать. Для большинства нужны материалы из походов, а Стёганому доспеху хватит 50 золота — и он даёт +2 к здоровью и +2 к броне. Нажмите «Создать», чтобы выковать его.',
     },
   },
   build_infirmary: {
     en: {
       title: 'The Infirmary',
-      text: 'One more here, and this one is free. The Infirmary heals your wounded between battles — without it, the damage a soldier takes stays with them. Raise it now, then come back for the rest of these halls as your treasury grows.',
+      text: 'One more here, and it costs almost nothing. The Infirmary heals your wounded between battles — without it, the damage a soldier takes stays with them. Raise it now, then come back for the rest of these halls as your treasury grows.',
     },
     ru: {
       title: 'Лазарет',
-      text: 'Ещё одно здание, и оно бесплатное. Лазарет лечит раненых между боями — без него полученные раны остаются с бойцом. Постройте его сейчас, а к остальным залам вернётесь, когда пополнится казна.',
+      text: 'Ещё одно здание, и стоит оно совсем недорого. Лазарет лечит раненых между боями — без него полученные раны остаются с бойцом. Постройте его сейчас, а к остальным залам вернётесь, когда пополнится казна.',
     },
   },
 
@@ -355,11 +356,11 @@ const TUTORIAL_STEPS = {
   errands_intro: {
     en: {
       title: 'Errands',
-      text: 'Work that needs one soldier, not an army. Send a unit out and it returns with XP, gold or crystals — no fighting, nobody lost. But it is away for the whole trip, 2 to 6 hours, and cannot embark until it is back, so never send the unit you need for your next battle.',
+      text: 'Work that needs one soldier, not an army. Send a unit out and it returns with XP, gold or crystals — no fighting, nobody lost. But it is away for the whole trip — 2 to 6 hours for ordinary work, longer for the rarer errands — and cannot embark until it is back, so never send the unit you need for your next battle.',
     },
     ru: {
       title: 'Поручения',
-      text: 'Работа, для которой нужен один боец, а не армия. Отправьте его — он вернётся с опытом, золотом или кристаллами, без боя и без потерь. Но всё это время, от 2 до 6 часов, его не будет в отряде и он не сможет пойти в поход — не отправляйте того, кто нужен вам в следующем бою.',
+      text: 'Работа, для которой нужен один боец, а не армия. Отправьте его — он вернётся с опытом, золотом или кристаллами, без боя и без потерь. Но всё это время — от 2 до 6 часов для обычной работы и дольше для редких поручений — его не будет в отряде и он не сможет пойти в поход, так что не отправляйте того, кто нужен вам в следующем бою.',
     },
   },
 };
