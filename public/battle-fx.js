@@ -157,18 +157,56 @@ function cellBoundsFor(dataId) {
   return { x: cellRect.left - baseRect.left, y: cellRect.top - baseRect.top, width: cellRect.width, height: cellRect.height };
 }
 
+// Every effect in this file is built on this, and playback AWAITS it (see
+// playbackSequence in public/screens/battle.js) — so a promise that never
+// settles does not merely drop an animation, it strands the whole battle with
+// `processing` stuck true and every button disabled.
+//
+// The ticker alone cannot be trusted to settle it. It is driven by
+// requestAnimationFrame, which the browser stops outright for a backgrounded
+// tab — a locked phone in the Telegram webview is the common case — and the
+// `if (!app)` bail-out below lives INSIDE the tick callback, so an app
+// destroyed mid-animation (navigating away, conceding, the result screen) takes
+// its ticker with it and that callback is never called again. Either way the
+// resolve never comes.
+//
+// So a wall-clock watchdog settles it regardless: whichever of the two gets
+// there first wins, and `settle` makes the loser a no-op. The slack is generous
+// because a frame budget blown on a weak phone is normal and should not cut an
+// animation short — this is a backstop, not a scheduler.
+const ANIM_WATCHDOG_SLACK_MS = 2000;
+
 function animate(duration, onTick) {
   return new Promise(resolve => {
     if (!app) { resolve(); return; }
     const speed = (typeof window !== 'undefined' && Number(window.__FX_SPEED__)) || 1;
     duration = duration / speed;
     const start = performance.now();
+    let done = false;
+    let watchdog = null;
+    const settle = () => {
+      if (done) return;
+      done = true;
+      if (watchdog) { clearTimeout(watchdog); watchdog = null; }
+      try { app?.ticker?.remove(tick); } catch {}
+      resolve();
+    };
     const tick = () => {
-      if (!app) { resolve(); return; }
+      if (done) return;
+      if (!app) { settle(); return; }
       const t = Math.min(1, (performance.now() - start) / duration);
       onTick(t);
-      if (t >= 1) { app.ticker.remove(tick); resolve(); }
+      if (t >= 1) settle();
     };
+    watchdog = setTimeout(() => {
+      if (done) return;
+      console.warn(`[battle-fx] animation watchdog fired after ${Math.round(duration)}ms — ticker stalled or app destroyed`);
+      // Land the animation on its end state before giving up, so a stalled
+      // ticker leaves the board where the effect meant to leave it rather than
+      // frozen halfway.
+      try { onTick(1); } catch {}
+      settle();
+    }, duration + ANIM_WATCHDOG_SLACK_MS);
     app.ticker.add(tick);
   });
 }

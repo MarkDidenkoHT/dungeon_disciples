@@ -55,16 +55,73 @@ export async function api(path, body = null) {
   }
 }
 
+// A request that never answers is the worst failure this client has, because it
+// looks like nothing at all: the caller's `await` simply never returns, so the
+// screen that set a `processing` flag before it keeps that flag forever and every
+// button stays disabled. That is exactly the mid-battle freeze — no error, no
+// stack, nothing in the log. `fetch` does not time out on its own: a socket the
+// phone dropped on a network handover, or a host still spinning up, can hold the
+// promise pending for minutes or until the tab is closed.
+//
+// So every call gets a deadline. A deadline that fires is a REJECTION, which the
+// callers already handle — battle's sendAction catches, clears `processing` and
+// re-renders, which hands control back to the player instead of stranding them.
+const DEFAULT_TIMEOUT_MS = 25000;
+// The paths that legitimately wait on a cold host. This is a free instance that
+// spins down when idle, and the first request after that pays the whole spin-up;
+// it is always one of these, because nothing else runs before the app has booted.
+const SLOW_PATH_TIMEOUT_MS = 75000;
+const SLOW_PATHS = new Set(['/login', '/bootstrap', '/battle/create']);
+
+function timeoutFor(pathName) {
+  return SLOW_PATHS.has(pathName) ? SLOW_PATH_TIMEOUT_MS : DEFAULT_TIMEOUT_MS;
+}
+
+export class TimeoutError extends Error {
+  constructor(path, ms) {
+    super(uiText('The connection timed out. Please try again.',
+                 'Время ожидания истекло. Попробуйте ещё раз.'));
+    this.name = 'TimeoutError';
+    this.code = 'timeout';
+    this.path = path;
+    this.timeoutMs = ms;
+  }
+}
+
 async function request(path, body) {
+  const pathName = path.split('?')[0];
+  const timeoutMs = timeoutFor(pathName);
+  // AbortSignal.timeout rather than a hand-rolled timer: the abort tears the
+  // socket down instead of leaving it hanging behind a promise nobody awaits.
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
   const options = {
     method: body ? 'POST' : 'GET',
     headers: { 'Content-Type': 'application/json' },
+    ...(controller ? { signal: controller.signal } : {}),
   };
   if (_sessionToken) options.headers['X-Session-Token'] = _sessionToken;
   if (body) options.body = JSON.stringify(body);
   console.log(`[API] -> ${options.method} /api${path}`);
-  const res = await fetch(`/api${path}`, options);
-  const text = await res.text();
+  let res;
+  let text;
+  try {
+    res = await fetch(`/api${path}`, options);
+    // The body read is inside the deadline too. Headers can arrive promptly from
+    // a proxy and the body then never finish — a stalled stream is just as much
+    // a hang as a connection that never opened, and res.text() awaits forever.
+    text = await res.text();
+  } catch (err) {
+    // An abort reads as a plain DOMException; name it for what it was so the
+    // caller can tell "we gave up waiting" from "the server said no".
+    if (err?.name === 'AbortError') {
+      console.error(`[API] timeout after ${timeoutMs}ms /api${path}`);
+      throw new TimeoutError(path, timeoutMs);
+    }
+    throw err;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
   let data;
   try {
     data = JSON.parse(text);

@@ -23,6 +23,7 @@ const {
   appendBattleLogEntries,
   getBattleLogs,
   getBattleLogsSince,
+  getBattleLogTipId,
 } = require('../utils/realtime');
 const battleBus = require('../utils/battle-bus');
 const pvpQueue  = require('../utils/pvp-queue');
@@ -253,8 +254,39 @@ const HERO_STARTING_UNITS = {
   h_g_3: { building_id: 'pale_maiden_barrow', unit_id: 'gs7', slot: 'slot_4' },
 };
 
+// Every data call in this file goes through here, and none of them had a
+// deadline. `fetch` has no default timeout, so a Supabase call that stalls — a
+// dropped connection, a pool exhausted, a slow query behind a remote hop — held
+// the Express handler open with it, which held the player's request open, which
+// left the client awaiting a response that would never come. On the battle
+// screen that is the freeze: `processing` never clears and every button stays
+// dead. The client now gives up on its own side too (see public/api.js), but a
+// request abandoned here is a socket and a handler reclaimed rather than leaked,
+// and it turns an invisible hang into a 500 that reaches the error notifier.
+//
+// Comfortably longer than any query this app makes, so it only ever fires on
+// something genuinely broken.
+const DB_TIMEOUT_MS = 15000;
+
+function dbSignal() {
+  // AbortSignal.timeout is in Node 18+; guarded anyway so a stray older runtime
+  // degrades to the previous behaviour rather than throwing on every query.
+  return typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+    ? AbortSignal.timeout(DB_TIMEOUT_MS)
+    : undefined;
+}
+
+function dbTimeoutError(path, err) {
+  if (err?.name !== 'TimeoutError' && err?.name !== 'AbortError') return err;
+  const wrapped = new Error(`Database request timed out after ${DB_TIMEOUT_MS}ms: ${path}`);
+  wrapped.code = 'db_timeout';
+  wrapped.cause = err;
+  return wrapped;
+}
+
 function supabase(path, options = {}) {
   return fetch(`${SUPABASE_URL}${path}`, {
+    signal: dbSignal(),
     ...options,
     headers: {
       'apikey': SUPABASE_SERVICE_KEY,
@@ -267,7 +299,7 @@ function supabase(path, options = {}) {
     const data = await r.json();
     if (!r.ok) throw new Error(data.message || JSON.stringify(data));
     return data;
-  });
+  }, err => { throw dbTimeoutError(path, err); });
 }
 
 // ── Atomic economy writes (sql/003_atomic_resources.sql) ────────────────────
@@ -281,15 +313,23 @@ function supabase(path, options = {}) {
 // These need their own transport: a `returns void` function answers 204 with an
 // empty body, and supabase() above calls r.json() unconditionally.
 async function rpc(fnName, args) {
-  const r = await fetch(`${SUPABASE_URL}/rpc/${fnName}`, {
-    method: 'POST',
-    headers: {
-      'apikey': SUPABASE_SERVICE_KEY,
-      'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(args),
-  });
+  let r;
+  try {
+    r = await fetch(`${SUPABASE_URL}/rpc/${fnName}`, {
+      method: 'POST',
+      signal: dbSignal(),
+      headers: {
+        'apikey': SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(args),
+    });
+  } catch (err) {
+    // Named the same way supabase() names it, so a spend or grant that died on
+    // the deadline is recognisable in the log rather than just another 500.
+    throw dbTimeoutError(`/rpc/${fnName}`, err);
+  }
   const text = await r.text();
   let data = null;
   if (text) { try { data = JSON.parse(text); } catch { data = null; } }
@@ -826,6 +866,18 @@ async function rehydrateEngine(record) {
 function buildBattleData(engine, bd) {
   return {
     ...engine.getBattleData(),
+    // Whose move it is, and whether that unit can actually take it. Two scalars,
+    // stamped on every write, and together they are everything GET /battle/tip
+    // needs to answer "has anything happened, and is it my turn" — which is all
+    // the PvP heartbeat ever asks. Reading them costs nothing; deriving them the
+    // other way costs a full engine rebuild (~11ms of blocking CPU, and far more
+    // on the host this runs on).
+    //
+    // `current_cannot_act` is the predicate behind runIdleTurns, asked WITHOUT
+    // mutating anything: when it is false there is no parked turn for a read to
+    // spend, so the tip is free to answer from storage alone.
+    current_side:       engine.done ? null : (engine.currentActor()?.side ?? null),
+    current_cannot_act: engine.done ? false : !!engine.cannotAct(engine.currentActor()),
     region_id:       bd.region_id,
     level:           bd.level,
     setup:           bd.setup,
@@ -4461,6 +4513,72 @@ router.get('/battle/stream', async (req, res) => {
   } catch (err) {
     // Headers may already be sent, in which case serverError would throw.
     if (res.headersSent) { try { res.end(); } catch {} return; }
+    serverError(res, err);
+  }
+});
+
+// GET /battle/tip — "has anything happened, and is it my turn?"
+//
+// The cheap half of /battle/state, for the one caller that asks constantly and
+// is almost always told nothing has changed: the PvP heartbeat, which polls
+// every 2.5s while the stream is quiet (see battle-realtime.js). That poll used
+// to cost a full /battle/state — three database round trips, a complete engine
+// rebuild (~11ms of blocking CPU here, several times that on this host, on a
+// single thread shared with every other player and every open stream) and a
+// ~33KB snapshot down a phone connection — to answer "nothing".
+//
+// This answers the same question from two scalars stamped on the record at write
+// time (see buildBattleData) plus one indexed row, with no engine at all. The
+// client escalates to the full read only when the tip says the battle moved.
+//
+// It deliberately does NOT move the battle on. /battle/state resolves an expired
+// turn or a turn nobody can take, and that is still what does it — the client's
+// own turn clock calls the full refresh the moment a deadline passes, and this
+// route reports `stale: true` for anything it is not entitled to answer for, so
+// a caller that gets one goes and asks properly.
+router.get('/battle/tip', requireAuth, async (req, res) => {
+  const { battle_id, chat_id } = req.query;
+  if (!battle_id) return res.status(400).json({ error: 'battle_id required' });
+  try {
+    const record = await getBattleState(battle_id);
+    if (!record) return res.status(404).json({ error: 'No active battle found' });
+    const mySide = battleSideFor(record, chat_id);
+    if (isPvpRecord(record) && chat_id && !mySide) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    const bd = record.battle_data || {};
+
+    // Anything that would make a full read CHANGE the battle rather than just
+    // report it. Each of these sends the caller to /battle/state, which is the
+    // only place allowed to move a turn on.
+    const needsFullRead =
+      // A battle written before current_side existed — nothing to answer from.
+      (!bd.done && bd.current_side === undefined) ||
+      // A clock that has run out: the turn must be spent, and a read is what
+      // spends it.
+      (isClockedRecord(record) && !bd.done && bd.turn_deadline && Date.now() >= bd.turn_deadline) ||
+      // No deadline yet, or a provisional one: this arrival may be what starts
+      // the real clock (see stampFirstDeadline).
+      (isClockedRecord(record) && !bd.done && (!bd.turn_deadline || bd.turn_provisional)) ||
+      // The unit up next cannot act, so somebody's read has to spend its turn.
+      (!bd.done && bd.current_cannot_act === true);
+
+    const last_log_id = await getBattleLogTipId(battle_id);
+
+    res.json({
+      last_log_id,
+      done:   bd.done ?? false,
+      kind:   isClockedRecord(record) ? 'pvp' : 'pve',
+      turn_deadline: bd.turn_deadline ?? null,
+      // Mirroring does not come into it: `current_side` is a stored absolute
+      // side and this is the same boolean from either chair, exactly as in
+      // /battle/action and /battle/state.
+      your_turn: !bd.done && bd.current_side != null && mySide != null
+        ? bd.current_side === mySide
+        : false,
+      stale: needsFullRead,
+    });
+  } catch (err) {
     serverError(res, err);
   }
 });

@@ -36,9 +36,23 @@ export function createBattleRealtimeController({ battleId, playerId, onStateChan
       ? `/battle/state?battle_id=${encodeURIComponent(battleId)}&chat_id=${encodeURIComponent(playerId)}&last_log_id=${lastLogId}`
       : `/battle/state?battle_id=${encodeURIComponent(battleId)}&chat_id=${encodeURIComponent(playerId)}`;
 
-    inFlight = api(url).then(data => {
-      if (data?.logs?.length) lastLogId = data.logs[data.logs.length - 1].id;
-      onStateChange?.(data);
+    // The cursor moves only once the screen says it CONSUMED the entries.
+    //
+    // It used to move before onStateChange was even called, which quietly lost
+    // log entries: the handler drops a payload that arrives while it is already
+    // playing one back (see `if (processing) return false` in screens/battle.js),
+    // and with the cursor already past them the next catch-up asked for
+    // everything AFTER the entries nobody had seen. In a duel that is the
+    // opponent's move going missing — the board still reconciles off the next
+    // snapshot, but the blow that landed never plays and never prints.
+    //
+    // A handler that answers anything other than `false` is taken to have
+    // consumed them, so the old behaviour is the default for any other caller.
+    inFlight = api(url).then(async data => {
+      const consumed = await onStateChange?.(data);
+      if (consumed !== false && data?.logs?.length) {
+        lastLogId = data.logs[data.logs.length - 1].id;
+      }
     }).catch(err => {
       onError?.(err);
     }).finally(() => {
@@ -66,6 +80,30 @@ export function createBattleRealtimeController({ battleId, playerId, onStateChan
   // never noticed because the server resolves the enemy inside the same request.
   //
   // Off by default (heartbeatMs 0): a solo battle has nobody to wait for.
+  // Asks GET /battle/tip, not /battle/state. The question a heartbeat asks is
+  // "did anything happen?", and the answer is almost always no — so paying for
+  // the full state to hear it was the wrong trade: three database round trips, a
+  // complete engine rebuild server-side and a ~33KB snapshot, every 2.5s, per
+  // player in the duel. The tip answers from two stored scalars and one indexed
+  // row, and only a tip that has MOVED costs a real read.
+  //
+  // `stale` is the server saying it was not entitled to answer from storage —
+  // an expired clock, a turn nobody can take, a deadline not yet stamped. Those
+  // need /battle/state, because that is the route that moves the battle on.
+  async function pollTip() {
+    const url = `/battle/tip?battle_id=${encodeURIComponent(battleId)}`
+              + `&chat_id=${encodeURIComponent(playerId)}`;
+    const tip = await api(url);
+    // The clock rides on the cheap poll too, so the countdown stays honest
+    // between full reads.
+    onStateChange?.({
+      kind: tip.kind, turn_deadline: tip.turn_deadline, your_turn: tip.your_turn,
+    });
+    const moved = tip.last_log_id != null && (lastLogId == null || tip.last_log_id > lastLogId);
+    if (tip.stale || tip.done || moved) return refreshFromServer();
+    return null;
+  }
+
   function startHeartbeat() {
     if (!heartbeatMs || heartbeat) return;
     heartbeat = setInterval(() => {
@@ -78,7 +116,16 @@ export function createBattleRealtimeController({ battleId, playerId, onStateChan
       // able to spare it. The heartbeat is here for a stream that has gone
       // quiet, not one that is doing its job.
       if (Date.now() - lastEventAt < heartbeatMs) return;
-      refreshFromServer();
+      // A full catch-up already running answers the question the poll was going
+      // to ask, so don't stack a second request behind it.
+      if (inFlight) return;
+      pollTip().catch(err => {
+        // A tip that fails is not worth reporting on its own — fall back to the
+        // read that was happening before this route existed, and let that one
+        // report if it fails too.
+        console.warn('[realtime] tip poll failed, falling back to full read', err?.message || err);
+        refreshFromServer();
+      });
     }, heartbeatMs);
   }
 

@@ -1,8 +1,20 @@
 const SUPABASE_URL = process.env.SUPABASE_URL.replace(/\/+$/, '');
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
+// Same deadline, and the same reason, as supabase() in routes/index.js: these
+// are the battle's own reads and writes, so a call that hangs here is precisely
+// the request a player is waiting on mid-fight.
+const DB_TIMEOUT_MS = 15000;
+
+function dbSignal() {
+  return typeof AbortSignal !== 'undefined' && AbortSignal.timeout
+    ? AbortSignal.timeout(DB_TIMEOUT_MS)
+    : undefined;
+}
+
 function supabaseService(path, options = {}) {
   return fetch(`${SUPABASE_URL}${path}`, {
+    signal: dbSignal(),
     ...options,
     headers: {
       'apikey': SUPABASE_SERVICE_KEY,
@@ -15,6 +27,12 @@ function supabaseService(path, options = {}) {
     const data = await r.json();
     if (!r.ok) throw new Error(data.message || JSON.stringify(data));
     return data;
+  }, err => {
+    if (err?.name !== 'TimeoutError' && err?.name !== 'AbortError') throw err;
+    const wrapped = new Error(`Database request timed out after ${DB_TIMEOUT_MS}ms: ${path}`);
+    wrapped.code = 'db_timeout';
+    wrapped.cause = err;
+    throw wrapped;
   });
 }
 
@@ -110,13 +128,38 @@ async function getBattleLogs(battle_id) {
   return (rows || []).map(row => ({ id: row.id, ...row.event })).filter(Boolean);
 }
 
+// The newest log id for a battle, and nothing else. One indexed row, a handful
+// of bytes — this is what lets a client ask "has anything happened?" without
+// paying for the whole battle state. See GET /battle/tip.
+async function getBattleLogTipId(battle_id) {
+  if (!battle_id) return null;
+  const rows = await supabaseService(
+    `/battle_log?battle_id=eq.${encodeURIComponent(battle_id)}&select=id&order=id.desc&limit=1`
+  );
+  return rows?.[0]?.id ?? null;
+}
+
+// How many entries a client with NO cursor is given. A caller that has a cursor
+// asks for what it has not seen and gets exactly that, however many; this cap is
+// only for the one that has nothing — a late reconnect into a long fight, which
+// used to fetch and ship every entry from round one. Those are history the
+// player has already watched (the reconnect path prints them as static text
+// rather than replaying them), so the oldest are the ones to drop.
+const LOG_BACKFILL_LIMIT = 300;
+
 async function getBattleLogsSince(battle_id, last_log_id) {
   if (!battle_id) return [];
-  const filter = last_log_id
-    ? `/battle_log?battle_id=eq.${encodeURIComponent(battle_id)}&id=gt.${last_log_id}&order=id.asc`
-    : `/battle_log?battle_id=eq.${encodeURIComponent(battle_id)}&order=id.asc`;
-  const rows = await supabaseService(filter);
-  return (rows || []).map(row => ({ id: row.id, ...row.event })).filter(Boolean);
+  if (last_log_id) {
+    const rows = await supabaseService(
+      `/battle_log?battle_id=eq.${encodeURIComponent(battle_id)}&id=gt.${last_log_id}&order=id.asc`
+    );
+    return (rows || []).map(row => ({ id: row.id, ...row.event })).filter(Boolean);
+  }
+  // Newest first to let the database apply the limit, then back into play order.
+  const rows = await supabaseService(
+    `/battle_log?battle_id=eq.${encodeURIComponent(battle_id)}&order=id.desc&limit=${LOG_BACKFILL_LIMIT}`
+  );
+  return [...(rows || [])].reverse().map(row => ({ id: row.id, ...row.event })).filter(Boolean);
 }
 
 module.exports = {
@@ -129,4 +172,5 @@ module.exports = {
   appendBattleLogEntries,
   getBattleLogs,
   getBattleLogsSince,
+  getBattleLogTipId,
 };

@@ -1697,7 +1697,24 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     render();
   }
 
+  // A write whose answer never arrived leaves the client not knowing whether the
+  // server applied it. Guessing either way is wrong — a retry can double a turn,
+  // and assuming nothing happened leaves the board a turn behind — so ask: the
+  // state read is authoritative and carries exactly the entries this client has
+  // not seen. Called only from the failure paths, after `processing` is clear, so
+  // the realtime handler is free to take the answer.
+  function resyncAfterFailedWrite() {
+    if (!realtimeController || battleResolved) return;
+    Promise.resolve(realtimeController.refresh())
+      .catch(err => console.error('Resync after failed write failed:', err));
+  }
+
   async function sendCast(spell_id, power, target_id) {
+    // Re-entrancy backstop. The buttons are disabled while `processing`, but a
+    // queued tap, a double-tap landing inside the same frame, or a keyboard
+    // activation can still arrive before the disable has been painted — and two
+    // writes for one turn is the one thing the server cannot sort out for us.
+    if (processing) return;
     castChoice = null;
     pendingAction = null;
     selectingTarget = null;
@@ -1723,6 +1740,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       processing = false;
       alert(err.message || 'Cast failed');
       render();
+      resyncAfterFailedWrite();
     }
   }
 
@@ -2142,6 +2160,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       </div>
     `;
 
+    // The strip below is brand new and empty, so whatever drawInitQueue last
+    // painted is gone with the old shell — forget it, or the signature match
+    // would skip the first paint into the new one and the queue would stay blank.
+    initQueueSig = null;
+
     ui = {
       screen: root.querySelector('.screen-battle'),
       initQueue: root.querySelector('#init-queue'),
@@ -2553,8 +2576,24 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // During playback `state` is already the END-of-turn state the server sent, so
   // its acted_this_round flags describe the wrong moment — playbackSequence
   // tracks who has gone and hands the remainder in here instead.
+  // The last queue actually painted. queueNow() in playbackSequence calls this
+  // on every round boundary, every turn hand-over and every death, and the
+  // answer is usually identical to the one already on screen — but an innerHTML
+  // assignment throws away up to twelve <img> elements and builds twelve new
+  // ones, so the browser re-decodes every portrait from cache and relayouts the
+  // strip, mid-animation, several times a turn. Skipping the identical repaint
+  // costs one string compare.
+  let initQueueSig = null;
   function drawInitQueue(order, activeId = null) {
     if (!ui?.initQueue) return;
+    // Everything the markup below actually reads. HP is in it because the pip
+    // carries an HP bar, so a hit has to repaint even when the order has not
+    // moved.
+    const sig = `${activeId ?? ''}#` + order
+      .map(c => `${c.id}:${c.battle_hp ?? 0}/${c.max_hp ?? 0}:${unitCallingId(c) ?? ''}`)
+      .join('|');
+    if (sig === initQueueSig) return;
+    initQueueSig = sig;
     ui.initQueue.innerHTML = order.map((c, i) => {
       const portrait = getPortraitUrl(c);
       const isActive = activeId ? c.id === activeId : i === 0;
@@ -2888,6 +2927,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
 
   async function sendAction(action, actor_id, target_id = null) {
+    // See sendCast: the disabled buttons are the first line, this is the one
+    // that holds when a tap beats the repaint.
+    if (processing) return;
     markTutorialDone(player, 'battle_first_action');
     hideTutorial();
     processing = true;
@@ -2940,6 +2982,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             log.prepend(el);
           }
           render();
+          // Most often this is 'Not this unit's turn' or a dropped request, and
+          // both mean the same thing: what the screen believes may no longer be
+          // what the server holds. Ask rather than sit on it — this is the path
+          // that used to end in a board the player could not move.
+          resyncAfterFailedWrite();
         }
   }
 
@@ -3334,13 +3381,18 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         // Skip if sendAction is already handling this turn's entries directly.
         // The lastLogId guard means onStateChange will only have genuinely new
         // entries that sendAction didn't receive (e.g. from a second DB write).
-        if (processing) return;
+        //
+        // Reported as NOT CONSUMED (see refreshFromServer in
+        // battle-realtime.js): the controller must not advance its last_log_id
+        // past entries this screen just threw away, or the next catch-up asks
+        // for everything after them and they are lost for good.
+        if (processing) return false;
         const newLogs = dedupeIncoming(Array.isArray(data.logs) ? data.logs : []);
         if (!newLogs.length) {
           // State update only, no new log entries - just reconcile state
           state = { ...data.state, log: state.log || [] };
           render();
-          return;
+          return true;
         }
         state = { ...data.state, log: [...(state.log || []), ...newLogs] };
 
@@ -3349,18 +3401,36 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           ui.battleLog.innerHTML = (state.log || []).slice(0, existingCount).slice().reverse().map(formatLogEntry).join('');
         }
 
-        if (data.done) {
-          await playbackSequence(newLogs);
-          renderResult(data.winner);
-          return;
-        }
+        // Claimed for the whole playback, exactly as sendAction claims it.
+        // Without this the flag stayed FALSE while a stream-driven playback ran,
+        // which left the action buttons live through it: a tap then started
+        // sendAction on top, and two playbacks ran at once over one board —
+        // interleaving their beats, racing on `state`, `lastLogId` and
+        // `playedLogIds`, and each resolving cells out of a grid the other was
+        // rebuilding. The unconditional `processing = false` at the end was the
+        // other half of it: a realtime update that landed while sendAction was
+        // waiting on the server cleared ITS flag and re-enabled the buttons
+        // mid-action. A flag is only cleared by whoever set it.
+        processing = true;
+        try {
+          if (data.done) {
+            await playbackSequence(newLogs);
+            renderResult(data.winner);
+            return true;
+          }
 
-        await playbackSequence(newLogs);
-        if (newLogs.length && newLogs[newLogs.length - 1].id != null) {
-          lastLogId = newLogs[newLogs.length - 1].id;
+          await playbackSequence(newLogs);
+          if (newLogs.length && newLogs[newLogs.length - 1].id != null) {
+            lastLogId = newLogs[newLogs.length - 1].id;
+          }
+        } finally {
+          // A throw out of playback must not leave the screen locked; the catch
+          // in refreshFromServer reports it and the board reconciles on the next
+          // state read.
+          processing = false;
         }
-        processing = false;
         render();
+        return true;
       },
       onError: (err) => {
         console.error('battle realtime error', err);
