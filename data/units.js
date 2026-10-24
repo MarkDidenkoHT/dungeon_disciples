@@ -4062,7 +4062,31 @@ const UNITS = {
         resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 20, nature: 20 },
         action: 'none', target_type: 'ally', targets: 1, range: 3,
         damage_source: null, action_power: 14,
-        xp: 1099, passive: ['Unity 1', 'vitality 2', 'unwavering_faith 2'], ability: null,
+        // 'Unity 1' was capitalised, and UNIT_ABILITIES lookups are exact — so
+        // the bond this unit is built around resolved to nothing and silently
+        // never formed. Lowercased with the rank swap rather than left for later.
+        xp: 1099, passive: ['unity 1', 'inner_fire 2', 'unwavering_faith 2'], ability: null,
+      },
+      // The other half of the Martyr of the Vow's tier 4: Forgiven ascends and
+      // turns Spirit, Forsaken does not and stays in the rotting body. Same
+      // frame as its sibling — same tier, same branch point, same cost — and
+      // the same unity bond, which is why it also takes no action of its own.
+      //
+      // The resistance spread is the martyr line's (death 50, nothing else), not
+      // Forgiven's flat 20: that even spread is the protection ascending BUYS,
+      // so the one that was refused should not have it too.
+      forsaken: {
+        id: 'dm_2112', f: 'dm', t: 4,
+        name: 'Forsaken',
+        name_ru: 'Отверженный',
+        tags: ['Holy', 'Knight', 'Zombie'],
+        pref_position: 'back',
+        size: 'tile',
+        hp: 55, armor: 15, initiative: 10,
+        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+        action: 'none', target_type: 'ally', targets: 1, range: 3,
+        damage_source: null, action_power: 14,
+        xp: 1099, passive: ['unity 1', 'horde 2', 'beacon_of_hope 2'], ability: null,
       },
       wailing_ghost: {
         id: 'dm_e3', f: 'dm', t: 1,

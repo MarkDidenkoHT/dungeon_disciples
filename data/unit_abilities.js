@@ -2606,18 +2606,18 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: "This unit's attacks also deal 20% of their damage to every chilled enemy.",
-    description_ru: "Атаки этого юнита также наносят 20% своего урона каждому горящему врагу.",
+    description_ru: "Атаки этого юнита также наносят 20% своего урона каждому врагу с ознобом.",
     params: { fellfire_pct: 20, fellfire_dot: 'chill' },
   },
   'hungering_frost 2': {
     id: 'hungering_frost 2',
     name: 'Hungering Frost',
     name_ru: "Голодный Мороз",
-    rank: 1,
+    rank: 2,
     type: 'passive',
     trigger: 'on_hit',
     description: "This unit's attacks also deal 30% of their damage to every chilled enemy.",
-    description_ru: "Атаки этого юнита также наносят 30% своего урона каждому горящему врагу.",
+    description_ru: "Атаки этого юнита также наносят 30% своего урона каждому врагу с ознобом.",
     params: { fellfire_pct: 30, fellfire_dot: 'chill' },
   },
   'mark_of_ash 1': {
@@ -3079,6 +3079,22 @@ const UNIT_ABILITIES = {
     description: 'Splits 6 bonus damage evenly among all Holy allies — the fewer you field the stronger the bonus.',
     description_ru: "Делит 6 бонусного урона поровну между всеми Святыми союзниками — чем их меньше, тем сильнее каждый.",
     params: { shared_pool_stat: 'damage', shared_pool_value: 6, tag_required: 'Holy' },
+    effect_name: 'divided_flame',
+  },
+  // The Holy arm of the shared-damage pool. Rank 2 doubles the pot exactly as
+  // its siblings do — divided_flame goes 6 -> 12 for Demons and rite_of_battle
+  // 6 -> 12 for Warriors — so the three tag variants stay one ability with
+  // three audiences rather than three balance curves.
+  'inner_fire 2': {
+    id: 'inner_fire 2',
+    name: 'Divided Flame',
+    name_ru: "Разделённое Пламя",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'Splits 12 bonus damage evenly among all Holy allies — the fewer you field the stronger the bonus.',
+    description_ru: "Делит 12 бонусного урона поровну между всеми Святыми союзниками — чем их меньше, тем сильнее каждый.",
+    params: { shared_pool_stat: 'damage', shared_pool_value: 12, tag_required: 'Holy' },
     effect_name: 'divided_flame',
   },
   'rite_of_battle 1': {

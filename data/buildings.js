@@ -1871,7 +1871,13 @@ const MERCENARY_BUILDINGS = {
     // Oathbound Martyr line.
     { id: 'cu_oathbound_martyr', label: 'Oathbound Martyr', label_ru: 'Мученик клятвы', region: 'chamber_of_unrest', unit_id: 'dm_2',   tier: 1, upgrades: ['cu_oathsworn_martyr'], cost: { grave_dust: 5, rusted_shackle: 5 } },
     { id: 'cu_oathsworn_martyr', label: 'Oathsworn Martyr', label_ru: 'Присягнувший мученик', region: 'chamber_of_unrest', unit_id: 'dm_21',  tier: 2, upgrades: ['cu_martyr_of_the_vow'], cost: { grave_dust: 10, rusted_shackle: 10 } },
-    { id: 'cu_martyr_of_the_vow', label: 'Martyr of the Vow', label_ru: 'Мученик обета', region: 'chamber_of_unrest', unit_id: 'dm_211', tier: 3, upgrades: [],                       cost: { grave_dust: 15, rusted_shackle: 15 } },
+    // Tier 4 is a FORK, the same shape the throne lines use (…_4_a / …_4_a_alt):
+    // the vow is kept and the martyr ascends, or it is not and it does not.
+    // Forgiven already existed as a unit but nothing led to it — this line
+    // stopped at tier 3, so dm_2111 was unreachable.
+    { id: 'cu_martyr_of_the_vow', label: 'Martyr of the Vow', label_ru: 'Мученик обета', region: 'chamber_of_unrest', unit_id: 'dm_211', tier: 3, upgrades: ['cu_forgiven', 'cu_forsaken'], cost: { grave_dust: 15, rusted_shackle: 15 } },
+    { id: 'cu_forgiven', label: 'Forgiven', label_ru: 'Прощенный', region: 'chamber_of_unrest', unit_id: 'dm_2111', tier: 4, upgrades: [], cost: { grave_dust: 20, rusted_shackle: 20 } },
+    { id: 'cu_forsaken', label: 'Forsaken', label_ru: 'Отверженный', region: 'chamber_of_unrest', unit_id: 'dm_2112', tier: 4, upgrades: [], cost: { grave_dust: 20, rusted_shackle: 20 } },
     // Wailing Ghost line.
     { id: 'cu_wailing_ghost',  label: 'Wailing Ghost', label_ru: 'Стенающий призрак',  region: 'chamber_of_unrest', unit_id: 'dm_e3',   tier: 1, upgrades: ['cu_revenant'],       cost: { grave_dust: 5, rusted_shackle: 5 } },
     { id: 'cu_revenant',       label: 'Revenant', label_ru: 'Ревенант',       region: 'chamber_of_unrest', unit_id: 'dm_e31',  tier: 2, upgrades: ['cu_soul_harvester'], cost: { grave_dust: 10, rusted_shackle: 10 } },
