@@ -2226,8 +2226,8 @@ const UNIT_ABILITIES = {
     params: { mothers_blessing: true, mothers_blessing_hp_cost_pct: 10 },
     effect_name: 'mothers_blessing',
   },
-  'mothers_blessing 1': {
-    id: 'mothers_blessing 1',
+  'mothers_blessing 2': {
+    id: 'mothers_blessing 2',
     name: "Mother's Blessing",
     name_ru: "Благословение Матери",
     rank: 2,
@@ -2415,6 +2415,24 @@ const UNIT_ABILITIES = {
     description: 'Adjacent allies in the same column gain 2 armor per Engineer ally on the field.',
     description_ru: "Соседние союзники в том же столбце получают по 2 брони за каждого союзного инженера.",
     params: { inspiration_stat: 'armor', inspiration_value_per_tag: 2, tag_required: 'Engineer' },
+  },
+  // Nine units — six Artificers, the Mechanic line's top three — have asked for
+  // this rank since before it existed, so their Inspiration has been inert.
+  //
+  // 2 -> 3 per tagged ally, which is what inspiration_initiative does across the
+  // same two ranks. The flat-value variants (inspiration_damage 3 -> 5) are a
+  // different curve because they do not multiply by a tag count, so this follows
+  // the per-tag sibling rather than them.
+  'inspiration_armor 2': {
+    id: 'inspiration_armor 2',
+    name: 'Inspiration',
+    name_ru: "Вдохновение",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'Adjacent allies in the same column gain 3 armor per Engineer ally on the field.',
+    description_ru: "Соседние союзники в том же столбце получают по 3 брони за каждого союзного инженера.",
+    params: { inspiration_stat: 'armor', inspiration_value_per_tag: 3, tag_required: 'Engineer' },
   },
   'inspiration_initiative 1': {
     id: 'inspiration_initiative 1',
