@@ -87,7 +87,7 @@ const ITEM_DEFS = {
     name_ru:      'Кровь Святого',
     faction:      null,
     tag_required: ['Spirit', 'Holy'],
-    adds_tag:     null,
+    adds_tag:     'Vampire',
     removes_tag:  'Holy',
     stat_mods:    { hp: 4, death_resist: 5},
     passive:      'inner_fire 1',
@@ -102,9 +102,9 @@ const ITEM_DEFS = {
     name:         "Bloodless",
     name_ru:      'Обескровленный',
     faction:      null,
-    tag_required: ['Vampire', 'Zombie'],
+    tag_required: 'Vampire',
     adds_tag:     'Skeleton',
-    removes_tag:  'Zombie',
+    removes_tag:  'Vampire',
     stat_mods:    { hp: 4, life_resist: 5},
     passive:      'vampires_vigil 1',
     icon:         'bloodless',
@@ -299,6 +299,25 @@ const ITEM_DEFS = {
     rarity:       'rare',
     cost:         { aggrails_signet: 2, Gold: 90, Crystals_Life: 25 },
   },
+  // Fear is positional: it only reaches the enemies ADJACENT to the bearer
+  // (range 1), so this is a front-line shield and the armor says so. Open to
+  // every faction — nothing in fear 2 counts allies or tags, so there is no
+  // roster it reads differently on.
+  face_of_dread: {
+    key:          'face_of_dread',
+    name:         'Face of Dread',
+    name_ru:      'Лик Ужаса',
+    faction:      null,
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { hp: 2, armor: 2, life_resist: 5 },
+    passive:      'fear 2',
+    icon:         'face_of_dread',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { Gold: 150, Crystals_Death: 25, grave_dust: 2 },
+    item_cost:    { iron_shield: 1, orb_of_light: 1 },
+  },
   codex_aeternum: {
     key:          'codex_aeternum',
     name:         'Codex Aeternum',
@@ -370,7 +389,7 @@ const ITEM_DEFS = {
     cost:         { vial_of_pure_blood: 1, Gold: 50 },
     item_cost:    { life_charm: 2},
   },
-  // The defensive half of the Choir pair — see emberchoir_plate.
+  // The defensive half of the Choir pair — see emberchoir_pauldrons.
   //
   // tag_required 'Warrior' where the plate has none, and for the opposite
   // reason: warding counts the carrier's WARRIOR allies, so on a back-line
@@ -660,16 +679,16 @@ const ITEM_DEFS = {
   // fire resist. No tag_required: choir 2 already pays nothing to a unit with
   // no Demon allies, so the item gates itself on whether the army is a Choir
   // army rather than on what the wearer is.
-  emberchoir_plate: {
-    key:          'emberchoir_plate',
-    name:         'Emberchoir Plate',
-    name_ru:      'Латы Пылающего Хора',
+  emberchoir_pauldrons: {
+    key:          'emberchoir_pauldrons',
+    name:         'Emberchoir Pauldrons',
+    name_ru:      'Наплечники Пылающего Хора',
     faction:      'choir_of_the_cursed',
     tag_required: null,
     adds_tag:     null,
     stat_mods:    { hp: 2, initiative: 2, fire_resist: 5 },
     passive:      'choir 2',
-    icon:         'emberchoir_plate',
+    icon:         'emberchoir_pauldrons',
     rarity:       'epic',
     unique:       true,
     cost:         { Gold: 150, Crystals_Fire: 25, aggrails_signet: 1 },
