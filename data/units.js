@@ -3655,6 +3655,25 @@ const UNITS = {
         damage_source: 'death', action_power: 18, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
         xp: 1560, passive: ['aggrails_blessing 2', 'desecrate 1', 'decay 1'], ability: null,
       },
+      // The Desecrator's tier 4 — cb_aggrails_desecrator was another dead end.
+      // desecrate goes 1 -> 2 (5% -> 8% bonus damage to Holy targets per Demon
+      // ally), which on a full Demon line is where this branch's whole threat
+      // comes from. Stats follow the faction's own t3 -> t4 step, read off High
+      // Keeper -> Grand Keeper: +10 HP, +2 power, resistances up a band, and the
+      // 4005 xp every tier 4 in this faction carries.
+      aggrails_blasphemer: {
+        id: 'opb_e2121', f: 'opb', t: 4,
+        name: 'Aggrails Blasphemer',
+        name_ru: 'Богохульник Агграила',
+        tags: ['Demon', 'Knight'],
+        pref_position: 'front',
+        size: 'tile',
+        hp: 65, armor: 20, initiative: 35,
+        resistances: { air: 10, fire: 20, life: 40, death: 25, cold: 10, nature: 15 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'death', action_power: 20, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
+        xp: 4005, passive: ['aggrails_blessing 2', 'desecrate 2', 'decay 1'], ability: null,
+      },
       aggrails_exorcist: {
         id: 'opb_e22', f: 'opb', t: 2,
         name: 'Aggrails Exorcist',
@@ -3667,6 +3686,27 @@ const UNITS = {
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 12, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
         xp: 540, passive: ['aggrails_blessing 1', 'desecrate 1', 'choir 1'], ability: null,
+      },
+      // The Exorcist's tier 3, which the line did not have — cb_aggrails_exorcist
+      // carried upgrades: [] and stopped at tier 2.
+      //
+      // Picks up HOLY on top of Demon/Knight, which is the point of it: desecrate
+      // hits Holy targets harder per Demon ally, so this one walks into the
+      // mirror match carrying the tag its own line is built to punish. choir 1
+      // goes to 2 with the tier, as the sibling branch does. Stats follow the
+      // line's own t2 -> t3 step (Devoted -> Champion): +5 HP, +5 armor, +4 power.
+      aggrails_crusader: {
+        id: 'opb_e221', f: 'opb', t: 3,
+        name: 'Aggrails Crusader',
+        name_ru: 'Крестоносец Агграила',
+        tags: ['Demon', 'Knight', 'Holy'],
+        pref_position: 'front',
+        size: 'tile',
+        hp: 55, armor: 15, initiative: 35,
+        resistances: { air: 5, fire: 25, life: 45, death: 5, cold: 5, nature: 5 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 16, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
+        xp: 1560, passive: ['aggrails_blessing 1', 'desecrate 1', 'choir 2'], ability: null,
       },
       initiate: {
         id: 'opb_e3', f: 'opb', t: 1,
@@ -4069,12 +4109,10 @@ const UNITS = {
       },
       // The other half of the Martyr of the Vow's tier 4: Forgiven ascends and
       // turns Spirit, Forsaken does not and stays in the rotting body. Same
-      // frame as its sibling — same tier, same branch point, same cost — and
-      // the same unity bond, which is why it also takes no action of its own.
-      //
-      // The resistance spread is the martyr line's (death 50, nothing else), not
-      // Forgiven's flat 20: that even spread is the protection ascending BUYS,
-      // so the one that was refused should not have it too.
+      // frame as its sibling — same tier, same branch point, same cost, the
+      // same flat 20 resistances — and the same unity bond, which is why it
+      // also takes no action of its own. The tags and the three passives are
+      // the whole of the difference between them.
       forsaken: {
         id: 'dm_2112', f: 'dm', t: 4,
         name: 'Forsaken',
@@ -4083,7 +4121,7 @@ const UNITS = {
         pref_position: 'back',
         size: 'tile',
         hp: 55, armor: 15, initiative: 10,
-        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
+        resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 20, nature: 20 },
         action: 'none', target_type: 'ally', targets: 1, range: 3,
         damage_source: null, action_power: 14,
         xp: 1099, passive: ['unity 1', 'horde 2', 'beacon_of_hope 2'], ability: null,
