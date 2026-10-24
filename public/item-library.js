@@ -189,15 +189,19 @@ export function mountItemLibrary(host, opts = {}) {
       rarity = sel.value;
       sel.className = `items-select items-select--rarity-${rarity}`;
       closeView();
-      refresh();
+      // The screen owns the filtering, so it has to hear the new value BEFORE
+      // the grid is rebuilt — a grid painted from the old list hands every
+      // tile an index into a list that no longer exists, and the next tap
+      // opens whatever moved into that slot.
       onFilterChange(state());
+      refresh();
       return;
     }
     if (sel.id === 'lib-stat-select') {
       stat = sel.value;
       closeView();
-      refresh();
       onFilterChange(state());
+      refresh();
     }
   });
 
@@ -219,8 +223,8 @@ export function mountItemLibrary(host, opts = {}) {
     if (e.target.closest('#lib-chip-toggle')) {
       chipOn = !chipOn;
       openIdx = null;
-      paint();
       onChipToggle(chipOn);
+      paint();
       return;
     }
 
