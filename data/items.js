@@ -370,6 +370,29 @@ const ITEM_DEFS = {
     cost:         { vial_of_pure_blood: 1, Gold: 50 },
     item_cost:    { life_charm: 2},
   },
+  // The defensive half of the Choir pair — see emberchoir_plate.
+  //
+  // tag_required 'Warrior' where the plate has none, and for the opposite
+  // reason: warding counts the carrier's WARRIOR allies, so on a back-line
+  // Caster it would still pay out in full while the unit wearing it is not the
+  // one being hit. Putting it on a Warrior puts it where the physical blows
+  // land, which is the whole point of a ward. Stats follow that too — armor and
+  // HP, not power.
+  infernal_bulwark: {
+    key:          'infernal_bulwark',
+    name:         'Infernal Bulwark',
+    name_ru:      'Инфернальный Бастион',
+    faction:      'choir_of_the_cursed',
+    tag_required: 'Warrior',
+    adds_tag:     null,
+    stat_mods:    { hp: 4, armor: 3 },
+    passive:      'warding 2',
+    icon:         'infernal_bulwark',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { Gold: 150, Crystals_Death: 20, grave_dust: 2 },
+    item_cost:    { iron_shield: 1, seal_of_power: 1 },
+  },
   dragon_skin: {
     key:          'dragon_skin',
     name:         'Dragon Skin',
@@ -626,6 +649,31 @@ const ITEM_DEFS = {
     unique:       true,
     cost:         { Gold: 200, aggrails_signet: 2, grave_dust: 2 },
     item_cost:    { fire_staff: 1, orb_of_fire: 1, dragon_scale: 1 },
+  },
+  // The Choir's front line is Demon AND Warrior to a unit (Black Castellan,
+  // Imp, Tormentor, Praetor...), which is what makes this and infernal_bulwark
+  // a pair: choir 2 scales off the Demon half, warding 2 off the Warrior half,
+  // and one body counts for both.
+  //
+  // Priced as an epic because it is dark_determination — same { hp 2,
+  // initiative 2 } — carrying a RANK 2 muster instead of a rank 1, plus the
+  // fire resist. No tag_required: choir 2 already pays nothing to a unit with
+  // no Demon allies, so the item gates itself on whether the army is a Choir
+  // army rather than on what the wearer is.
+  emberchoir_plate: {
+    key:          'emberchoir_plate',
+    name:         'Emberchoir Plate',
+    name_ru:      'Латы Пылающего Хора',
+    faction:      'choir_of_the_cursed',
+    tag_required: null,
+    adds_tag:     null,
+    stat_mods:    { hp: 2, initiative: 2, fire_resist: 5 },
+    passive:      'choir 2',
+    icon:         'emberchoir_plate',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { Gold: 150, Crystals_Fire: 25, aggrails_signet: 1 },
+    item_cost:    { iron_armor: 1, orb_of_fire: 1 },
   },
   dragon_scale: {
     key:          'dragon_scale',
