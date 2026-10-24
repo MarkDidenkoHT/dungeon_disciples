@@ -285,9 +285,11 @@ async function sweepErrands(report: Report) {
       // Write the outcome back for the client to display. `seen` is left alone
       // — the game sets it when the player has actually been shown the result.
       //
-      // `tokens_paid` is NOT left alone. The game server pays nothing for an
-      // errand, but it does check that flag before it would, so stamping it
-      // here is what keeps the two from ever both paying for one row.
+      // `tokens_paid` records that the token half of the reward was handed over
+      // HERE. Nothing reads it today — the game server pays nothing for an
+      // errand — so it is a receipt rather than a lock: the one way to tell,
+      // from the row alone, that a Tome a player is asking about was actually
+      // written to `resources` and not merely promised.
       await db(`/errands?id=eq.${row.id}`, {
         method: 'PATCH',
         body: JSON.stringify({

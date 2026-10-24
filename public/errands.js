@@ -106,7 +106,7 @@ function errandHeaderHtml(def, desc) {
 // The requirement is stated as the two tags with a joiner between them: "/" for
 // a simple errand (either tag qualifies, both pay double) and "+" for a grand
 // one (both or nobody). One glyph is the whole rule.
-function offerTagsHtml(offer, def) {
+function offerTagsHtml(offer) {
   const tags = offer.requirement?.tags_all || offer.requirement?.tags_any || [];
   const both = Boolean(offer.requirement?.tags_all?.length);
   const join = `<span class="errand-offer-join">${both ? '+' : '/'}</span>`;
@@ -142,7 +142,7 @@ function offerCardHtml(offer, { selected, hours }) {
         <span class="errand-offer-hours">${hours}${T('hours')}</span>
       </span>
       <span class="errand-offer-name">${def?.title?.[lang] ?? offer.errand_id}</span>
-      ${offerTagsHtml(offer, def)}
+      ${offerTagsHtml(offer)}
       <span class="errand-chips errand-offer-chips">${offerRewardHtml(offer, hours)}</span>
     </button>`;
 }

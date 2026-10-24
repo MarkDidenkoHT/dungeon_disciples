@@ -3201,12 +3201,37 @@ async function ensureErrandOffer(chat_id, player) {
   const minted   = [];
   const held     = [];
 
+  // An offered row naming an errand that no longer exists in data/errands.js is
+  // a DEAD END, not merely an offer that cannot be drawn: it still counts as
+  // "already holding one", so the slot it occupies is never refilled, while the
+  // sheet shows nothing because the definition it needs is gone. Dropping the
+  // row is the only thing that unsticks it. Rare — an errand id has to be
+  // removed or renamed — but silent and permanent when it happens.
+  const live = [];
+  const stale = [];
+  for (const r of offered) (ERR.ERRANDS_BY_ID[r.errand] ? live : stale).push(r);
+  if (stale.length) {
+    await Promise.all(stale.map(r =>
+      supabase(`${ERRAND_TABLE}?id=eq.${encodeURIComponent(r.id)}`
+        + `&player=eq.${encodeURIComponent(chat_id)}&active=is.false`, { method: 'DELETE' })
+        .catch(err => console.error(`stale errand offer ${r.id} not cleared:`, err.message))));
+  }
+
   for (const kind of [ERR.KIND_SIMPLE, ERR.KIND_GRAND]) {
     // Already holding one of this kind: hand back the oldest and never mint a
     // second. If a race did write two, this consistently picks the same one and
     // the extra is simply never shown.
-    const mine = offered.filter(r => offerKindOf(r) === kind).sort(byCreatedAt);
-    if (mine.length) { held.push(mine[0]); continue; }
+    const mine = live.filter(r => offerKindOf(r) === kind).sort(byCreatedAt);
+    if (mine.length) {
+      // The post can be razed or swapped under a STANDING grand offer, and the
+      // level is only checked when one is minted. Without this the card keeps
+      // its place in the row and Send answers `errand_post_level` — an offer
+      // that cannot be taken is worse than no offer. The row is left alone
+      // rather than deleted, so it comes back when the post does.
+      if (kind === ERR.KIND_GRAND && postLevel < ERR.GRAND_MIN_POST_LEVEL) continue;
+      held.push(mine[0]);
+      continue;
+    }
 
     const offer = pickErrandFor({
       chat_id,
