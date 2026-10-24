@@ -432,6 +432,29 @@ const UNITS = {
       damage_source: 'physical', action_power: 36, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
       xp: 8200, passive: ['rage 2', 'aggrails_blessing 2', 'choir 2'], ability: 'pact 2',
     },
+    // The warrior road's other end, and the only one the Choir had been
+    // missing: every other tier 4 in the faction is a fork but this line ran
+    // straight into the Conqueror. The Conqueror wins by being the largest
+    // thing on the board — it stacks on Demons present (choir, aggrails) and
+    // is at its best in a squad that is still whole. The Decimator is the
+    // opposite bet: softer and better armoured, it gains nothing from a full
+    // field and 30% damage every time one of its own goes down, while the
+    // ward it carries cuts the enemy's physical damage for everyone standing
+    // with it. Roman like the rest of the line, and decimation is the Choir's
+    // whole theology — the ranks are what you spend.
+    decimator: {
+      id: 'd1112', f: 'd', t: 4,
+      name: 'Decimator',
+      name_ru: 'Дециматор',
+      tags: ['Demon', 'Warrior'],
+      pref_position: 'front',
+      size: 'column',
+      hp: 140, armor: 20, initiative: 30,
+      resistances: { air: 5, fire: 40, life: 0, death: 5, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 30, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      xp: 8200, passive: ['rage 2', 'vengeance 2', 'warding 2'], ability: 'pact 2',
+    },
     chorister: {
       id: 'd12', f: 'd', t: 2,
       name: 'Chorister',
@@ -860,6 +883,24 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 22, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
       xp: 3095, passive: ['magic_attunement 1', 'essence_of_power 1', 'resist_aura_death 3'], ability: 'rite_of_reclamation 2',
+    },
+    // The Veiled branch's other end. Where the Pale Court peer deepens the
+    // Court's own death-ward, the Herald turns outward: it is the faction's
+    // only answer to an army that fights by blessing itself, and the only
+    // thing in the Choir that wards against life damage, which is what the
+    // Empire's holy shocks and its Mithrail line actually deal.
+    dread_herald: {
+      id: 'd6212', f: 'd', t: 4,
+      name: 'Dread Herald',
+      name_ru: 'Глашатай Ужаса',
+      tags: ['Court', 'Caster'],
+      pref_position: 'back',
+      size: 'tile',
+      hp: 60, armor: 5, initiative: 25,
+      resistances: { air: 0, fire: 25, life: 30, death: 15, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 20, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      xp: 3095, passive: ['magic_attunement 1', 'beacon_of_despair 2', 'resist_aura_life 2'], ability: 'rite_of_reclamation 2',
     },
     flame_spawn: {
       id: 'd7', f: 'd', t: 1,
@@ -3603,6 +3644,19 @@ const UNITS = {
         damage_source: 'physical', action_power: 15, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
         xp: 1560, passive: ['beacon_of_hope 2', 'beacon_of_despair 1'], ability: 'lions_roar 2', 
       },
+      exalted_lion: {
+        id: 'opb_e1111', f: 'opb', t: 4,
+        name: 'Exalted Lion',
+        name_ru: 'Возвышенный Лев',
+        tags: ['Demon', 'Holy'],
+        pref_position: 'front',
+        size: 'tile',
+        hp: 75, armor: 20, initiative: 30,
+        resistances: { air: 10, fire: 20, life: 40, death: 20, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 20, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
+        xp: 4005, passive: ['beacon_of_hope 2', 'beacon_of_despair 2', 'command 1'], ability: 'lions_roar 2',
+      },
       scarlet_recruit: {
         id: 'opb_e2', f: 'opb', t: 1,
         name: 'Recruit',
@@ -3655,6 +3709,25 @@ const UNITS = {
         damage_source: 'death', action_power: 18, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
         xp: 1560, passive: ['aggrails_blessing 2', 'desecrate 1', 'decay 1'], ability: null,
       },
+      // The Desecrator's tier 4 — cb_aggrails_desecrator was another dead end.
+      // desecrate goes 1 -> 2 (5% -> 8% bonus damage to Holy targets per Demon
+      // ally), which on a full Demon line is where this branch's whole threat
+      // comes from. Stats follow the faction's own t3 -> t4 step, read off High
+      // Keeper -> Grand Keeper: +10 HP, +2 power, resistances up a band, and the
+      // 4005 xp every tier 4 in this faction carries.
+      aggrails_blasphemer: {
+        id: 'opb_e2121', f: 'opb', t: 4,
+        name: 'Aggrails Blasphemer',
+        name_ru: 'Богохульник Агграила',
+        tags: ['Demon', 'Knight'],
+        pref_position: 'front',
+        size: 'tile',
+        hp: 65, armor: 20, initiative: 35,
+        resistances: { air: 10, fire: 20, life: 40, death: 25, cold: 10, nature: 15 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'death', action_power: 20, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
+        xp: 4005, passive: ['aggrails_blessing 2', 'desecrate 2', 'decay 1'], ability: null,
+      },
       aggrails_exorcist: {
         id: 'opb_e22', f: 'opb', t: 2,
         name: 'Aggrails Exorcist',
@@ -3667,6 +3740,27 @@ const UNITS = {
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 12, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
         xp: 540, passive: ['aggrails_blessing 1', 'desecrate 1', 'choir 1'], ability: null,
+      },
+      // The Exorcist's tier 3, which the line did not have — cb_aggrails_exorcist
+      // carried upgrades: [] and stopped at tier 2.
+      //
+      // Picks up HOLY on top of Demon/Knight, which is the point of it: desecrate
+      // hits Holy targets harder per Demon ally, so this one walks into the
+      // mirror match carrying the tag its own line is built to punish. choir 1
+      // goes to 2 with the tier, as the sibling branch does. Stats follow the
+      // line's own t2 -> t3 step (Devoted -> Champion): +5 HP, +5 armor, +4 power.
+      aggrails_crusader: {
+        id: 'opb_e221', f: 'opb', t: 3,
+        name: 'Aggrails Crusader',
+        name_ru: 'Крестоносец Агграила',
+        tags: ['Demon', 'Knight', 'Holy'],
+        pref_position: 'front',
+        size: 'tile',
+        hp: 55, armor: 15, initiative: 35,
+        resistances: { air: 5, fire: 25, life: 45, death: 5, cold: 5, nature: 5 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 16, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
+        xp: 1560, passive: ['aggrails_blessing 1', 'desecrate 1', 'choir 2'], ability: null,
       },
       initiate: {
         id: 'opb_e3', f: 'opb', t: 1,
@@ -4062,7 +4156,29 @@ const UNITS = {
         resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 20, nature: 20 },
         action: 'none', target_type: 'ally', targets: 1, range: 3,
         damage_source: null, action_power: 14,
-        xp: 1099, passive: ['Unity 1', 'vitality 2', 'unwavering_faith 2'], ability: null,
+        // 'Unity 1' was capitalised, and UNIT_ABILITIES lookups are exact — so
+        // the bond this unit is built around resolved to nothing and silently
+        // never formed. Lowercased with the rank swap rather than left for later.
+        xp: 1099, passive: ['unity 1', 'inner_fire 2', 'unwavering_faith 2'], ability: null,
+      },
+      // The other half of the Martyr of the Vow's tier 4: Forgiven ascends and
+      // turns Spirit, Forsaken does not and stays in the rotting body. Same
+      // frame as its sibling — same tier, same branch point, same cost, the
+      // same flat 20 resistances — and the same unity bond, which is why it
+      // also takes no action of its own. The tags and the three passives are
+      // the whole of the difference between them.
+      forsaken: {
+        id: 'dm_2112', f: 'dm', t: 4,
+        name: 'Forsaken',
+        name_ru: 'Отверженный',
+        tags: ['Holy', 'Knight', 'Zombie'],
+        pref_position: 'back',
+        size: 'tile',
+        hp: 55, armor: 15, initiative: 10,
+        resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 20, nature: 20 },
+        action: 'none', target_type: 'ally', targets: 1, range: 3,
+        damage_source: null, action_power: 14,
+        xp: 1099, passive: ['unity 1', 'horde 2', 'beacon_of_hope 2'], ability: null,
       },
       wailing_ghost: {
         id: 'dm_e3', f: 'dm', t: 1,

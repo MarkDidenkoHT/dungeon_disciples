@@ -2226,8 +2226,8 @@ const UNIT_ABILITIES = {
     params: { mothers_blessing: true, mothers_blessing_hp_cost_pct: 10 },
     effect_name: 'mothers_blessing',
   },
-  'mothers_blessing 1': {
-    id: 'mothers_blessing 1',
+  'mothers_blessing 2': {
+    id: 'mothers_blessing 2',
     name: "Mother's Blessing",
     name_ru: "Благословение Матери",
     rank: 2,
@@ -2415,6 +2415,24 @@ const UNIT_ABILITIES = {
     description: 'Adjacent allies in the same column gain 2 armor per Engineer ally on the field.',
     description_ru: "Соседние союзники в том же столбце получают по 2 брони за каждого союзного инженера.",
     params: { inspiration_stat: 'armor', inspiration_value_per_tag: 2, tag_required: 'Engineer' },
+  },
+  // Nine units — six Artificers, the Mechanic line's top three — have asked for
+  // this rank since before it existed, so their Inspiration has been inert.
+  //
+  // 2 -> 3 per tagged ally, which is what inspiration_initiative does across the
+  // same two ranks. The flat-value variants (inspiration_damage 3 -> 5) are a
+  // different curve because they do not multiply by a tag count, so this follows
+  // the per-tag sibling rather than them.
+  'inspiration_armor 2': {
+    id: 'inspiration_armor 2',
+    name: 'Inspiration',
+    name_ru: "Вдохновение",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'Adjacent allies in the same column gain 3 armor per Engineer ally on the field.',
+    description_ru: "Соседние союзники в том же столбце получают по 3 брони за каждого союзного инженера.",
+    params: { inspiration_stat: 'armor', inspiration_value_per_tag: 3, tag_required: 'Engineer' },
   },
   'inspiration_initiative 1': {
     id: 'inspiration_initiative 1',
@@ -2606,18 +2624,18 @@ const UNIT_ABILITIES = {
     type: 'passive',
     trigger: 'on_hit',
     description: "This unit's attacks also deal 20% of their damage to every chilled enemy.",
-    description_ru: "Атаки этого юнита также наносят 20% своего урона каждому горящему врагу.",
+    description_ru: "Атаки этого юнита также наносят 20% своего урона каждому врагу с ознобом.",
     params: { fellfire_pct: 20, fellfire_dot: 'chill' },
   },
   'hungering_frost 2': {
     id: 'hungering_frost 2',
     name: 'Hungering Frost',
     name_ru: "Голодный Мороз",
-    rank: 1,
+    rank: 2,
     type: 'passive',
     trigger: 'on_hit',
     description: "This unit's attacks also deal 30% of their damage to every chilled enemy.",
-    description_ru: "Атаки этого юнита также наносят 30% своего урона каждому горящему врагу.",
+    description_ru: "Атаки этого юнита также наносят 30% своего урона каждому врагу с ознобом.",
     params: { fellfire_pct: 30, fellfire_dot: 'chill' },
   },
   'mark_of_ash 1': {
@@ -3079,6 +3097,22 @@ const UNIT_ABILITIES = {
     description: 'Splits 6 bonus damage evenly among all Holy allies — the fewer you field the stronger the bonus.',
     description_ru: "Делит 6 бонусного урона поровну между всеми Святыми союзниками — чем их меньше, тем сильнее каждый.",
     params: { shared_pool_stat: 'damage', shared_pool_value: 6, tag_required: 'Holy' },
+    effect_name: 'divided_flame',
+  },
+  // The Holy arm of the shared-damage pool. Rank 2 doubles the pot exactly as
+  // its siblings do — divided_flame goes 6 -> 12 for Demons and rite_of_battle
+  // 6 -> 12 for Warriors — so the three tag variants stay one ability with
+  // three audiences rather than three balance curves.
+  'inner_fire 2': {
+    id: 'inner_fire 2',
+    name: 'Divided Flame',
+    name_ru: "Разделённое Пламя",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'Splits 12 bonus damage evenly among all Holy allies — the fewer you field the stronger the bonus.',
+    description_ru: "Делит 12 бонусного урона поровну между всеми Святыми союзниками — чем их меньше, тем сильнее каждый.",
+    params: { shared_pool_stat: 'damage', shared_pool_value: 12, tag_required: 'Holy' },
     effect_name: 'divided_flame',
   },
   'rite_of_battle 1': {

@@ -2030,7 +2030,8 @@
           "tier": 3,
           "unit_id": "d111",
           "upgrades": [
-            "conqueror_pit"
+            "conqueror_pit",
+            "decimator_pit"
           ],
           "cost": {
             "gold": 144,
@@ -2052,6 +2053,20 @@
             "Crystals_Fire": 77,
             "Crystals_Death": 19,
             "Crystals_Life": 19
+          }
+        },
+        {
+          "id": "decimator_pit",
+          "label": "Decimator Pit",
+          "label_ru": "Яма дециматоров",
+          "category": "barracks",
+          "tier": 4,
+          "unit_id": "d1112",
+          "upgrades": [],
+          "cost": {
+            "gold": 154,
+            "Crystals_Fire": 77,
+            "Crystals_Death": 38
           }
         },
         {
@@ -2549,7 +2564,8 @@
           "tier": 3,
           "unit_id": "d621",
           "upgrades": [
-            "pale_court_hall"
+            "pale_court_hall",
+            "dread_herald_hall"
           ],
           "cost": {
             "gold": 200
@@ -2562,6 +2578,18 @@
           "category": "barracks",
           "tier": 4,
           "unit_id": "d6211",
+          "upgrades": [],
+          "cost": {
+            "gold": 400
+          }
+        },
+        {
+          "id": "dread_herald_hall",
+          "label": "Dread Herald Hall",
+          "label_ru": "Зал глашатаев ужаса",
+          "category": "barracks",
+          "tier": 4,
+          "unit_id": "d6212",
           "upgrades": [],
           "cost": {
             "gold": 400
@@ -5548,6 +5576,12 @@
           "building_id": "conqueror_pit",
           "label": "Conqueror Pit",
           "label_ru": "Яма завоевателей"
+        },
+        {
+          "unit_id": "d1112",
+          "building_id": "decimator_pit",
+          "label": "Decimator Pit",
+          "label_ru": "Яма дециматоров"
         }
       ],
       "d1": [
@@ -5984,6 +6018,12 @@
           "building_id": "pale_court_hall",
           "label": "Pale Court Hall",
           "label_ru": "Зал Бледного Двора"
+        },
+        {
+          "unit_id": "d6212",
+          "building_id": "dread_herald_hall",
+          "label": "Dread Herald Hall",
+          "label_ru": "Зал глашатаев ужаса"
         }
       ],
       "d72": [
@@ -6666,6 +6706,14 @@
           "label_ru": "Возвышенный Евангелист"
         }
       ],
+      "opb_e111": [
+        {
+          "unit_id": "opb_e1111",
+          "building_id": "cb_exalted_lion",
+          "label": "Exalted Lion",
+          "label_ru": "Возвышенный Лев"
+        }
+      ],
       "opb_e2": [
         {
           "unit_id": "opb_e21",
@@ -6692,6 +6740,22 @@
           "building_id": "cb_aggrails_desecrator",
           "label": "Aggrails Desecrator",
           "label_ru": "Осквернитель Агграила"
+        }
+      ],
+      "opb_e22": [
+        {
+          "unit_id": "opb_e221",
+          "building_id": "cb_aggrails_crusader",
+          "label": "Aggrails Crusader",
+          "label_ru": "Крестоносец Агграила"
+        }
+      ],
+      "opb_e212": [
+        {
+          "unit_id": "opb_e2121",
+          "building_id": "cb_aggrails_blasphemer",
+          "label": "Aggrails Blasphemer",
+          "label_ru": "Богохульник Агграила"
         }
       ],
       "opb_e3": [
@@ -6822,6 +6886,20 @@
           "building_id": "cu_martyr_of_the_vow",
           "label": "Martyr of the Vow",
           "label_ru": "Мученик обета"
+        }
+      ],
+      "dm_211": [
+        {
+          "unit_id": "dm_2111",
+          "building_id": "cu_forgiven",
+          "label": "Forgiven",
+          "label_ru": "Прощенный"
+        },
+        {
+          "unit_id": "dm_2112",
+          "building_id": "cu_forsaken",
+          "label": "Forsaken",
+          "label_ru": "Отверженный"
         }
       ],
       "dm_e3": [

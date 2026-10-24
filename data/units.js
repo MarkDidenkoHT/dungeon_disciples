@@ -432,6 +432,29 @@ const UNITS = {
       damage_source: 'physical', action_power: 36, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
       xp: 8200, passive: ['rage 2', 'aggrails_blessing 2', 'choir 2'], ability: 'pact 2',
     },
+    // The warrior road's other end, and the only one the Choir had been
+    // missing: every other tier 4 in the faction is a fork but this line ran
+    // straight into the Conqueror. The Conqueror wins by being the largest
+    // thing on the board — it stacks on Demons present (choir, aggrails) and
+    // is at its best in a squad that is still whole. The Decimator is the
+    // opposite bet: softer and better armoured, it gains nothing from a full
+    // field and 30% damage every time one of its own goes down, while the
+    // ward it carries cuts the enemy's physical damage for everyone standing
+    // with it. Roman like the rest of the line, and decimation is the Choir's
+    // whole theology — the ranks are what you spend.
+    decimator: {
+      id: 'd1112', f: 'd', t: 4,
+      name: 'Decimator',
+      name_ru: 'Дециматор',
+      tags: ['Demon', 'Warrior'],
+      pref_position: 'front',
+      size: 'column',
+      hp: 140, armor: 20, initiative: 30,
+      resistances: { air: 5, fire: 40, life: 0, death: 5, cold: 0, nature: 5 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      damage_source: 'physical', action_power: 30, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      xp: 8200, passive: ['rage 2', 'vengeance 2', 'warding 2'], ability: 'pact 2',
+    },
     chorister: {
       id: 'd12', f: 'd', t: 2,
       name: 'Chorister',
@@ -860,6 +883,24 @@ const UNITS = {
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'death', action_power: 22, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
       xp: 3095, passive: ['magic_attunement 1', 'essence_of_power 1', 'resist_aura_death 3'], ability: 'rite_of_reclamation 2',
+    },
+    // The Veiled branch's other end. Where the Pale Court peer deepens the
+    // Court's own death-ward, the Herald turns outward: it is the faction's
+    // only answer to an army that fights by blessing itself, and the only
+    // thing in the Choir that wards against life damage, which is what the
+    // Empire's holy shocks and its Mithrail line actually deal.
+    dread_herald: {
+      id: 'd6212', f: 'd', t: 4,
+      name: 'Dread Herald',
+      name_ru: 'Глашатай Ужаса',
+      tags: ['Court', 'Caster'],
+      pref_position: 'back',
+      size: 'tile',
+      hp: 60, armor: 5, initiative: 25,
+      resistances: { air: 0, fire: 25, life: 30, death: 15, cold: 0, nature: 0 },
+      action: 'attack', target_type: 'enemy', targets: 1, range: 3,
+      damage_source: 'death', action_power: 20, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      xp: 3095, passive: ['magic_attunement 1', 'beacon_of_despair 2', 'resist_aura_life 2'], ability: 'rite_of_reclamation 2',
     },
     flame_spawn: {
       id: 'd7', f: 'd', t: 1,
@@ -3602,6 +3643,19 @@ const UNITS = {
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 15, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
         xp: 1560, passive: ['beacon_of_hope 2', 'beacon_of_despair 1'], ability: 'lions_roar 2', 
+      },
+      exalted_lion: {
+        id: 'opb_e1111', f: 'opb', t: 4,
+        name: 'Exalted Lion',
+        name_ru: 'Возвышенный Лев',
+        tags: ['Demon', 'Holy'],
+        pref_position: 'front',
+        size: 'tile',
+        hp: 75, armor: 20, initiative: 30,
+        resistances: { air: 10, fire: 20, life: 40, death: 20, cold: 0, nature: 0 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 20, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
+        xp: 4005, passive: ['beacon_of_hope 2', 'beacon_of_despair 2', 'command 1'], ability: 'lions_roar 2',
       },
       scarlet_recruit: {
         id: 'opb_e2', f: 'opb', t: 1,
