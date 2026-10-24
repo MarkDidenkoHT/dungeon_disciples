@@ -1025,6 +1025,100 @@ button:active:not(:disabled) { opacity: 0.75; }
   padding: 0;
 }
 
+/* ── The two offers in one row ───────────────────────────────────────────────
+   Two building images side by side, each its own card. A fixed 1fr/1fr grid
+   rather than flex, so the simple errand's card cannot grow past the grand
+   one's just because its title is longer — the player is comparing them, and a
+   comparison wants two equal columns. */
+.errand-offers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 0 10px;
+}
+/* One offer (post level 1, or the other kind already taken) keeps the card at
+   roughly the width it has beside a sibling, centred — a single card stretched
+   across the sheet turns the building art into a banner. */
+.errand-offers:has(> .errand-offer:only-child) {
+  grid-template-columns: minmax(0, 200px);
+  justify-content: center;
+}
+
+.errand-offer {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 0 0 7px;
+  border-radius: 10px; border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03); color: var(--text);
+  font-family: inherit; text-align: center; cursor: pointer;
+  overflow: hidden;
+  /* The unselected card is pushed back rather than hidden: both offers stay
+     readable, and only one of them looks like the one being sent on. */
+  opacity: 0.6;
+  transition: opacity 0.12s ease, border-color 0.12s ease;
+}
+.errand-offer--selected {
+  opacity: 1;
+  border-color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.10);
+}
+.errand-offer--dead { filter: grayscale(0.65); }
+
+.errand-offer-art {
+  position: relative;
+  display: block; width: 100%;
+  /* Wider than tall: two of these have to share one row and still leave the
+     sheet room for the reward, the duration picker and the unit track. */
+  aspect-ratio: 4 / 3;
+  background: rgba(0,0,0,0.25);
+}
+/* Absolute, so the image cannot feed its own intrinsic height back into the
+   box's aspect-ratio — a cover-cropped <img> at height:100% inside an
+   aspect-ratio box resolves to the art's own proportions instead of 4/3. */
+.errand-offer-art img {
+  position: absolute; inset: 0;
+  display: block; width: 100%; height: 100%; object-fit: cover;
+}
+/* Both overlays sit on the art so the card's text column stays one rhythm. */
+.errand-offer-badge {
+  position: absolute; top: 5px; left: 5px;
+  padding: 2px 6px; border-radius: 4px;
+  background: rgba(var(--accent-rgb), 0.85); color: #0b0b0d;
+  font-size: 0.58rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.07em;
+}
+.errand-offer-hours {
+  position: absolute; bottom: 5px; right: 5px;
+  padding: 2px 7px; border-radius: 9px;
+  background: rgba(0,0,0,0.72); color: var(--text);
+  font-size: 0.68rem; font-weight: 700;
+}
+.errand-offer--grand .errand-offer-hours { color: var(--accent); }
+
+.errand-offer-name {
+  padding: 0 6px;
+  font-size: 0.74rem; font-weight: 700; line-height: 1.25;
+}
+.errand-offer--selected .errand-offer-name { color: var(--accent); }
+
+.errand-offer-tags {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 3px;
+  padding: 0 4px;
+}
+/* "/" means either tag qualifies, "+" means both are required. */
+.errand-offer-join { color: var(--muted); font-size: 0.72rem; font-weight: 700; }
+.errand-offer-chips { justify-content: center; padding: 0 4px; }
+.errand-offer-chips .errand-reward-chip { font-size: 0.64rem; padding: 2px 7px; }
+
+/* The token IS the grand errand's headline, so it is drawn bigger than a gold
+   or crystal icon rather than at chip scale. */
+.errand-reward-chip--token { font-size: 0.74rem; }
+.errand-reward-chip--token .res-icon-img { width: 17px; height: 17px; }
+.errand-token-name { font-weight: 600; }
+.errand-offer-chips .errand-reward-chip--token { font-size: 0.72rem; }
+.errand-offer-chips .errand-reward-chip--token .res-icon-img { width: 19px; height: 19px; }
+
+.errand-desc--detail { padding: 0 10px; }
+
 .errand-parts { display: flex; flex-direction: row; gap: 6px; padding: 0 10px; }
 .errand-part {
   flex: 1;
@@ -11225,6 +11319,7 @@ html[lang="ru"] .detail-action-label,
 html[lang="ru"] .detail-unit-badge,
 html[lang="ru"] .embark-event-section-label,
 html[lang="ru"] .embark-title,
+html[lang="ru"] .errand-offer-badge,
 html[lang="ru"] .errand-reroll-ad,
 html[lang="ru"] .errand-section-label,
 html[lang="ru"] .event-section-label,

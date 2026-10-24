@@ -1,6 +1,7 @@
 import { api, bootstrapCache, errandsCache, refreshResourceBar } from './api.js';
 import { openSheet, getSheetBody, setSheetTitle, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, playAdPlaceholder } from './utils.js';
 import { ERRANDS_BY_ID } from '../data/errands.js';
+import { TOKEN_DEFS } from '../data/embark.js';
 import { showTutorialSpotlight, isTutorialDone, markTutorialDone } from './tutorial.js';
 import { assetUrl } from './asset_base.js';
 
@@ -40,6 +41,16 @@ const ET = {
   adCancel:    { en: 'Cancel',                 ru: 'Отмена' },
   rerollNoAlt: { en: 'No other errand fits your roster right now.',
                  ru: 'Сейчас вашему отряду не подходит другое поручение.' },
+  // The two offers. `needsEither` / `needsBoth` are the whole difference between
+  // them stated in one word, next to the tags they apply to.
+  pick:        { en: 'Choose an errand',       ru: 'Выберите поручение' },
+  grandBadge:  { en: 'Grand',                  ru: 'Большое' },
+  needsEither: { en: 'either',                 ru: 'любой' },
+  needsBoth:   { en: 'both',                   ru: 'оба' },
+  requires:    { en: 'Requires',               ru: 'Требуется' },
+  trip:        { en: 'Trip',                   ru: 'В пути' },
+  noUnit:      { en: 'No unit on your roster can take this one.',
+                 ru: 'Никто в отряде не может взять это поручение.' },
 };
 
 // Server error codes that deserve their own line rather than the generic
@@ -86,6 +97,56 @@ function errandHeaderHtml(def, desc) {
     </div>`;
 }
 
+// ── The two offers, side by side ─────────────────────────────────────────────
+// The post holds one simple errand and one grand one, and the sheet's question
+// is which to take. Each card carries its OWN art, requirement and reward,
+// because that is what the player is comparing — and there is room for both
+// building images in one row, so neither has to be read from a list.
+//
+// The requirement is stated as the two tags with a joiner between them: "/" for
+// a simple errand (either tag qualifies, both pay double) and "+" for a grand
+// one (both or nobody). One glyph is the whole rule.
+function offerTagsHtml(offer, def) {
+  const tags = offer.requirement?.tags_all || offer.requirement?.tags_any || [];
+  const both = Boolean(offer.requirement?.tags_all?.length);
+  const join = `<span class="errand-offer-join">${both ? '+' : '/'}</span>`;
+  return `
+    <span class="errand-offer-tags" title="${T('requires')}: ${both ? T('needsBoth') : T('needsEither')}">
+      ${tags.map(t => `<span class="unit-tag">${t}</span>`).join(join)}
+    </span>`;
+}
+
+// What this offer pays, for the card. A grand errand pays one indivisible
+// reward; a simple one pays per tag matched, so its card shows both halves at
+// the trip length currently picked for it.
+function offerRewardHtml(offer, hours) {
+  if (offer.reward) return rewardHtml(offer.reward, { names: false });
+  const picked = offer.durations?.find(d => d.hours === hours) ?? offer.durations?.[0];
+  return (picked?.parts || []).map(p => rewardHtml(p.reward, { names: false })).join('');
+}
+
+function offerCardHtml(offer, { selected, hours }) {
+  const def = ERRANDS_BY_ID[offer.errand_id];
+  const src = errandArtUrl(def);
+  const grand = offer.kind === 'grand';
+  // No candidate means the offer stands but this roster cannot answer it — shown
+  // anyway, dimmed, because "you need a Caster who is also Holy" is information
+  // worth having, and hiding the card would make the post look empty.
+  const dead = !(offer.candidates || []).length;
+  return `
+    <button class="errand-offer ${selected ? 'errand-offer--selected' : ''} ${grand ? 'errand-offer--grand' : ''} ${dead ? 'errand-offer--dead' : ''}"
+            data-row-id="${offer.row_id ?? ''}" type="button">
+      <span class="errand-offer-art">
+        ${src ? `<img src="${src}" alt="" onerror="this.style.display='none'">` : ''}
+        ${grand ? `<span class="errand-offer-badge">${T('grandBadge')}</span>` : ''}
+        <span class="errand-offer-hours">${hours}${T('hours')}</span>
+      </span>
+      <span class="errand-offer-name">${def?.title?.[lang] ?? offer.errand_id}</span>
+      ${offerTagsHtml(offer, def)}
+      <span class="errand-chips errand-offer-chips">${offerRewardHtml(offer, hours)}</span>
+    </button>`;
+}
+
 function activeErrandsHtml(active) {
   if (!active.length) return '';
   return `
@@ -112,7 +173,22 @@ function resourceIcon(key) {
   return key === 'Gold' ? GOLD_ICON : (CRYSTAL_ICONS[key] ?? '');
 }
 
-function rewardHtml(reward = {}) {
+// A token (Tome, Sigil, potion) is what a GRAND errand pays, and it has real art
+// — the same file the daily-task and quest sheets use — so it reads as the thing
+// the player already knows from the supply pool rather than as a word.
+function tokenIconHtml(id) {
+  const def = TOKEN_DEFS[id];
+  const fallback = def?.icon || '✦';
+  if (!def?.art) return fallback;
+  return `<img src="${assetUrl(`/${def.art}`)}" class="res-icon-img" alt=""
+               onerror="this.replaceWith(document.createTextNode('${fallback}'))">`;
+}
+
+// `names` spells a token out ("+1 Tome of Knowledge") instead of leaving it as
+// an icon. On by default everywhere there is a full row to write in; off on the
+// offer cards, which are half a screen wide and already carry the name in the
+// chip's title.
+function rewardHtml(reward = {}, { names = true } = {}) {
   const bits = [];
   if (reward.xp_self)   bits.push(`<span class="errand-reward-chip">+${reward.xp_self} ${T('xpSelf')}</span>`);
   if (reward.xp_roster) bits.push(`<span class="errand-reward-chip">+${reward.xp_roster} ${T('xpRoster')}</span>`);
@@ -120,6 +196,11 @@ function rewardHtml(reward = {}) {
     const icon = resourceIcon(item);
     bits.push(`<span class="errand-reward-chip" title="${item.replace('Crystals_', '')}">+${amount}${
       icon || ` ${item.replace('Crystals_', '')}`}</span>`);
+  }
+  for (const [item, amount] of Object.entries(reward.tokens || {})) {
+    const name = TOKEN_DEFS[item]?.name || item;
+    bits.push(`<span class="errand-reward-chip errand-reward-chip--token" title="${name}">+${amount}${
+      tokenIconHtml(item)}${names ? `<span class="errand-token-name">${name}</span>` : ''}</span>`);
   }
   return bits.join('');
 }
@@ -143,9 +224,35 @@ export async function openErrandsSheet(player) {
 
   let state  = null;
   let chosen = null;
-  // The trip length the player picked. Defaults to the shortest — the cheapest
-  // commitment is the safe default when the unit may be wanted for an embark.
-  let chosenHours = null;
+  // Which of the two offers is in front. Held as the offer ROW id, which is what
+  // /errands/start takes — so the sheet never has to describe the errand it is
+  // sending a unit on, only name the row the server already minted.
+  let chosenOffer = null;
+  // The trip length the player picked, PER OFFER. Per offer rather than one
+  // shared value because the two offers do not allow the same lengths: a grand
+  // errand has exactly one, and switching cards must not carry a 6h pick onto a
+  // 12h errand or silently reset the other card's choice.
+  const hoursByOffer = {};
+
+  function offerList() {
+    return state?.offers ?? (state?.offer ? [state.offer] : []);
+  }
+  function currentOffer() {
+    const all = offerList();
+    return all.find(o => String(o.row_id) === String(chosenOffer)) ?? all[0] ?? null;
+  }
+  function hoursFor(offer) {
+    const allowed = offer?.durations ?? [];
+    const want = hoursByOffer[String(offer?.row_id)];
+    return allowed.find(d => d.hours === want)?.hours ?? allowed[0]?.hours ?? offer?.hours ?? null;
+  }
+  // Selecting a card re-picks the unit too: the two offers have different
+  // requirements, so the unit chosen for one is often not a candidate for the
+  // other.
+  function selectOffer(rowId) {
+    chosenOffer = rowId;
+    chosen = currentOffer()?.candidates?.[0] ?? null;
+  }
 
   async function load(forceRefresh = false) {
     // Navigation refreshes this cache for the button badge. Reuse that result
@@ -155,14 +262,22 @@ export async function openErrandsSheet(player) {
     state  = await (forceRefresh
       ? errandsCache.refresh(player.chat_id)
       : errandsCache.get(player.chat_id));
-    chosen = state.offer?.candidates?.[0] ?? null;   // Send is one tap
-    chosenHours = state.offer?.durations?.[0]?.hours ?? state.offer?.hours ?? null;
+    // Keep the card the player was looking at across a reload when it is still
+    // on offer; otherwise fall to the first, which is the simple errand.
+    const all = offerList();
+    const keep = all.find(o => String(o.row_id) === String(chosenOffer));
+    selectOffer((keep ?? all[0])?.row_id ?? null);
     render();
   }
 
   // The reroll button, or nothing at all when the day's swaps are gone. Hidden
   // rather than shown-disabled: the offer sheet is already dense, and a control
   // that cannot do anything until tomorrow is not worth the row.
+  //
+  // Only drawn under the SIMPLE card. The server rerolls simple offers only (a
+  // faction has one grand errand, so a swap could only return what it replaced),
+  // and a button under the grand card that silently changed the other one would
+  // be a lie about what it does.
   function rerollBtnHtml() {
     const left = bootstrapCache.data?.errand_reroll?.remaining ?? 0;
     if (left <= 0) return '';
@@ -255,7 +370,8 @@ export async function openErrandsSheet(player) {
 
     // 2. Units are out. At level 4 an open offer can be shown alongside them.
     const active = state?.active ?? [];
-    if (active.length && !state?.offer) {
+    const offers = offerList();
+    if (active.length && !offers.length) {
       const first = active[0];
       const def = ERRANDS_BY_ID[first.errand_id];
       setSheetTitle(def?.title?.[lang] ?? first.errand_id);
@@ -266,48 +382,70 @@ export async function openErrandsSheet(player) {
       return;
     }
 
-    // 3. An offer is waiting.
-    if (state?.offer) {
-      const def  = ERRANDS_BY_ID[state.offer.errand_id];
-      const rows = (bootstrapCache.data?.roster || [])
-        .filter(r => state.offer.candidates.includes(String(r.id)));
+    // 3. Offers are waiting — one card per kind, in one row.
+    if (offers.length) {
+      const offer = currentOffer();
+      const def   = ERRANDS_BY_ID[offer.errand_id];
+      const hours = hoursFor(offer);
+      const rows  = (bootstrapCache.data?.roster || [])
+        .filter(r => offer.candidates.includes(String(r.id)));
 
-      // Priced by the server, one entry per allowed trip length. Each entry
-      // carries the two tag halves rather than one merged total, because what a
-      // given unit earns depends on which of the two tags it has.
-      const durations = state.offer.durations ?? [];
-      const picked    = durations.find(d => d.hours === chosenHours) ?? durations[0] ?? { hours: state.offer.hours, parts: [] };
+      // Priced by the server, one entry per allowed trip length. A grand errand
+      // reports exactly one, so the picker below collapses to nothing rather
+      // than offering a choice that does not exist.
+      const durations = offer.durations ?? [];
+      const picked    = durations.find(d => d.hours === hours) ?? durations[0] ?? { hours: offer.hours, parts: [] };
       const parts     = picked.parts ?? [];
-      // Which tags the selected unit has: the halves it earns are the lit ones,
-      // which is the whole explanation the sheet needs to give.
-      const chosenTags = state.offer.candidate_tags?.[String(chosen)] ?? [];
+      // Which tags the selected unit has: for a simple errand the halves it
+      // earns are the lit ones. A grand errand has no halves — a unit either
+      // carries both tags and takes the whole reward, or cannot go at all.
+      const chosenTags = offer.candidate_tags?.[String(chosen)] ?? [];
+      const dead = !rows.length;
 
-      setSheetTitle(def?.title?.[lang] ?? state.offer.errand_id);
+      // The sheet is a choice between two errands now, so its header names the
+      // choice and each card names its own errand.
+      setSheetTitle(offers.length > 1 ? T('pick') : (def?.title?.[lang] ?? offer.errand_id));
       body.innerHTML = `
         <div class="errand-sheet">
           ${activeErrandsHtml(active)}
-          ${errandHeaderHtml(def, def?.desc?.[lang] ?? '')}
 
-          <div class="errand-parts">
-            ${parts.map(p => `
-              <div class="errand-part ${chosenTags.includes(p.tag) ? 'errand-part--earned' : ''}">
-                <span class="unit-tag">${p.tag}</span>
-                <span class="errand-chips">${rewardHtml(p.reward)}</span>
-              </div>`).join('')}
+          <div class="errand-offers" id="errand-offers">
+            ${offers.map(o => offerCardHtml(o, {
+              selected: String(o.row_id) === String(offer.row_id),
+              hours:    hoursFor(o),
+            })).join('')}
           </div>
 
-          <div class="errand-durations" id="errand-durations">
-            ${durations.map(d => `
-              <button class="errand-duration ${d.hours === picked.hours ? 'errand-duration--selected' : ''}"
-                      data-hours="${d.hours}">
-                <span class="errand-duration-time">${d.hours}${T('hours')}</span>
-                <span class="errand-duration-mult">x${d.mult}</span>
-              </button>`).join('')}
-          </div>
+          ${def?.desc?.[lang] ? `<p class="errand-desc errand-desc--detail">${def.desc[lang]}</p>` : ''}
+
+          ${offer.reward ? `
+            <div class="errand-section-label">${T('reward')}</div>
+            <div class="errand-chips">${rewardHtml(offer.reward)}</div>
+          ` : `
+            <div class="errand-parts">
+              ${parts.map(p => `
+                <div class="errand-part ${chosenTags.includes(p.tag) ? 'errand-part--earned' : ''}">
+                  <span class="unit-tag">${p.tag}</span>
+                  <span class="errand-chips">${rewardHtml(p.reward)}</span>
+                </div>`).join('')}
+            </div>
+          `}
+
+          ${durations.length > 1 ? `
+            <div class="errand-durations" id="errand-durations">
+              ${durations.map(d => `
+                <button class="errand-duration ${d.hours === picked.hours ? 'errand-duration--selected' : ''}"
+                        data-hours="${d.hours}">
+                  <span class="errand-duration-time">${d.hours}${T('hours')}</span>
+                  <span class="errand-duration-mult">x${d.mult}</span>
+                </button>`).join('')}
+            </div>` : ''}
+
+          ${dead ? `<p class="errand-desc errand-desc--detail">${T('noUnit')}</p>` : ''}
 
           <button class="errand-btn" id="errand-send" ${chosen ? '' : 'disabled'}>${T('send')}</button>
 
-          ${rerollBtnHtml()}
+          ${offer.reward ? '' : rerollBtnHtml()}
 
           <div class="prep-track-wrap errand-track-wrap">
             <div class="portrait-track" id="errand-track">
@@ -316,12 +454,21 @@ export async function openErrandsSheet(player) {
           </div>
         </div>`;
 
+      // Switching cards swaps the requirement, the reward and the candidate
+      // list, so it is a full re-render like every other pick in this sheet.
+      body.querySelector('#errand-offers')?.addEventListener('click', e => {
+        const card = e.target.closest('.errand-offer');
+        if (!card || String(card.dataset.rowId) === String(offer.row_id)) return;
+        selectOffer(card.dataset.rowId);
+        render();
+      });
+
       // Re-renders rather than patching in place: the reward chips below have to
       // change with the pick, and they are the whole point of offering a choice.
       body.querySelector('#errand-durations')?.addEventListener('click', e => {
         const btn = e.target.closest('.errand-duration');
         if (!btn) return;
-        chosenHours = Number(btn.dataset.hours);
+        hoursByOffer[String(offer.row_id)] = Number(btn.dataset.hours);
         render();
       });
 
@@ -344,7 +491,14 @@ export async function openErrandsSheet(player) {
         btn.disabled = true;
         btn.textContent = T('sending');
         try {
-          await api('/errands/start', { chat_id: player.chat_id, roster_id: chosen, hours: chosenHours });
+          // The offer row is named explicitly — with two on the table the
+          // server cannot infer which one the player was looking at.
+          await api('/errands/start', {
+            chat_id: player.chat_id,
+            roster_id: chosen,
+            hours,
+            offer_row_id: offer.row_id,
+          });
           await load(true);                  // that unit is out now
           refreshErrandButton(player).catch(() => {});
         } catch (err) {
@@ -432,7 +586,8 @@ export async function refreshErrandButton(player) {
   if (btn.disabled) return;
   try {
     const state = await errandsCache.get(player.chat_id);
-    btn.classList.toggle('res-bar-errands--ready', !!state.offer || !!(state.finished || []).length);
+    const waiting = (state.offers ?? (state.offer ? [state.offer] : [])).length;
+    btn.classList.toggle('res-bar-errands--ready', !!waiting || !!(state.finished || []).length);
   } catch {
     // Never let this take the shell down; the button just stays quiet.
   }

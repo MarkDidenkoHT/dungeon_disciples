@@ -3047,11 +3047,18 @@ function dailySeed(chat_id, date) {
 // it again beats giving nothing. For a reroll it does not: the player paid an ad
 // view for a DIFFERENT errand, so the caller needs to know it cannot deliver and
 // refund rather than hand back what they already had.
-function pickErrandFor({ chat_id, faction, postLevel, freeRows, date, lastErrandId = null, salt = '', requireDifferent = false }) {
+//
+// `kind` is which of the two offers is being minted. The two are picked
+// independently off the same roster, so the post can hold a simple offer and a
+// grand one at the same time and the player chooses between them.
+function pickErrandFor({ chat_id, faction, postLevel, freeRows, date, lastErrandId = null, salt = '', requireDifferent = false, kind = ERR.KIND_SIMPLE }) {
   if (!freeRows.length) return null;
+  // Grand errands are the post's second level. Asking for one below it is not
+  // an error — it is simply an offer this player has not unlocked.
+  if (kind === ERR.KIND_GRAND && Number(postLevel) < ERR.GRAND_MIN_POST_LEVEL) return null;
 
   const profiles = freeRows.map(row => ({ row, profile: ERR.unitProfile(row, resolveRosterDef) }));
-  const pool = ERR.ERRANDS.filter(e => e.faction === faction);
+  const pool = ERR.ERRANDS.filter(e => e.faction === faction && ERR.errandKind(e) === kind);
   const tier = ERR.errandTier(postLevel);
 
   const eligible = [];
@@ -3067,7 +3074,7 @@ function pickErrandFor({ chat_id, faction, postLevel, freeRows, date, lastErrand
   const from  = fresh.length ? fresh : eligible;
   const pick  = from[dailySeed(chat_id, `${date}${salt ? `|${salt}` : ''}`) % from.length];
 
-  return { errand_id: pick.errand.id, tier, requirement: pick.resolved };
+  return { errand_id: pick.errand.id, kind, tier, requirement: pick.resolved };
 }
 
 // Who on the roster can take this offer RIGHT NOW, and what each of them would
@@ -3087,21 +3094,31 @@ function errandCandidates(offer, freeRows) {
 // The whole offer as the client needs it: the errand, every duration priced, and
 // what each tag half pays. Per-unit totals are NOT precomputed — the sheet shows
 // the two halves and the player works out that a dual-tag unit takes both.
-function offerPayload(offer, freeRows, postLevel) {
+//
+// `row_id` is the offer row. With two offers on screen the client has to say
+// WHICH one it is sending a unit on, and it says it by id rather than by kind so
+// /errands/start never has to re-derive which row the player was looking at.
+function offerPayload(offer, freeRows, postLevel, rowId = null) {
   const def = ERR.ERRANDS_BY_ID[offer.errand_id];
   if (!def) return null;
-  const durations = ERR.DURATIONS.map(d => ({
+  const durations = ERR.errandDurations(def).map(d => ({
     hours: d.hours,
     mult:  d.mult,
     parts: ERR.rewardParts(def, postLevel, offer.tier, d.hours),
   }));
   const cands = errandCandidates(offer, freeRows);
   return {
+    row_id:      rowId == null ? null : String(rowId),
     errand_id:   offer.errand_id,
+    kind:        ERR.errandKind(def),
     tier:        offer.tier,
     requirement: offer.requirement,
     durations,
     hours:       durations[0].hours,
+    // A grand errand has no halves to price, so the sheet is handed the one
+    // reward it pays. Null for a simple errand, whose `durations[].parts` are
+    // the answer instead.
+    reward:      ERR.isGrand(def) ? ERR.grandReward(def) : null,
     // Roster ids only, so the existing client filter keeps working; the tag
     // detail rides alongside for the "what would this one bring?" line.
     candidates:      cands.map(c => c.roster_id),
@@ -3149,6 +3166,21 @@ function freeRosterRows(roster, activeRows) {
 //   offered   active=false, errand_data.offered=true   waiting to be taken
 //   running   active=true                              unit is out
 //   finished  active=false, no `offered` flag          edge function ended it
+// Which kind an offer row is. Read off the DEFINITION rather than off
+// errand_data, so rows written before `kind` existed classify as simple without
+// a migration.
+function offerKindOf(row) {
+  return ERR.errandKind(ERR.ERRANDS_BY_ID[row?.errand]);
+}
+
+const byCreatedAt = (a, b) => String(a.created_at).localeCompare(String(b.created_at));
+
+// TWO OFFERS, ONE SLOT. The post now holds at most one offer of EACH kind, so
+// the sheet can put the simple errand and the grand one side by side and the
+// player chooses. Capacity is unchanged — it governs how many units can be OUT
+// (one, two at post level 4) — so taking one offer normally parks the other
+// until that unit is home. The unparked offer is not discarded: it is the same
+// row, still `offered`, and it comes back the moment a slot frees.
 async function ensureErrandOffer(chat_id, player) {
   const [structRows, roster, rows] = await Promise.all([
     supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
@@ -3161,43 +3193,60 @@ async function ensureErrandOffer(chat_id, player) {
   const postLevel = errandPostLevelOf(structRows[0]);
   const capacity = errandCapacityForLevel(postLevel);
 
-  // Keep the second offer available only while a level-4 errand slot is free.
-  if (active.length >= capacity) return { rows, active, offerRow: null, roster, structRows };
-  // Already holding an offer: hand back the oldest and never mint a second. If a
-  // race did write two, this consistently picks the same one and the extra is
-  // simply never shown.
-  if (offered.length) {
-    const offerRow = offered.sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))[0];
-    return { rows, active, offerRow, roster, structRows };
+  // No free slot: hold whatever offers exist, mint nothing, show nothing.
+  if (active.length >= capacity) return { rows, active, offerRows: [], roster, structRows };
+
+  const freeRows = freeRosterRows(roster, active);
+  const date     = playerLocalDate(player.timezone);
+  const minted   = [];
+  const held     = [];
+
+  for (const kind of [ERR.KIND_SIMPLE, ERR.KIND_GRAND]) {
+    // Already holding one of this kind: hand back the oldest and never mint a
+    // second. If a race did write two, this consistently picks the same one and
+    // the extra is simply never shown.
+    const mine = offered.filter(r => offerKindOf(r) === kind).sort(byCreatedAt);
+    if (mine.length) { held.push(mine[0]); continue; }
+
+    const offer = pickErrandFor({
+      chat_id,
+      faction: player.faction,
+      postLevel,
+      freeRows,
+      date,
+      // Scoped to this kind, so the one grand errand a faction has is not
+      // suppressed by the simple errand that was run last.
+      lastErrandId: rows.find(r => offerKindOf(r) === kind)?.errand ?? null,
+      kind,
+    });
+    // Nothing fits (no qualifying unit, or the post is too low for a grand
+    // errand). Not an error: that kind is simply not on offer today.
+    if (!offer) continue;
+
+    const inserted = await supabase(ERRAND_TABLE, {
+      method: 'POST',
+      body: JSON.stringify({
+        player: String(chat_id),
+        errand: offer.errand_id,
+        errand_data: {
+          offered:     true,
+          kind:        offer.kind,
+          tier:        offer.tier,
+          requirement: offer.requirement,
+          offered_at:  new Date().toISOString(),
+        },
+        active: false,
+      }),
+      headers: { Prefer: 'return=representation' },
+    });
+    const row = Array.isArray(inserted) ? inserted[0] : inserted;
+    if (row) minted.push(row);
   }
 
-  const offer = pickErrandFor({
-    chat_id,
-    faction: player.faction,
-    postLevel,
-    freeRows: freeRosterRows(roster, active),
-    date: playerLocalDate(player.timezone),
-    lastErrandId: rows[0]?.errand ?? null,
-  });
-  if (!offer) return { rows, active, offerRow: null, roster, structRows };
-
-  const inserted = await supabase(ERRAND_TABLE, {
-    method: 'POST',
-    body: JSON.stringify({
-      player: String(chat_id),
-      errand: offer.errand_id,
-      errand_data: {
-        offered:     true,
-        tier:        offer.tier,
-        requirement: offer.requirement,
-        offered_at:  new Date().toISOString(),
-      },
-      active: false,
-    }),
-    headers: { Prefer: 'return=representation' },
-  });
-  const offerRow = Array.isArray(inserted) ? inserted[0] : inserted;
-  return { rows: [offerRow, ...rows], active, offerRow, roster, structRows };
+  // Simple first, then grand — the order the sheet draws them in.
+  const offerRows = [...held, ...minted]
+    .sort((a, b) => (offerKindOf(a) === ERR.KIND_GRAND ? 1 : 0) - (offerKindOf(b) === ERR.KIND_GRAND ? 1 : 0));
+  return { rows: [...minted, ...rows], active, offerRows, roster, structRows };
 }
 
 // Rows this player has, newest first. `active` separates "out" from "finished".
@@ -3217,7 +3266,7 @@ router.get('/errands', requireAuth, async (req, res) => {
     const player = req.authenticatedPlayer;
     if (!player) return res.status(404).json({ error: 'Player not found' });
 
-    const { rows, active, offerRow, roster, structRows } = await ensureErrandOffer(chat_id, player);
+    const { rows, active, offerRows, roster, structRows } = await ensureErrandOffer(chat_id, player);
 
     // Finished but not yet acknowledged. The edge function ends the errand and
     // the bot announces it; this is what the player sees when they come back in.
@@ -3225,15 +3274,18 @@ router.get('/errands', requireAuth, async (req, res) => {
     // an untaken offer would be reported as a completed one.
     const unseen = rows.filter(r => !r.active && !r.errand_data?.offered && !r.errand_data?.seen);
 
-    const offer = offerRow
-      ? offerPayload(
-          { errand_id: offerRow.errand, ...offerRow.errand_data },
-          freeRosterRows(roster, active),
-          errandPostLevelOf(structRows[0]))
-      : null;
+    const free      = freeRosterRows(roster, active);
+    const postLevel = errandPostLevelOf(structRows[0]);
+    const offers = offerRows
+      .map(row => offerPayload({ errand_id: row.errand, ...row.errand_data }, free, postLevel, row.id))
+      .filter(Boolean);
 
     res.json({
-      offer,
+      offers,
+      // The first offer under its old name, for any caller still reading a
+      // single `offer` (the resource-bar badge did until this change).
+      offer: offers[0] ?? null,
+      grand_min_post_level: ERR.GRAND_MIN_POST_LEVEL,
       active: active.map(r => ({ id: r.id, errand_id: r.errand, ...r.errand_data })),
       finished: unseen.map(r => ({ id: r.id, errand_id: r.errand, ...r.errand_data })),
       definitions: ERR.ERRANDS,
@@ -3247,7 +3299,7 @@ router.get('/errands', requireAuth, async (req, res) => {
 // back from its row; the request only says WHO goes and for HOW LONG, and both
 // are validated. Nothing about the errand or its reward comes from the client.
 router.post('/errands/start', requireAuth, async (req, res) => {
-  const { chat_id, roster_id, hours } = req.body;
+  const { chat_id, roster_id, hours, offer_row_id } = req.body;
   if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });
   try {
     const player = await getPlayerByChatId(chat_id);
@@ -3273,9 +3325,17 @@ router.post('/errands/start', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'That unit is already on an errand', code: 'errand_unit_busy' });
     }
 
-    const offerRow = rows
+    // Two offers can stand at once, so the client names the one it is taking.
+    // `offer_row_id` is matched against the player's OWN offered rows — it
+    // selects between rows the server already minted and can never introduce an
+    // errand, a requirement or a reward of the client's choosing. An omitted or
+    // unknown id falls back to the oldest offer, which is what a single-offer
+    // client used to get.
+    const offeredRows = rows
       .filter(r => !r.active && r.errand_data?.offered)
-      .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))[0];
+      .sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)));
+    const offerRow = (offer_row_id != null
+      && offeredRows.find(r => String(r.id) === String(offer_row_id))) || offeredRows[0];
     if (!offerRow) return res.status(400).json({ error: 'No errand available', code: 'errand_no_offer' });
 
     const offer = { errand_id: offerRow.errand, ...offerRow.errand_data };
@@ -3289,15 +3349,26 @@ router.post('/errands/start', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'That unit cannot go', code: 'errand_requirement' });
     }
 
+    // A grand errand requires BOTH its tags, and this is where that is decided:
+    // `offer.requirement` was snapshotted onto the row when the offer was minted
+    // and carries tags_all for a grand errand, tags_any for a simple one.
     const profile = ERR.unitProfile(row, resolveRosterDef);
     if (!ERR.unitMeets(profile, offer.requirement)) {
       return res.status(400).json({ error: 'That unit does not meet the requirement', code: 'errand_requirement' });
     }
+    // The post can be razed or swapped under a standing grand offer. Re-checked
+    // here rather than trusted from mint time, so the token cannot be collected
+    // on a post that no longer qualifies.
+    if (ERR.isGrand(def) && postLevel < ERR.GRAND_MIN_POST_LEVEL) {
+      return res.status(400).json({ error: "The Messenger's Post is too small for that errand", code: 'errand_post_level' });
+    }
 
     const now         = Date.now();
     // The client sends which trip it picked; an unknown value resolves to the
-    // shortest one, so the duration multiplier can never be forged.
-    const duration = ERR.durationFor(hours);
+    // errand's shortest allowed one, so the duration multiplier can never be
+    // forged — and a grand errand, which allows exactly one length, cannot be
+    // run short.
+    const duration = ERR.durationFor(def, hours);
 
     // Everything the edge function needs to finish this without re-deriving it,
     // and everything the client needs to render it. The reward is computed from
@@ -3312,6 +3383,7 @@ router.post('/errands/start', requireAuth, async (req, res) => {
       // message without importing data/errands.js (it is CommonJS, and Deno
       // would have to reimplement the lookup to read it).
       title:       def.title,
+      kind:        ERR.errandKind(def),
       tier:        offer.tier,
       hours:       duration.hours,
       started_at:  new Date(now).toISOString(),
@@ -3361,6 +3433,12 @@ router.post('/errands/seen', requireAuth, async (req, res) => {
     const alreadySeen = row.errand_data?.seen === true;
     const errandUnit  = row.errand_data?.roster_id;
 
+    // NOTHING IS PAID HERE, tokens included. A grand errand pays out of the
+    // supply pool (a Tome, a Sigil, potions), and that payout belongs to the
+    // same place every other errand reward does: the errands-complete edge
+    // function, which writes the token into `resources` under item_type 'token'
+    // and stamps `tokens_paid` on the row. One payer, so there is no window in
+    // which two of them could both decide a Tome is owed.
     await supabase(`${ERRAND_TABLE}?id=eq.${encodeURIComponent(errand_row_id)}`, {
       method: 'PATCH',
       body: JSON.stringify({ errand_data: { ...(row.errand_data || {}), seen: true } }),
@@ -3680,7 +3758,11 @@ router.post('/errands/reroll/start', requireAuth, async (req, res) => {
       errandRowsFor(chat_id),
     ]);
     const active  = rows.filter(r => r.active);
-    const offered = rows.filter(r => !r.active && r.errand_data?.offered);
+    // Only the SIMPLE offer is rerollable. A faction has exactly one grand
+    // errand, so a swap could never return anything but the errand it replaced
+    // — the ad would always be spent for nothing.
+    const offered = rows.filter(r => !r.active && r.errand_data?.offered
+      && offerKindOf(r) === ERR.KIND_SIMPLE);
     const capacity = errandCapacityForLevel(errandPostLevelOf(structRows[0]));
 
     // Nothing to swap. Checked before the allowance so a player cannot burn a
@@ -3748,7 +3830,8 @@ router.post('/errands/reroll/claim', requireAuth, async (req, res) => {
       errandRowsFor(chat_id),
     ]);
     const active  = rows.filter(r => r.active);
-    const offered = rows.filter(r => !r.active && r.errand_data?.offered);
+    const offered = rows.filter(r => !r.active && r.errand_data?.offered
+      && offerKindOf(r) === ERR.KIND_SIMPLE);
     const capacity = errandCapacityForLevel(errandPostLevelOf(structRows[0]));
     if (active.length >= capacity || !offered.length) {
       // Burn the token, do NOT spend a daily use — there is nothing to swap.
@@ -3771,6 +3854,7 @@ router.post('/errands/reroll/claim', requireAuth, async (req, res) => {
       lastErrandId: oldRow.errand,
       salt:         `reroll:${record.reroll.count + 1}`,
       requireDifferent: true,
+      kind:         ERR.KIND_SIMPLE,
     });
     if (!offer) {
       // Only one errand this roster can answer. Refund by not counting it.
@@ -3787,6 +3871,7 @@ router.post('/errands/reroll/claim', requireAuth, async (req, res) => {
         errand: offer.errand_id,
         errand_data: {
           offered:     true,
+          kind:        offer.kind,
           tier:        offer.tier,
           requirement: offer.requirement,
           offered_at:  new Date().toISOString(),
@@ -3808,7 +3893,7 @@ router.post('/errands/reroll/claim', requireAuth, async (req, res) => {
         errand_id:   offerRow.errand,
         tier:        offerRow.errand_data.tier,
         requirement: offerRow.errand_data.requirement,
-      }, freeRosterRows(roster, active), errandPostLevelOf(structRows[0])),
+      }, freeRosterRows(roster, active), errandPostLevelOf(structRows[0]), offerRow.id),
       remaining: REROLL_DAILY_CAP - record.reroll.count,
       cap:       REROLL_DAILY_CAP,
     });

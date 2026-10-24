@@ -13,11 +13,18 @@
 // so a third tag hung on a unit by its item counts here exactly like a native one.
 //
 // TWO TAGS, TWO PARTS
-// Every errand names two tags and pays one reward part per tag. A unit qualifies
-// by having EITHER tag and earns only the part(s) it actually matches — so the
-// unit carrying both tags brings both halves home, and that is the interesting
-// choice in the sheet. The pool the parts are drawn from is deliberately small:
-// XP for the unit, gold, or one faction-appropriate crystal.
+// Every SIMPLE errand names two tags and pays one reward part per tag. A unit
+// qualifies by having EITHER tag and earns only the part(s) it actually matches
+// — so the unit carrying both tags brings both halves home. The pool the parts
+// are drawn from is deliberately small: XP for the unit, gold, or one
+// faction-appropriate crystal.
+//
+// TWO ERRANDS, ONE SLOT
+// The post offers a simple errand and a GRAND one at the same time, and the
+// player takes one. A grand errand demands both of its tags, runs for a fixed
+// length written into the errand rather than chosen, and pays a token out of the
+// supply pool. See the KIND_* block below for why the two are shaped so
+// differently.
 //
 // COMPLETABILITY
 // Nothing here guarantees an errand is offerable. That is enforced when the
@@ -41,6 +48,9 @@ const TIER_REWARD_MULT = { 1: 1, 2: 1.5, 3: 2 };
 // worse per hour (2h pays 10/h, 6h pays 6.7/h), so the short trip is right when
 // the unit is wanted for an embark and the long one is right overnight. There is
 // no failure roll, so this choice IS the errand's decision.
+//
+// A GRAND errand has no such choice: its `hours` is part of the errand, the way
+// its reward is, so the trip length varies per errand rather than per player.
 const DURATIONS = [
   { hours: 2, mult: 1 },
   { hours: 4, mult: 1.5 },
@@ -48,22 +58,76 @@ const DURATIONS = [
 ];
 const DEFAULT_HOURS = 2;
 
+// ── Two kinds of errand ─────────────────────────────────────────────────────
+// The post offers BOTH at once and the player takes one, so the decision the
+// sheet asks is no longer "how long?" but "which?".
+//
+//   simple  the errand this file was written for: two tags, EITHER qualifies,
+//           one reward part per tag matched, and the player picks 2/4/6 hours.
+//           Pays XP, gold or a crystal — the currencies that are always useful
+//           and never scarce.
+//   grand   one errand, both tags, a fixed long trip, and a reward out of the
+//           supply pool rather than the treasury: a Tome, a Sigil, a stack of
+//           potions. These are the things a player cannot buy, so the grand
+//           errand is the only standing way to earn one at home.
+//
+// The grand errand is deliberately NOT a bigger simple one. Its cost is the
+// pair of tags (a dual-tag unit is a real roster constraint, not a filter) plus
+// a unit gone for most of a day, and what it buys is a token — a different
+// currency, not more of the same one. That keeps the choice between the two a
+// choice about what the player NEEDS rather than arithmetic about rates.
+const KIND_SIMPLE = 'simple';
+const KIND_GRAND  = 'grand';
+
+// Grand errands are the Messenger's Post's second level earning its keep. At
+// level 1 only the simple offer is minted, so the post has a reason to rise
+// beyond the payout multiplier.
+const GRAND_MIN_POST_LEVEL = 2;
+
+function errandKind(errand) {
+  return errand?.kind === KIND_GRAND ? KIND_GRAND : KIND_SIMPLE;
+}
+function isGrand(errand) {
+  return errandKind(errand) === KIND_GRAND;
+}
+
+// Every trip length this errand allows, priced. One entry for a grand errand
+// (its own `hours`, no multiplier — the reward is already written for that
+// length), three for a simple one.
+function errandDurations(errand) {
+  if (isGrand(errand)) return [{ hours: Number(errand.hours) || DEFAULT_HOURS, mult: 1 }];
+  return DURATIONS;
+}
+
 // Server and client both resolve a requested duration through this, so an
-// arbitrary `hours` in a request body cannot buy a multiplier.
-function durationFor(hours) {
-  return DURATIONS.find(d => d.hours === Number(hours)) ?? DURATIONS[0];
+// arbitrary `hours` in a request body cannot buy a multiplier or a shorter trip
+// than the errand asks for.
+function durationFor(errand, hours) {
+  const allowed = errandDurations(errand);
+  return allowed.find(d => d.hours === Number(hours)) ?? allowed[0];
 }
 
 // ── Definition shape ────────────────────────────────────────────────────────
 //   id       unique key, referenced by the errand row
+//   kind     'simple' (the default when absent) or 'grand'
 //   faction  which faction may be offered it
 //   art      a building art key (see buildings.js). The image shown is that
 //            building in THIS errand's faction, /assets/buildings/<art>_<e|c|g>.jpg,
 //            so an errand costs no art of its own — naming a building is enough.
 //            Missing art degrades to no image.
+//
+// SIMPLE only:
 //   parts    exactly two, one per tag:
 //              tag     the unit tag this half is for
 //              reward  what that half pays — xp_self, xp_roster, or resources
+//
+// GRAND only:
+//   require_tags  exactly two; the unit must carry BOTH
+//   hours         the one trip length this errand has
+//   reward        the whole payout, flat — scaled by neither post nor duration
+//                 (see rewardForTags). `tokens` keys are TOKEN_DEFS ids from
+//                 data/embark.js: crossroad_sigil, tome_of_knowledge,
+//                 health_potion.
 //
 // SCALE — what these numbers are measured against:
 //   one unit's share of a battle   10 XP (level 1) to 26 XP (level 6)
@@ -173,6 +237,40 @@ const ERRANDS = [
       { tag: 'Holy',    reward: { xp_self: PART_XP } },
     ],
   },
+
+  // ── GRAND ERRANDS ─────────────────────────────────────────────────────────
+  // One per faction, each paying a different token, each a different length.
+  // The tag pairs are chosen off the real rosters (data/units.js): Caster+Holy
+  // is thirteen Empire units, Caster+Demon is forty-two Choir ones, and
+  // Knight+Zombie is eleven in the Grail — a constraint a player can satisfy
+  // without it being a constraint they can ignore.
+  {
+    id: 'emp_temple_long_vigil', kind: KIND_GRAND, faction: 'empire', art: 'temple',
+    require_tags: ['Caster', 'Holy'],
+    hours: 6,
+    reward: { tokens: { tome_of_knowledge: 1 } },
+    title: { en: 'The Long Vigil',               ru: 'Долгое бдение' },
+    desc:  { en: 'Six hours knelt in the Lion\'s Temple, reading the hard pages aloud until they are yours. Only a blessed voice can hold the light that long.',
+             ru: 'Шесть часов на коленях в Храме Льва — читать трудные страницы вслух, пока они не станут вашими. Лишь благословенный голос удержит свет так долго.' },
+  },
+  {
+    id: 'cho_guild_long_transcription', kind: KIND_GRAND, faction: 'choir_of_the_cursed', art: 'mage_guild',
+    require_tags: ['Caster', 'Demon'],
+    hours: 8,
+    reward: { tokens: { crossroad_sigil: 1 } },
+    title: { en: 'Copy the Crossroad Leaf',      ru: 'Переписать лист перекрестья' },
+    desc:  { en: 'The guild holds one leaf of the old crossroad work and will not let it leave the room. Copy it by hand, in a hand the ink does not burn.',
+             ru: 'Гильдия хранит один лист старой работы о перекрестьях и не выпустит его из комнаты. Перепишите его рукой, которую не жжёт эта тушь.' },
+  },
+  {
+    id: 'gra_infirmary_long_watch', kind: KIND_GRAND, faction: 'grail_of_sorrow', art: 'infirmary',
+    require_tags: ['Knight', 'Zombie'],
+    hours: 12,
+    reward: { tokens: { health_potion: 5 } },
+    title: { en: 'A Night and a Day in the Ward', ru: 'Ночь и день в палате' },
+    desc:  { en: 'The infirmary brews through the night and needs hands that do not tire and a back that does not turn. Stay until the vats are full.',
+             ru: 'Лазарет варит всю ночь: нужны руки, что не устанут, и спина, что не отвернётся. Останьтесь, пока чаны не наполнятся.' },
+  },
 ];
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -206,18 +304,25 @@ function unitProfile(row, resolveDef, itemStats = row?._item_stats ?? null) {
   return { tags: kept };
 }
 
-// The two tags an errand accepts, in the order their reward parts are listed.
+// The two tags an errand names — the order its reward parts are listed in for a
+// simple one, the order written in `require_tags` for a grand one.
 function errandTags(errand) {
+  if (isGrand(errand)) return (errand?.require_tags || []).slice();
   return (errand?.parts || []).map(p => p.tag);
 }
 
 // What this errand demands, resolved into the shape that is snapshotted onto the
-// errand row so the UI can still explain it after the fact.
+// errand row so the UI can still explain it after the fact. The two kinds differ
+// only in the key: `tags_any` for either, `tags_all` for both.
 function resolveRequirement(errand) {
-  return { tags_any: errandTags(errand) };
+  return isGrand(errand)
+    ? { tags_all: errandTags(errand) }
+    : { tags_any: errandTags(errand) };
 }
 
 function unitMeets(profile, resolved) {
+  const all = resolved?.tags_all || [];
+  if (all.length) return all.every(t => profile.tags.includes(t));
   const want = resolved?.tags_any || [];
   if (!want.length) return true;
   return want.some(t => profile.tags.includes(t));
@@ -229,8 +334,14 @@ function scaleAmount(n, mult) { return Math.round(n * mult); }
 // tags gets both halves; a unit matching one gets one. Tier and duration
 // multiply what comes out, never which parts apply.
 function rewardForTags(errand, tags, postLevel, tierOverride = null, hours = DEFAULT_HOURS) {
+  // A grand errand pays exactly what it is written to pay. Nothing multiplies
+  // it: its length is fixed, and a token is a whole thing — x1.5 of one Sigil
+  // is either a rounding bug or a doubling, never a 50% raise. The post level
+  // gates whether it is OFFERED (GRAND_MIN_POST_LEVEL) instead of scaling it.
+  if (isGrand(errand)) return grandReward(errand);
+
   const tier = tierOverride ?? errandTier(postLevel);
-  const mult = (TIER_REWARD_MULT[tier] ?? 1) * durationFor(hours).mult;
+  const mult = (TIER_REWARD_MULT[tier] ?? 1) * durationFor(errand, hours).mult;
   const have = (tags || []).filter(Boolean).map(String);
 
   const out = {};
@@ -247,9 +358,24 @@ function rewardForTags(errand, tags, postLevel, tierOverride = null, hours = DEF
   return out;
 }
 
+// A deep-ish copy, so a caller that merges into the returned object (the way
+// the simple path builds one up) cannot write into the definition itself.
+function grandReward(errand) {
+  const r = errand?.reward || {};
+  const out = {};
+  if (r.xp_self)   out.xp_self   = r.xp_self;
+  if (r.xp_roster) out.xp_roster = r.xp_roster;
+  if (r.resources) out.resources = { ...r.resources };
+  if (r.tokens)    out.tokens    = { ...r.tokens };
+  return out;
+}
+
 // Every part priced on its own, for the sheet: the player sees which tag pays
 // what BEFORE choosing who goes, which is the whole point of the two-part split.
+// A grand errand has no parts — both tags buy one indivisible reward — so it
+// reports an empty list and the sheet shows `reward` instead.
 function rewardParts(errand, postLevel, tierOverride = null, hours = DEFAULT_HOURS) {
+  if (isGrand(errand)) return [];
   return (errand.parts || []).map(p => ({
     tag:    p.tag,
     reward: rewardForTags(errand, [p.tag], postLevel, tierOverride, hours),
@@ -269,6 +395,13 @@ export {
   TIER_REWARD_MULT,
   DURATIONS,
   DEFAULT_HOURS,
+  KIND_SIMPLE,
+  KIND_GRAND,
+  GRAND_MIN_POST_LEVEL,
+  errandKind,
+  isGrand,
+  errandDurations,
+  grandReward,
   durationFor,
   errandTier,
   unitProfile,
@@ -286,6 +419,13 @@ if (typeof module !== 'undefined') module.exports = {
   TIER_REWARD_MULT,
   DURATIONS,
   DEFAULT_HOURS,
+  KIND_SIMPLE,
+  KIND_GRAND,
+  GRAND_MIN_POST_LEVEL,
+  errandKind,
+  isGrand,
+  errandDurations,
+  grandReward,
   durationFor,
   errandTier,
   unitProfile,
