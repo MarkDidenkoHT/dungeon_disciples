@@ -508,7 +508,7 @@
 
 <h1>⚖️ Unit Balance · Compare + Scores</h1>
 <div class="sub">
-  Loading data from the project. <strong>Vitality</strong> = ((avg resist + armor) / 2) + HP · <strong>DPS</strong> = action_power × (targets / 2) × (1 + initiative/100) · <strong>Overall</strong> = Vitality + DPS.
+  Loading data from the project. <strong>Vitality</strong> = ((avg resist + armor) / 2) + HP · <strong>DPS</strong> = action_power × (min(targets, 3) / 2) × (1 + initiative/100) · <strong>Overall</strong> = Vitality + DPS.
 </div>
 
 <div class="tabs">
@@ -926,10 +926,14 @@
       return ((avgRes + armor) / 2) + hp;
     }
 
+    // Six targets counts as three — see TARGETS_SCORE_CAP in utils/army-power.js
+    // for why. Kept in step with calcUnitPower there and in public/utils.js.
+    const TARGETS_SCORE_CAP = 3;
+
     function calcDPS(unit) {
       const d = unit.data;
       const power = d.action_power || 0;
-      const targets = d.targets || 0;
+      const targets = Math.min(d.targets || 0, TARGETS_SCORE_CAP);
       const initiative = d.initiative || 0;
       return power * (targets / 2) * (1 + initiative / 100);
     }
