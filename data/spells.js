@@ -289,12 +289,22 @@ const SPELLS = {
       name: 'Hymn of Warding',
       name_ru: 'Гимн оберега',
       category: 'buff',
-      tier: 1,
+      // Tier II, not I. A tome page is one tier tab (renderSlider in
+      // public/screens/spell_tome.js), three cards fit above the fold, and this
+      // was the Choir's fourth — the SECOND single-ally buff on a shelf where
+      // Song of Frenzy already holds that slot and is granted at creation. The
+      // Empire's tier I is one granted buff, one bought one and a line effect;
+      // moving this leaves the Choir with the same shape, and the Grail does the
+      // same with Pall of Sorrow.
+      tier: 2,
       type: 'combat',
       effect_icon: 'resist_aura_cold',
       description: 'One ally is warded against air and cold: +15 to both for 2 rounds, +5 per extra power.',
       description_ru: 'Союзник защищён от воздуха и холода: +15 к обоим на 2 раунда, +5 за доп. силу.',
-      cost: { crystals: { Crystals_Fire: 15 } },
+      // 20, the going rate on its new shelf (Chorus of Wrath, Pyre Requiem). It
+      // was 15 — already the dearest thing in tier I, which is part of why it was
+      // the one to move.
+      cost: { crystals: { Crystals_Fire: 20 } },
       power_cost: 1,
       scaling: { 'resistances.air': 5, 'resistances.cold': 5 },
       effect_type: 'buff',
@@ -350,9 +360,17 @@ const SPELLS = {
       type: 'combat',
       effect_icon: 'dissipate',
       // In a faction where everything is song, the punishment is being left out
-      // of it: their passives go unsung.
-      description: 'The enemy is left out of the verse: their passives fall silent for 1 round. At full power, 2 rounds.',
-      description_ru: 'Врага не вписали в песнь: их пассивные умения молчат 1 раунд. На полной силе — 2 раунда.',
+      // of it: the passives go unsung.
+      //
+      // NOBODY is written in, your own line included. The lock is not applied
+      // per target — applySpellParams sets _passives_locked on every combatant
+      // on the field (the battlefield-wide lock in utils/battle-engine.js), and
+      // target_scope is 'none' because there is nothing to aim it at. So this is
+      // a trade, not a one-sided silence, and the text has to say so: a player
+      // who reads "the enemy" and casts it over their own passive engine has
+      // been misled by the card, not outplayed.
+      description: 'Nobody is written into the verse: every passive on the field falls silent for 1 round — yours as well as theirs. At full power, 2 rounds.',
+      description_ru: 'Никого не вписали в песнь: все пассивные умения на поле молчат 1 раунд — и ваши, и вражеские. На полной силе — 2 раунда.',
       cost: { crystals: { Crystals_Fire: 20, Crystals_Nature: 5 } },
       power_cost: 1,
       max_power_bonus: { lock_all_passives_rounds: 1 },
@@ -456,13 +474,20 @@ const SPELLS = {
       name: 'Pall of Sorrow',
       name_ru: 'Покров скорби',
       category: 'special',
-      tier: 1,
+      // Tier II, for the reason Hymn of Warding is — the Grail's tier I was four
+      // cards deep. This is the one that moves because it is the only spell that
+      // does TWO things at once (shroud them, shield your hero), and the only
+      // 'special' any faction was selling at tier I. What it leaves behind is the
+      // Choir's tier I exactly: the granted single-ally buff, the permanence
+      // debuff, the line debuff.
+      tier: 2,
       type: 'combat',
       effect_icon: 'sorrow',
       // The drain fantasy in one cast: they are weakened, your own is veiled.
       description: 'A shroud settles over one enemy — −10% damage dealt for 2 rounds, −5% per extra power — and your hero is veiled with an 8-point shield, +4 per extra power.',
       description_ru: 'Покров ложится на врага — −10% наносимого урона на 2 раунда, −5% за доп. силу — а вашего героя укрывает щит на 8 единиц, +4 за доп. силу.',
-      cost: { crystals: { Crystals_Death: 10, Crystals_Fire: 5 } },
+      // 15 + 5, the going rate on its new shelf (Last Rites, The Long Rot).
+      cost: { crystals: { Crystals_Death: 15, Crystals_Fire: 5 } },
       power_cost: 1,
       scaling: { damage_dealt_reduction_pct: 5, shield_caster: 4 },
       effect_type: 'debuff',
