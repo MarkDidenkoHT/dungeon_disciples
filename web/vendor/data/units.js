@@ -3644,19 +3644,6 @@ const UNITS = {
         damage_source: 'physical', action_power: 15, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
         xp: 1560, passive: ['beacon_of_hope 2', 'beacon_of_despair 1'], ability: 'lions_roar 2', 
       },
-      exalted_lion: {
-        id: 'opb_e1111', f: 'opb', t: 4,
-        name: 'Exalted Lion',
-        name_ru: 'Возвышенный Лев',
-        tags: ['Demon', 'Holy'],
-        pref_position: 'front',
-        size: 'tile',
-        hp: 75, armor: 20, initiative: 30,
-        resistances: { air: 10, fire: 20, life: 40, death: 20, cold: 0, nature: 0 },
-        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: 'physical', action_power: 20, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-        xp: 4005, passive: ['beacon_of_hope 2', 'beacon_of_despair 2', 'command 1'], ability: 'lions_roar 2',
-      },
       scarlet_recruit: {
         id: 'opb_e2', f: 'opb', t: 1,
         name: 'Recruit',
@@ -3761,6 +3748,24 @@ const UNITS = {
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 16, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
         xp: 1560, passive: ['aggrails_blessing 1', 'desecrate 1', 'choir 2'], ability: null,
+      },
+      // The Crusader's tier 4 — cb_aggrails_crusader was the branch's dead end,
+      // the way cb_aggrails_desecrator was before the Blasphemer. Same tier
+      // step the sibling branch takes (Desecrator -> Blasphemer): +10 HP,
+      // +5 armor, +4 power, and the line's own two per-tag passives raised to
+      // rank 2 while choir stays where the Crusader already had it.
+      aggrails_lion: {
+        id: 'opb_e2211', f: 'opb', t: 4,
+        name: 'Aggrails Lion',
+        name_ru: 'Лев Агграила',
+        tags: ['Demon', 'Knight', 'Holy'],
+        pref_position: 'front',
+        size: 'tile',
+        hp: 65, armor: 20, initiative: 35,
+        resistances: { air: 10, fire: 30, life: 50, death: 10, cold: 5, nature: 5 },
+        action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+        damage_source: 'physical', action_power: 20, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
+        xp: 4005, passive: ['aggrails_blessing 2', 'desecrate 2', 'choir 2'], ability: null,
       },
       initiate: {
         id: 'opb_e3', f: 'opb', t: 1,

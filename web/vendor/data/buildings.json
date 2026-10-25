@@ -6706,14 +6706,6 @@
           "label_ru": "Возвышенный Евангелист"
         }
       ],
-      "opb_e111": [
-        {
-          "unit_id": "opb_e1111",
-          "building_id": "cb_exalted_lion",
-          "label": "Exalted Lion",
-          "label_ru": "Возвышенный Лев"
-        }
-      ],
       "opb_e2": [
         {
           "unit_id": "opb_e21",
@@ -6756,6 +6748,14 @@
           "building_id": "cb_aggrails_blasphemer",
           "label": "Aggrails Blasphemer",
           "label_ru": "Богохульник Агграила"
+        }
+      ],
+      "opb_e221": [
+        {
+          "unit_id": "opb_e2211",
+          "building_id": "cb_aggrails_lion",
+          "label": "Aggrails Lion",
+          "label_ru": "Лев Агграила"
         }
       ],
       "opb_e3": [
