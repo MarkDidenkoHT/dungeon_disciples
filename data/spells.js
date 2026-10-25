@@ -197,6 +197,7 @@ const SPELLS = {
   choir_of_the_cursed: [
     {
       id: 'd_spell_4',
+      effect_name: 'eternal_pyre',
       name: 'Eternal Pyre',
       name_ru: 'Вечный Костёр',
       category: 'debuff',
@@ -341,6 +342,7 @@ const SPELLS = {
     },
     {
       id: 'd_spell_11',
+      effect_name: 'unsung',
       name: 'Unsung',
       name_ru: 'Неспетые',
       category: 'special',
@@ -364,6 +366,7 @@ const SPELLS = {
   grail_of_sorrow: [
     {
       id: 'g_spell_4',
+      effect_name: 'unending_wound',
       name: 'Unending Wound',
       name_ru: 'Незаживающая Рана',
       category: 'debuff',

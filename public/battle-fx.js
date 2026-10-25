@@ -7112,6 +7112,238 @@ export async function rime_ward(originCellEl, opts = {}) {
   layer.destroy({ children: true });
 }
 
+// ── The Seal — Eternal Pyre / Unending Wound ──────────────────────────────────
+//
+// Both spells do the same thing to different damage: they take the burn or the
+// bleed the victim is ALREADY carrying and stop it expiring. So they are one
+// picture in two palettes — the arrangement vitalPulse and the six Wards
+// already use, and for the same reason: authoring them twice only lets them
+// drift apart.
+//
+// Everything else in this file ends by dissipating, which is how a one-shot
+// reads as over and done. This one ends by LOCKING: the ring closes, strikes
+// bright, holds, and is cut. Permanence is the whole subject of both spells, so
+// the motion has to say it — and the motes are drawn INWARD rather than thrown
+// off, because nothing gets out of this one either.
+const SEAL_EMBER = { core: 0xffd79a, mid: 0xff6a12, deep: 0x7a2a00 };
+const SEAL_BLOOD = { core: 0xff8e96, mid: 0xc2102a, deep: 0x5a0512 };
+
+async function brandSeal(cellEl, pal, label) {
+  if (!app || !window.PIXI || !cellEl) return;
+  const dataId = cellEl.dataset?.id;
+  if (!dataId) return;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+  const TAU     = Math.PI * 2;
+
+  // Fixed per play, so two seals on the same unit differ instead of the effect
+  // looking like a looping sprite — same reason vitalPulse seeds its motes.
+  const MOTES = 9;
+  const motes = Array.from({ length: MOTES }, (_, i) => ({
+    ang:   (i / MOTES) * TAU + rand(-0.25, 0.25),
+    delay: rand(0, 0.25),
+    size:  rand(1.6, 3.2),
+  }));
+
+  const { layer, glow, solid } = riderLayer(5);
+  console.log(`[battle-fx] ${label} START`, dataId);
+
+  await animate(1000, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+    glow.clear(); solid.clear();
+
+    const cx = b.x + b.width  / 2;
+    const cy = b.y + b.height / 2;
+    const R  = Math.min(b.width, b.height) * 0.5;
+
+    // Cut, not faded. The seal is still at full strength when it stops being
+    // drawn, which is the whole difference between "that is over" and "that is
+    // permanent" — a fade-out would undo the sentence the rest of this says.
+    const out = t > 0.94 ? 1 - (t - 0.94) / 0.06 : 1;
+
+    // 1. The status the victim is already wearing, flaring as the spell takes.
+    const flare = Math.sin(clamp01(t / 0.22) * Math.PI);
+    if (flare > 0) {
+      softGlow(glow, cx, cy, R * 0.75, pal.mid,  0.55 * flare);
+      softGlow(glow, cx, cy, R * 0.40, pal.core, 0.50 * flare);
+    }
+
+    // 2. The ring drawing itself closed, clockwise from the top.
+    const draw = clamp01((t - 0.15) / 0.50);
+    const lock = clamp01((t - 0.68) / 0.10);
+    if (draw > 0) {
+      const rr = R * 0.86;
+      const a0 = -Math.PI / 2;
+      solid.lineStyle(Math.max(1.5, R * (0.07 + 0.05 * lock)),
+                      lock > 0 ? pal.core : pal.mid, (0.55 + 0.4 * lock) * out);
+      solid.moveTo(cx + Math.cos(a0) * rr, cy + Math.sin(a0) * rr);
+      solid.arc(cx, cy, rr, a0, a0 + TAU * draw);
+      solid.lineStyle(0);
+      // The head of the stroke, so the eye has something to follow round.
+      if (draw < 1) {
+        const a = a0 + TAU * draw;
+        softGlow(glow, cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, R * 0.18, pal.core, 0.7 * out);
+      }
+    }
+
+    // 3. Motes pulled IN to the ring rather than thrown off it.
+    for (const m of motes) {
+      const p = clamp01((t - 0.25 - m.delay) / 0.45);
+      if (p <= 0 || p >= 1) continue;
+      const dist = R * (1.5 - 0.64 * p);
+      const mx = cx + Math.cos(m.ang) * dist;
+      const my = cy + Math.sin(m.ang) * dist;
+      softGlow(glow, mx, my, m.size * 1.8, pal.mid, 0.5 * (1 - p) * out);
+      solid.beginFill(pal.core, 0.8 * (1 - p) * out);
+      solid.drawCircle(mx, my, m.size * (1 - p * 0.5));
+      solid.endFill();
+    }
+
+    // 4. The strike of the seal, and the hold after it.
+    if (lock > 0) {
+      const f = Math.sin(lock * Math.PI);
+      softGlow(glow, cx, cy, R * (0.5 + 0.5 * lock), pal.core, 0.60 * f * out);
+      softGlow(glow, cx, cy, R * 0.9,                pal.deep, 0.30 * lock * out);
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log(`[battle-fx] ${label} END`, dataId);
+}
+
+export async function eternal_pyre(cellEl)   { return brandSeal(cellEl, SEAL_EMBER, 'eternal_pyre'); }
+export async function unending_wound(cellEl) { return brandSeal(cellEl, SEAL_BLOOD, 'unending_wound'); }
+
+// ── Unsung ────────────────────────────────────────────────────────────────────
+//
+// The Choir's tier-3 capstone, and the only effect here whose subject is an
+// ABSENCE. Every other Choir picture pushes sound outward; this one writes the
+// verse across the field and then strikes it out, which is what being left out
+// of it looks like. The caster does nothing visible on purpose — nobody is
+// struck, somebody is omitted.
+//
+// It covers the WHOLE board, both sides, because that is what the spell does:
+// applySpellParams sets `_passives_locked` on every combatant, the caster's own
+// units included (the battlefield-wide lock in utils/battle-engine.js). The
+// enemy line alone would be the prettier picture and the wrong one.
+const UNSUNG_PAL = { ink: 0xe8e4f0, pale: 0x9a93b5, mute: 0x191622 };
+
+export async function unsung(originCellEl, opts = {}) {
+  const targetCells = (opts.targetCells || []).filter(Boolean);
+  if (!app || !window.PIXI || !targetCells.length) return;
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand    = (a, b) => a + Math.random() * (b - a);
+
+  const ids = targetCells.map(c => c.dataset?.id).filter(Boolean);
+  if (!ids.length) return;
+
+  // Three notes per unit, seeded once so the field does not write the same bar
+  // over every portrait.
+  const NOTES = 3;
+  const notes = new Map(ids.map(id => [id, Array.from({ length: NOTES }, (_, i) => ({
+    x:     (i - (NOTES - 1) / 2) * 0.26 + rand(-0.05, 0.05),
+    delay: rand(0, 0.22),
+    rise:  rand(0.75, 1.10),
+    size:  rand(0.075, 0.105),
+    tilt:  rand(-0.25, 0.25),
+  }))]));
+
+  const { layer, glow, solid } = riderLayer(4);
+  console.log('[battle-fx] unsung START', ids.length);
+
+  await animate(1250, t => {
+    glow.clear(); solid.clear();
+
+    const cells = ids.map(id => ({ id, b: cellBoundsFor(id) })).filter(c => c.b);
+    if (!cells.length) return;
+
+    const minX = Math.min(...cells.map(c => c.b.x));
+    const maxX = Math.max(...cells.map(c => c.b.x + c.b.width));
+    const minY = Math.min(...cells.map(c => c.b.y));
+    const maxY = Math.max(...cells.map(c => c.b.y + c.b.height));
+    const span = Math.max(1, maxX - minX);
+
+    // The erasure, left to right. Everything behind it is simply gone.
+    const wipe   = clamp01((t - 0.45) / 0.35);
+    const wipeX  = minX + span * wipe;
+    const erased = x => wipe > 0 && x <= wipeX;
+
+    // 1. The staff — three faint rules the verse would have been written on,
+    //    drawn in from the left and taken away by the wipe from the same side.
+    const rule = clamp01(t / 0.3);
+    if (rule > 0) {
+      for (let i = 0; i < 3; i++) {
+        const y    = minY + (maxY - minY) * (0.3 + i * 0.2);
+        const to   = Math.min(minX + span * rule, maxX);
+        const from = wipe > 0 ? Math.max(minX, wipeX) : minX;
+        if (to <= from) continue;
+        solid.lineStyle(1, UNSUNG_PAL.pale, 0.28);
+        solid.moveTo(from, y);
+        solid.lineTo(to, y);
+        solid.lineStyle(0);
+      }
+    }
+
+    // 2. The colour going out of each unit as the wipe passes it, then seeping
+    //    back. Drawn as a plain dark plate on the SOLID layer rather than the
+    //    ADD one: every other effect in this file puts light in, and this is the
+    //    one that has to take it out. Drawn before the notes so a later cell's
+    //    plate cannot sit on top of an earlier cell's notation.
+    for (const c of cells) {
+      const b  = c.b;
+      const cx = b.x + b.width / 2;
+      const m  = clamp01((t - 0.5 - ((cx - minX) / span) * 0.25) / 0.5);
+      if (m <= 0) continue;
+      solid.beginFill(UNSUNG_PAL.mute, Math.sin(m * Math.PI) * 0.42);
+      solid.drawRoundedRect(b.x, b.y, b.width, b.height, Math.min(b.width, b.height) * 0.14);
+      solid.endFill();
+    }
+
+    // 3. The notes lifting off each portrait — until the wipe reaches them, at
+    //    which point they stop being drawn mid-rise. Cut, never faded: a note
+    //    that dims has finished; a note that vanishes was taken.
+    for (const c of cells) {
+      const b  = c.b;
+      const cx = b.x + b.width / 2;
+      const cy = b.y + b.height / 2;
+      const R  = Math.min(b.width, b.height);
+
+      for (const n of notes.get(c.id)) {
+        const p = clamp01((t - 0.1 - n.delay) / 0.5);
+        if (p <= 0) continue;
+        const nx = cx + b.width * n.x + Math.sin(p * Math.PI) * R * n.tilt * 0.2;
+        const ny = cy + R * 0.2 - R * n.rise * 0.75 * p;
+        if (erased(nx)) continue;
+        const a  = (p < 0.2 ? p / 0.2 : 1) * 0.9;
+        const hd = R * n.size;
+        solid.beginFill(UNSUNG_PAL.ink, a);
+        solid.drawEllipse(nx, ny, hd, hd * 0.72);
+        solid.endFill();
+        solid.lineStyle(Math.max(1, hd * 0.26), UNSUNG_PAL.ink, a);
+        solid.moveTo(nx + hd * 0.9, ny);
+        solid.lineTo(nx + hd * 0.9, ny - hd * 2.6);
+        solid.lineStyle(0);
+        softGlow(glow, nx, ny, hd * 1.6, UNSUNG_PAL.pale, 0.22 * a);
+      }
+    }
+
+    // 4. The edge of the erasure itself, so there is a hand behind it.
+    if (wipe > 0 && wipe < 1) {
+      const a = Math.sin(wipe * Math.PI);
+      solid.lineStyle(Math.max(1.5, span * 0.008), UNSUNG_PAL.ink, 0.7 * a);
+      solid.moveTo(wipeX, minY);
+      solid.lineTo(wipeX, maxY);
+      solid.lineStyle(0);
+      softGlow(glow, wipeX, (minY + maxY) / 2, (maxY - minY) * 0.14, UNSUNG_PAL.pale, 0.3 * a);
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] unsung END');
+}
+
 export const EFFECTS = {
   sorrow,
   eternal_grief,
@@ -7207,6 +7439,12 @@ export const EFFECTS = {
   // dispel Purgation used to borrow.
   song_of_frenzy,
   chorus_of_wrath,
+  // The Seal in its two palettes, and the capstone that drew nothing at all.
+  // Eternal Pyre and Unending Wound share one factory (brandSeal) because they
+  // are one mechanic wearing two damage types.
+  eternal_pyre,
+  unending_wound,
+  unsung,
   sorrows_haste,
   last_rites,
   purgation,

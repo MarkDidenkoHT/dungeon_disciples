@@ -91,6 +91,14 @@ const SIDE_WIDE_FX = new Set(['lions_roar', 'prayer_of_healing',
 // reaches the whole enemy line the same way.
 const FOE_WIDE_FX = new Set(['sorrow', 'toll_of_bells']);
 
+// Wider still: BOTH sides at once. Unsung is the only one — its lock is not
+// applied per target but to every combatant on the field, the caster's own
+// units included (see the battlefield-wide lock in applySpellParams,
+// utils/battle-engine.js), and its cast logs target_scope 'none' with no ids
+// at all. So the cells are read off the board like Sorrow's, without the side
+// filter that makes Sorrow reach only across it.
+const BOARD_WIDE_FX = new Set(['unsung']);
+
 // Effects that TRAVEL from the actor to the target — EFFECTS[name](actorCell,
 // { targetCell }). An ordinary attack already routes these correctly (see the
 // 'action' branch of singleEffectCall), but an ABILITY that draws one did not:
@@ -1008,7 +1016,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             // The effects that predate it ignore the extra key.
             if (origin && cells.length) await EFFECTS[effectName](origin, { targetCells: cells, value: entry.value });
           }
-        } else if (SIDE_WIDE_FX.has(effectName) || FOE_WIDE_FX.has(effectName)) {
+        } else if (SIDE_WIDE_FX.has(effectName) || FOE_WIDE_FX.has(effectName) || BOARD_WIDE_FX.has(effectName)) {
           if (actor && actorCell && !fxCovered.has(entryIdx)) {
             // The WHOLE run is covered, not just this entry. A side-wide wash
             // already paints every cell on the side, so one play says all of it
@@ -1026,9 +1034,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
               }
               fxCovered.add(j);
             }
-            const wantEnemies = FOE_WIDE_FX.has(effectName);
+            // null = no side filter at all, which is what board-wide means.
+            const wantSide = BOARD_WIDE_FX.has(effectName)
+              ? null
+              : (FOE_WIDE_FX.has(effectName) ? 'foe' : 'own');
             const cells = state.combatants
-              .filter(u => (wantEnemies ? u.side !== actor.side : u.side === actor.side) &&
+              .filter(u => (wantSide === null ||
+                            (wantSide === 'foe' ? u.side !== actor.side : u.side === actor.side)) &&
                            (u.alive || dyingHere.has(u.id)))
               .map(u => document.querySelector(`.battle-cell[data-id="${u.id}"]`))
               .filter(Boolean);
