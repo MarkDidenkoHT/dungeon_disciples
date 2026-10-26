@@ -158,10 +158,8 @@ function tokenIconHtml(id) {
                onerror="this.replaceWith(document.createTextNode('${fallback}'))">`;
 }
 
-// `names` spells a token out ("+1 Tome of Knowledge") instead of leaving it as
-// an icon. On by default everywhere there is a full row to write in; off on the
-// offer cards, which are half a screen wide and already carry the name in the
-// chip's title.
+// `names` adds the token's written name. Grand errand rewards keep the compact
+// amount-and-icon treatment used by the other reward chips.
 function rewardHtml(reward = {}, { names = true } = {}) {
   const bits = [];
   if (reward.xp_self)   bits.push(`<span class="errand-reward-chip">+${reward.xp_self} ${T('xpSelf')}</span>`);
@@ -394,7 +392,7 @@ export async function openErrandsSheet(player) {
             <div class="errand-parts">
               <div class="errand-part ${filterTags.every(tag => chosenTags.includes(tag)) ? 'errand-part--earned' : ''}">
                 ${filterTags.map((tag, i) => `${i ? '<span class="errand-offer-join">+</span>' : ''}<span class="unit-tag">${tag}</span>`).join('')}
-                <span class="errand-chips">${rewardHtml(offer.reward)}</span>
+                <span class="errand-chips">${rewardHtml(offer.reward, { names: false })}</span>
               </div>
             </div>
           ` : `
