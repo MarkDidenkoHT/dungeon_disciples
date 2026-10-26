@@ -1090,7 +1090,7 @@ class BattleEngine {
     // Heal equals the unit's action_power — no hidden multiplier. (Previously
     // ×1.3, which made a power-10 healer restore 13 and read as a bug.)
     const power = data.action_power ?? data.action?.value ?? 15;
-    return Math.floor(power * (1 + (Number(actor._empower_bonus_pct) || 0) / 100));
+    return Math.ceil(power * (1 + (Number(actor._empower_bonus_pct) || 0) / 100));
   }
   // ── Battle Fatigue (see BATTLE_FATIGUE) ─────────────────────────────────────
   // Current healing-reduction percentage from fatigue (0 until it kicks in).
@@ -1270,6 +1270,7 @@ class BattleEngine {
   // its turn-start passives do not fire, and it earns no power for the lent hit.
   // afterAction restores its prior acted state.
   executeAction(actor, target = null, actionType = 'attack', opts = {}) {
+    actor._dispel_used_this_action = 0;
     if (opts.consumesTurn === false) {
       actor._borrowed_turn = { acted: actor.acted_this_round };
       actor._skip_power_gain = true;
@@ -1310,7 +1311,7 @@ class BattleEngine {
     if (poolAction === 'shield' || poolAction === 'decay') {
       actor._empower_used_this_action = (actor._empower_bonus_pct ?? 0) > 0;
       const basePower = Number(actor.unit_data?.action_power ?? actor.unit_data?.action?.value ?? 0);
-      const power     = basePower * (1 + (Number(actor._empower_bonus_pct) || 0) / 100);
+      const power     = Math.ceil(basePower * (1 + (Number(actor._empower_bonus_pct) || 0) / 100));
       const maxHits = Math.max(1, Number(actor.unit_data?.targets ?? 1));
       const list    = maxHits > 1 ? this.getValidTargets(actor).slice(0, maxHits) : [target];
       const label   = { name: poolAction === 'shield' ? 'Shield' : 'Decay', dispellable: true };
@@ -2260,6 +2261,7 @@ class BattleEngine {
     return this.afterAction(actor);
   }
   afterAction(actor) {
+    if (actor) actor._dispel_used_this_action = 0;
     if (actor?._empower_used_this_action) {
       this.clearEmpower(actor);
       actor._empower_used_this_action = false;
