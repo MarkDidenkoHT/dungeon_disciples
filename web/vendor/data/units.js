@@ -384,7 +384,7 @@ const UNITS = {
       id: 'd1', f: 'd', t: 1,
       name: 'Imp',
       name_ru: 'Бес',
-      tags: ['Demon', 'Warrior'],
+      tags: ['Demon', 'Warrior', 'Beast'],
       pref_position: 'front',
       size: 'column',
       hp: 100, armor: 0, initiative: 30,
@@ -397,7 +397,7 @@ const UNITS = {
       id: 'd11', f: 'd', t: 2,
       name: 'Tormentor',
       name_ru: 'Мучитель',
-      tags: ['Demon', 'Warrior'],
+      tags: ['Demon', 'Warrior', 'Beast'],
       pref_position: 'front',
       size: 'column',
       hp: 120, armor: 0, initiative: 30,
@@ -410,7 +410,7 @@ const UNITS = {
       id: 'd111', f: 'd', t: 3,
       name: 'Praetor',
       name_ru: 'Претор',
-      tags: ['Demon', 'Warrior'],
+      tags: ['Demon', 'Warrior', 'Beast'],
       pref_position: 'front',
       size: 'column',
       hp: 130, armor: 15, initiative: 30,
@@ -423,7 +423,7 @@ const UNITS = {
       id: 'd1111', f: 'd', t: 4,
       name: 'Conqueror',
       name_ru: 'Завоеватель',
-      tags: ['Demon', 'Warrior'],
+      tags: ['Demon', 'Warrior', 'Beast'],
       pref_position: 'front',
       size: 'column',
       hp: 150, armor: 15, initiative: 30,
@@ -432,34 +432,24 @@ const UNITS = {
       damage_source: 'physical', action_power: 36, action_icon: 'demon_claw.jpg', action_animation: 'claw_strike',
       xp: 8200, passive: ['rage 2', 'aggrails_blessing 2', 'choir 2'], ability: 'pact 2',
     },
-    // The warrior road's other end, and the only one the Choir had been
-    // missing: every other tier 4 in the faction is a fork but this line ran
-    // straight into the Conqueror. The Conqueror wins by being the largest
-    // thing on the board — it stacks on Demons present (choir, aggrails) and
-    // is at its best in a squad that is still whole. The Decimator is the
-    // opposite bet: softer and better armoured, it gains nothing from a full
-    // field and 30% damage every time one of its own goes down, while the
-    // ward it carries cuts the enemy's physical damage for everyone standing
-    // with it. Roman like the rest of the line, and decimation is the Choir's
-    // whole theology — the ranks are what you spend.
     decimator: {
       id: 'd1112', f: 'd', t: 4,
       name: 'Decimator',
       name_ru: 'Дециматор',
-      tags: ['Demon', 'Warrior'],
+      tags: ['Demon', 'Warrior', 'Knight'],
       pref_position: 'front',
       size: 'column',
       hp: 140, armor: 20, initiative: 30,
       resistances: { air: 5, fire: 40, life: 0, death: 5, cold: 0, nature: 5 },
-      action: 'attack', target_type: 'enemy', targets: 1, range: 1,
+      action: 'choir_shock', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30, action_icon: 'mace.jpg', action_animation: 'mace_swing',
       xp: 8200, passive: ['rage 2', 'vengeance 2', 'warding 2'], ability: 'pact 2',
     },
     chorister: {
-      id: 'd12', f: 'd', t: 2,
+      tags: ['Demon', 'Warrior', 'Beast'],
       name: 'Chorister',
       name_ru: 'Хорист',
-      tags: ['Demon', 'Caster'],
+      tags: ['Demon', 'Caster', 'Court'],
       pref_position: 'back',
       size: 'column',
       hp: 120, armor: 0, initiative: 25,
@@ -472,7 +462,7 @@ const UNITS = {
       id: 'd121', f: 'd', t: 3,
       name: 'Chanter',
       name_ru: 'Певчий',
-      tags: ['Demon', 'Caster'],
+      tags: ['Demon', 'Caster', 'Court'],
       pref_position: 'back',
       size: 'column',
       hp: 130, armor: 0, initiative: 35,
@@ -485,7 +475,7 @@ const UNITS = {
       id: 'd1211', f: 'd', t: 4,
       name: 'Archchanter',
       name_ru: 'Архипевчий',
-      tags: ['Demon', 'Caster'],
+      tags: ['Demon', 'Caster', 'Court'],
       pref_position: 'back',
       size: 'column',
       hp: 150, armor: 0, initiative: 35,
@@ -498,7 +488,7 @@ const UNITS = {
       id: 'd1212', f: 'd', t: 4,
       name: 'Doomchanter',
       name_ru: 'Певчий Гибели',
-      tags: ['Demon', 'Caster'],
+      tags: ['Demon', 'Caster', 'Court'],
       pref_position: 'back',
       size: 'column',
       hp: 140, armor: 10, initiative: 25,
@@ -576,7 +566,7 @@ const UNITS = {
       id: 'd3', f: 'd', t: 1,
       name: 'Clay Gargoyle',
       name_ru: 'Глиняная Горгулья',
-      tags: ['Demon', 'Caster'],
+      tags: ['Demon', 'Caster', 'Construct'],
       pref_position: 'none',
       size: 'row',
       hp: 50, armor: 30, initiative: 50,
@@ -589,7 +579,7 @@ const UNITS = {
       id: 'd31', f: 'd', t: 2,
       name: 'Stone Gargoyle',
       name_ru: 'Каменная Горгулья',
-      tags: ['Demon', 'Caster'],
+      tags: ['Demon', 'Caster', 'Construct'],
       pref_position: 'none',
       size: 'row',
       hp: 70, armor: 35, initiative: 50,
@@ -602,7 +592,7 @@ const UNITS = {
       id: 'd311', f: 'd', t: 3,
       name: 'Onyx Gargoyle',
       name_ru: 'Ониксовая Горгулья',
-      tags: ['Demon', 'Caster'],
+      tags: ['Demon', 'Caster', 'Construct'],
       pref_position: 'none',
       size: 'row',
       hp: 75, armor: 40, initiative: 50,
@@ -615,7 +605,7 @@ const UNITS = {
       id: 'd3111', f: 'd', t: 4,
       name: 'Obsidian Gargoyle',
       name_ru: 'Обсидиановая Горгулья',
-      tags: ['Demon', 'Caster'],
+      tags: ['Demon', 'Caster', 'Construct'],
       pref_position: 'none',
       size: 'row',
       hp: 90, armor: 45, initiative: 50,
@@ -628,7 +618,7 @@ const UNITS = {
       id: 'd32', f: 'd', t: 2,
       name: 'Quartz Gargoyle',
       name_ru: 'Кварцевая Горгулья',
-      tags: ['Demon', 'Caster'],
+      tags: ['Demon', 'Caster', 'Construct'],
       pref_position: 'none',
       size: 'row',
       hp: 70, armor: 30, initiative: 50,
@@ -641,7 +631,7 @@ const UNITS = {
       id: 'd321', f: 'd', t: 3,
       name: 'Azurite Gargoyle',
       name_ru: 'Азуритовая Горгулья',
-      tags: ['Demon', 'Caster'],
+      tags: ['Demon', 'Caster', 'Construct'],
       pref_position: 'none',
       size: 'row',
       hp: 85, armor: 30, initiative: 50,
@@ -654,7 +644,7 @@ const UNITS = {
       id: 'd3211', f: 'd', t: 4,
       name: 'Malachite Gargoyle',
       name_ru: 'Малахитовая Горгулья',
-      tags: ['Demon', 'Caster'],
+      tags: ['Demon', 'Caster', 'Construct'],
       pref_position: 'none',
       size: 'row',
       hp: 110, armor: 30, initiative: 50,
@@ -667,7 +657,7 @@ const UNITS = {
       id: 'd3212', f: 'd', t: 4,
       name: 'Alabaster Gargoyle',
       name_ru: 'Алебастровая Горгулья',
-      tags: ['Demon', 'Caster'],
+      tags: ['Demon', 'Caster', 'Construct'],
       pref_position: 'none',
       size: 'row',
       hp: 110, armor: 30, initiative: 30,
@@ -680,7 +670,7 @@ const UNITS = {
       id: 'd33', f: 'd', t: 2,
       name: 'Basalt Gargoyle',
       name_ru: 'Базальтовая Горгулья',
-      tags: ['Demon', 'Caster'],
+      tags: ['Demon', 'Caster', 'Construct'],
       pref_position: 'none',
       size: 'row',
       hp: 70, armor: 30, initiative: 45,
@@ -693,7 +683,7 @@ const UNITS = {
       id: 'd331', f: 'd', t: 3,
       name: 'Slagstone Gargoyle',
       name_ru: 'Шлаковая Горгулья',
-      tags: ['Demon', 'Caster'],
+      tags: ['Demon', 'Caster', 'Construct'],
       pref_position: 'none',
       size: 'row',
       hp: 90, armor: 30, initiative: 45,
@@ -706,7 +696,7 @@ const UNITS = {
       id: 'd3311', f: 'd', t: 4,
       name: 'Magma Gargoyle',
       name_ru: 'Магмовая Горгулья',
-      tags: ['Demon', 'Caster'],
+      tags: ['Demon', 'Caster', 'Construct'],
       pref_position: 'none',
       size: 'row',
       hp: 110, armor: 30, initiative: 45,
@@ -884,11 +874,6 @@ const UNITS = {
       damage_source: 'death', action_power: 22, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
       xp: 3095, passive: ['magic_attunement 1', 'essence_of_power 1', 'resist_aura_death 3'], ability: 'rite_of_reclamation 2',
     },
-    // The Veiled branch's other end. Where the Pale Court peer deepens the
-    // Court's own death-ward, the Herald turns outward: it is the faction's
-    // only answer to an army that fights by blessing itself, and the only
-    // thing in the Choir that wards against life damage, which is what the
-    // Empire's holy shocks and its Mithrail line actually deal.
     dread_herald: {
       id: 'd6212', f: 'd', t: 4,
       name: 'Dread Herald',
@@ -997,7 +982,7 @@ const UNITS = {
       id: 'd5', f: 'd', t: 1,
       name: 'Cultist',
       name_ru: 'Культист',
-      tags: ['Caster', null],
+      tags: ['Caster'],
       pref_position: 'back',
       size: 'tile',
       hp: 35, armor: 0, initiative: 30,
@@ -1010,7 +995,7 @@ const UNITS = {
       id: 'd51', f: 'd', t: 2,
       name: 'Choir Servant',
       name_ru: 'Слуга Хора',
-      tags: ['Caster', null],
+      tags: ['Caster'],
       pref_position: 'back',
       size: 'tile',
       hp: 40, armor: 5, initiative: 30,
@@ -1049,7 +1034,7 @@ const UNITS = {
       id: 'd52', f: 'd', t: 2,
       name: 'Ash Cantor',
       name_ru: 'Пепельный Кантор',
-      tags: ['Caster', null],
+      tags: ['Caster'],
       pref_position: 'back',
       size: 'tile',
       hp: 40, armor: 5, initiative: 30,
@@ -1573,7 +1558,7 @@ const UNITS = {
       id: 'e12', f: 'e', t: 2,
       name: 'Horseman',
       name_ru: 'Всадник',
-      tags: ['Knight', 'Warrior'],
+      tags: ['Knight', 'Warrior', 'Holy'],
       pref_position: 'none',
       size: 'row',
       hp: 95, armor: 25, initiative: 50,
@@ -1586,7 +1571,7 @@ const UNITS = {
       id: 'e121', f: 'e', t: 3,
       name: 'Cavalry',
       name_ru: 'Кавалерист',
-      tags: ['Knight', 'Warrior'],
+      tags: ['Knight', 'Warrior', 'Holy'],
       pref_position: 'none',
       size: 'row',
       hp: 115, armor: 25, initiative: 55,
@@ -1599,7 +1584,7 @@ const UNITS = {
       id: 'e1211', f: 'e', t: 4,
       name: 'Retributor',
       name_ru: 'Воздаятель',
-      tags: ['Knight', 'Warrior'],
+      tags: ['Knight', 'Warrior', 'Holy'],
       pref_position: 'none',
       size: 'row',
       hp: 130, armor: 30, initiative: 55,
@@ -1742,7 +1727,7 @@ const UNITS = {
       id: 'e6', f: 'e', t: 1,
       name: 'Smith',
       name_ru: 'Кузнец',
-      tags: ['Engineer', null],
+      tags: ['Engineer'],
       pref_position: 'back',
       size: 'tile',
       hp: 35, armor: 5, initiative: 20,
@@ -1755,7 +1740,7 @@ const UNITS = {
       id: 'e61', f: 'e', t: 2,
       name: 'Mechanic',
       name_ru: 'Механик',
-      tags: ['Engineer', null],
+      tags: ['Engineer'],
       pref_position: 'back',
       size: 'tile',
       hp: 45, armor: 5, initiative: 20,
@@ -1768,7 +1753,7 @@ const UNITS = {
       id: 'e611', f: 'e', t: 3,
       name: 'Master Mechanic',
       name_ru: 'Мастер Механик',
-      tags: ['Engineer', null],
+      tags: ['Engineer'],
       pref_position: 'back',
       size: 'tile',
       hp: 50, armor: 10, initiative: 20,
@@ -1807,7 +1792,7 @@ const UNITS = {
       id: 'e62', f: 'e', t: 2,
       name: 'Rifleman',
       name_ru: 'Стрелок',
-      tags: ['Engineer', null],
+      tags: ['Engineer'],
       pref_position: 'back',
       size: 'tile',
       hp: 50, armor: 10, initiative: 35,
@@ -1820,7 +1805,7 @@ const UNITS = {
       id: 'e621', f: 'e', t: 3,
       name: 'Devastator',
       name_ru: 'Разрушитель',
-      tags: ['Engineer', null],
+      tags: ['Engineer'],
       pref_position: 'back',
       size: 'tile',
       hp: 55, armor: 15, initiative: 35,
@@ -1833,7 +1818,7 @@ const UNITS = {
       id: 'e6211', f: 'e', t: 4,
       name: 'Annihilator',
       name_ru: 'Аннигилятор',
-      tags: ['Engineer', null],
+      tags: ['Engineer'],
       pref_position: 'back',
       size: 'tile',
       hp: 65, armor: 15, initiative: 35,
@@ -1846,7 +1831,7 @@ const UNITS = {
       id: 'e622', f: 'e', t: 3,
       name: 'Flamethrower',
       name_ru: 'Огнемётчик',
-      tags: ['Engineer', null],
+      tags: ['Engineer'],
       pref_position: 'back',
       size: 'tile',
       hp: 60, armor: 10, initiative: 40,
@@ -1859,7 +1844,7 @@ const UNITS = {
       id: 'e6221', f: 'e', t: 4,
       name: 'Incinerator',
       name_ru: 'Испепелитель',
-      tags: ['Engineer', null],
+      tags: ['Engineer'],
       pref_position: 'back',
       size: 'tile',
       hp: 65, armor: 15, initiative: 40,
@@ -2158,7 +2143,7 @@ const UNITS = {
       id: 'e4', f: 'e', t: 1,
       name: 'Apprentice',
       name_ru: 'Ученик',
-      tags: ['Caster', null],
+      tags: ['Caster'],
       pref_position: 'back',
       size: 'tile',
       hp: 35, armor: 0, initiative: 30,
@@ -2171,7 +2156,7 @@ const UNITS = {
       id: 'e41', f: 'e', t: 2,
       name: 'Red Mage',
       name_ru: 'Красный Маг',
-      tags: ['Caster', null],
+      tags: ['Caster'],
       pref_position: 'back',
       size: 'tile',
       hp: 45, armor: 0, initiative: 30,
@@ -2184,7 +2169,7 @@ const UNITS = {
       id: 'e411', f: 'e', t: 3,
       name: 'Ash Priest',
       name_ru: 'Пепельный Жрец',
-      tags: ['Caster', null],
+      tags: ['Caster'],
       pref_position: 'back',
       size: 'tile',
       hp: 55, armor: 0, initiative: 30,
@@ -2197,7 +2182,7 @@ const UNITS = {
       id: 'e4111', f: 'e', t: 4,
       name: 'Ash Hierophant',
       name_ru: 'Пепельный Иерофант',
-      tags: ['Caster', null],
+      tags: ['Caster'],
       pref_position: 'back',
       size: 'tile',
       hp: 60, armor: 5, initiative: 30,
@@ -2236,7 +2221,7 @@ const UNITS = {
       id: 'e42', f: 'e', t: 2,
       name: 'Blue Mage',
       name_ru: 'Синий Маг',
-      tags: ['Caster', null],
+      tags: ['Caster'],
       pref_position: 'back',
       size: 'tile',
       hp: 40, armor: 5, initiative: 30,
@@ -2249,7 +2234,7 @@ const UNITS = {
       id: 'e421', f: 'e', t: 3,
       name: 'Cryomancer',
       name_ru: 'Криомант',
-      tags: ['Caster', null],
+      tags: ['Caster'],
       pref_position: 'back',
       size: 'tile',
       hp: 45, armor: 10, initiative: 30,
@@ -2262,7 +2247,7 @@ const UNITS = {
       id: 'e4211', f: 'e', t: 4,
       name: 'Winter Magus',
       name_ru: 'Зимний Маг',
-      tags: ['Caster', null],
+      tags: ['Caster'],
       pref_position: 'back',
       size: 'tile',
       hp: 50, armor: 15, initiative: 30,
@@ -2275,7 +2260,7 @@ const UNITS = {
       id: 'e43', f: 'e', t: 2,
       name: 'Warder Adept',
       name_ru: 'Хранитель',
-      tags: ['Caster', null],
+      tags: ['Caster'],
       pref_position: 'back',
       size: 'tile',
       hp: 40, armor: 5, initiative: 35,
@@ -2288,7 +2273,7 @@ const UNITS = {
       id: 'e431', f: 'e', t: 3,
       name: 'Bulwark Magus',
       name_ru: 'Старший Хранитель',
-      tags: ['Caster', null],
+      tags: ['Caster'],
       pref_position: 'back',
       size: 'tile',
       hp: 50, armor: 10, initiative: 35,
@@ -2301,7 +2286,7 @@ const UNITS = {
       id: 'e4311', f: 'e', t: 4,
       name: 'Bulwark Archon',
       name_ru: 'Архонт Оплота',
-      tags: ['Caster', null],
+      tags: ['Caster'],
       pref_position: 'back',
       size: 'tile',
       hp: 55, armor: 15, initiative: 35,
@@ -2906,8 +2891,8 @@ const UNITS = {
       tags: ['Vampire', 'Knight'],
       pref_position: 'front',
       size: 'tile',
-      hp: 55, armor: 15, initiative: 40,
-      resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 0, nature: 0 },
+      hp: 60, armor: 15, initiative: 40,
+      resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 18, action_icon: 'vampire_sword.jpg', action_animation: 'sword_swing',
       xp: 1560, passive: ['iron_will 1', 'parry 1', 'leech 1'], ability: 'exsanguinate 1',
@@ -2919,8 +2904,8 @@ const UNITS = {
       tags: ['Vampire', 'Knight'],
       pref_position: 'front',
       size: 'tile',
-      hp: 65, armor: 15, initiative: 40,
-      resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 0, nature: 5 },
+      hp: 70, armor: 15, initiative: 40,
+      resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 15, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 22, action_icon: 'vampire_sword.jpg', action_animation: 'sword_swing',
       xp: 2900, passive: ['iron_will 2', 'parry 1', 'leech 1'], ability: 'exsanguinate 1',
@@ -3027,7 +3012,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 24, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
-      xp: 1250, passive: ['sacrament 1', 'lifesteal 2'], ability: 'libation 1',
+      xp: 1250, passive: ['sacrament 1', 'lifesteal 2', 'shatter 1'], ability: 'libation 1',
     },
     chosen: {
       id: 'gs211', f: 'g', t: 3,
@@ -3072,7 +3057,7 @@ const UNITS = {
       id: 'gs4', f: 'g', t: 1,
       name: 'Husk Colossus',
       name_ru: 'Иссушенный Колосс',
-      tags: ['Zombie', 'Warrior'],
+      tags: ['Zombie', 'Warrior', 'Holy'],
       pref_position: 'none',
       size: 'row',
       hp: 110, armor: 0, initiative: 20,
@@ -3696,12 +3681,6 @@ const UNITS = {
         damage_source: 'death', action_power: 18, action_icon: 'blood_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
         xp: 1560, passive: ['aggrails_blessing 2', 'desecrate 1', 'decay 1'], ability: null,
       },
-      // The Desecrator's tier 4 — cb_aggrails_desecrator was another dead end.
-      // desecrate goes 1 -> 2 (5% -> 8% bonus damage to Holy targets per Demon
-      // ally), which on a full Demon line is where this branch's whole threat
-      // comes from. Stats follow the faction's own t3 -> t4 step, read off High
-      // Keeper -> Grand Keeper: +10 HP, +2 power, resistances up a band, and the
-      // 4005 xp every tier 4 in this faction carries.
       aggrails_blasphemer: {
         id: 'opb_e2121', f: 'opb', t: 4,
         name: 'Aggrails Blasphemer',
@@ -3728,14 +3707,6 @@ const UNITS = {
         damage_source: 'physical', action_power: 12, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
         xp: 540, passive: ['aggrails_blessing 1', 'desecrate 1', 'choir 1'], ability: null,
       },
-      // The Exorcist's tier 3, which the line did not have — cb_aggrails_exorcist
-      // carried upgrades: [] and stopped at tier 2.
-      //
-      // Picks up HOLY on top of Demon/Knight, which is the point of it: desecrate
-      // hits Holy targets harder per Demon ally, so this one walks into the
-      // mirror match carrying the tag its own line is built to punish. choir 1
-      // goes to 2 with the tier, as the sibling branch does. Stats follow the
-      // line's own t2 -> t3 step (Devoted -> Champion): +5 HP, +5 armor, +4 power.
       aggrails_crusader: {
         id: 'opb_e221', f: 'opb', t: 3,
         name: 'Aggrails Crusader',
@@ -3749,11 +3720,6 @@ const UNITS = {
         damage_source: 'physical', action_power: 16, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
         xp: 1560, passive: ['aggrails_blessing 1', 'desecrate 1', 'choir 2'], ability: null,
       },
-      // The Crusader's tier 4 — cb_aggrails_crusader was the branch's dead end,
-      // the way cb_aggrails_desecrator was before the Blasphemer. Same tier
-      // step the sibling branch takes (Desecrator -> Blasphemer): +10 HP,
-      // +5 armor, +4 power, and the line's own two per-tag passives raised to
-      // rank 2 while choir stays where the Crusader already had it.
       aggrails_lion: {
         id: 'opb_e2211', f: 'opb', t: 4,
         name: 'Aggrails Lion',
@@ -4161,17 +4127,8 @@ const UNITS = {
         resistances: { air: 20, fire: 20, life: 20, death: 20, cold: 20, nature: 20 },
         action: 'none', target_type: 'ally', targets: 1, range: 3,
         damage_source: null, action_power: 14,
-        // 'Unity 1' was capitalised, and UNIT_ABILITIES lookups are exact — so
-        // the bond this unit is built around resolved to nothing and silently
-        // never formed. Lowercased with the rank swap rather than left for later.
         xp: 1099, passive: ['unity 1', 'inner_fire 2', 'unwavering_faith 2'], ability: null,
       },
-      // The other half of the Martyr of the Vow's tier 4: Forgiven ascends and
-      // turns Spirit, Forsaken does not and stays in the rotting body. Same
-      // frame as its sibling — same tier, same branch point, same cost, the
-      // same flat 20 resistances — and the same unity bond, which is why it
-      // also takes no action of its own. The tags and the three passives are
-      // the whole of the difference between them.
       forsaken: {
         id: 'dm_2112', f: 'dm', t: 4,
         name: 'Forsaken',
@@ -4265,8 +4222,6 @@ const UNITS = {
         xp: 2915, passive: ['iron_will 2', 'undying 2', 'stoicism 1'], ability: null,
       },
     },
-    // The Faction Colossus. Base stats only: its HP pool, phases and spells come
-    // from data/colossus.js, which builds the unit for each attempt.
     colossus: {
       reliquary_titan: {
         id: 'colossus', f: 'col', t: 4,
@@ -4280,9 +4235,6 @@ const UNITS = {
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
         damage_source: 'physical', action_power: 14, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
         xp: 0, passive: ['unbreakable 2', 'stoicism 1'], ability: null,
-        // Its spells are an ordered ROTATION, not a pile to pick the dearest
-        // affordable item from. data/colossus.js writes one per phase; the
-        // reasoning is in the kit comment there and in aiPickCycledSpell.
         spell_cycle: true,
       },
     },

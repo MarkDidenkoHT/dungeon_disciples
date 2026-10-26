@@ -1514,14 +1514,15 @@ function craftRequirementText(itemDef, lang = 'en') {
 // database, and rows written while `caster_hat` said 'caster' still say
 // 'caster'. Canonicalising on the way in fixes those rows without a migration.
 const CANONICAL_TAGS = [
-  'Archer', 'Caster', 'Construct', 'Court', 'Demon', 'Engineer', 'Holy',
-  'Knight', 'Skeleton', 'Spirit', 'Treefolk', 'Vampire', 'Warrior', 'Zombie',
+  'Archer', 'Beast', 'Caster', 'Construct', 'Court', 'Demon', 'Dragon',
+  'Engineer', 'Holy', 'Knight', 'Skeleton', 'Spirit', 'Treefolk', 'Vampire',
+  'Warrior', 'Zombie',
 ];
 const CANONICAL_TAG_BY_LOWER = new Map(CANONICAL_TAGS.map(t => [t.toLowerCase(), t]));
 
-// Unknown tags pass through untouched rather than being dropped: 'Treefolk' is
-// deliberately carried by no unit yet, and a future tag must not silently
-// vanish because this list has not caught up.
+// Unknown tags pass through untouched rather than being dropped: 'Treefolk'
+// and 'Dragon' are deliberately carried by no unit yet, and a future tag must
+// not silently vanish because this list has not caught up.
 function canonicalTag(tag) {
   if (!tag) return null;
   return CANONICAL_TAG_BY_LOWER.get(String(tag).toLowerCase()) ?? String(tag);

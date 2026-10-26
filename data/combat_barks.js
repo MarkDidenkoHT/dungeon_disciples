@@ -18,10 +18,10 @@
 //   target. A named rule therefore always beats any tag rule.
 //
 // The ONLY tags any unit in data/units.js carries are:
-//   Archer, Caster, Construct, Court, Demon, Engineer, Holy, Knight, Skeleton,
-//   Spirit, Vampire, Warrior, Zombie
+//   Archer, Beast, Caster, Construct, Court, Demon, Engineer, Holy, Knight,
+//   Skeleton, Spirit, Vampire, Warrior, Zombie
 // A filter naming anything else silently never matches - check units.js before
-// inventing one. There is no Choir, Beast or Ghost tag.
+// inventing one. There is no Choir or Ghost tag.
 //
 // TWO LINES PER RULE. Not three, not five. A bark is a shout across a battle
 // line, and a rule with five lines is four of them padding out the two that
@@ -42,9 +42,10 @@
 //     grief is for what the spell cost them, THEIR OWN mistake. Never write
 //     them as forgotten, cast out, or waiting on the Empire's god.
 //   Choir of the Cursed (Demon / Court / Warrior / Knight / Caster /
-//     Construct) - born out of song and hungry with it. Voices, verses, the
-//     First Song, appetite. Their god is AGGRAIL, and they lapse into a tongue
-//     nobody else speaks, transliterated the same way in both languages.
+//     Construct / Beast) - born out of song and hungry with it. Voices,
+//     verses, the First Song, appetite. Their god is AGGRAIL, and they lapse
+//     into a tongue nobody else speaks, transliterated the same way in both
+//     languages.
 //
 // NO COMMERCE. Nothing in this file is a price, a debt, a share, a contract, a
 // loan or a payment - not for the Choir, not for anyone. The Choir is greedy
