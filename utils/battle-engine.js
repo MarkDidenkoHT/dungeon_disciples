@@ -1270,7 +1270,6 @@ class BattleEngine {
   // its turn-start passives do not fire, and it earns no power for the lent hit.
   // afterAction restores its prior acted state.
   executeAction(actor, target = null, actionType = 'attack', opts = {}) {
-    actor._dispel_used_this_action = 0;
     if (opts.consumesTurn === false) {
       actor._borrowed_turn = { acted: actor.acted_this_round };
       actor._skip_power_gain = true;
@@ -2261,7 +2260,6 @@ class BattleEngine {
     return this.afterAction(actor);
   }
   afterAction(actor) {
-    if (actor) actor._dispel_used_this_action = 0;
     if (actor?._empower_used_this_action) {
       this.clearEmpower(actor);
       actor._empower_used_this_action = false;

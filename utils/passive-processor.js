@@ -407,10 +407,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
   const p = def.params || {};
   const abilityKey = def.id ?? def.name ?? null;
   const applyDispel = (targetUnit, polarity) => {
-    const remaining = Math.max(0, Number(p.dispel_count) - (Number(owner._dispel_used_this_action) || 0));
-    if (!remaining) return;
-    const removed = engine.dispelEffects(targetUnit, polarity, remaining);
-    owner._dispel_used_this_action = (Number(owner._dispel_used_this_action) || 0) + removed.length;
+    const removed = engine.dispelEffects(targetUnit, polarity, p.dispel_count);
     for (const effect of removed) {
       engine.pushLog({
         type: 'passive', passive: def.name,
