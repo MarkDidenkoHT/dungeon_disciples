@@ -98,8 +98,8 @@ function errandHeaderHtml(def, desc) {
 }
 
 // ── The two offers, side by side ─────────────────────────────────────────────
-// Both offer cards use the same tag and reward elements. Their requirements
-// and payout rules differ, but their display stays consistent.
+// The offer cards only identify the errands. Requirement and reward are shown
+// once in the shared selected-offer details below.
 //
 // The requirement is stated as the two tags with a joiner between them: "/" for
 // a simple errand (either tag qualifies, both pay double) and "+" for a grand
@@ -120,7 +120,7 @@ function offerRewardHtml(offer, hours) {
   return (picked?.parts || []).map(p => rewardHtml(p.reward, { names: false })).join('');
 }
 
-function offerCardHtml(offer, { selected, hours }) {
+function offerCardHtml(offer, { selected }) {
   const def = ERRANDS_BY_ID[offer.errand_id];
   const src = errandArtUrl(def);
   const grand = offer.kind === 'grand';
@@ -137,8 +137,6 @@ function offerCardHtml(offer, { selected, hours }) {
         <span class="errand-offer-hours">${hours}${T('hours')}</span>
       </span>
       <span class="errand-offer-name">${def?.title?.[lang] ?? offer.errand_id}</span>
-      ${offerTagsHtml(offer)}
-      <span class="errand-chips errand-offer-chips">${offerRewardHtml(offer, hours)}</span>
     </button>`;
 }
 
@@ -387,11 +385,11 @@ export async function openErrandsSheet(player) {
       // than offering a choice that does not exist.
       const durations = offer.durations ?? [];
       const picked    = durations.find(d => d.hours === hours) ?? durations[0] ?? { hours: offer.hours, parts: [] };
-      const parts     = picked.parts ?? [];
       // Which tags the selected unit has: for a simple errand the halves it
       // earns are the lit ones. A grand errand has no halves — a unit either
       // carries both tags and takes the whole reward, or cannot go at all.
       const chosenTags = offer.candidate_tags?.[String(chosen)] ?? [];
+      const filterTags = offer.requirement?.tags_all || offer.requirement?.tags_any || [];
       const dead = !rows.length;
 
       // The sheet is a choice between two errands now, so its header names the
@@ -404,21 +402,22 @@ export async function openErrandsSheet(player) {
           <div class="errand-offers" id="errand-offers">
             ${offers.map(o => offerCardHtml(o, {
               selected: String(o.row_id) === String(offer.row_id),
-              hours:    hoursFor(o),
             })).join('')}
           </div>
 
           ${def?.desc?.[lang] ? `<p class="errand-desc errand-desc--detail">${def.desc[lang]}</p>` : ''}
 
-          ${offer.reward ? '' : `
-            <div class="errand-parts">
-              ${parts.map(p => `
-                <div class="errand-part ${chosenTags.includes(p.tag) ? 'errand-part--earned' : ''}">
-                  <span class="unit-tag">${p.tag}</span>
-                  <span class="errand-chips">${rewardHtml(p.reward)}</span>
-                </div>`).join('')}
-            </div>
-          `}
+          <div class="errand-offer-details">
+            ${offerTagsHtml(offer)}
+            <span class="errand-chips errand-offer-chips">${offerRewardHtml(offer, hours)}</span>
+          </div>
+
+          <div class="errand-parts">
+            ${filterTags.map(tag => `
+              <div class="errand-part ${chosenTags.includes(tag) ? 'errand-part--earned' : ''}">
+                <span class="unit-tag">${tag}</span>
+              </div>`).join('')}
+          </div>
 
           ${durations.length > 1 ? `
             <div class="errand-durations" id="errand-durations">

@@ -1130,6 +1130,7 @@ button:active:not(:disabled) { opacity: 0.75; }
 .errand-token-name { font-weight: 600; }
 .errand-offer-chips .errand-reward-chip--token { font-size: 0.72rem; }
 .errand-offer-chips .errand-reward-chip--token .res-icon-img { width: 19px; height: 19px; }
+.errand-offer-details { display: grid; justify-items: center; gap: 4px; }
 
 .errand-desc--detail {
   box-sizing: border-box;
