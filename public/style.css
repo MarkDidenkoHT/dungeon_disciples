@@ -62,6 +62,19 @@ html, body {
   height: 100%;
 }
 
+/* Ambient faction motes: visible over screen art, while remaining inert. */
+#ambient-particles {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.58;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #ambient-particles { opacity: 0.42; }
+}
+
 #shell {
   display: flex;
   flex-direction: column;
