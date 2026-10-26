@@ -3115,10 +3115,10 @@ function offerPayload(offer, freeRows, postLevel, rowId = null) {
     requirement: offer.requirement,
     durations,
     hours:       durations[0].hours,
-    // A grand errand has no halves to price, so the sheet is handed the one
-    // reward it pays. Null for a simple errand, whose `durations[].parts` are
-    // the answer instead.
-    reward:      ERR.isGrand(def) ? ERR.grandReward(def) : null,
+    // What the errand pays when ONE unit earns both halves — the headline the
+    // card is sold on, for either kind. `durations[0].parts` is still the
+    // per-tag breakdown the sheet actually draws.
+    reward:      ERR.grandReward(def, postLevel, offer.tier),
     // Roster ids only, so the existing client filter keeps working; the tag
     // detail rides alongside for the "what would this one bring?" line.
     candidates:      cands.map(c => c.roster_id),
@@ -3374,9 +3374,11 @@ router.post('/errands/start', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'That unit cannot go', code: 'errand_requirement' });
     }
 
-    // A grand errand requires BOTH its tags, and this is where that is decided:
-    // `offer.requirement` was snapshotted onto the row when the offer was minted
-    // and carries tags_all for a grand errand, tags_any for a simple one.
+    // `offer.requirement` was snapshotted onto the row when the offer was minted.
+    // Both kinds now carry tags_any — either tag lets a unit go, and carrying
+    // both is what pays double — but unitMeets still honours the tags_all of a
+    // row minted before that change, so an offer standing across the deploy is
+    // judged by the rule it was shown under.
     const profile = ERR.unitProfile(row, resolveRosterDef);
     if (!ERR.unitMeets(profile, offer.requirement)) {
       return res.status(400).json({ error: 'That unit does not meet the requirement', code: 'errand_requirement' });

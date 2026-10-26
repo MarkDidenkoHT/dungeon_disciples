@@ -147,19 +147,36 @@ function resourceIcon(key) {
   return key === 'Gold' ? GOLD_ICON : (CRYSTAL_ICONS[key] ?? '');
 }
 
-// A token (Tome, Sigil, potion) is what a GRAND errand pays, and it has real art
-// — the same file the daily-task and quest sheets use — so it reads as the thing
-// the player already knows from the supply pool rather than as a word.
+// 'supplies' is the one reward key that is not a TOKEN_DEFS id. The errand
+// table cannot name a supply, because its row name is per faction — Camping
+// Supplies, Liquid Sin, Chalice Of Sustenance — so it writes the placeholder
+// and whoever draws or pays it resolves the faction. /bootstrap already does
+// that resolving for the embark gate, art and both labels included, which is
+// why this reads the answer off the cache instead of working it out again.
+function supplyDef() {
+  const s = bootstrapCache.data?.supplies;
+  if (!s) return null;
+  return { name: (lang === 'ru' ? s.label_ru : s.label_en) || s.item, art: s.art || null, icon: '\u{1F9FA}' };
+}
+
+// A token (Tome, Sigil, potion) or a supply, and each has real art — the same
+// file the daily-task and quest sheets use — so it reads as the thing the
+// player already knows from the supply pool rather than as a word.
+function rewardTokenDef(id) {
+  return id === 'supplies' ? supplyDef() : (TOKEN_DEFS[id] || null);
+}
+
 function tokenIconHtml(id) {
-  const def = TOKEN_DEFS[id];
+  const def = rewardTokenDef(id);
   const fallback = def?.icon || '✦';
   if (!def?.art) return fallback;
   return `<img src="${assetUrl(`/${def.art}`)}" class="res-icon-img" alt=""
                onerror="this.replaceWith(document.createTextNode('${fallback}'))">`;
 }
 
-// `names` adds the token's written name. Grand errand rewards keep the compact
-// amount-and-icon treatment used by the other reward chips.
+// `names` adds the token's written name. On everywhere there is a full row to
+// write in, which since the short/long rework is everywhere — a supply or a
+// potion in a reward box needs saying, not just an icon.
 function rewardHtml(reward = {}, { names = true } = {}) {
   const bits = [];
   if (reward.xp_self)   bits.push(`<span class="errand-reward-chip">+${reward.xp_self} ${T('xpSelf')}</span>`);
@@ -170,7 +187,11 @@ function rewardHtml(reward = {}, { names = true } = {}) {
       icon || ` ${item.replace('Crystals_', '')}`}</span>`);
   }
   for (const [item, amount] of Object.entries(reward.tokens || {})) {
-    const name = TOKEN_DEFS[item]?.name || item;
+    // Before a faction is picked there is no supply name to show, so the
+    // placeholder would read as the literal word 'supplies'. That only happens
+    // on an account that cannot have an errand yet, and it degrades to a
+    // sensible enough word rather than to nothing.
+    const name = rewardTokenDef(item)?.name || item;
     bits.push(`<span class="errand-reward-chip" title="${name}">+${amount}${
       tokenIconHtml(item)}${names ? `<span class="errand-token-name">${name}</span>` : ''}</span>`);
   }
@@ -359,17 +380,17 @@ export async function openErrandsSheet(player) {
       const rows  = (bootstrapCache.data?.roster || [])
         .filter(r => offer.candidates.includes(String(r.id)));
 
-      // Priced by the server, one entry per allowed trip length. A grand errand
-      // reports exactly one, so the picker below collapses to nothing rather
-      // than offering a choice that does not exist.
+      // Priced by the server, one entry per allowed trip length — which is now
+      // exactly one for every errand, short or long. The picker below is keyed
+      // off `durations.length > 1` and so never renders; it is left standing
+      // because the shape still supports an errand that offers a choice.
       const durations = offer.durations ?? [];
       const picked    = durations.find(d => d.hours === hours) ?? durations[0] ?? { hours: offer.hours, parts: [] };
       const parts     = picked.parts ?? [];
-      // Which tags the selected unit has: for a simple errand the halves it
-      // earns are the lit ones. A grand errand has no halves — a unit either
-      // carries both tags and takes the whole reward, or cannot go at all.
+      // Which tags the selected unit has. Both kinds pay per tag now, so the
+      // lit halves are the ones this unit actually earns — light both and the
+      // card is showing everything it will bring home.
       const chosenTags = offer.candidate_tags?.[String(chosen)] ?? [];
-      const filterTags = offer.requirement?.tags_all || offer.requirement?.tags_any || [];
       const dead = !rows.length;
 
       // The sheet is a choice between two errands now, so its header names the
@@ -388,22 +409,13 @@ export async function openErrandsSheet(player) {
 
           ${def?.desc?.[lang] ? `<p class="errand-desc errand-desc--detail">${def.desc[lang]}</p>` : ''}
 
-          ${offer.reward ? `
-            <div class="errand-parts">
-              <div class="errand-part ${filterTags.every(tag => chosenTags.includes(tag)) ? 'errand-part--earned' : ''}">
-                ${filterTags.map((tag, i) => `${i ? '<span class="errand-offer-join">+</span>' : ''}<span class="unit-tag">${tag}</span>`).join('')}
-                <span class="errand-chips">${rewardHtml(offer.reward, { names: false })}</span>
-              </div>
-            </div>
-          ` : `
-            <div class="errand-parts">
-              ${parts.map(p => `
-                <div class="errand-part ${chosenTags.includes(p.tag) ? 'errand-part--earned' : ''}">
-                  <span class="unit-tag">${p.tag}</span>
-                  <span class="errand-chips">${rewardHtml(p.reward)}</span>
-                </div>`).join('')}
-            </div>
-          `}
+          <div class="errand-parts">
+            ${parts.map(p => `
+              <div class="errand-part ${chosenTags.includes(p.tag) ? 'errand-part--earned' : ''}">
+                <span class="unit-tag">${p.tag}</span>
+                <span class="errand-chips">${rewardHtml(p.reward)}</span>
+              </div>`).join('')}
+          </div>
 
           ${durations.length > 1 ? `
             <div class="errand-durations" id="errand-durations">
