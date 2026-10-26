@@ -333,8 +333,6 @@ export async function openErrandsSheet(player) {
   function render() {
     const body = getSheetBody();
     if (!body) return;
-    body.closest('.modal')?.classList.toggle('modal--errands-expanded', messengerPostLevel() >= 4);
-
     // 1. Something finished. The bot already said so; this is the payoff screen.
     const done = state?.finished?.[0];
     if (done) {

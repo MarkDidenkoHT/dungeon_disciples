@@ -1268,6 +1268,15 @@ export function setSheetTitle(title) {
   if (el) el.textContent = title;
 }
 
+// The same, for the pills beside the title. A sheet whose header describes
+// what the BODY is currently showing — the castle's branch picker names the
+// unit on the card — has to update the header when the body changes, and the
+// body is re-rendered on its own without reopening the sheet.
+export function setSheetBadges(html) {
+  const el = _sheetEl?.querySelector('.modal-header-badges');
+  if (el) el.innerHTML = html ?? '';
+}
+
 // Anything that decorates the screen while the sheet is open (the roster's
 // trophy bar) registers here. The sheet is hidden by toggling a class rather
 // than being removed, so watching the DOM for its removal never fires.

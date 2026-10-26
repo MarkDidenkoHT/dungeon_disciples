@@ -23,6 +23,7 @@ import { renderSpellTome }   from './spell_tome.js';
 import {
   RESIST_ICONS, RESIST_ORDER,
   resolveAbility, renderModalContent, openSheet, closeSheet, getSheetBody, GOLD_ICON,
+  setSheetTitle, setSheetBadges,
   openSubSheet, closeSubSheet, getSubSheetBody, cap, onSheetClose, RESOURCE_BAR_SLOTS, CROSSROAD_SIGIL_SLOT, gameConfirm,
   buildUnitCard, getActionLabel, buildAbilityModalParts,
   renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
@@ -883,7 +884,6 @@ export function renderCastle(root, params = {}) {
       // Build sits to the LEFT of the portraits, deconstruct to the RIGHT, so
       // the whole bottom strip is one thumb-height row: act, choose, remove.
       const confirmLabel = s.confirmLabel || CASTLE_TEXT.confirm[castleLang];
-      const pickName     = unitName(s.unit) || s.buildingLabel || '';
       const cards = slides.map((slide, i) => {
         // Layer 2 holds halls, not soldiers, so a branch card there had nothing
         // to show and came out as an empty frame. Building art is drawn to the
@@ -905,13 +905,10 @@ export function renderCastle(root, params = {}) {
 
       return `
         <div class="castle-unit-slider"${opts.sheetKey ? ` data-sheet-key="${opts.sheetKey}"` : ''}>
-          ${pickName ? `
-          <div class="castle-slider-pick">
-            <span class="castle-slider-pick-name">${pickName}</span>
-            ${slides.length > 1
-              ? `<span class="castle-slider-pick-of">${CASTLE_TEXT.pickOf[castleLang](idx + 1, slides.length)}</span>`
-              : ''}
-          </div>` : ''}
+          <!-- The name and the x-of-y used to sit here, above the card. They
+               are in the sheet HEADER now (see sliderHeader): the header was
+               carrying nothing but a close button, and the one thing on
+               screen without a name was the unit being chosen. -->
           <div class="castle-slider-track" id="slider-track">
             ${buildUnitCard(s.unit, {
               buildingLabel: s.buildingLabel,
@@ -960,8 +957,20 @@ export function renderCastle(root, params = {}) {
         </div>`;
     }
 
+    // What the header says about the slide on screen. The name is the title,
+    // and x-of-y is a pill beside it; `title` ("Build", "Upgrade") is the
+    // fallback for a slide that names nothing, so the header is never blank.
+    function sliderHeader(idx) {
+      const s = slides[idx];
+      setSheetTitle(unitName(s?.unit) || s?.buildingLabel || title || '');
+      setSheetBadges(slides.length > 1
+        ? `<span class="modal-header-pill">${CASTLE_TEXT.pickOf[castleLang](idx + 1, slides.length)}</span>`
+        : '');
+    }
+
     // The sheet's own ✕ is the only close control — no duplicate.
     openModal(title, renderSliderHtml(current));
+    sliderHeader(current);
     // The cost belongs to the SELECTED slide, so it is refreshed on every branch
     // change alongside the card, and torn down with the sheet however it closes.
     showCostBar(slides[current]?.cost ?? slides[current]?.mercCost);
@@ -994,6 +1003,7 @@ export function renderCastle(root, params = {}) {
     function showSlide(i) {
       current = i;
       getSheetBody().innerHTML = renderSliderHtml(current);
+      sliderHeader(current);
       showCostBar(slides[current]?.cost ?? slides[current]?.mercCost);
       attach();
     }
