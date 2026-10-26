@@ -409,7 +409,7 @@ const COMBAT_BARKS = [
   {
     trigger: 'attack', actor: { tag: 'Holy', faction: 'e' },
     lines: [
-      'Mithrail guide me hand!',
+      'Mithrail guide my hand!',
       'By his light, and by my hand.',
     ],
     lines_ru: [

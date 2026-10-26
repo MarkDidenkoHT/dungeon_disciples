@@ -1342,6 +1342,9 @@ class BattleEngine {
         value: bonusPct,
         message: `${actor.unit_name} empowers ${target.unit_name} — +${bonusPct}% damage on the next attack`,
       });
+      // Empower is a support action too: let pool-trigger passives such as
+      // Dispel remove an ally's negative effects when the buff is applied.
+      this.fireTrigger('on_pool', { actor, target, dmg: bonusPct, dying: null });
       if (actor.id !== target.id) {
         this.fireTrigger('on_receive_ally_buff', { actor, target, dmg: 0, dying: null });
       }
