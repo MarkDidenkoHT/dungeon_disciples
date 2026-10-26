@@ -98,8 +98,8 @@ function errandHeaderHtml(def, desc) {
 }
 
 // ── The two offers, side by side ─────────────────────────────────────────────
-// The post holds one simple errand and one grand one. Cards identify the
-// offers; the selected requirement and reward are shown once below.
+// Both offer cards use the same tag and reward elements. Their requirements
+// and payout rules differ, but their display stays consistent.
 //
 // The requirement is stated as the two tags with a joiner between them: "/" for
 // a simple errand (either tag qualifies, both pay double) and "+" for a grand
@@ -112,6 +112,12 @@ function offerTagsHtml(offer) {
     <span class="errand-offer-tags" title="${T('requires')}: ${both ? T('needsBoth') : T('needsEither')}">
       ${tags.map(t => `<span class="unit-tag">${t}</span>`).join(join)}
     </span>`;
+}
+
+function offerRewardHtml(offer, hours) {
+  if (offer.reward) return rewardHtml(offer.reward, { names: false });
+  const picked = offer.durations?.find(d => d.hours === hours) ?? offer.durations?.[0];
+  return (picked?.parts || []).map(p => rewardHtml(p.reward, { names: false })).join('');
 }
 
 function offerCardHtml(offer, { selected, hours }) {
@@ -131,6 +137,8 @@ function offerCardHtml(offer, { selected, hours }) {
         <span class="errand-offer-hours">${hours}${T('hours')}</span>
       </span>
       <span class="errand-offer-name">${def?.title?.[lang] ?? offer.errand_id}</span>
+      ${offerTagsHtml(offer)}
+      <span class="errand-chips errand-offer-chips">${offerRewardHtml(offer, hours)}</span>
     </button>`;
 }
 
@@ -402,11 +410,7 @@ export async function openErrandsSheet(player) {
 
           ${def?.desc?.[lang] ? `<p class="errand-desc errand-desc--detail">${def.desc[lang]}</p>` : ''}
 
-          ${offer.reward ? `
-            ${offerTagsHtml(offer)}
-            <div class="errand-section-label">${T('reward')}</div>
-            <div class="errand-chips">${rewardHtml(offer.reward)}</div>
-          ` : `
+          ${offer.reward ? '' : `
             <div class="errand-parts">
               ${parts.map(p => `
                 <div class="errand-part ${chosenTags.includes(p.tag) ? 'errand-part--earned' : ''}">
