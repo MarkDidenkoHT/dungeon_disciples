@@ -144,8 +144,9 @@ function durationFor(errand, hours) {
 //              reward  what that half pays — xp_self, xp_roster, resources
 //                      or tokens
 //
-// `resources` keys are treasury lines (Gold, Crystals_*, Valor) and take the
-// post multiplier. `tokens` keys are TOKEN_DEFS ids from data/embark.js
+// `resources` keys are treasury lines (Gold, Crystals_*, Valor). They take the
+// post multiplier, except Valor, which steps by VALOR_PER_TIER instead.
+// `tokens` keys are TOKEN_DEFS ids from data/embark.js
 // (crossroad_sigil, tome_of_knowledge, health_potion) plus the placeholder
 // 'supplies', and none of them scale.
 //
@@ -160,14 +161,13 @@ function durationFor(errand, hours) {
 // matching both tags doubles that, the post multiplies it (x1, x1.5, x2) and so
 // does the trip length (x1, x1.5, x2) — so the ceiling is a dual-tag unit at a
 // level-3 post for six hours, which is 160 XP and 160 gold.
-// The SHORT pool. One part at post level 1 is about one battle share for XP;
-// gold is deliberately ahead of that. A unit matching both tags doubles what
-// it brings and the post multiplies it (x1, x1.5, x2), so a short errand tops
-// out at 80 XP and 200 gold. That is generous against a level-6 battle's 40
-// gold, and meant to be: an errand costs a unit's absence for two hours, and a
-// player who keeps the post busy should feel it.
+// The SHORT pool. These are BASES: the post multiplies them (x1, x1.5, x2), so
+// the gold half runs 25 -> 38 -> 50 and tops out at 50, which is a level-6
+// battle's 40 and a bit. Written as the base rather than the ceiling because
+// that is what the multiplier takes; the ceiling is the number that was
+// agreed, and it is the one to check after changing anything here.
 const PART_XP    = 20;
-const PART_GOLD  = 50;
+const PART_GOLD  = 25;
 const PART_CRYST = 6;
 
 // Potions are a COUNT OF A WHOLE THING, written once and never scaled — see
@@ -181,11 +181,13 @@ const PART_POTION = 2;
 // engraving currency (data/engravings.js) whose only other standing source is
 // the daily; the token is a Tome or a Sigil, and a token never scales.
 //
-// Valor does, on the post tier like gold — this is the BASE, so a level-2 post
-// pays 38 and a level-3 one 50. A long errand is six hours of a unit's absence
-// and it is only offered from post level 2, so it is priced to be worth
-// choosing over three short ones.
-const LONG_VALOR = 25;
+// Valor climbs by a FLAT +5 an upgrade — 10, 15, 20, 25 — rather than on the
+// x1/x1.5/x2 multiplier everything else uses. The multiplier cannot draw that
+// line: it repeats at tiers 3 and 4, so the top post would pay the same as the
+// one below it and the ladder would stop at 20. A currency this scarce is
+// easier to reason about as a straight line anyway.
+const LONG_VALOR     = 10;
+const VALOR_PER_TIER = 5;
 
 // `supplies` is NOT a token id. It is a placeholder the player's FACTION
 // resolves at payout — Camping Supplies, Liquid Sin, Chalice Of Sustenance —
@@ -461,9 +463,10 @@ function scaleAmount(n, mult) { return Math.round(n * mult); }
 // `resources` — XP, gold, crystals and Valor alike — takes the post tier
 // multiplier.
 //
-// Supplies are the exception to the exception: they want to grow with the post
-// but only in whole embarks, so they take SUPPLY_TIER_STEP instead. A part
-// writing `supplies: 1` pays 1, 2, 3 or 4 of them.
+// Two things grow with the post without using the multiplier, because neither
+// wants a fractional or a repeating step: supplies take SUPPLY_TIER_STEP, so a
+// part writing `supplies: 1` pays 1, 2, 3 or 4 of them, and Valor adds
+// VALOR_PER_TIER for 10, 15, 20, 25.
 function rewardForTags(errand, tags, postLevel, tierOverride = null, hours = DEFAULT_HOURS) {
   const tier = tierOverride ?? errandTier(postLevel);
   const mult = (TIER_REWARD_MULT[tier] ?? 1) * durationFor(errand, hours).mult;
@@ -477,7 +480,12 @@ function rewardForTags(errand, tags, postLevel, tierOverride = null, hours = DEF
     if (r.xp_roster) out.xp_roster = (out.xp_roster ?? 0) + scaleAmount(r.xp_roster, mult);
     for (const [k, v] of Object.entries(r.resources || {})) {
       out.resources = out.resources || {};
-      out.resources[k] = (out.resources[k] ?? 0) + scaleAmount(v, mult);
+      // Valor adds its step instead of taking the multiplier. Only ever one
+      // part per errand pays it, so adding the step to the written amount is
+      // the whole of it; two Valor parts on one errand would step twice.
+      out.resources[k] = (out.resources[k] ?? 0) + (k === 'Valor'
+        ? v + VALOR_PER_TIER * (tier - 1)
+        : scaleAmount(v, mult));
     }
     for (const [k, v] of Object.entries(r.tokens || {})) {
       out.tokens = out.tokens || {};
