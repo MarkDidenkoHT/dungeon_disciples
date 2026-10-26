@@ -406,6 +406,18 @@ function dispatchPassive(trigger, owner, def, ctx) {
   const { engine, actor, target, dmg, dying } = ctx;
   const p = def.params || {};
   const abilityKey = def.id ?? def.name ?? null;
+  const applyDispel = (targetUnit, polarity) => {
+    const removed = engine.dispelEffects(targetUnit, polarity, p.dispel_count);
+    for (const effect of removed) {
+      engine.pushLog({
+        type: 'passive', passive: def.name,
+        actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
+        targetId: targetUnit.id, targetName: targetUnit.unit_name, targetCell: targetUnit.cellIndex,
+        value: 1, heal: polarity === 'negative',
+        message: `${def.name} — ${targetUnit.unit_name}'s ${effect.name} ${polarity === 'negative' ? 'is cleansed' : 'is stripped away'}`,
+      });
+    }
+  };
   if (trigger === 'on_battle_start') {
     // ── Vows ────────────────────────────────────────────────────────────────
     //
@@ -975,14 +987,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
   }
   if (trigger === 'on_hit' && owner === actor && target && dmg > 0) {
-    if (p.dispel_power != null) {
-      const cut = engine.reduceEffect(target, 'positive', p.dispel_power);
-      if (cut) {
-        engine.pushLog({ type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
-          targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex, value: cut.from - cut.to, heal: false,
-          message: `${def.name} — ${target.unit_name}'s ${cut.name} ${cut.to > 0 ? `weakens to ${cut.to}` : 'is stripped away'}` });
-      }
-    }
+    if (p.dispel_count != null) applyDispel(target, 'positive');
     if ((p.lowest_ally_heal_pct != null || p.lowest_ally_heal_pct_per_tag != null) && !target?._drain_immune) {
       const healPct = pctFor(p, engine, owner.side, "lowest_ally_heal_pct", "lowest_ally_heal_pct_per_tag");
       const heal = Math.floor(dmg * drainPct(healPct, owner) / 100 * engine.fatigueHealMult() * drainSweepMult(owner));
@@ -1380,24 +1385,12 @@ function dispatchPassive(trigger, owner, def, ctx) {
   }
   // Shield and Decay actions. Polarity follows the side: a ward on an ally eases
   // what is hurting them, a pool on an enemy eats what is helping them.
-  if (trigger === 'on_pool' && owner === actor && target && p.dispel_power != null) {
+  if (trigger === 'on_pool' && owner === actor && target && p.dispel_count != null) {
     const polarity = target.side === owner.side ? 'negative' : 'positive';
-    const cut = engine.reduceEffect(target, polarity, p.dispel_power);
-    if (cut) {
-      engine.pushLog({ type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
-        targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex, value: cut.from - cut.to, heal: polarity === 'negative',
-        message: `${def.name} — ${target.unit_name}'s ${cut.name} ${cut.to > 0 ? `weakens to ${cut.to}` : 'is gone'}` });
-    }
+    applyDispel(target, polarity);
   }
   if (trigger === 'on_heal' && owner === actor) {
-    if (p.dispel_power != null && target) {
-      const cut = engine.reduceEffect(target, 'negative', p.dispel_power);
-      if (cut) {
-        engine.pushLog({ type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
-          targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex, value: cut.from - cut.to, heal: true,
-          message: `${def.name} — ${target.unit_name}'s ${cut.name} ${cut.to > 0 ? `eases to ${cut.to}` : 'is cleansed'}` });
-      }
-    }
+    if (p.dispel_count != null && target) applyDispel(target, 'negative');
     if ((p.hot_pct != null || p.hot_pct_per_tag != null) && target) {
       target._hot = (target._hot ?? 0) + Math.floor(dmg * pctFor(p, engine, owner.side, "hot_pct", "hot_pct_per_tag") / 100);
       engine.registerEffect(target, {

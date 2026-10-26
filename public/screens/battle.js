@@ -289,8 +289,8 @@ const BT = {
                    ru: (a, t, v) => `${a} лечит ${t} на <span class="log-val-heal">${v}</span>` },
   logHit:        { en: (a, t, v) => `${a} hit ${t} for <span class="log-val">${v}</span>`,
                    ru: (a, t, v) => `${a} бьёт ${t} на <span class="log-val">${v}</span>` },
-  logEmpower:    { en: (a, t, v) => `${a} empowers ${t}: <span class="log-val-shield">+${v}%</span> damage on the next attack`,
-                   ru: (a, t, v) => `${a} усиливает ${t}: <span class="log-val-shield">+${v}%</span> к урону следующей атаки` },
+  logEmpower:    { en: (a, t, v) => `${a} empowers ${t}: <span class="log-val-shield">+${v}%</span> action power on the next action`,
+                   ru: (a, t, v) => `${a} усиливает ${t}: <span class="log-val-shield">+${v}%</span> к силе следующего действия` },
   logResisted:   { en: (p, r) => ` <span class="log-resisted">(${p} power, ${r} resisted)</span>`,
                    ru: (p, r) => ` <span class="log-resisted">(${p} силы, ${r} поглощено)</span>` },
   // Was ALSO called logPower, silently overwriting the entry above it — so the
@@ -1267,6 +1267,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     if (actionKey === 'sacrifice') {
       state.combatants.filter(c => c.alive && c.side === actor.side && c.id !== actor.id).forEach(c => targets.add(c.id));
+      return targets;
+    }
+
+    if (actionKey === 'empower') {
+      state.combatants
+        .filter(c => c.alive && !c._untargetable && c.side === actor.side)
+        .forEach(c => targets.add(c.id));
       return targets;
     }
 
@@ -2278,9 +2285,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     { key: 'chorus',      icon: 'command.jpg', en: 'Chorus of War', ru: 'Хор Войны',  n: c => num(c, '_chorus_power'),      unit: 'power' },
     // _dmg_mult is a multiplier, not a stack, so it is printed as the percentage
     // it actually moves damage by and split across the two tables by direction:
-    // above 1 it is a buff, below 1 a debuff. It used to exist only as a text
-    // chip on the inspect card and never showed on a portrait at all.
+    // above 1 it is a buff, below 1 a debuff.
     { key: 'empowered',   icon: 'blood_frenzy.jpg',  en: 'Empowered', ru: 'Усиление',   n: c => dmgMultPct(c, 'up'),   unit: 'pct' },
+    { key: 'empower-action', icon: 'blood_frenzy.jpg', en: 'Empowered next action', ru: 'Усилено следующее действие', n: c => num(c, '_empower_bonus_pct'), unit: 'pct' },
     // Max HP bought with oaths at the Temple (data/callings.js, block 5). Not a
     // battle effect at all — it is already inside max_hp before the fight
     // starts — but it is the only thing an oath buys, and folded into the HP bar

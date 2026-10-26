@@ -989,7 +989,7 @@ class BattleEngine {
 
     if (actionKey === 'empower') {
       return this.combatants.filter(t =>
-        t.alive && !t._untargetable && t.side === actor.side && this.isDamageDealer(t)
+        t.alive && !t._untargetable && t.side === actor.side
       );
     }
 
@@ -1089,7 +1089,8 @@ class BattleEngine {
     const data  = actor.unit_data || actor;
     // Heal equals the unit's action_power — no hidden multiplier. (Previously
     // ×1.3, which made a power-10 healer restore 13 and read as a bug.)
-    return data.action_power ?? data.action?.value ?? 15;
+    const power = data.action_power ?? data.action?.value ?? 15;
+    return Math.floor(power * (1 + (Number(actor._empower_bonus_pct) || 0) / 100));
   }
   // ── Battle Fatigue (see BATTLE_FATIGUE) ─────────────────────────────────────
   // Current healing-reduction percentage from fatigue (0 until it kicks in).
@@ -1307,7 +1308,9 @@ class BattleEngine {
     // reason `sacrifice` is above: the AI drives every turn through 'attack'.
     const poolAction = this.getActionKey(actor);
     if (poolAction === 'shield' || poolAction === 'decay') {
-      const power   = Number(actor.unit_data?.action_power ?? actor.unit_data?.action?.value ?? 0);
+      actor._empower_used_this_action = (actor._empower_bonus_pct ?? 0) > 0;
+      const basePower = Number(actor.unit_data?.action_power ?? actor.unit_data?.action?.value ?? 0);
+      const power     = basePower * (1 + (Number(actor._empower_bonus_pct) || 0) / 100);
       const maxHits = Math.max(1, Number(actor.unit_data?.targets ?? 1));
       const list    = maxHits > 1 ? this.getValidTargets(actor).slice(0, maxHits) : [target];
       const label   = { name: poolAction === 'shield' ? 'Shield' : 'Decay', dispellable: true };
@@ -1340,7 +1343,7 @@ class BattleEngine {
         targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
         actionKind: 'empower',
         value: bonusPct,
-        message: `${actor.unit_name} empowers ${target.unit_name} — +${bonusPct}% damage on the next attack`,
+        message: `${actor.unit_name} empowers ${target.unit_name} — +${bonusPct}% action power on the next action`,
       });
       // Empower is a support action too: let pool-trigger passives such as
       // Dispel remove an ally's negative effects when the buff is applied.
@@ -1351,6 +1354,8 @@ class BattleEngine {
       actor.acted_this_round = true;
       return this.afterAction(actor);
     }
+
+    actor._empower_used_this_action = (actor._empower_bonus_pct ?? 0) > 0;
 
     if (this.isHealer(actor) || dualActionHeal) {
       if (actor._mothers_kiss) {
@@ -2095,6 +2100,7 @@ class BattleEngine {
       actor.acted_this_round = true;
       return this.afterAction(actor);
     }
+    actor._empower_used_this_action = (actor._empower_bonus_pct ?? 0) > 0;
     const raw    = this.calcHeal(actor);
     const factor = 1 - Math.min(100, (target._infect_stacks ?? 0) * 10) / 100;
     const afterDecay = this.absorbWithDecay(target, Math.floor(raw * factor));
