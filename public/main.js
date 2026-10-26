@@ -30,6 +30,7 @@ import {
   setActiveNav,
   refreshResourceBar,
   refreshNavLock,
+  errandsCache,
 } from './api.js';
 
 export { api, setSessionToken, setActiveNav, refreshResourceBar, refreshNavLock };
@@ -538,14 +539,19 @@ async function boot() {
     // used to wait on a /bootstrap that could only start once that floor was
     // over — so the loading screen ended and the castle was still empty.
     //
-    // Chained off login rather than run beside it because chat_id comes from
-    // login, and NOT awaited: the preload must not get any slower on account of
-    // it, and a failure here is a cache miss, not a broken launch.
+    // Chained off login because the chat id and session token come from its
+    // response. Errands start warming alongside bootstrap, so the first visit
+    // to the sheet can reuse this request instead of waiting for its own.
     //
     // It IS awaited by the loading screen now (capped there by a timeout), so the
     // bar only fills once the castle has something to show.
     const dataReady = loginPromise
-      .then(r => r?.player?.chat_id && bootstrapCache.get(r.player.chat_id))
+      .then(r => {
+        if (!r?.player?.chat_id) return null;
+        setSessionToken(r.session_token);
+        if (r.player.faction) errandsCache.get(r.player.chat_id).catch(() => {});
+        return bootstrapCache.get(r.player.chat_id);
+      })
       .catch(() => {});
 
     const [loginResult] = await Promise.all([
