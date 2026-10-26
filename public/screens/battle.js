@@ -2302,7 +2302,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     { key: 'stun',    icon: 'stun.jpg',    en: 'Stunned',          ru: 'Оглушение',      n: c => num(c, '_stun_rounds'),        unit: 'rounds' },
     { key: 'terror',  icon: 'terror.jpg',  en: 'Terror',           ru: 'Ужас',           n: c => num(c, '_terror_rounds'),      unit: 'rounds' },
     { key: 'fear',    icon: 'fear.jpg',    en: 'Fear',             ru: 'Страх',          n: c => num(c, '_fear_dmg_reduction'), unit: 'pct' },
-    { key: 'infect',  icon: 'infect.jpg',  en: 'Healing reduced',  ru: 'Лечение снижено', n: c => num(c, '_healing_reduction'), unit: 'pct' },
+    { key: 'infect',  icon: 'infect.jpg',  en: 'Healing reduced',  ru: 'Лечение снижено', n: c => num(c, '_infect_stacks'), unit: 'stacks', detail: c => `${num(c, '_infect_stacks') * 10}%` },
     { key: 'sorrow',  icon: 'sorrow.jpg',  en: 'Sorrow',           ru: 'Скорбь',         n: c => (st(c, '_sorrow_source_ids') || []).length },
     // The pool left, not a percentage: it is how much healing this unit will
     // lose before any reaches its HP.
@@ -2320,6 +2320,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     dmg:    { en: 'per turn',    ru: 'за ход' },
     hp:     { en: 'HP per turn', ru: 'HP за ход' },
     pct:    { en: '%',           ru: '%' },
+    stacks: { en: 'stacks',     ru: 'зарядов' },
     armor:  { en: 'armor',       ru: 'брони' },
     initiative: { en: 'initiative', ru: 'инициативы' },
     max_hp:     { en: 'max HP',    ru: 'макс. HP' },
@@ -2352,11 +2353,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const n = d.n(occ);
       if (!(n > 0)) continue;
       const suffix = d.unit ? ` ${UNIT_SUFFIX[d.unit][L]}` : '';
+      const detail = d.detail?.(occ);
       entries.push({
         key:   d.key,
         icon:  assetUrl(`/assets/icons/abilities/${d.icon}`),
         name:  d[L],
-        title: d.unit || n > 1 ? `${d[L]}: ${n}${suffix}` : d[L],
+        title: d.unit || n > 1 ? `${d[L]}: ${n}${suffix}${detail ? ` (${detail})` : ''}` : d[L],
         badge: n > 1 || d.alwaysNum ? n : null,
       });
     }

@@ -429,7 +429,7 @@ class BattleEngine {
       _stacks:            {},
       _flags:             {},
       _dmg_mult:          1,
-      _healing_reduction: 0,
+      _infect_stacks: 0,
       _deferred_dmg:      0,
       _debuff_reduction:  0,
       _granted_buffs:     [],
@@ -1505,7 +1505,7 @@ class BattleEngine {
   healTarget(actor, target) {
     if (!target || !target.alive) return 0;
     const raw    = this.calcHeal(actor);
-    const factor = 1 - (target._healing_reduction ?? 0) / 100;
+    const factor = 1 - Math.min(100, (target._infect_stacks ?? 0) * 10) / 100;
     // Decay is applied to the heal BEFORE the overheal clamp, so a decayed unit
     // at full HP still burns its decay down rather than having the clamp hide
     // it — otherwise topping up a healthy ally would silently cleanse them.
@@ -2093,7 +2093,7 @@ class BattleEngine {
       return this.afterAction(actor);
     }
     const raw    = this.calcHeal(actor);
-    const factor = 1 - (target._healing_reduction ?? 0) / 100;
+    const factor = 1 - Math.min(100, (target._infect_stacks ?? 0) * 10) / 100;
     const afterDecay = this.absorbWithDecay(target, Math.floor(raw * factor));
     const heal   = Math.max(0, Math.min(afterDecay, target.max_hp - target.battle_hp));
     target.battle_hp += heal;
@@ -2315,7 +2315,7 @@ class BattleEngine {
   stoneFormMend(unit) {
     const pct = unit?._stone_form_heal_pct ?? 0;
     if (!unit?.alive || !(pct > 0)) return 0;
-    const factor = 1 - ((unit._healing_reduction ?? 0) / 100);
+    const factor = 1 - Math.min(100, (unit._infect_stacks ?? 0) * 10) / 100;
     const healed = Math.min(
       this.absorbWithDecay(unit, Math.floor(unit.max_hp * pct / 100 * factor * this.fatigueHealMult())),
       unit.max_hp - unit.battle_hp);
@@ -2706,7 +2706,7 @@ class BattleEngine {
     // a target it could strip nothing from.
     const dispellable = e => e.dispellable !== false;
     const hasNegative = c => (c._effects || []).some(e => e.polarity === 'negative' && dispellable(e))
-      || (c.dot_dmg > 0) || (c._poison_dmg > 0) || (c._bleed_dmg > 0) || (c._chill_dmg > 0) || (c._healing_reduction > 0);
+      || (c.dot_dmg > 0) || (c._poison_dmg > 0) || (c._bleed_dmg > 0) || (c._chill_dmg > 0) || (c._infect_stacks > 0);
     const hasPositive = c => (c._effects || []).some(e => e.polarity === 'positive' && dispellable(e)) || (c._dmg_mult || 1) > 1;
 
     // Resurrect a fallen ally — always worth it when a valid corpse exists.
@@ -3599,7 +3599,7 @@ class BattleEngine {
           _mothers_blessing:     c._mothers_blessing,
           _mothers_blessing_pct: c._mothers_blessing_pct,
           _debuff_reduction:   c._debuff_reduction,
-          _healing_reduction:  c._healing_reduction,
+          _infect_stacks:      c._infect_stacks,
           _dmg_mult:           c._dmg_mult,
           _empower_bonus_pct:  c._empower_bonus_pct ?? 0,
           _fear_dmg_reduction: c._fear_dmg_reduction,
@@ -3747,7 +3747,7 @@ class BattleEngine {
       c._mothers_blessing     = b._mothers_blessing     ?? false;
       c._mothers_blessing_pct = b._mothers_blessing_pct ?? 10;
       c._debuff_reduction  = b._debuff_reduction  ?? 0;
-      c._healing_reduction = b._healing_reduction ?? 0;
+      c._infect_stacks = b._infect_stacks ?? Math.round((b._healing_reduction ?? 0) / 10);
       c._dmg_mult          = b._dmg_mult          ?? 1;
       c._empower_bonus_pct = b._empower_bonus_pct ?? 0;
       c._fear_dmg_reduction = b._fear_dmg_reduction ?? 0;

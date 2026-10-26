@@ -73,7 +73,7 @@ export class BattleSystem {
       _stacks:       {},
       _flags:        {},
       _dmg_mult:          1,
-      _healing_reduction: 0,
+      _infect_stacks: 0,
       _granted_buffs: [],
     };
   }
@@ -189,7 +189,7 @@ export class BattleSystem {
     const dualActionHeal = DUAL_TARGET_ACTIONS.has(actionKey) && target.side === actor.side;
     if (this.isHealer(actor) || dualActionHeal) {
       const raw    = this.calcHeal(actor);
-      const factor = 1 - (target._healing_reduction ?? 0) / 100;
+      const factor = 1 - Math.min(100, (target._infect_stacks ?? 0) * 10) / 100;
       const heal   = Math.floor(Math.min(raw * factor, target.max_hp - target.battle_hp));
       target.battle_hp += heal;
       this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });
@@ -333,7 +333,7 @@ export class BattleSystem {
       return this.afterAction(actor);
     }
     const raw    = this.calcHeal(actor);
-    const factor = 1 - (target._healing_reduction ?? 0) / 100;
+    const factor = 1 - Math.min(100, (target._infect_stacks ?? 0) * 10) / 100;
     const heal   = Math.floor(Math.min(raw * factor, target.max_hp - target.battle_hp));
     target.battle_hp += heal;
     this.fireTrigger('on_heal', { actor, target, dmg: heal, dying: null });

@@ -1192,9 +1192,8 @@ function dispatchPassive(trigger, owner, def, ctx) {
       const pctPerStack = p.healing_reduction_pct_per_stack ?? 10;
       const requestedStacks = p.healing_reduction_stacks ?? Math.ceil(p.healing_reduction_pct / pctPerStack);
       let applied = 0;
-      for (let i = 0; i < requestedStacks && (target._healing_reduction ?? 0) < 100; i++) {
-        const amount = Math.min(pctPerStack, 100 - (target._healing_reduction ?? 0));
-        target._healing_reduction = (target._healing_reduction ?? 0) + amount;
+      for (let i = 0; i < requestedStacks && (target._infect_stacks ?? 0) < Math.floor(100 / pctPerStack); i++) {
+        target._infect_stacks = (target._infect_stacks ?? 0) + 1;
         // Recover the sequence from the saved effect list after a battle
         // snapshot restore, so a fresh stack never merges into an older one.
         const priorStackId = (target._effects || []).reduce((max, effect) => {
@@ -1204,12 +1203,12 @@ function dispatchPassive(trigger, owner, def, ctx) {
         target._infect_stack_id = priorStackId + 1;
         engine.registerEffect(target, {
           key: `healing_reduction_${target._infect_stack_id}`, name: def.name, polarity: 'negative',
-          dispellable: def.dispellable === true, restore: { _healing_reduction: -amount }, amount,
+          dispellable: def.dispellable === true, restore: { _infect_stacks: -1 }, amount: 1,
         });
-        applied += amount;
+        applied += 1;
       }
       if (applied > 0) {
-        engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target._healing_reduction });
+        engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target._infect_stacks });
       }
     }
     // ── Decay: stacking anti-heal pool on the TARGET (see POOL_CAP_PCT).
@@ -1748,7 +1747,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   if ((p.radiant_surge_heal != null || p.radiant_surge_damage != null) && target) {
     if (target.side === actor.side) {
       const raw    = p.radiant_surge_heal ?? 0;
-      const factor = 1 - (target._healing_reduction ?? 0) / 100;
+      const factor = 1 - Math.min(100, (target._infect_stacks ?? 0) * 10) / 100;
       const heal   = Math.max(0, Math.min(engine.absorbWithDecay(target, Math.floor(raw * factor * engine.fatigueHealMult())),
                                           target.max_hp - target.battle_hp));
       const preHealRatio = target.max_hp > 0 ? target.battle_hp / target.max_hp : 1;
@@ -1807,7 +1806,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     target._bleed_dmg = 0;
     target._bleed_permanent = 0;
     target._chill_dmg = 0;
-    target._healing_reduction = 0;
+    target._infect_stacks = 0;
     target._dmg_mult = Math.min(target._dmg_mult ?? 1, 1);
     for (const key of Object.keys(target._flags)) {
       if (key.endsWith('_applied')) target._flags[key] = false;
@@ -1908,7 +1907,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   if (p.heal_flat != null && def.target === 'all_allies') {
     const allies = combatants.filter(c => c.side === actor.side && c.alive);
     for (const a of allies) {
-      const factor = 1 - ((a._healing_reduction ?? 0) / 100);
+      const factor = 1 - Math.min(100, (a._infect_stacks ?? 0) * 10) / 100;
       const healed = Math.min(engine.absorbWithDecay(a, Math.floor(p.heal_flat * factor * engine.fatigueHealMult())), a.max_hp - a.battle_hp);
       if (healed > 0) {
         a.battle_hp += healed;
@@ -2005,7 +2004,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     // The mend goes through the normal heal path: fatigue weakens it, a healing
     // reduction on the unit applies, and it cannot overheal.
     const pct    = p.stone_form_heal_pct ?? 0;
-    const factor = 1 - ((actor._healing_reduction ?? 0) / 100);
+    const factor = 1 - Math.min(100, (actor._infect_stacks ?? 0) * 10) / 100;
     const healed = Math.min(
       engine.absorbWithDecay(actor, Math.floor(actor.max_hp * pct / 100 * factor * engine.fatigueHealMult())),
       actor.max_hp - actor.battle_hp);
@@ -2083,7 +2082,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     });
 
     const pct    = p.ember_shroud_heal_pct ?? 0;
-    const factor = 1 - ((actor._healing_reduction ?? 0) / 100);
+    const factor = 1 - Math.min(100, (actor._infect_stacks ?? 0) * 10) / 100;
     const healed = Math.min(
       engine.absorbWithDecay(actor, Math.floor(actor.max_hp * pct / 100 * factor * engine.fatigueHealMult())),
       actor.max_hp - actor.battle_hp);
