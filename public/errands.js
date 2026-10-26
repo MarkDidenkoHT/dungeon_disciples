@@ -174,9 +174,17 @@ function tokenIconHtml(id) {
                onerror="this.replaceWith(document.createTextNode('${fallback}'))">`;
 }
 
-// `names` adds the token's written name. On everywhere there is a full row to
-// write in, which since the short/long rework is everywhere — a supply or a
-// potion in a reward box needs saying, not just an icon.
+// `names` spells a token out ('Camping Supplies') instead of leaving it as an
+// icon. ON where there is a full row to write in — the in-progress list — and
+// OFF in the reward boxes, which are half a card wide and already carry the
+// name in the chip's title.
+//
+// Not a preference. Two boxes sit side by side, each half a phone wide:
+// 'Camping Supplies' or 'Tome of Knowledge' wraps onto a second line, that box
+// grows to fit it and its neighbour does not — so a pair that should read as
+// two halves of one reward comes out as two different-sized lumps. Gold and XP
+// never had the problem, because a resource chip is an amount and an icon.
+// That is the shape every chip in a reward box keeps.
 function rewardHtml(reward = {}, { names = true } = {}) {
   const bits = [];
   if (reward.xp_self)   bits.push(`<span class="errand-reward-chip">+${reward.xp_self} ${T('xpSelf')}</span>`);
@@ -413,7 +421,7 @@ export async function openErrandsSheet(player) {
             ${parts.map(p => `
               <div class="errand-part ${chosenTags.includes(p.tag) ? 'errand-part--earned' : ''}">
                 <span class="unit-tag">${p.tag}</span>
-                <span class="errand-chips">${rewardHtml(p.reward)}</span>
+                <span class="errand-chips">${rewardHtml(p.reward, { names: false })}</span>
               </div>`).join('')}
           </div>
 
