@@ -98,10 +98,8 @@ function errandHeaderHtml(def, desc) {
 }
 
 // ── The two offers, side by side ─────────────────────────────────────────────
-// The post holds one simple errand and one grand one, and the sheet's question
-// is which to take. Each card carries its OWN art, requirement and reward,
-// because that is what the player is comparing — and there is room for both
-// building images in one row, so neither has to be read from a list.
+// The post holds one simple errand and one grand one. Cards identify the
+// offers; the selected requirement and reward are shown once below.
 //
 // The requirement is stated as the two tags with a joiner between them: "/" for
 // a simple errand (either tag qualifies, both pay double) and "+" for a grand
@@ -114,15 +112,6 @@ function offerTagsHtml(offer) {
     <span class="errand-offer-tags" title="${T('requires')}: ${both ? T('needsBoth') : T('needsEither')}">
       ${tags.map(t => `<span class="unit-tag">${t}</span>`).join(join)}
     </span>`;
-}
-
-// What this offer pays, for the card. A grand errand pays one indivisible
-// reward; a simple one pays per tag matched, so its card shows both halves at
-// the trip length currently picked for it.
-function offerRewardHtml(offer, hours) {
-  if (offer.reward) return rewardHtml(offer.reward, { names: false });
-  const picked = offer.durations?.find(d => d.hours === hours) ?? offer.durations?.[0];
-  return (picked?.parts || []).map(p => rewardHtml(p.reward, { names: false })).join('');
 }
 
 function offerCardHtml(offer, { selected, hours }) {
@@ -142,8 +131,6 @@ function offerCardHtml(offer, { selected, hours }) {
         <span class="errand-offer-hours">${hours}${T('hours')}</span>
       </span>
       <span class="errand-offer-name">${def?.title?.[lang] ?? offer.errand_id}</span>
-      ${offerTagsHtml(offer)}
-      <span class="errand-chips errand-offer-chips">${offerRewardHtml(offer, hours)}</span>
     </button>`;
 }
 
@@ -274,10 +261,7 @@ export async function openErrandsSheet(player) {
   // rather than shown-disabled: the offer sheet is already dense, and a control
   // that cannot do anything until tomorrow is not worth the row.
   //
-  // Only drawn under the SIMPLE card. The server rerolls simple offers only (a
-  // faction has one grand errand, so a swap could only return what it replaced),
-  // and a button under the grand card that silently changed the other one would
-  // be a lie about what it does.
+  // One shared control stays available whichever offer is selected.
   function rerollBtnHtml() {
     const left = bootstrapCache.data?.errand_reroll?.remaining ?? 0;
     if (left <= 0) return '';
@@ -419,6 +403,7 @@ export async function openErrandsSheet(player) {
           ${def?.desc?.[lang] ? `<p class="errand-desc errand-desc--detail">${def.desc[lang]}</p>` : ''}
 
           ${offer.reward ? `
+            ${offerTagsHtml(offer)}
             <div class="errand-section-label">${T('reward')}</div>
             <div class="errand-chips">${rewardHtml(offer.reward)}</div>
           ` : `
@@ -445,7 +430,7 @@ export async function openErrandsSheet(player) {
 
           <button class="errand-btn" id="errand-send" ${chosen ? '' : 'disabled'}>${T('send')}</button>
 
-          ${offer.reward ? '' : rerollBtnHtml()}
+          ${rerollBtnHtml()}
 
           <div class="prep-track-wrap errand-track-wrap">
             <div class="portrait-track" id="errand-track">

@@ -2,6 +2,8 @@ import { UNITS } from './units.js';
 import { ITEM_DEFS, applyItemModifiers } from './items.js';
 
 const ALL_CRYSTALS = ['Crystals_Life', 'Crystals_Fire', 'Crystals_Death', 'Crystals_Frost', 'Crystals_Nature', 'Crystals_Air'];
+// Embark XP is tuned down uniformly across every region and level.
+const EMBARK_XP_MULTIPLIER = 0.8;
 
 //encounter mapping
 // 01
@@ -434,7 +436,7 @@ function buildDifficulties(regionId) {
     out[levelKey] = {
       rewards: {
         gold: r.gold ?? 0,
-        xp:   r.xp   ?? 0,
+        xp:   Math.floor((r.xp ?? 0) * EMBARK_XP_MULTIPLIER),
       },
     };
   }
@@ -451,7 +453,7 @@ function getLevelRewards(region_id, level) {
   const declared = REGION_ENCOUNTERS[region_id]?.[`level_${level}`]?.rewards ?? {};
   return {
     gold:     declared.gold ?? 0,
-    xp:       declared.xp   ?? 0,
+    xp:       Math.floor((declared.xp ?? 0) * EMBARK_XP_MULTIPLIER),
     crystals: Array.isArray(declared.crystals) ? declared.crystals : [],
     trophies: declared.trophies && typeof declared.trophies === 'object' ? declared.trophies : {},
   };
