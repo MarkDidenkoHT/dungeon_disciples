@@ -171,7 +171,7 @@ function rewardHtml(reward = {}, { names = true } = {}) {
   }
   for (const [item, amount] of Object.entries(reward.tokens || {})) {
     const name = TOKEN_DEFS[item]?.name || item;
-    bits.push(`<span class="errand-reward-chip errand-reward-chip--token" title="${name}">+${amount}${
+    bits.push(`<span class="errand-reward-chip" title="${name}">+${amount}${
       tokenIconHtml(item)}${names ? `<span class="errand-token-name">${name}</span>` : ''}</span>`);
   }
   return bits.join('');

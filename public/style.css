@@ -1117,10 +1117,12 @@ button:active:not(:disabled) { opacity: 0.75; }
 /* "/" means either tag qualifies, "+" means both are required. */
 .errand-offer-join { color: var(--muted); font-size: 0.72rem; font-weight: 700; }
 
-/* The token IS the grand errand's headline, so it is drawn bigger than a gold
-   or crystal icon rather than at chip scale. */
-.errand-reward-chip--token { font-size: 0.74rem; }
-.errand-reward-chip--token .res-icon-img { width: 17px; height: 17px; }
+/* One treatment for every reward chip, regular or grand. A regular errand pays
+   resources and a grand one pays a token, but the chip is the same object
+   either way. Sizing only the TOKEN icon left the resource icons sitting at
+   .res-icon-img's 35px default, so a regular errand drew 35px gold next to
+   11px text and its reward boxes came out twice the height of a grand one's. */
+.errand-reward-chip .res-icon-img { width: 17px; height: 17px; }
 .errand-token-name { font-weight: 600; }
 
 .errand-desc--detail {
