@@ -366,6 +366,7 @@ export async function openErrandsSheet(player) {
       // than offering a choice that does not exist.
       const durations = offer.durations ?? [];
       const picked    = durations.find(d => d.hours === hours) ?? durations[0] ?? { hours: offer.hours, parts: [] };
+      const parts     = picked.parts ?? [];
       // Which tags the selected unit has: for a simple errand the halves it
       // earns are the lit ones. A grand errand has no halves — a unit either
       // carries both tags and takes the whole reward, or cannot go at all.
