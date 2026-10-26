@@ -68,11 +68,12 @@ html, body {
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  opacity: 0.58;
+  opacity: 0.9;
+  mix-blend-mode: screen;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #ambient-particles { opacity: 0.42; }
+  #ambient-particles { opacity: 0.72; }
 }
 
 #shell {
