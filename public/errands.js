@@ -120,7 +120,7 @@ function offerRewardHtml(offer, hours) {
   return (picked?.parts || []).map(p => rewardHtml(p.reward, { names: false })).join('');
 }
 
-function offerCardHtml(offer, { selected }) {
+function offerCardHtml(offer, { selected, hours }) {
   const def = ERRANDS_BY_ID[offer.errand_id];
   const src = errandArtUrl(def);
   const grand = offer.kind === 'grand';
@@ -402,6 +402,7 @@ export async function openErrandsSheet(player) {
           <div class="errand-offers" id="errand-offers">
             ${offers.map(o => offerCardHtml(o, {
               selected: String(o.row_id) === String(offer.row_id),
+              hours:    hoursFor(o),
             })).join('')}
           </div>
 
