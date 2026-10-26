@@ -33,14 +33,14 @@ if (!context) {
     canvas.style.height = `${height}px`;
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
 
-    const count = Math.max(32, Math.min(76, Math.round((width * height) / 12500)));
+    const count = Math.max(60, Math.min(92, Math.round((width * height) / 8500)));
     particles = Array.from({ length: count }, () => ({
       x: Math.random() * width,
       y: Math.random() * height,
-      radius: Math.random() * 1.5 + 0.5,
+      radius: Math.random() * 1.8 + 0.9,
       vx: (Math.random() - 0.5) * 0.16,
       vy: (Math.random() - 0.5) * 0.16,
-      alpha: Math.random() * 0.3 + 0.12,
+      alpha: Math.random() * 0.34 + 0.3,
       pulse: (Math.random() - 0.5) * 0.003,
       color: palette[Math.floor(Math.random() * palette.length)],
     }));
@@ -72,9 +72,12 @@ if (!context) {
       context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
       context.fillStyle = particle.color;
       context.globalAlpha = particle.alpha;
+      context.shadowColor = particle.color;
+      context.shadowBlur = 5;
       context.fill();
     }
     context.globalAlpha = 1;
+    context.shadowBlur = 0;
     if (!reducedMotion.matches) frame = requestAnimationFrame(draw);
   }
 
