@@ -1188,21 +1188,27 @@ function dispatchPassive(trigger, owner, def, ctx) {
         }
       }
     }
-    if (p.healing_reduction_pct != null) {
-      // Infect does NOT stack. Every hit re-applies it, and re-applying takes
-      // the stronger of the two rather than adding: an attacker with Infect
-      // lands several blows a round, and stacking drove any target to a 100%
-      // healing block within two rounds, which made healers pointless rather
-      // than pressured. A higher rank (or a second infector) still upgrades a
-      // weaker one — it just cannot pile onto itself.
-      const before  = target._healing_reduction ?? 0;
-      const applied = Math.max(0, Math.min(100, p.healing_reduction_pct) - before);
-      if (applied > 0) {
-        target._healing_reduction = before + applied;
+    if (p.healing_reduction_pct_per_stack != null || p.healing_reduction_pct != null) {
+      const pctPerStack = p.healing_reduction_pct_per_stack ?? 10;
+      const requestedStacks = p.healing_reduction_stacks ?? Math.ceil(p.healing_reduction_pct / pctPerStack);
+      let applied = 0;
+      for (let i = 0; i < requestedStacks && (target._healing_reduction ?? 0) < 100; i++) {
+        const amount = Math.min(pctPerStack, 100 - (target._healing_reduction ?? 0));
+        target._healing_reduction = (target._healing_reduction ?? 0) + amount;
+        // Recover the sequence from the saved effect list after a battle
+        // snapshot restore, so a fresh stack never merges into an older one.
+        const priorStackId = (target._effects || []).reduce((max, effect) => {
+          const match = /^healing_reduction_(\d+)$/.exec(effect.key || '');
+          return Math.max(max, match ? Number(match[1]) : 0);
+        }, target._infect_stack_id ?? 0);
+        target._infect_stack_id = priorStackId + 1;
         engine.registerEffect(target, {
-          key: 'healing_reduction', name: def.name, polarity: 'negative', dispellable: def.dispellable === true,
-          restore: { _healing_reduction: -applied }, // dispel undoes exactly what was added
+          key: `healing_reduction_${target._infect_stack_id}`, name: def.name, polarity: 'negative',
+          dispellable: def.dispellable === true, restore: { _healing_reduction: -amount }, amount,
         });
+        applied += amount;
+      }
+      if (applied > 0) {
         engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target._healing_reduction });
       }
     }
