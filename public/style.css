@@ -2993,10 +2993,24 @@ button.cost-bar-item:active { transform: scale(0.9); }
   letter-spacing: 0.02em;
 }
 
+/* The card used to be dimmed whole with opacity: 0.5, which halved its art
+   along with everything else. That reads fine on bright region art, but
+   Darkwood is near-black to begin with and at half strength the card looked
+   empty — the picture was there, just invisible against the page. Dim the
+   CONTENT and desaturate the ART instead: the region still reads as
+   unavailable, and its art survives. */
 .embark-card--coming-soon {
-  opacity: 0.5;
   cursor: default;
   pointer-events: none;
+}
+
+.embark-card--coming-soon .embark-card-bg {
+  filter: grayscale(0.7);
+}
+
+.embark-card--coming-soon .embark-card-info,
+.embark-card--coming-soon .embark-card-badge--soon {
+  opacity: 0.6;
 }
 
 .embark-region-block--coming-soon .embark-level-row {
