@@ -1,4 +1,5 @@
 import { assetUrl, resolveAssetBase, installAssetFallback } from './asset_base.js';
+import './ambient-particles.js';
 import { renderRegister }   from './screens/register.js';
 import { renderWelcome }    from './screens/welcome.js';
 import { needsConsent, applyAnalyticsConsent } from './analytics.js';
