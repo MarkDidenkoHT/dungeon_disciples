@@ -91,8 +91,8 @@ const UI_TEXT = {
 // Levels that end in a boss fight — highlighted red on the level row.
 const BOSS_LEVELS = [3, 6, 10];
 
-// Each region card uses /assets/embark/<id>.jpg as its full background (see the
-// regionBgStyle scrim below). Descriptions and the guaranteed crystal match the
+// Each region card uses /assets/embark/<id>.jpg as its full background image.
+// Descriptions and the guaranteed crystal match the
 // region's real roster and rewards (see data/units.js + data/embark.js).
 export const REGIONS = [
   {
@@ -170,9 +170,8 @@ export const REGIONS = [
 //
 // Art follows the region convention — /assets/embark/<id>.jpg — so a mode gets
 // its picture by dropping the file in and flipping `art` on. Until then the card
-// paints the gradient in .embark-card--pvp rather than an empty box; the inline
-// background is left off entirely, because an inline url() to a file that does
-// not exist beats the stylesheet and leaves a blank card.
+// paints the gradient in .embark-card--pvp rather than an empty box. Card art is
+// an <img> so missing CDN files can fall back to the app server.
 const PVP_MODES = [
   {
     id: 'pvp_quick',
@@ -203,10 +202,10 @@ const PVP_MODES = [
   },
 ];
 
-// Region art as the card's full background. The text over it carries its own
-// shadow (see .embark-card-label / -desc), so the art is shown clean.
-function regionBgStyle(r) {
-  return `background-image: url('${assetUrl(`/assets/embark/${r.id}.jpg`)}');`;
+// Use an img rather than CSS background-image so the shared CDN error handler
+// can retry missing Cloudflare assets from the Render origin.
+function regionBgImg(r) {
+  return `<img class="embark-card-bg" src="${assetUrl(`/assets/embark/${r.id}.jpg`)}" alt="" aria-hidden="true" loading="lazy">`;
 }
 
 // `highlightRegions` arrives from the item sheet's material detail: the regions
@@ -646,8 +645,8 @@ export function renderEmbark(root, params = {}) {
       return `
         <div class="embark-region-block">
           <div class="embark-card embark-card--pvp${open ? '' : ' embark-card--locked'}"
-               data-pvp-mode="${m.id}" data-label="${label}"
-               style="${m.art ? regionBgStyle(m) : ''}">
+               data-pvp-mode="${m.id}" data-label="${label}">
+            ${m.art ? regionBgImg(m) : ''}
             <div class="embark-card-info">
               <span class="embark-card-label">${label}</span>
               <span class="embark-card-desc">${m.tourney ? tourneyLine() : desc}</span>
@@ -939,7 +938,8 @@ export function renderEmbark(root, params = {}) {
         if (r.comingSoon) {
           return `
             <div class="embark-region-block embark-region-block--coming-soon">
-              <div class="embark-card embark-card--coming-soon" data-id="${r.id}" style="${regionBgStyle(r)}">
+              <div class="embark-card embark-card--coming-soon" data-id="${r.id}">
+                ${regionBgImg(r)}
                 <div class="embark-card-info">
                   <span class="embark-card-label">${rLabel(r)}</span>
                   <span class="embark-card-desc">${rDesc(r)}</span>
@@ -952,7 +952,8 @@ export function renderEmbark(root, params = {}) {
         if (r.toColossus) {
           return `
             <div class="embark-region-block embark-region-block--arena">
-              <div class="embark-card embark-card--arena" data-to-colossus="1" data-id="${r.id}" style="${regionBgStyle(r)}">
+              <div class="embark-card embark-card--arena" data-to-colossus="1" data-id="${r.id}">
+                ${regionBgImg(r)}
                 <div class="embark-card-info">
                   <span class="embark-card-label">${rLabel(r)}</span>
                   <span class="embark-card-desc">${rDesc(r)}</span>
@@ -966,7 +967,8 @@ export function renderEmbark(root, params = {}) {
         if (r.toArena) {
           return `
             <div class="embark-region-block embark-region-block--arena">
-              <div class="embark-card embark-card--arena" data-to-arena="1" data-id="${r.id}" style="${regionBgStyle(r)}">
+              <div class="embark-card embark-card--arena" data-to-arena="1" data-id="${r.id}">
+                ${regionBgImg(r)}
                 <div class="embark-card-info">
                   <span class="embark-card-label">${rLabel(r)}</span>
                   <span class="embark-card-desc">${rDesc(r)}</span>
@@ -990,7 +992,8 @@ export function renderEmbark(root, params = {}) {
         const levels   = Array.from({ length: maxLevel }, (_, i) => i + 1);
         return `
           <div class="embark-region-block">
-            <div class="embark-card" data-id="${r.id}" data-max-level="${maxLevel}" style="${regionBgStyle(r)}">
+            <div class="embark-card" data-id="${r.id}" data-max-level="${maxLevel}">
+              ${regionBgImg(r)}
               ${eventBadgeHtml(r.id)}
               <div class="embark-card-info">
                 <span class="embark-card-label">${rLabel(r)}</span>

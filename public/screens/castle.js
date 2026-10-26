@@ -173,13 +173,7 @@ const CASTLE_TEXT = {
   upgrade:     { en: 'Upgrade',                               ru: 'Улучшить' },
   treeTitle:   { en: 'Evolution',                             ru: 'Развитие' },
   treeEmpty:   { en: 'This unit has no upgrade line.',        ru: 'У этого юнита нет ветки развития.' },
-  // The build picker names the UNIT, not the building: the player is choosing
-  // who will live there, and that is what the card in front of them shows.
-  chooseUnit:  { en: 'Choose Unit',                           ru: 'Выберите бойца' },
-  // Which of the options is on the card. The picker's title says "Choose Unit"
-  // and renderUnitPortrait dropped the name from the art on the grounds that
-  // "the sheet title already carries it" — true everywhere EXCEPT here, where
-  // the title is the question, so the unit being chosen was nameless.
+  // Which option is on the card; the portrait art itself carries no name.
   pickOf:      { en: (i, n) => `${i} / ${n}`,                 ru: (i, n) => `${i} / ${n}` },
   noBuildings: { en: 'No buildings available for this slot.', ru: 'Для этого слота нет доступных зданий.' },
   mercHall:    { en: 'Mercenary Hall',                        ru: 'Зал наёмников' },
@@ -3771,12 +3765,11 @@ export function renderCastle(root, params = {}) {
       return;
     }
 
-    // "Choose Unit" is the barracks question. A building that recruits nobody —
-    // the Mercenary Hall, Barracks II — is not a unit choice, and titling its
-    // sheet that way asked the player to pick a soldier from a list of halls.
+    // Recruit-bearing builds are clear from the portrait cards, so keep their
+    // sheet header free of a redundant title. Empty buildings still say Build.
     const recruits = available.some(b => b.unit_id);
     openSliderModal(recruits
-      ? CASTLE_TEXT.chooseUnit[castleLang]
+      ? ''
       : CASTLE_TEXT.build[castleLang],
       available.map(b => {
         const costText = costLabelFor(b.cost);

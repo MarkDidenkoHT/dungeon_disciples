@@ -66,7 +66,7 @@ html, body {
 #ambient-particles {
   position: fixed;
   inset: 0;
-  z-index: 2;
+  z-index: 99999;
   pointer-events: none;
   opacity: 0.9;
   mix-blend-mode: screen;
@@ -2778,6 +2778,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .embark-card {
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: flex-end;
   min-height: 150px;
@@ -2794,6 +2796,16 @@ button.cost-bar-item:active { transform: scale(0.9); }
      back to `default` and kills pointer events. */
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+}
+
+.embark-card-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
 }
 
 .embark-card--disabled { opacity: 0.55; }
