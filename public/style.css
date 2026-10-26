@@ -1114,23 +1114,14 @@ button:active:not(:disabled) { opacity: 0.75; }
 }
 .errand-offer--selected .errand-offer-name { color: var(--accent); }
 
-.errand-offer-tags {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 3px;
-  padding: 0 4px;
-}
 /* "/" means either tag qualifies, "+" means both are required. */
 .errand-offer-join { color: var(--muted); font-size: 0.72rem; font-weight: 700; }
-.errand-offer-chips { justify-content: center; padding: 0 4px; }
-.errand-offer-chips .errand-reward-chip { font-size: 0.64rem; padding: 2px 7px; }
 
 /* The token IS the grand errand's headline, so it is drawn bigger than a gold
    or crystal icon rather than at chip scale. */
 .errand-reward-chip--token { font-size: 0.74rem; }
 .errand-reward-chip--token .res-icon-img { width: 17px; height: 17px; }
 .errand-token-name { font-weight: 600; }
-.errand-offer-chips .errand-reward-chip--token { font-size: 0.72rem; }
-.errand-offer-chips .errand-reward-chip--token .res-icon-img { width: 19px; height: 19px; }
-.errand-offer-details { display: grid; justify-items: center; gap: 4px; }
 
 .errand-desc--detail {
   box-sizing: border-box;

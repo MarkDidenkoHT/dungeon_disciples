@@ -98,28 +98,9 @@ function errandHeaderHtml(def, desc) {
 }
 
 // ── The two offers, side by side ─────────────────────────────────────────────
-// The offer cards only identify the errands. Requirement and reward are shown
-// once in the shared selected-offer details below.
+// The offer cards only identify the errands. Their tags and rewards are shown
+// in the styled detail boxes below.
 //
-// The requirement is stated as the two tags with a joiner between them: "/" for
-// a simple errand (either tag qualifies, both pay double) and "+" for a grand
-// one (both or nobody). One glyph is the whole rule.
-function offerTagsHtml(offer) {
-  const tags = offer.requirement?.tags_all || offer.requirement?.tags_any || [];
-  const both = Boolean(offer.requirement?.tags_all?.length);
-  const join = `<span class="errand-offer-join">${both ? '+' : '/'}</span>`;
-  return `
-    <span class="errand-offer-tags" title="${T('requires')}: ${both ? T('needsBoth') : T('needsEither')}">
-      ${tags.map(t => `<span class="unit-tag">${t}</span>`).join(join)}
-    </span>`;
-}
-
-function offerRewardHtml(offer, hours) {
-  if (offer.reward) return rewardHtml(offer.reward, { names: false });
-  const picked = offer.durations?.find(d => d.hours === hours) ?? offer.durations?.[0];
-  return (picked?.parts || []).map(p => rewardHtml(p.reward, { names: false })).join('');
-}
-
 function offerCardHtml(offer, { selected, hours }) {
   const def = ERRANDS_BY_ID[offer.errand_id];
   const src = errandArtUrl(def);
@@ -408,17 +389,22 @@ export async function openErrandsSheet(player) {
 
           ${def?.desc?.[lang] ? `<p class="errand-desc errand-desc--detail">${def.desc[lang]}</p>` : ''}
 
-          <div class="errand-offer-details">
-            ${offerTagsHtml(offer)}
-            <span class="errand-chips errand-offer-chips">${offerRewardHtml(offer, hours)}</span>
-          </div>
-
-          <div class="errand-parts">
-            ${filterTags.map(tag => `
-              <div class="errand-part ${chosenTags.includes(tag) ? 'errand-part--earned' : ''}">
-                <span class="unit-tag">${tag}</span>
-              </div>`).join('')}
-          </div>
+          ${offer.reward ? `
+            <div class="errand-parts">
+              <div class="errand-part ${filterTags.every(tag => chosenTags.includes(tag)) ? 'errand-part--earned' : ''}">
+                ${filterTags.map((tag, i) => `${i ? '<span class="errand-offer-join">+</span>' : ''}<span class="unit-tag">${tag}</span>`).join('')}
+                <span class="errand-chips">${rewardHtml(offer.reward)}</span>
+              </div>
+            </div>
+          ` : `
+            <div class="errand-parts">
+              ${parts.map(p => `
+                <div class="errand-part ${chosenTags.includes(p.tag) ? 'errand-part--earned' : ''}">
+                  <span class="unit-tag">${p.tag}</span>
+                  <span class="errand-chips">${rewardHtml(p.reward)}</span>
+                </div>`).join('')}
+            </div>
+          `}
 
           ${durations.length > 1 ? `
             <div class="errand-durations" id="errand-durations">
