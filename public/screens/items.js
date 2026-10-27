@@ -656,6 +656,7 @@ export function renderItems(root, params = {}) {
     if (itemsLayer === 1) {
       hideCostBar();
       const engravingSlots = [
+        { key: 'Gold', label: 'Gold', icon: GOLD_ICON },
         { key: ENGRAVING_CURRENCY, label: ENGRAVING_CURRENCY,
           icon: `<img src="${assetUrl('/assets/icons/recources/valor.png')}" class="res-icon-img" alt="Valor">` },
         { key: ENGRAVING_TOKEN, label: ENGRAVING_TOKEN,
