@@ -2046,7 +2046,7 @@ const UNITS = {
       resistances: { air: 15, fire: 15, life: 40, death: 15, cold: 15, nature: 15 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 18, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
-      xp: 4005, passive: ['fanaticism 1', 'iron_will 2', 'radiance 1'], ability: 'purge 1',
+      xp: 4005, passive: ['fanaticism 1', 'iron_will 2', 'dissipate 1'], ability: 'purge 1',
     },
     mithrails_warden: {
       id: 'e212', f: 'e', t: 3,

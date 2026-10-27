@@ -655,8 +655,14 @@ export function renderItems(root, params = {}) {
     if (!hostVisible) return;
     if (itemsLayer === 1) {
       hideCostBar();
-      refreshResourceBar(player).catch(() => {});
-      showValorBar();
+      const engravingSlots = [
+        { key: ENGRAVING_CURRENCY, label: ENGRAVING_CURRENCY,
+          icon: `<img src="${assetUrl('/assets/icons/recources/valor.png')}" class="res-icon-img" alt="Valor">` },
+        { key: ENGRAVING_TOKEN, label: ENGRAVING_TOKEN,
+          icon: `<img src="${assetUrl(`/assets/icons/recources/${ENGRAVING_TOKEN}.png`)}" class="res-icon-img" alt="${ENGRAVING_TOKEN}">` },
+      ];
+      document.getElementById('roster-trophy-bar')?.remove();
+      refreshResourceBar(player, { slots: engravingSlots }).catch(() => {});
       return;
     }
     const entry = currentList()[selected];
@@ -724,33 +730,6 @@ export function renderItems(root, params = {}) {
       const chip = e.target.closest('[data-material]');
       if (chip) openMaterialSheet(chip.dataset.material);
     });
-
-    const resourceRow = document.getElementById('resource-bar-row') || document.getElementById('resource-bar');
-    resourceRow?.insertAdjacentElement('afterend', bar);
-  }
-
-  function showValorBar() {
-    document.getElementById('roster-trophy-bar')?.remove();
-    const amountOf = item => resources.find(r => r.item === item)?.amount ?? 0;
-    // What the page spends: Valor, and the tokens won in the Crown Tourney.
-    const chips = [
-      { item: ENGRAVING_CURRENCY, icon: 'valor',           fallback: '⚔' },
-      { item: ENGRAVING_TOKEN,    icon: ENGRAVING_TOKEN,   fallback: '✦' },
-    ];
-
-    const bar = document.createElement('div');
-    bar.id = 'roster-trophy-bar';
-    bar.className = 'roster-trophy-bar';
-    bar.innerHTML = chips.map(c => `
-      <div class="trophy-bar-item" title="${c.item} — ${amountOf(c.item)}">
-        <div class="trophy-bar-icon-wrap">
-          <img src="${assetUrl(`/assets/icons/recources/${c.icon}.png`)}"
-               class="trophy-bar-icon" alt="${c.item}"
-               onerror="this.style.display='none';this.nextSibling.style.display='flex';">
-          <span class="trophy-bar-icon-fallback">${c.fallback}</span>
-        </div>
-        <span class="trophy-bar-val">${amountOf(c.item)}</span>
-      </div>`).join('');
 
     const resourceRow = document.getElementById('resource-bar-row') || document.getElementById('resource-bar');
     resourceRow?.insertAdjacentElement('afterend', bar);
