@@ -1161,7 +1161,10 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
   // strength warning has to compare exactly the numbers the player is looking
   // at — computing it a second way would eventually disagree with the display.
   function playerArmyPower() {
-    const placed = Object.values(occupied).filter(o => o && o.anchor !== undefined);
+    // Large units occupy more than one cell, but contribute power only once.
+    const placed = Object.entries(occupied)
+      .filter(([cell, occ]) => occ && occ.anchor === Number(cell))
+      .map(([, occ]) => occ);
     return placed.reduce((sum, occ) => {
       const u = roster.find(r => r.id === occ.unitId);
       if (!u) return sum;
