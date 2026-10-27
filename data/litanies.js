@@ -426,11 +426,14 @@ const LITANIES = [
     verses: [
       // A Descant cell pays the ally side whatever its singer does.
       { speaker: 'B', strike: 'visual',
-        line: ['placeholder', 'текст'] },
+        line: ['You....',
+               'Вы....'] },
       { speaker: 'C', strike: 'visual',
-        line: ['placeholder', 'текст'] },
+        line: ['.... will hear ....',
+               '.... услышите ....'] },
       { speaker: 'A', strike: 'lethal',
-        line: ['placeholder', 'текст'] },
+        line: ['... their whispers...',
+               '... их шёпот...'] },
     ],
     reward: {
       enemy_initiative_flat: 10,
@@ -462,24 +465,13 @@ const LITANIES = [
       { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', calling: 'descant', all_alive: true },
     ] },
     verses: [
-      // The homily is said in the tongue, call and answer, and only the last
-      // line is in a language the dying champion knows - which is the whole
-      // point of it. The tongue is transliterated identically in EN and RU.
+      // One utterance in the Demons' tongue, passed between the speakers.
       { speaker: 'B', strike: 'line',
-        line: ['Aggraa vorr neee?', 'Агграа ворр нэээ?'] },
+        line: ['Aggraa vorr neee....', 'Агграа ворр нее....'] },
       { speaker: 'all_alive', strike: 'line',
-        line: ['Vorr am neee.', 'Ворр ам нэээ.'] },
-      { speaker: 'B', strike: 'line',
-        line: ['Aggraa kheen neee?', 'Агграа кхеен нэээ?'] },
-      { speaker: 'all_alive', strike: 'line',
-        line: ['Kheen am neee.', 'Кхеен ам нэээ.'] },
-      { speaker: 'B', strike: 'line',
-        line: ['Aggraa seluun neee?', 'Агграа селуун нэээ?'] },
-      { speaker: 'all_alive', strike: 'line',
-        line: ['Seluun am neee!', 'Селуун ам нэээ!'] },
+        line: ['.... Aggraa vorr neee ....', '.... Агграа ворр нее ....'] },
       { speaker: 'B', strike: 'lethal',
-        line: ['Now you learn the words.',
-               'Теперь ты выучишь слова.'] },
+        line: ['... Kthara!', '... Ктара!'] },
     ],
     reward: {
       enemy_damage_flat: 5,
