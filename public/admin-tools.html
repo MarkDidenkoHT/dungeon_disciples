@@ -235,6 +235,12 @@
       font-size: 13px;
       min-width: 700px;
     }
+    #tab-units .compare-panel table {
+      width: 800px;
+      min-width: 800px;
+      max-width: 800px;
+      table-layout: fixed;
+    }
     th {
       background: #1f2432;
       padding: 10px 10px 6px 10px;
@@ -540,6 +546,7 @@
       <input type="text" id="searchBox" placeholder="🔍 name, tag, id…" style="min-width:140px;">
       <select id="factionFilter"><option value="">Faction</option></select>
       <select id="tierFilter"><option value="">Tier</option></select>
+      <select id="roleFilter"><option value="">Role</option></select>
       <select id="sizeFilter"><option value="">Size</option></select>
       <select id="tagFilter"><option value="">Tag</option></select>
     </div>
@@ -653,6 +660,7 @@
     const searchBox = document.getElementById('searchBox');
     const factionFilter = document.getElementById('factionFilter');
     const tierFilter = document.getElementById('tierFilter');
+    const roleFilter = document.getElementById('roleFilter');
     const sizeFilter = document.getElementById('sizeFilter');
     const tagFilter = document.getElementById('tagFilter');
     const assetFilter = document.getElementById('assetFilter');
@@ -1110,16 +1118,20 @@
     function populateFilters() {
       const factions = new Set();
       const tiers = new Set();
+      const roles = new Set();
       const sizes = new Set();
       flatUnits.forEach(u => {
         if (u.data.f) factions.add(u.data.f);
         if (u.data.t !== undefined && u.data.t !== null) tiers.add(u.data.t);
+        if (u.data.pref_position) roles.add(u.data.pref_position);
         if (u.data.size) sizes.add(u.data.size);
       });
       factionFilter.innerHTML = '<option value="">All factions</option>' +
         [...factions].sort().map(f => `<option value="${f}">${f}</option>`).join('');
       tierFilter.innerHTML = '<option value="">All tiers</option>' +
         [...tiers].sort((a,b)=>a-b).map(t => `<option value="${t}">${t}</option>`).join('');
+      roleFilter.innerHTML = '<option value="">All roles</option>' +
+        [...roles].sort().map(role => `<option value="${role}">${role}</option>`).join('');
       
       const sizeOptions = [...sizes].sort();
       let sizeHtml = '<option value="">All sizes</option>';
@@ -1199,6 +1211,7 @@
       const q = searchBox.value.trim().toLowerCase();
       const fF = factionFilter.value;
       const tF = tierFilter.value;
+      const roleF = roleFilter.value;
       const sF = sizeFilter.value;
       const tagF = tagFilter.value;
       const aF = assetFilter.value;
@@ -1206,6 +1219,7 @@
       
       if (fF && d.f !== fF) return false;
       if (tF && String(d.t) !== tF) return false;
+      if (roleF && d.pref_position !== roleF) return false;
       
       if (sF) {
         if (sF === 'large') {
@@ -2100,7 +2114,7 @@
     }
 
     // ---- Event listeners ----
-    [searchBox, factionFilter, tierFilter, sizeFilter, tagFilter, assetFilter].forEach(el => {
+    [searchBox, factionFilter, tierFilter, roleFilter, sizeFilter, tagFilter, assetFilter].forEach(el => {
       el.addEventListener('input', renderUnitList);
       el.addEventListener('change', renderUnitList);
     });
