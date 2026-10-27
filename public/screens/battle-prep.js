@@ -2,6 +2,7 @@ import { assetUrl } from '../asset_base.js';
 import { api, navigate, resourceCache, refreshResourceBar, bootstrapCache }  from '../api.js';
 import { errandRosterIds } from '../errands.js';
 import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
+import { applyEngraving } from '../../data/engravings.js';
 
 // The Spell Tome's tabs minus non-combat, which is roster-only and has nothing
 // castable in a battle.
@@ -102,8 +103,14 @@ const BP_TEXT = {
                   ru: 'Сразу получить ресурсы этого уровня. Без опыта.' },
   quickCost:    { en: (n) => `${n} supplies`, ru: (n) => `${n} припасов` },
   quickLocked:  { en: 'Clear this level first', ru: 'Сначала пройдите этот уровень' },
-  quickClose:   { en: (gap) => `Your army must lead by more than ${gap} power`,
-                  ru: (gap) => `Ваша армия должна превосходить врага более чем на ${gap} силы` },
+  quickClose:   {
+    en: (gap, mine, theirs) => Number.isFinite(mine) && Number.isFinite(theirs)
+      ? `Quick Battle power check: your army ${mine}, enemy ${theirs}. Your army must lead by more than ${gap} power.`
+      : `Your army must lead by more than ${gap} power`,
+    ru: (gap, mine, theirs) => Number.isFinite(mine) && Number.isFinite(theirs)
+      ? `Проверка силы быстрого боя: ваша армия ${mine}, враг ${theirs}. Ваша армия должна превосходить врага более чем на ${gap} силы.`
+      : `Ваша армия должна превосходить врага более чем на ${gap} силы`,
+  },
   quickNoSupp:  { en: (n) => `Not enough supplies (${n} needed)`, ru: (n) => `Недостаточно припасов (нужно ${n})` },
   quickEmpty:   { en: 'Place your squad first', ru: 'Сначала расставьте отряд' },
   quickDone:    { en: 'Spoils claimed', ru: 'Добыча получена' },
@@ -1159,10 +1166,10 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
       const u = roster.find(r => r.id === occ.unitId);
       if (!u) return sum;
       const def = resolveUnitDef(u) || {};
-      // Army power must count the worn item's stats too.
+      // Match server order: definition + Temple HP, then the worn item, then engraving.
       const withItem = withEquippedItem(
         { ...def, hp: u.unit_data?.max_hp ?? def.hp }, equippedItemFor(u.id));
-      return sum + calcUnitPower(withItem);
+      return sum + calcUnitPower(applyEngraving(withItem, u.engraving));
     }, 0);
   }
 
@@ -1353,7 +1360,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
       const reason =
         err.code === 'no_supplies'       ? BP_TEXT.quickNoSupp[L](QUICK_BATTLE_SUPPLY_COST)
         : err.code === 'not_cleared'     ? BP_TEXT.quickLocked[L]
-        : err.code === 'power_too_close' ? BP_TEXT.quickClose[L](QUICK_BATTLE_POWER_MARGIN)
+        : err.code === 'power_too_close' ? BP_TEXT.quickClose[L](QUICK_BATTLE_POWER_MARGIN, err.power, err.enemy_power)
         : BP_TEXT.quickFailed[L];
       await askBeforeBattle(reason, { confirmOnly: true });
     } finally {
