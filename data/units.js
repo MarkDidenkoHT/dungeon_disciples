@@ -1359,7 +1359,7 @@ const UNITS = {
       f: 'e', t: 3, size: 'tile',
       tags: ['Engineer', 'Construct'],
       pref_position: 'back',
-      hp: 55, armor: 15, initiative: 25,
+      hp: 55, armor: 15, initiative: 30,
       resistances: { air: 0, fire: 0, life: 40, death: 0, cold: 0, nature: 0 },
       action: 'artificer_shock', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'physical', action_power: 20, action_icon: 'repair.jpg', action_animation: 'holy_shock',
