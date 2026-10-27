@@ -20,16 +20,14 @@
 // object and nothing else can be affected by it.
 //
 // THE ONE EXCEPTION IS THE TARGET, which is LITANY_TARGETS below and is the same
-// for all nine. A litany is staged over the death of the other side's CHAMPION,
+// for all six. A litany is staged over the death of the other side's CHAMPION,
 // and that is the whole of the condition: who is worth the rite does not change
 // from one litany to the next, so writing a per-litany list nine times only
 // gave nine places for the same answer to drift.
 //
-// NINE litanies, three to a faction. EVERY lead is a HERO line: a litany is a
-// champion felling a champion, and a rite a rank-and-file unit could land was a
-// rite the player never staged on purpose. A hero may carry more than one (the
-// Paladin and the Inquisitor share two), and every hero line carries at least
-// one.
+// SIX litanies, two to a faction. EVERY lead is a HERO line, and every hero
+// line of a faction can lead both of that faction's litanies from either cell
+// in the middle row. The player still has to fill each litany's chorus cells.
 //
 // ── The formation ─────────────────────────────────────────────────────────────
 //
@@ -98,7 +96,7 @@
 // Artificer, the Choir Regent) leads with the strike: every hero line has a real
 // attack at every tier, so no litany has to borrow a killer.
 //
-// There used to be a third cell role, 'hero', for the four litanies where the
+// There used to be a third cell role, 'hero', for litanies where the
 // hero sang while a rank-and-file unit took the blow. Nothing uses it now.
 //
 // ── The verses ────────────────────────────────────────────────────────────────
@@ -180,11 +178,11 @@
 // board satisfies both and the player only ever sees the earlier one.
 
 // Every champion a litany may be staged over. ONE list, read by fireLitany for
-// all nine - see "The target" above.
+// all six - see "The target" above.
 const LITANY_TARGETS = [
 
   // ── The heroes ──────────────────────────────────────────────────────────────
-  // All nine lines, every tier, both branches. Own faction included: a mirror
+  // All nine hero lines, every tier, both branches. Own faction included: a mirror
   // match is still a champion felled.
 
   // Empire: Paladin, Inquisitor, Artificer.
@@ -219,6 +217,35 @@ const LITANY_TARGETS = [
   'mv_e4', 'mv_e41', 'mv_e411',      // Cryodrox, the Glittering Abyss
 ];
 
+// Every hero can lead their faction's litanies. Keep the complete hero lines
+// in one place so a new hero cannot silently miss an existing rite.
+const HERO_IDS = {
+  empire: [
+    'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
+    'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212',
+    'h_e_2', 'h_e_2_a2', 'h_e_2_a3', 'h_e_2_a41', 'h_e_2_a42',
+    'h_e_2_b2', 'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42',
+    'h_e_3', 'h_e_3_a2', 'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42',
+    'h_e_3_b2', 'h_e_3_b3', 'h_e_3_b41', 'h_e_3_b42',
+  ],
+  grail: [
+    'h_g_1', 'h_g_1_a2', 'h_g_1_a3', 'h_g_1_a41', 'h_g_1_a42',
+    'h_g_1_b2', 'h_g_1_b3', 'h_g_1_b41', 'h_g_1_b42',
+    'h_g_2', 'h_g_2_a2', 'h_g_2_a3', 'h_g_2_a41', 'h_g_2_a42',
+    'h_g_2_b2', 'h_g_2_b3', 'h_g_2_b41', 'h_g_2_b42',
+    'h_g_3', 'h_g_3_a2', 'h_g_3_a3', 'h_g_3_a41', 'h_g_3_a42',
+    'h_g_3_b2', 'h_g_3_b3', 'h_g_3_b41', 'h_g_3_b42',
+  ],
+  choir: [
+    'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
+    'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42',
+    'h_d_2', 'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42',
+    'h_d_2_b2', 'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42',
+    'h_d_3', 'h_d_3_a2', 'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42',
+    'h_d_3_b2', 'h_d_3_b3', 'h_d_3_b41', 'h_d_3_b42',
+  ],
+};
+
 const LITANIES = [
 
   // ── Empire: Argent Hammer (Inquisitor or Paladin) and Duty Eternal (Paladin) ─
@@ -229,14 +256,8 @@ const LITANIES = [
     // A and C are Crusade callers; either a Paladin or Inquisitor may lead from
     // either column of row 1. The merged B cell shows the two position choices.
     //
-    // Leads: Paladin and Inquisitor, every tier of both paths. The Inquisitor
-    // lead moved here from Cinder Verdict; the Paladin lead remains eligible.
-    lead: { ids: [
-      'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
-      'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212',
-      'h_e_2', 'h_e_2_a2', 'h_e_2_a3', 'h_e_2_a41', 'h_e_2_a42',
-      'h_e_2_b2', 'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42',
-    ] },
+    // Every Empire hero line can lead from either middle-row cell.
+    lead: { ids: HERO_IDS.empire },
     formation: { cells: [
       // A: a Crusade - like the other, so the whole reward lands on the enemy side.
       { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'crusade' },
@@ -270,13 +291,8 @@ const LITANIES = [
     // A and C are both required Vigil anchors; C sits on the bottom front cell
     // to keep this distinct from Profane Chorus, which needs Crusade in C. The
     // speaking chorus itself is every living ally except the lead.
-    // Both Paladin and Inquisitor may lead, from either middle-row column.
-    lead: { ids: [
-      'h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112',
-      'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212',
-      'h_e_2', 'h_e_2_a2', 'h_e_2_a3', 'h_e_2_a41', 'h_e_2_a42',
-      'h_e_2_b2', 'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42',
-    ] },
+    // Every Empire hero line can lead from either middle-row cell.
+    lead: { ids: HERO_IDS.empire },
     formation: { cells: [
       // A: required Vigil on the top back cell.
       { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'vigil' },
@@ -308,50 +324,6 @@ const LITANIES = [
     once_per: 'battle',
   },
 
-  // ── Empire: the Artificer's litany — the Artificer leads, its construct sings ───
-  {
-    id:    'iron_sentence',
-    name:  'The Iron Sentence',
-    name_ru: 'Железный приговор',
-    // Back column left, front right - the board as the Litanies page draws it:
-    //   A .
-    //   . B
-    //   C B
-    //
-    // The Artificer leads and lands the killing blow; its Sentinel construct
-    // stands with it in the front column as chorus.
-    lead: { ids: [
-      'h_e_3', 'h_e_3_a2', 'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42',
-      'h_e_3_b2', 'h_e_3_b3', 'h_e_3_b41', 'h_e_3_b42',
-    ] },
-    formation: { cells: [
-      // A: the Artificer now leads from the back cell.
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'lead' },
-      // B: a Vigil - the ally half of the reward. Two cells of the front
-      // column, which the Artificer's own Sentinel line fills.
-      { key: 'B', row: 1, col: 'front', size: 'column', role: 'chorus', calling: 'vigil' },
-      // C: a Crusade - the enemy half of the reward.
-      { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', calling: 'crusade' },
-    ] },
-    verses: [
-      { speaker: 'B', strike: 'visual',
-        line: ['The unclean may break our iron. They will not break our purpose.',
-               'Нечисть может сломать наше железо. Но не нашу волю.'] },
-      { speaker: 'C', strike: 'visual',
-        line: ['No shape but man has leave to live beneath this sun.',
-               'Под этим солнцем жить дозволено лишь человеку.'] },
-      { speaker: 'A', strike: 'lethal',
-        line: ['By Mithrail’s sentence: extinction.',
-               'Приговором Митраила — истребление.'] },
-    ],
-    reward: {
-      ally_heal_flat: 5,
-      enemy_damage_flat: 5,
-      message:    'Allies are healed for 5 HP and enemies take 5 damage.',
-      message_ru: 'Союзники лечатся на 5 HP, враги получают 5 урона.',
-    },
-    once_per: 'battle',
-  },
   // ── Grail of Sorrow: the Grail Warden's litanies ──────────────────────────────────
   {
     id:    'carried_cup',
@@ -362,26 +334,26 @@ const LITANIES = [
     //   . B
     //   . .
     //
-    // Lead: Grail Warden, every tier of both paths.
-    lead: { ids: [
-      'h_g_2', 'h_g_2_a2', 'h_g_2_a3', 'h_g_2_a41', 'h_g_2_a42',
-      'h_g_2_b2', 'h_g_2_b3', 'h_g_2_b41', 'h_g_2_b42',
-    ] },
+    // Every Grail hero line can lead from either middle-row cell.
+    lead: { ids: HERO_IDS.grail },
     formation: { cells: [
       // A: a Acceptance - the enemy half of the reward.
       { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'acceptance' },
       // C: a Denial - the ally half of the reward.
       { key: 'C', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'denial' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
-      { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
+      { key: 'B', row: 1, col: 'either', size: 'tile', role: 'lead' },
     ] },
     verses: [
       { speaker: 'A', strike: 'support',
-        line: ['placeholder', 'текст'] },
+        line: ['We will say your name over you.',
+               'Мы произнесём над тобой твоё имя.'] },
       { speaker: 'C', strike: 'visual',
-        line: ['placeholder', 'текст'] },
+        line: ['We will wash you and close your eyes.',
+               'Мы омоем тебя и закроем тебе глаза.'] },
       { speaker: 'B', strike: 'lethal',
-        line: ['placeholder', 'текст'] },
+        line: ['No one did this for us. Lie still.',
+               'Нам этого никто не сделал. Лежи тихо.'] },
     ],
     reward: {
       ally_heal_flat: 5,
@@ -402,16 +374,13 @@ const LITANIES = [
     //   . B
     //   C .
     //
-    // Lead: Mourning Prophet, every tier of both paths.
-    lead: { ids: [
-      'h_g_1', 'h_g_1_a2', 'h_g_1_a3', 'h_g_1_a41', 'h_g_1_a42',
-      'h_g_1_b2', 'h_g_1_b3', 'h_g_1_b41', 'h_g_1_b42',
-    ] },
+    // Every Grail hero line can lead from either middle-row cell.
+    lead: { ids: HERO_IDS.grail },
     formation: { cells: [
       // A: a Acceptance - like the other, so the whole reward lands on the enemy side.
       { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'acceptance' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
-      { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
+      { key: 'B', row: 1, col: 'either', size: 'tile', role: 'lead' },
       // C: Acceptance anchor; the whole living chorus answers as in Duty Eternal.
       { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', calling: 'acceptance', all_alive: true },
     ] },
@@ -437,46 +406,6 @@ const LITANIES = [
     },
     once_per: 'battle',
   },
-  // ── Grail of Sorrow: Mother's Voice's litanies ────────────────────────────────────
-  {
-    id:    'mothers_answer',
-    name:  "Mother's Answer",
-    name_ru: 'Ответ Матери',
-    // Back column left, front right - the board as the Litanies page draws it:
-    //   A .
-    //   B C
-    //   . C
-    //
-    // Lead: Mother's Voice, every tier of both paths.
-    lead: { ids: [
-      'h_g_3', 'h_g_3_a2', 'h_g_3_a3', 'h_g_3_a41', 'h_g_3_a42',
-      'h_g_3_b2', 'h_g_3_b3', 'h_g_3_b41', 'h_g_3_b42',
-    ] },
-    formation: { cells: [
-      // A: a Denial - the ally half of the reward.
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'denial' },
-      // B: the lead - the only cell that kills. Its own list is `lead` below.
-      { key: 'B', row: 1, col: 'back', size: 'tile', role: 'lead' },
-      // C: a Acceptance - the enemy half of the reward.
-      { key: 'C', row: 1, col: 'front', size: 'column', role: 'chorus', calling: 'acceptance' },
-    ] },
-    verses: [
-      { speaker: 'A', strike: 'support',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'C', strike: 'visual',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'B', strike: 'lethal',
-        line: ['placeholder', 'текст'] },
-    ],
-    reward: {
-      ally_heal_flat: 5,
-      enemy_damage_flat: 5,
-      message:    'Allies are healed for 5 HP and enemies take 5 damage.',
-      message_ru: 'Союзники лечатся на 5 HP, враги получают 5 урона.',
-    },
-    once_per: 'battle',
-  },
-
   // ── Choir of the Cursed: the Choir Regent's litany ────────────────────────────────
   {
     id:    'taken_breath',
@@ -487,27 +416,18 @@ const LITANIES = [
     //   B .
     //   A C
     //
-    // Lead: Choir Regent, every tier of both paths. The Regent used to sing this
-    // from a hero cell while a Chorister landed the blow; it kills here now, as
-    // every lead does. `choir_shock` is a real attack at every tier, so the
-    // lethal verse is the Regent's own action rather than a borrowed one.
-    lead: { ids: [
-      'h_d_2', 'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42',
-      'h_d_2_b2', 'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42',
-    ] },
+    // Every Choir hero line can lead from either middle-row cell.
+    lead: { ids: HERO_IDS.choir },
     formation: { cells: [
-      // B: a Descant - the ally half of the reward. The Chorister that used to
-      // lead still fits it: a TWO-CELL singer in the back column.
-      { key: 'B', row: 0, col: 'back', size: 'column', role: 'chorus', calling: 'descant' },
+      // B: a Descant - the ally half of the reward.
+      { key: 'B', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'descant' },
       // A: the lead - the only cell that kills. Its own list is `lead` above.
-      // The Regent is a tile and prefers the back column (data/units.js).
-      { key: 'A', row: 2, col: 'back', size: 'tile', role: 'lead' },
+      { key: 'A', row: 1, col: 'either', size: 'tile', role: 'lead' },
       // C: a Hunger - the enemy half of the reward.
       { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'hunger' },
     ] },
     verses: [
-      // The Chorister throws fire rather than mending, so its verse is a blow
-      // played for show - a Descant cell pays the ally side whatever it does.
+      // A Descant cell pays the ally side whatever its singer does.
       { speaker: 'B', strike: 'visual',
         line: ['placeholder', 'текст'] },
       { speaker: 'C', strike: 'visual',
@@ -534,70 +454,41 @@ const LITANIES = [
     //   C .
     //
     // Lead: Black Castellan, every tier of both paths.
-    lead: { ids: [
-      'h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42',
-      'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42',
-    ] },
+    lead: { ids: HERO_IDS.choir },
     formation: { cells: [
       // A: a Hunger - the enemy half of the reward.
       { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'hunger' },
       // B: the lead - the only cell that kills. Its own list is `lead` below.
-      { key: 'B', row: 1, col: 'front', size: 'tile', role: 'lead' },
-      // C: a Descant - the ally half of the reward.
-      { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', calling: 'descant' },
+      { key: 'B', row: 1, col: 'either', size: 'tile', role: 'lead' },
+      // C: a Descant - the ally half of the reward. Descant anchors the
+      // congregation; everyone living answers the Castellan, as in Duty Eternal.
+      { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', calling: 'descant', all_alive: true },
     ] },
     verses: [
-      { speaker: 'A', strike: 'visual',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'C', strike: 'support',
-        line: ['placeholder', 'текст'] },
+      // The homily is said in the tongue, call and answer, and only the last
+      // line is in a language the dying champion knows - which is the whole
+      // point of it. The tongue is transliterated identically in EN and RU.
+      { speaker: 'B', strike: 'line',
+        line: ['Aggraa vorr neee?', 'Агграа ворр нэээ?'] },
+      { speaker: 'all_alive', strike: 'line',
+        line: ['Vorr am neee.', 'Ворр ам нэээ.'] },
+      { speaker: 'B', strike: 'line',
+        line: ['Aggraa kheen neee?', 'Агграа кхеен нэээ?'] },
+      { speaker: 'all_alive', strike: 'line',
+        line: ['Kheen am neee.', 'Кхеен ам нэээ.'] },
+      { speaker: 'B', strike: 'line',
+        line: ['Aggraa seluun neee?', 'Агграа селуун нэээ?'] },
+      { speaker: 'all_alive', strike: 'line',
+        line: ['Seluun am neee!', 'Селуун ам нэээ!'] },
       { speaker: 'B', strike: 'lethal',
-        line: ['placeholder', 'текст'] },
+        line: ['Now you learn the words.',
+               'Теперь ты выучишь слова.'] },
     ],
     reward: {
       enemy_damage_flat: 5,
       ally_heal_flat: 5,
       message:    'Allies are healed for 5 HP and enemies take 5 damage.',
       message_ru: 'Союзники лечатся на 5 HP, враги получают 5 урона.',
-    },
-    once_per: 'battle',
-  },
-  // ── Choir of the Cursed: the Infernal Ascendant's litany ──────────────────────────
-  {
-    id:    'kindling_creed',
-    name:  'The Kindling Creed',
-    name_ru: 'Символ разжигания',
-    // Back column left, front right - the board as the Litanies page draws it:
-    //   . A
-    //   B .
-    //   . C
-    //
-    // Lead: Infernal Ascendant, every tier of both paths.
-    lead: { ids: [
-      'h_d_3', 'h_d_3_a2', 'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42',
-      'h_d_3_b2', 'h_d_3_b3', 'h_d_3_b41', 'h_d_3_b42',
-    ] },
-    formation: { cells: [
-      // A: a Hunger - like the other, so the whole reward lands on the enemy side.
-      { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'hunger' },
-      // B: the lead - the only cell that kills. Its own list is `lead` below.
-      { key: 'B', row: 1, col: 'back', size: 'tile', role: 'lead' },
-      // C: a Hunger - like the other, so the whole reward lands on the enemy side.
-      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'hunger' },
-    ] },
-    verses: [
-      { speaker: 'A', strike: 'visual',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'C', strike: 'visual',
-        line: ['placeholder', 'текст'] },
-      { speaker: 'B', strike: 'lethal',
-        line: ['placeholder', 'текст'] },
-    ],
-    reward: {
-      enemy_damage_flat: 5,
-      enemy_armor_flat: 5,
-      message:    'Enemies take 5 damage and lose 5 armor.',
-      message_ru: 'Враги получают 5 урона и теряют 5 брони.',
     },
     once_per: 'battle',
   },

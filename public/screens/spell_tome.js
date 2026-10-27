@@ -212,8 +212,8 @@ const TOME_TEXT = {
   litaniesAria:  { en: w => w.many, ru: w => w.many },
   litaniesTitle: { en: w => w.many, ru: w => w.many },
   litaniesBlurb: {
-    en: w => `A ${w.one} is a staged execution. Stand the exact formation below and the chorus speaks before the lead strikes — the killing blow is held back for the last verse.`,
-    ru: w => `${w.one} — это обставленная казнь. Постройте бойцов ровно так, как показано ниже, и Свита выступит раньше, чем Инициатор нанесёт удар: смертельный удар придержан до последнего стиха.`,
+    en: w => `Kill an enemy hero or regional boss with your hero while the formation below is in place. Your hero stands in either cell of the middle row.`,
+    ru: w => `Убейте вражеского героя или регионального босса своим героем, пока построение ниже соблюдено. Ваш герой стоит в любой клетке среднего ряда.`,
   },
   litanyLocked: {
     en: `🔒 Requires Proving Grounds level ${LITANY_BUILDING_LEVEL}`,
@@ -230,8 +230,8 @@ const TOME_TEXT = {
   // on all six cards. The note has to say that out loud — a Target section
   // sitting above the list would otherwise read as belonging to the first card.
   litanyTargetNote: {
-    en: w => `Every ${w.one} below is staged over the same death — an enemy champion. No other kill will do:`,
-    ru: w => `Все ${w.manyLower} ниже обставляются одной и той же смертью — гибелью вражеского чемпиона. Другая жертва не подойдёт:`,
+    en: w => `Every ${w.one} below triggers when your hero kills an enemy hero or regional boss. No other kill will do:`,
+    ru: w => `Каждая ${w.manyLower} ниже срабатывает, когда ваш герой убивает вражеского героя или регионального босса. Другая жертва не подойдёт:`,
   },
   litanyReward:    { en: 'Reward',      ru: 'Награда' },
   // The formation is a PLACE on the board, not a list, so the card draws the
@@ -239,8 +239,8 @@ const TOME_TEXT = {
   // fills it. "Front column, top to bottom" made the reader rebuild that picture
   // from a sentence every time.
   litanyGridNote:  {
-    en: 'Your half of the battle grid — man the marked cells:',
-    ru: 'Ваша половина боевой сетки — займите отмеченные клетки:',
+    en: 'Your half of the battle grid — your hero stands in either middle-row cell; also man the other marked cells:',
+    ru: 'Ваша половина боевой сетки — герой стоит в любой клетке среднего ряда; займите и остальные отмеченные клетки:',
   },
   litanyColBack:   { en: 'Back',  ru: 'Тыл' },
   litanyColFront:  { en: 'Front', ru: 'Фронт' },
@@ -983,12 +983,12 @@ export function renderSpellTome(root, { player }) {
         </details>`;
     }).join('');
 
-    // Whose death a litany is staged around — the same answer for all fifteen
+    // Whose death a litany is staged around — the same answer for all six
     // (LITANY_TARGETS in data/litanies.js), so it is drawn ONCE for the page.
     // It used to be a section on every card, which was the same twelve faces
     // repeated six times and read as if each litany had a quarrel of its own.
     //
-    // Deduped by name, so the ninety ids behind it come out as the nine hero
+    // Deduped by name, so the hero ids behind it come out as the nine hero
     // lines and the three bosses — a reader recognises a face, not a tier.
     const targetHtml = performable.length ? bandHtml('target', '', LITANY_TARGETS) : '';
 
