@@ -2583,7 +2583,7 @@ export function renderCastle(root, params = {}) {
           ${CASTLE_TEXT.resurrect[castleLang]} (${spellCostLabel(resurrectionSpell)})
         </button>` : '';
 
-    const healHtml = isDamaged && healSpell && tokenCount('health_potion') < 1 ? `
+    const healHtml = isDamaged && healSpell && tokenCount('health_potion') <= 0 ? `
         <button class="heal-btn" data-roster-id="${rosterUnit.id}" data-spell-id="${healSpell.id}">
           ${CASTLE_TEXT.heal[castleLang]} (${spellCostLabel(healSpell)})
         </button>` : '';

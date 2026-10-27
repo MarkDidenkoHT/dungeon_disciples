@@ -1490,14 +1490,21 @@ const FACTION_CRYSTAL = {
 
 // Applied at module load. A building with no entry above keeps whatever cost it
 // declares inline; only the throne (THRONE_UPGRADE_COSTS) and the mercenary
-// halls (trophy costs) are deliberately absent from the table.
+// halls (trophy costs) are deliberately absent from the table. Tier-2 and
+// tier-3 dwelling prices get a flat gold reduction regardless of faction.
 function applyBuildingCosts() {
   for (const [faction, pools] of Object.entries(BUILDING_POOLS)) {
     for (const [category, list] of Object.entries(pools)) {
       if (category === 'throne') continue;
       for (const def of list) {
         const cost = BUILDING_COSTS_BY_FACTION[faction]?.[def.id] ?? BUILDING_COSTS[def.id];
-        if (cost) def.cost = { ...cost };
+        const baseCost = cost ?? def.cost;
+        if (!baseCost) continue;
+        const goldReduction = def.tier === 2 ? 25 : def.tier === 3 ? 50 : 0;
+        def.cost = {
+          ...baseCost,
+          ...(baseCost.gold != null ? { gold: Math.max(0, baseCost.gold - goldReduction) } : {}),
+        };
       }
     }
   }
