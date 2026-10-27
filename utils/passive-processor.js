@@ -1518,7 +1518,8 @@ function dispatchPassive(trigger, owner, def, ctx) {
     if (p.sustenance_hp_per_tag != null && p.partner_synergy && owner.alive) {
       const bond = findPartnerFor(synergyUnitsFor(engine), owner.id, p.partner_synergy);
       const drinker = bond ? engine.combatants.find(c => c.id === bond.partnerId) : null;
-      if (drinker && drinker.alive) {
+      // Do not make the Zombie pay when the Vampire has nothing to recover.
+      if (drinker && drinker.alive && drinker.battle_hp < drinker.max_hp) {
         const wanted    = p.sustenance_hp_per_tag * tagCount(engine, owner.side, p.tag_required);
         const spendable = Math.max(0, owner.battle_hp - 1);
         const spent     = Math.min(wanted, spendable);
