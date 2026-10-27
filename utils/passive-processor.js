@@ -990,17 +990,16 @@ function dispatchPassive(trigger, owner, def, ctx) {
     if (p.dispel_count != null) applyDispel(target, 'positive');
     if ((p.lowest_ally_heal_pct != null || p.lowest_ally_heal_pct_per_tag != null) && !target?._drain_immune) {
       const healPct = pctFor(p, engine, owner.side, "lowest_ally_heal_pct", "lowest_ally_heal_pct_per_tag");
-      const heal = Math.floor(dmg * drainPct(healPct, owner) / 100 * engine.fatigueHealMult() * drainSweepMult(owner));
       const candidates = engine.combatants.filter(c => c.side === owner.side && c.alive && c.max_hp > c.battle_hp);
       if (candidates.length > 0) {
         const lowest = candidates.reduce((a, b) => {
           const aMissing = a.max_hp - a.battle_hp;
           const bMissing = b.max_hp - b.battle_hp;
-          if (aMissing === bMissing) {
-            return a.battle_hp < b.battle_hp ? a : b;
-          }
+          if (aMissing === bMissing) return a.battle_hp < b.battle_hp ? a : b;
           return aMissing > bMissing ? a : b;
         }, candidates[0]);
+        const infectFactor = 1 - Math.min(100, (lowest._infect_stacks ?? 0) * 10) / 100;
+        const heal = Math.floor(dmg * drainPct(healPct, owner) / 100 * infectFactor * engine.fatigueHealMult() * drainSweepMult(owner));
         const actual = Math.min(engine.absorbWithDecay(lowest, heal), lowest.max_hp - lowest.battle_hp);
         lowest.battle_hp += actual;
         if (actual > 0) {
@@ -1031,7 +1030,8 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
     }
     if (p.self_heal_pct != null && !target?._drain_immune) {
-      const heal = Math.floor(dmg * drainPct(p.self_heal_pct, owner) / 100 * engine.fatigueHealMult() * drainSweepMult(owner));
+      const infectFactor = 1 - Math.min(100, (owner._infect_stacks ?? 0) * 10) / 100;
+      const heal = Math.floor(dmg * drainPct(p.self_heal_pct, owner) / 100 * infectFactor * engine.fatigueHealMult() * drainSweepMult(owner));
       const actual = Math.min(engine.absorbWithDecay(owner, heal), owner.max_hp - owner.battle_hp);
       owner.battle_hp += actual;
       if (actual > 0) {
