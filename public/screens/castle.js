@@ -2161,6 +2161,10 @@ export function renderCastle(root, params = {}) {
       id: 'roster_intro',
       bare:   true,
       ready:  heroNeedsArmour,
+      // The castle keeps its selected sub-page while the player visits the
+      // forge. The equipment lesson lives on the troop page, so restore that
+      // page before showing its first spotlight.
+      open:   () => { if (currentLayer !== 1) setLayer(1); },
       target: () => nodeForSlot(heroSlot()),
       // The tap opens the sheet through the node's own handler; the driver then
       // finds the next step already on screen.

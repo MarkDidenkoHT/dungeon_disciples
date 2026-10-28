@@ -569,6 +569,12 @@ export function renderItems(root, params = {}) {
         if (!isTutorialDone(player, 'craft_item')) {
           markTutorialDone(player, 'craft_item');
           hideTutorial();
+          // The forge is a handoff in onboarding: once the first item exists,
+          // return to the castle so its equipment steps can take over. Leaving
+          // the player on Items let them craft more armor before ever seeing
+          // the unit slot.
+          navigate('castle', { player });
+          return;
         }
         render();
       } catch (err) {
