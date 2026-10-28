@@ -428,7 +428,11 @@ export function renderRegister(root, { player } = {}) {
       try { await bootstrapCache.refresh(updated.chat_id); }
       catch { bootstrapCache.invalidate(); }
       errandsCache.invalidate();
-      navigate('castle', { player: updated });
+      const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param || '';
+      const inviteToken = new URLSearchParams(window.location.search).get('pvp_invite')
+        || (startParam.startsWith('pvp_') ? startParam.slice(4) : null);
+      if (inviteToken) navigate('battle-prep', { player: updated, mode: 'pvp_invite', inviteToken });
+      else navigate('castle', { player: updated });
     } catch (err) {
       error.textContent = err.message;
       error.classList.remove('hidden');

@@ -5151,6 +5151,21 @@ button.cost-bar-item:active { transform: scale(0.9); }
   position: relative;
 }
 
+.pvp-challenge-link-btn {
+  display: block;
+  margin: 8px auto 0;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: rgba(20, 17, 13, 0.88);
+  color: var(--accent-bright);
+  font: 700 0.74rem Georgia, 'Times New Roman', serif;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.pvp-challenge-link-btn:disabled { opacity: 0.55; cursor: wait; }
+
 .quick-note {
   position: absolute;
   top: calc(100% + 4px);

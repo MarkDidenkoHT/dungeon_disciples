@@ -70,6 +70,13 @@ const BP_TEXT = {
   enemy:        { en: 'Enemy',        ru: 'Враг' },
   toBattle:     { en: 'To Battle',    ru: 'В бой' },
   enterQueue:   { en: 'Enter Queue',  ru: 'В очередь' },
+  createChallenge: { en: 'Copy challenge link', ru: 'Скопировать ссылку на бой' },
+  acceptChallenge: { en: 'Accept challenge', ru: 'Принять вызов' },
+  challengeCopied: { en: 'Challenge link copied. Keep this screen open or return when your opponent joins.',
+                     ru: 'Ссылка скопирована. Оставьте экран открытым или вернитесь, когда соперник присоединится.' },
+  challengeFailed: { en: 'Could not create or join this challenge.', ru: 'Не удалось создать вызов или присоединиться к нему.' },
+  inviterOffline: { en: 'The inviter is offline. Ask them to open the challenge screen, then try again.',
+                    ru: 'Пригласивший игрок не в сети. Попросите его открыть экран вызова и попробуйте снова.' },
   searching:    { en: 'Searching for an opponent', ru: 'Ищем соперника' },
   searchingHint:{ en: 'Leave this screen open. An opponent is usually found within 30 seconds.',
                   ru: 'Не закрывайте экран. Соперник обычно находится за 30 секунд.' },
@@ -210,7 +217,7 @@ function getLoyalty(heroUnit) {
   return tier >= 4 ? 5 : tier + 1;
 }
 
-export function renderBattlePrep(root, { player, region_id, level, mode = null }) {
+export function renderBattlePrep(root, { player, region_id, level, mode = null, inviteToken = null }) {
   const L = lang(player);
   // The level is no longer fixed at entry: the side arrows slide through the
   // region's cleared ground without going back to embark, so everything that
@@ -223,6 +230,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
   // fogged because the opponent is not chosen yet — matchmaking picks it once
   // the player queues. Every region-only step below is gated on this.
   const isPvp = String(mode || '').startsWith('pvp');
+  const isPvpInvite = mode === 'pvp_invite';
   // The faction Colossus, from its embark page: the enemy is this week's boss at
   // the pool's current HP, and followers that already fought it today sit out.
   const isColossus = mode === 'colossus';
@@ -256,9 +264,9 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
         </div>
 
         <button id="ready-btn" class="battle-prep-enter-btn${isPvp ? ' battle-prep-enter-btn--queue' : ''}"
-                disabled aria-label="${isPvp ? BP_TEXT.enterQueue[L] : BP_TEXT.toBattle[L]}">
+                disabled aria-label="${isPvpInvite ? BP_TEXT.acceptChallenge[L] : isPvp ? BP_TEXT.enterQueue[L] : BP_TEXT.toBattle[L]}">
           ${isPvp
-            ? `<span class="battle-prep-queue-label">${BP_TEXT.enterQueue[L]}</span>`
+            ? `<span class="battle-prep-queue-label">${isPvpInvite ? BP_TEXT.acceptChallenge[L] : BP_TEXT.enterQueue[L]}</span>`
             : `<img src="${assetUrl(`/assets/icons/ui/to_battle.png`)}" alt="${BP_TEXT.toBattle[L]}"
                     onerror="this.replaceWith(document.createTextNode('⚔'))">`}
         </button>
@@ -278,6 +286,8 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
           </span>
         </div>
       </div>
+
+      ${mode === 'pvp_quick' ? `<button id="pvp-challenge-link" class="pvp-challenge-link-btn" type="button">${BP_TEXT.createChallenge[L]}</button>` : ''}
 
       ${isPvp || isColossus ? '' : `
       <div class="prep-level-slider" id="prep-level-slider">
@@ -2104,14 +2114,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
   window.addEventListener('pagehide', () => stopQueue({ cancel: true }), { once: true });
 
   async function enterQueue() {
-    const playerUnitIds = roster
-      .filter(u => placedUnitIds().has(u.id))
-      .map(u => ({ id: String(u.id), _rosterId: String(u.id) }));
-
-    const placement = {};
-    for (const [cellIdx, occ] of Object.entries(occupied)) {
-      if (occ.anchor === Number(cellIdx)) placement[occ.unitId] = Number(cellIdx);
-    }
+    const { playerUnitIds, placement } = currentFormation();
 
     saveFormation();
 
@@ -2160,9 +2163,110 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null }
     }
   }
 
+  function currentFormation() {
+    const playerUnitIds = roster
+      .filter(u => placedUnitIds().has(u.id))
+      .map(u => ({ id: String(u.id), _rosterId: String(u.id) }));
+    const placement = {};
+    for (const [cellIdx, occ] of Object.entries(occupied)) {
+      if (occ.anchor === Number(cellIdx)) placement[occ.unitId] = Number(cellIdx);
+    }
+    return { playerUnitIds, placement };
+  }
+
+  let challengePoll = null;
+  let challengeToken = null;
+  let challengeJoining = false;
+
+  async function pollCreatedChallenge() {
+    if (!challengeToken || challengeJoining || !document.querySelector('.screen-battle-prep')) return;
+    try {
+      const status = await api(`/pvp/challenge?chat_id=${encodeURIComponent(player.chat_id)}&token=${encodeURIComponent(challengeToken)}`);
+      if (status.status === 'accepted' && status.battle_id) {
+        challengeJoining = true;
+        clearInterval(challengePoll);
+        enterDuel({ battle_id: status.battle_id, opponent: status.opponent });
+      } else if (status.status !== 'pending') {
+        clearInterval(challengePoll);
+      }
+    } catch (err) {
+      console.error('Challenge status check failed:', err);
+    }
+  }
+
+  root.querySelector('#pvp-challenge-link')?.addEventListener('click', async () => {
+    const { playerUnitIds, placement } = currentFormation();
+    if (!placedUnitIds().has(heroId)) return;
+    const button = root.querySelector('#pvp-challenge-link');
+    button.disabled = true;
+    try {
+      saveFormation();
+      const result = await api('/pvp/challenge', {
+        chat_id: player.chat_id,
+        formation: { playerUnitIds, placement },
+      });
+      challengeToken = result.token;
+      await pollCreatedChallenge();
+      challengePoll = setInterval(pollCreatedChallenge, 2000);
+      const inviteUrl = result.link;
+      if (!inviteUrl) throw new Error('Telegram challenge link is unavailable');
+      try {
+        await navigator.clipboard.writeText(inviteUrl);
+      } catch {
+        try {
+          const field = document.createElement('textarea');
+          field.value = inviteUrl;
+          field.setAttribute('readonly', '');
+          field.style.position = 'fixed';
+          field.style.opacity = '0';
+          document.body.appendChild(field);
+          field.select();
+          const copied = document.execCommand('copy');
+          field.remove();
+          if (!copied) window.prompt(BP_TEXT.createChallenge[L], inviteUrl);
+        } catch {
+          window.prompt(BP_TEXT.createChallenge[L], inviteUrl);
+        }
+      }
+      await askBeforeBattle(BP_TEXT.challengeCopied[L], { confirmOnly: true });
+    } catch (err) {
+      console.error('Failed to create PvP challenge:', err);
+      const message = err.code === 'battle_in_progress' ? err.message : BP_TEXT.challengeFailed[L];
+      await askBeforeBattle(message, { confirmOnly: true });
+      button.disabled = false;
+    }
+  });
+
+  async function acceptChallenge() {
+    if (!inviteToken || !placedUnitIds().has(heroId)) return;
+    const button = root.querySelector('#ready-btn');
+    button.disabled = true;
+    const { playerUnitIds, placement } = currentFormation();
+    saveFormation();
+    try {
+      const match = await api('/pvp/challenge/accept', {
+        chat_id: player.chat_id,
+        token: inviteToken,
+        formation: { playerUnitIds, placement },
+      });
+      await enterDuel(match);
+    } catch (err) {
+      console.error('Failed to accept PvP challenge:', err);
+      const message = err.code === 'invalid_squad' ? err.message
+        : err.code === 'inviter_offline' ? BP_TEXT.inviterOffline[L]
+        : BP_TEXT.challengeFailed[L];
+      await askBeforeBattle(message, { confirmOnly: true });
+      button.disabled = false;
+      button.classList.add('battle-prep-enter-btn--ready');
+    }
+  }
+
+  window.addEventListener('pagehide', () => clearInterval(challengePoll), { once: true });
+
   root.querySelector('#ready-btn').addEventListener('click', async () => {
     if (!placedUnitIds().has(heroId)) return;
 
+    if (isPvpInvite) { await acceptChallenge(); return; }
     if (isPvp) { await enterQueue(); return; }
 
     const loyaltyUsed = placedLoyaltyUsed();

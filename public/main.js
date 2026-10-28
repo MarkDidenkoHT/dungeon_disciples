@@ -36,6 +36,9 @@ import {
 export { api, setSessionToken, setActiveNav, refreshResourceBar, refreshNavLock };
 
 const app = document.getElementById('app');
+const pvpStartParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param || '';
+const incomingPvpInvite = new URLSearchParams(window.location.search).get('pvp_invite')
+  || (pvpStartParam.startsWith('pvp_') ? pvpStartParam.slice(4) : null);
 
 // Tooltips for the two resource-bar controls.
 const SHELL_TEXT = {
@@ -576,6 +579,7 @@ async function boot() {
         return;
       }
       if (isNew || !p.faction || !p.hero) navigate('register', { player: p });
+      else if (incomingPvpInvite) navigate('battle-prep', { player: p, mode: 'pvp_invite', inviteToken: incomingPvpInvite });
       else                                navigate('castle',   { player: p });
     };
 

@@ -1229,7 +1229,7 @@ router.post('/login', async (req, res) => {
       // The signed start_param first; failing that, whatever the bot was told in
       // a `/start <code>` message moments ago.
       const carried = telegramUser.start_param || takePendingInvite(chat_id);
-      if (carried) {
+      if (carried && !String(carried).startsWith('pvp_')) {
         const result = await acceptInvite(created[0], carried);
         invite = result?.ok ? result : null;
       }
@@ -5255,8 +5255,8 @@ router.post('/battle/action', requireAuth, async (req, res) => {
 // 'player'); the one who just arrived takes the enemy side. Which is which
 // matters to nothing but storage — each of them is shown themselves on the left
 // (see viewFor).
-async function createPvpBattle(a, b) {
-  const battle_id = `pvp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+async function createPvpBattle(a, b, { battle_id = null, mode = null } = {}) {
+  battle_id ||= `pvp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
   const [armyA, armyB] = await Promise.all([
     buildArmyFor(a.chat_id, a.formation.playerUnitIds),
@@ -5296,7 +5296,7 @@ async function createPvpBattle(a, b) {
       },
     }),
     kind:           'pvp',
-    mode:           a.mode || 'pvp_quick',
+    mode:           mode || a.mode || 'pvp_quick',
     // Null for a quick match. Present, this battle counts toward that tourney
     // for BOTH players — they queued into the same one.
     tourney_id:     a.tourney_id ?? b.tourney_id ?? null,
@@ -6231,6 +6231,187 @@ const matchmakingTimer = setInterval(() => { runMatchmaking().catch(() => {}); }
 if (typeof matchmakingTimer.unref === 'function') matchmakingTimer.unref();
 
 // POST /pvp/enqueue — join the queue with the formation just arranged in prep.
+// Direct challenges use the same PvP engine and battle_state row as quick
+// matches. Only the invite token is public; roster IDs and formations stay on
+// the server and are revalidated when the challenge is accepted.
+function pvpChallengeHash(token) {
+  return crypto.createHash('sha256').update(String(token)).digest('hex');
+}
+
+// The inviter keeps this fresh from the challenge screen. PvP matchmaking and
+// SSE fan-out are process-local today, so this presence check follows the same
+// single-instance assumption; the invite itself remains durable in Supabase.
+const pvpChallengePresence = new Map(); // token_hash -> last authenticated inviter poll
+const PVP_CHALLENGE_ONLINE_MS = 30000;
+
+function validPvpFormation(formation) {
+  return !!formation
+    && Array.isArray(formation.playerUnitIds)
+    && formation.playerUnitIds.length >= 1
+    && formation.playerUnitIds.length <= 6
+    && formation.placement
+    && typeof formation.placement === 'object'
+    && !Array.isArray(formation.placement);
+}
+
+router.post('/pvp/challenge', requireAuth, async (req, res) => {
+  const { chat_id, formation } = req.body;
+  if (!chat_id || !validPvpFormation(formation)) {
+    return res.status(400).json({ error: 'chat_id and a valid formation are required', code: 'invalid_formation' });
+  }
+  try {
+    if (await getActiveBattle(chat_id)) {
+      return res.status(400).json({ error: 'A battle is already in progress', code: 'battle_in_progress' });
+    }
+    const squad = await loadSquad(chat_id, formation.playerUnitIds);
+    if (squad.error) return res.status(400).json({ error: squad.error, code: 'invalid_squad' });
+
+    const token = crypto.randomBytes(32).toString('base64url');
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    await supabase('/pvp_challenges', {
+      method: 'POST',
+      body: JSON.stringify({
+        token_hash: pvpChallengeHash(token),
+        inviter_chat_id: String(chat_id),
+        inviter_formation: {
+          playerUnitIds: formation.playerUnitIds,
+          placement: formation.placement,
+        },
+        status: 'pending',
+        expires_at: expiresAt,
+      }),
+    });
+    const botUsername = await getBotUsername();
+    res.json({
+      token,
+      link: inviteLinkFor(botUsername, `pvp_${token}`),
+      expires_at: expiresAt,
+    });
+  } catch (err) {
+    serverError(res, err, 'create PvP challenge');
+  }
+});
+
+router.get('/pvp/challenge', requireAuth, async (req, res) => {
+  const { chat_id, token } = req.query;
+  if (!chat_id || !token) return res.status(400).json({ error: 'chat_id and token required' });
+  try {
+    const rows = await supabase(`/pvp_challenges?token_hash=eq.${pvpChallengeHash(token)}&limit=1`);
+    const challenge = rows[0];
+    if (!challenge) return res.status(404).json({ error: 'Challenge not found', code: 'challenge_not_found' });
+    if (String(challenge.inviter_chat_id) !== String(chat_id)
+        && String(challenge.invitee_chat_id || '') !== String(chat_id)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    if (challenge.status === 'pending' && Date.parse(challenge.expires_at) <= Date.now()) {
+      await supabase(`/pvp_challenges?id=eq.${encodeURIComponent(challenge.id)}&status=eq.pending`, {
+        method: 'PATCH', body: JSON.stringify({ status: 'expired', updated_at: new Date().toISOString() }),
+      });
+      return res.json({ status: 'expired' });
+    }
+    if (challenge.status === 'pending' && String(challenge.inviter_chat_id) === String(chat_id)) {
+      const now = Date.now();
+      pvpChallengePresence.set(challenge.token_hash, now);
+      for (const [hash, at] of pvpChallengePresence) {
+        if (now - at > PVP_CHALLENGE_ONLINE_MS * 2) pvpChallengePresence.delete(hash);
+      }
+    }
+    const opponentId = String(chat_id) === String(challenge.inviter_chat_id)
+      ? challenge.invitee_chat_id : challenge.inviter_chat_id;
+    const opponent = opponentId ? await pvpOpponentCard(opponentId) : null;
+    res.json({ status: challenge.status, battle_id: challenge.battle_id, opponent });
+  } catch (err) {
+    serverError(res, err, 'read PvP challenge');
+  }
+});
+
+router.post('/pvp/challenge/accept', requireAuth, async (req, res) => {
+  const { chat_id, token, formation } = req.body;
+  if (!chat_id || !token || !validPvpFormation(formation)) {
+    return res.status(400).json({ error: 'chat_id, token and a valid formation are required', code: 'invalid_request' });
+  }
+  try {
+    const rows = await supabase(`/pvp_challenges?token_hash=eq.${pvpChallengeHash(token)}&limit=1`);
+    const challenge = rows[0];
+    if (!challenge) return res.status(404).json({ error: 'Challenge not found', code: 'challenge_not_found' });
+    if (String(challenge.inviter_chat_id) === String(chat_id)) {
+      return res.status(400).json({ error: 'You cannot accept your own challenge', code: 'challenge_self' });
+    }
+    if (challenge.status === 'accepted' && String(challenge.invitee_chat_id || '') === String(chat_id)) {
+      const existing = await getBattleState(challenge.battle_id);
+      if (existing) {
+        const opponent = await pvpOpponentCard(challenge.inviter_chat_id);
+        return res.json({ status: 'matched', mode: 'pvp_invite', opponent, battle_id: challenge.battle_id });
+      }
+      return res.status(409).json({ error: 'Your challenge is starting; please retry shortly', code: 'challenge_starting' });
+    }
+    if (challenge.status !== 'pending' || Date.parse(challenge.expires_at) <= Date.now()) {
+      return res.status(409).json({ error: 'This challenge is no longer available', code: 'challenge_unavailable' });
+    }
+    const inviterLastSeen = pvpChallengePresence.get(challenge.token_hash) || 0;
+    if (Date.now() - inviterLastSeen > PVP_CHALLENGE_ONLINE_MS) {
+      return res.status(409).json({ error: 'The inviter is offline. Ask them to open the challenge screen.', code: 'inviter_offline' });
+    }
+    const [inviterBattle, inviteeBattle, squad] = await Promise.all([
+      getActiveBattle(challenge.inviter_chat_id),
+      getActiveBattle(chat_id),
+      loadSquad(chat_id, formation.playerUnitIds),
+    ]);
+    if (inviterBattle || inviteeBattle) {
+      return res.status(409).json({ error: 'A player is already in another battle', code: 'battle_in_progress' });
+    }
+    if (squad.error) return res.status(400).json({ error: squad.error, code: 'invalid_squad' });
+    const inviterSquad = await loadSquad(challenge.inviter_chat_id, challenge.inviter_formation.playerUnitIds);
+    if (inviterSquad.error) {
+      return res.status(409).json({ error: 'The inviter squad is no longer valid', code: 'inviter_squad_invalid' });
+    }
+
+    // The guarded update claims this link once across all server instances. The
+    // reserved battle id also makes retries by the winning invitee recoverable.
+    const battle_id = `pvp_${crypto.randomUUID()}`;
+    const claimed = await supabase(
+      `/pvp_challenges?id=eq.${encodeURIComponent(challenge.id)}&status=eq.pending&expires_at=gt.${encodeURIComponent(new Date().toISOString())}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: 'accepted', invitee_chat_id: String(chat_id), battle_id,
+          updated_at: new Date().toISOString(),
+        }),
+      }
+    );
+    if (!claimed.length) {
+      return res.status(409).json({ error: 'This challenge was accepted or expired already', code: 'challenge_unavailable' });
+    }
+
+    try {
+      await createPvpBattle(
+        { chat_id: String(challenge.inviter_chat_id), formation: challenge.inviter_formation, mode: 'pvp_invite' },
+        { chat_id: String(chat_id), formation, mode: 'pvp_invite' },
+        { battle_id, mode: 'pvp_invite' },
+      );
+      const [inviterCard, inviteeCard] = await Promise.all([
+        pvpOpponentCard(challenge.inviter_chat_id), pvpOpponentCard(chat_id),
+      ]);
+      noteMatch(challenge.inviter_chat_id, battle_id, inviteeCard);
+      noteMatch(chat_id, battle_id, inviterCard);
+      battleBus.publish(pvpRoom(String(challenge.inviter_chat_id)), {
+        status: 'matched', mode: 'pvp_invite', opponent: inviteeCard, battle_id,
+      }, { event: 'pvp' });
+      return res.json({ status: 'matched', mode: 'pvp_invite', opponent: inviterCard, battle_id });
+    } catch (err) {
+      // A failed build releases the claim so the same live invite can be tried
+      // again. Keep the token hash and saved inviter formation unchanged.
+      await supabase(`/pvp_challenges?id=eq.${encodeURIComponent(challenge.id)}&status=eq.accepted&battle_id=eq.${encodeURIComponent(battle_id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'pending', invitee_chat_id: null, battle_id: null, updated_at: new Date().toISOString() }),
+      }).catch(() => {});
+      throw err;
+    }
+  } catch (err) {
+    serverError(res, err, 'accept PvP challenge');
+  }
+});
+
 router.post('/pvp/enqueue', requireAuth, async (req, res) => {
   const { chat_id, mode = 'pvp_quick', formation } = req.body;
   if (!chat_id || !formation) return res.status(400).json({ error: 'chat_id and formation required' });
