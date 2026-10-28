@@ -16,6 +16,7 @@ import { ruleName } from '../../data/tourney.js';
 import { syncFormationSynergies } from '../formation-synergy-view.js';
 import { resolveSynergies } from '../../data/formation_synergies.js';
 import { matchAvailableLitany } from '../../data/litanies.js';
+import { COMBAT_BARKS } from '../../data/combat_barks.js';
 
 // The ability/item inspect handler has to be on `document`, because these icons
 // also appear inside the body-level modal sheet, which is outside the screen
@@ -249,12 +250,6 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
             <div class="battle-grid" id="enemy-grid"></div>
           </div>
         </div>
-      </div>
-
-      <div id="battle-prep-litany" class="battle-prep-litany" hidden aria-live="polite">
-        <strong class="battle-prep-litany-name"></strong>
-        <span class="battle-prep-litany-line"></span>
-        <small class="battle-prep-litany-bonus"></small>
       </div>
 
       <!-- Sits BELOW the grids: a launch button pinned to the top edge of the
@@ -1031,20 +1026,40 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
     });
   }
 
+  let announcedLitanyKey = null;
   function updateLitanyPreview() {
-    const panel = root.querySelector('#battle-prep-litany');
-    if (!panel) return;
     const match = matchAvailableLitany(litanyPreviewUnits(), { frontCol: 1, unlocked: litaniesUnlocked });
-    if (!match) { panel.hidden = true; return; }
-    const def = match.def;
-    const localized = value => Array.isArray(value) ? value[L === 'ru' ? 1 : 0] : value;
-    const name = L === 'ru' ? (def.name_ru || def.name) : def.name;
-    const line = localized(def.prepLine) || '';
-    const hero = match.lead?.unit_name || (L === 'ru' ? 'Герой' : 'Hero');
-    panel.querySelector('.battle-prep-litany-name').textContent = name;
-    panel.querySelector('.battle-prep-litany-line').textContent = `${hero}: “${line}”`;
-    panel.querySelector('.battle-prep-litany-bonus').textContent = localized([def.message, def.message_ru]) || '';
-    panel.hidden = false;
+    if (!match) { announcedLitanyKey = null; return; }
+    const key = `${match.def.id}:${match.lead?.id}:${Object.values(match.speakers).map(unit => unit.id).join(',')}`;
+    if (key === announcedLitanyKey) return;
+    announcedLitanyKey = key;
+    if (player?.settings?.barks_enabled === false || !match.lead) return;
+
+    // Use the hero's existing attack bark and the battle screen's bark toast.
+    // The litany adds no new dialogue or announcement panel.
+    const rule = COMBAT_BARKS.find(entry => entry.trigger === 'attack' && entry.actor?.name === match.lead.unit_name);
+    if (!rule?.lines?.length) return;
+    const anchor = Object.entries(occupied).find(([cellIndex, occ]) =>
+      occ && String(occ.unitId) === String(match.lead.id) && Number(cellIndex) === Number(occ.anchor)
+    )?.[1]?.anchor;
+    const cell = anchor == null ? null : root.querySelector(`#player-grid [data-i="${anchor}"]`);
+    if (!cell) return;
+    const lineIndex = Math.floor(Math.random() * rule.lines.length);
+    const line = L === 'ru' ? (rule.lines_ru?.[lineIndex] || '') : rule.lines[lineIndex];
+    if (!line) return;
+    root.querySelectorAll('.prep-bark-toast').forEach(toast => toast.remove());
+    const grid = cell.closest('.battle-grid');
+    cell.classList.add('battle-cell--bark-active');
+    grid?.classList.add('battle-grid--bark');
+    const toast = document.createElement('div');
+    toast.className = 'bark-toast prep-bark-toast';
+    toast.textContent = line;
+    cell.appendChild(toast);
+    setTimeout(() => {
+      toast.remove();
+      cell.classList.remove('battle-cell--bark-active');
+      if (grid && !grid.querySelector('.battle-cell--bark-active')) grid.classList.remove('battle-grid--bark');
+    }, 6000);
   }
 
   // How much initiative each unit is being handed right now, so the badge can

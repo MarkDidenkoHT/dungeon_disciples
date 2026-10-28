@@ -5151,22 +5151,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   position: relative;
 }
 
-.battle-prep-litany {
-  display: grid;
-  gap: 3px;
-  margin: 8px 12px 0;
-  padding: 8px 12px;
-  border: 1px solid rgba(224, 187, 98, 0.42);
-  border-radius: 8px;
-  background: rgba(35, 27, 16, 0.82);
-  color: var(--text, #eee3c6);
-  text-align: center;
-}
-.battle-prep-litany[hidden] { display: none; }
-.battle-prep-litany-name { color: #e0bb62; }
-.battle-prep-litany-line { font-style: italic; }
-.battle-prep-litany-bonus { opacity: 0.8; }
-
 .battle-prep-enter-btn--pvp img { width: clamp(48px, 14vw, 72px); }
 .pvp-challenge-link-btn { cursor: pointer; }
 .pvp-challenge-link-btn:disabled { cursor: wait; }

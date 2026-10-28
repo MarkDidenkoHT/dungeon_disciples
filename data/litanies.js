@@ -111,7 +111,6 @@ const LITANIES = [
     bonus: { hp_flat: 3 },
     message: 'All allies gain 3 max HP.',
     message_ru: 'Все союзники получают 3 к максимальному здоровью.',
-    prepLine: ['We stand as one.', 'Мы едины.'],
   },
 
   // ── Empire ─────────────────────────────────────────────────────────────────
@@ -132,7 +131,6 @@ const LITANIES = [
     bonus: { power_flat: 1 },
     message: 'All allies gain 1 power.',
     message_ru: 'Все союзники получают 1 силу.',
-    prepLine: ['The hammer falls together.', 'Молот бьёт единым строем.'],
   },
   {
     id:    'unbroken_banner',
@@ -151,7 +149,6 @@ const LITANIES = [
     bonus: { shield_flat: 5 },
     message: 'All allies begin with 5 shield.',
     message_ru: 'Все союзники начинают бой со щитом 5.',
-    prepLine: ['Duty eternal. The line is ready.', 'Вечный долг. Строй готов.'],
   },
 
   // ── Grail of Sorrow: the Grail Warden's litanies ──────────────────────────────────
@@ -177,7 +174,6 @@ const LITANIES = [
     bonus: { resist_flat: { life: 5 } },
     message: 'All allies gain 5 life resistance.',
     message_ru: 'Все союзники получают 5 сопротивления жизни.',
-    prepLine: ['We refuse to fall.', 'Мы не падём.'],
   },
 
   // ── Grail of Sorrow: the Mourning Prophet's litanies ──────────────────────────────
@@ -203,7 +199,6 @@ const LITANIES = [
     bonus: { armor_flat: 5 },
     message: 'All allies gain 5 armor.',
     message_ru: 'Все союзники получают 5 брони.',
-    prepLine: ['We bear what comes.', 'Мы примем всё, что грядёт.'],
   },
   // ── Choir of the Cursed ───────────────────────────────────────────────────
   {
@@ -228,7 +223,6 @@ const LITANIES = [
     bonus: { resist_flat: { death: 5 } },
     message: 'All allies gain 5 death resistance.',
     message_ru: 'Все союзники получают 5 сопротивления смерти.',
-    prepLine: ['Take their breath; keep ours.', 'Отнимите их дыхание, сохраните наше.'],
   },
   // ── Choir of the Cursed ───────────────────────────────────────────────────
   {
@@ -253,7 +247,6 @@ const LITANIES = [
     bonus: { power_flat: 1 },
     message: 'All allies gain 1 power.',
     message_ru: 'Все союзники получают 1 силу.',
-    prepLine: ['Let the iron word be heard.', 'Пусть железное слово прозвучит.'],
   },
 ];
 

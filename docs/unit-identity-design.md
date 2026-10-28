@@ -77,9 +77,9 @@ can hand it, and **which litany cells the unit can stand in**.
 
 **Litanies read the calling.** A litany's chorus cells name a calling, and the unit
 standing there has to have it (see [data/litanies.js](../data/litanies.js)). A matching
-formation grants its side a small passive stat bonus at battle start. The battle-prep
-screen previews the match with one short hero line, so players can complete the setup
-without waiting through a combat performance.
+formation grants its side a small passive stat bonus at battle start. When the formation
+matches in battle prep, the hero speaks through the existing combat-bark toast and bark
+lines; there is no separate litany dialogue or panel.
 
 **Partly built already.** The callings themselves, the storage and the litany half are
 in: [data/callings.js](../data/callings.js), `roster.calling` jsonb, and
