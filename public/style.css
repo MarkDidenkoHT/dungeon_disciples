@@ -4139,7 +4139,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
   max-height: 22px;
   opacity: 1;
   transform: translateY(0);
-  transition: max-height 220ms ease, opacity 180ms ease, transform 220ms ease, bottom 220ms ease;
+  transition: max-height 520ms cubic-bezier(.45, 0, .25, 1), opacity 420ms ease,
+    transform 520ms cubic-bezier(.45, 0, .25, 1), bottom 520ms cubic-bezier(.45, 0, .25, 1);
 }
 .battle-log-toggle {
   background: none;
@@ -4168,8 +4169,9 @@ button.cost-bar-item:active { transform: scale(0.9); }
   gap: 2px;
   opacity: 1;
   transform: translateY(0);
-  transition: flex 240ms ease, height 240ms ease, min-height 240ms ease,
-    padding 240ms ease, opacity 180ms ease, transform 240ms ease;
+  transition: flex 520ms cubic-bezier(.45, 0, .25, 1), height 520ms cubic-bezier(.45, 0, .25, 1),
+    min-height 520ms cubic-bezier(.45, 0, .25, 1), padding 520ms cubic-bezier(.45, 0, .25, 1),
+    opacity 420ms ease, transform 520ms cubic-bezier(.45, 0, .25, 1);
 }
 
 .battle-log::-webkit-scrollbar { display: none; }
@@ -4201,8 +4203,9 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background: var(--bg);
   opacity: 1;
   transform: translateY(0);
-  transition: flex 240ms ease, min-height 240ms ease, padding 240ms ease,
-    opacity 180ms ease, transform 240ms ease;
+  transition: flex 520ms cubic-bezier(.45, 0, .25, 1), min-height 520ms cubic-bezier(.45, 0, .25, 1),
+    padding 520ms cubic-bezier(.45, 0, .25, 1), opacity 420ms ease,
+    transform 520ms cubic-bezier(.45, 0, .25, 1);
 }
 .battle-log.hidden { display: flex !important; }
 .battle-info.hidden { display: block !important; }

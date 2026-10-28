@@ -2236,7 +2236,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         el.animate([
           { transformOrigin: 'top left', transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
           { transformOrigin: 'top left', transform: 'translate(0, 0) scale(1, 1)' },
-        ], { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' });
+        ], { duration: 560, easing: 'cubic-bezier(.45, 0, .25, 1)' });
       });
     });
     applyLogToggle();
