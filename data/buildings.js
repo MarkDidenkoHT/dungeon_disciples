@@ -498,8 +498,8 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 1500, Crystals_Life: 400 }, 3: { gold: 4000, Crystals_Life: 1000 } } },
       { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
         art: 'messenger_post',
-        desc: 'Opens errands. Levels 2 and 3 improve rewards; level 4 allows two errands at once.',
-        desc_ru: 'Открывает поручения. Уровни 2 и 3 увеличивают награду, а уровень 4 позволяет выполнять два поручения одновременно.',
+        desc: 'Opens errands. Level 2 unlocks Grand Errands and lets one simple and one grand errand run at once; later levels improve rewards.',
+        desc_ru: 'Открывает поручения. Уровень 2 открывает великие поручения и позволяет одновременно выполнять одно обычное и одно великое; следующие уровни увеличивают награды.',
         cost: { gold: 10 },
         upgrade_costs: {
           2: { gold: 200, Crystals_Life: 60 },
@@ -682,8 +682,8 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 1500, Crystals_Life: 400 }, 3: { gold: 4000, Crystals_Life: 1000 } } },
       { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
         art: 'messenger_post',
-        desc: 'Opens errands. Levels 2 and 3 improve rewards; level 4 allows two errands at once.',
-        desc_ru: 'Открывает поручения. Уровни 2 и 3 увеличивают награду, а уровень 4 позволяет выполнять два поручения одновременно.',
+        desc: 'Opens errands. Level 2 unlocks Grand Errands and lets one simple and one grand errand run at once; later levels improve rewards.',
+        desc_ru: 'Открывает поручения. Уровень 2 открывает великие поручения и позволяет одновременно выполнять одно обычное и одно великое; следующие уровни увеличивают награды.',
         cost: { gold: 10 },
         upgrade_costs: {
           2: { gold: 200, Crystals_Fire: 60 },
@@ -881,8 +881,8 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 1500, Crystals_Life: 400 }, 3: { gold: 4000, Crystals_Life: 1000 } } },
       { id: 'messenger_post', label: "Messenger's Post", label_ru: 'Почтовый двор', category: 'merc_up', unit_id: null, tier: 1, upgrades: [],
         art: 'messenger_post',
-        desc: 'Opens errands. Levels 2 and 3 improve rewards; level 4 allows two errands at once.',
-        desc_ru: 'Открывает поручения. Уровни 2 и 3 увеличивают награду, а уровень 4 позволяет выполнять два поручения одновременно.',
+        desc: 'Opens errands. Level 2 unlocks Grand Errands and lets one simple and one grand errand run at once; later levels improve rewards.',
+        desc_ru: 'Открывает поручения. Уровень 2 открывает великие поручения и позволяет одновременно выполнять одно обычное и одно великое; следующие уровни увеличивают награды.',
         cost: { gold: 10 },
         upgrade_costs: {
           2: { gold: 200, Crystals_Death: 60 },

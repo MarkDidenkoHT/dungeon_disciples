@@ -2835,6 +2835,34 @@ async function bumpQuestsWithReport(chat_id, counters) {
 // costs no column and no write.
 const ERRAND_TABLE = '/errands';
 
+// Starting an errand reads the active rows before it writes one. Serialize
+// starts per player so two overlapping requests cannot both claim the last
+// slot from the same stale snapshot.
+const _errandStartQueues = new Map();
+function serializeErrandStart(req, res, next) {
+  const key = String(req.body?.chat_id || '');
+  if (!key) return next();
+
+  const previous = _errandStartQueues.get(key) || Promise.resolve();
+  let release;
+  const held = new Promise(resolve => { release = resolve; });
+  const queued = previous.then(() => held);
+  _errandStartQueues.set(key, queued);
+
+  previous.then(() => {
+    let done = false;
+    const unlock = () => {
+      if (done) return;
+      done = true;
+      release();
+      if (_errandStartQueues.get(key) === queued) _errandStartQueues.delete(key);
+    };
+    res.once('finish', unlock);
+    res.once('close', unlock);
+    next();
+  }).catch(next);
+}
+
 // The Messenger's Post level, which is what errand payouts scale with. Named
 // apart from throneLevelOf so the two cannot be swapped by accident — they used
 // to be the same number.
@@ -2843,7 +2871,7 @@ function errandPostLevelOf(structures) {
 }
 
 function errandCapacityForLevel(level) {
-  return level >= 4 ? 2 : 1;
+  return level >= ERR.GRAND_MIN_POST_LEVEL ? 2 : 1;
 }
 
 function throneLevelOf(structures) {
@@ -3180,12 +3208,11 @@ function offerKindOf(row) {
 
 const byCreatedAt = (a, b) => String(a.created_at).localeCompare(String(b.created_at));
 
-// TWO OFFERS, ONE SLOT. The post now holds at most one offer of EACH kind, so
-// the sheet can put the simple errand and the grand one side by side and the
-// player chooses. Capacity is unchanged — it governs how many units can be OUT
-// (one, two at post level 4) — so taking one offer normally parks the other
-// until that unit is home. The unparked offer is not discarded: it is the same
-// row, still `offered`, and it comes back the moment a slot frees.
+// TWO OFFERS, TWO DISTINCT SLOTS. The post holds at most one offer of EACH kind,
+// so the sheet can show the simple errand and the grand one side by side. Once
+// Grand Errands unlock, one simple and one grand errand can run at once; two of
+// either kind cannot. The other kind stays available after one starts, while
+// another offer of the running kind is not minted.
 async function ensureErrandOffer(chat_id, player) {
   const [structRows, roster, rows] = await Promise.all([
     supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`),
@@ -3197,6 +3224,7 @@ async function ensureErrandOffer(chat_id, player) {
   const offered = rows.filter(r => !r.active && r.errand_data?.offered);
   const postLevel = errandPostLevelOf(structRows[0]);
   const capacity = errandCapacityForLevel(postLevel);
+  const activeKinds = new Set(active.map(offerKindOf));
 
   // No free slot: hold whatever offers exist, mint nothing, show nothing.
   if (active.length >= capacity) return { rows, active, offerRows: [], roster, structRows };
@@ -3223,6 +3251,10 @@ async function ensureErrandOffer(chat_id, player) {
   }
 
   for (const kind of [ERR.KIND_SIMPLE, ERR.KIND_GRAND]) {
+    // When Grand Errands are unlocked, the second slot is for the other kind,
+    // never another unit sent on the same kind.
+    if (activeKinds.has(kind)) continue;
+
     // Already holding one of this kind: hand back the oldest and never mint a
     // second. If a race did write two, this consistently picks the same one and
     // the extra is simply never shown.
@@ -3328,7 +3360,7 @@ router.get('/errands', requireAuth, async (req, res) => {
 // POST /errands/start — send a unit on the standing offer. The offer is read
 // back from its row; the request only says WHO goes and for HOW LONG, and both
 // are validated. Nothing about the errand or its reward comes from the client.
-router.post('/errands/start', requireAuth, async (req, res) => {
+router.post('/errands/start', requireAuth, serializeErrandStart, async (req, res) => {
   const { chat_id, roster_id, hours, offer_row_id } = req.body;
   if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });
   try {
@@ -3371,6 +3403,9 @@ router.post('/errands/start', requireAuth, async (req, res) => {
     const offer = { errand_id: offerRow.errand, ...offerRow.errand_data };
     const def   = ERR.ERRANDS_BY_ID[offer.errand_id];
     if (!def) return res.status(400).json({ error: 'No errand available', code: 'errand_no_offer' });
+    if (active.some(r => offerKindOf(r) === ERR.errandKind(def))) {
+      return res.status(400).json({ error: 'Only one errand of each kind can run at a time', code: 'errand_kind_busy' });
+    }
 
     const row = roster.find(r => String(r.id) === String(roster_id));
     if (!row) return res.status(404).json({ error: 'Unit not found' });
@@ -3799,7 +3834,7 @@ router.post('/errands/reroll/start', requireAuth, async (req, res) => {
 
     // Nothing to swap. Checked before the allowance so a player cannot burn a
     // day's rerolls against an offer that is not there.
-    if (active.length >= capacity) {
+    if (active.length >= capacity || active.some(r => offerKindOf(r) === ERR.KIND_SIMPLE)) {
       return res.status(400).json({ error: 'All errand slots are full', code: 'errand_busy' });
     }
     if (!offered.length) return res.status(400).json({ error: 'No offer to reroll',           code: 'reroll_no_offer' });
@@ -3865,7 +3900,7 @@ router.post('/errands/reroll/claim', requireAuth, async (req, res) => {
     const offered = rows.filter(r => !r.active && r.errand_data?.offered
       && offerKindOf(r) === ERR.KIND_SIMPLE);
     const capacity = errandCapacityForLevel(errandPostLevelOf(structRows[0]));
-    if (active.length >= capacity || !offered.length) {
+    if (active.length >= capacity || active.some(r => offerKindOf(r) === ERR.KIND_SIMPLE) || !offered.length) {
       // Burn the token, do NOT spend a daily use — there is nothing to swap.
       record.reroll.pending = null;
       await writeFavorRecord(chat_id, record);

@@ -1786,7 +1786,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 40, death: 0, cold: 0, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-      xp: 1690, passive: ['unbreakable 2', 'find_weakness 2'], ability: 'radiant_surge 3',
+      xp: 1690, passive: ['unbreakable 2', 'find_weakness 2'], ability: 'purge 1',
     },
     rifleman: {
       id: 'e62', f: 'e', t: 2,
@@ -1916,7 +1916,7 @@ const UNITS = {
       resistances: { air: 0, fire: 5, life: 40, death: 5, cold: 0, nature: 5 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 5, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'holy_heal',
-      xp: 75, passive: ['inspiration_damage 1', 'rite_of_battle 1'], ability: 'prayer_of_healing 1',
+      xp: 75, passive: ['inspiration_damage 1'], ability: 'prayer_of_healing 1',
     },
     sister_initiate: {
       id: 'e81', f: 'e', t: 2,
@@ -1929,7 +1929,7 @@ const UNITS = {
       resistances: { air: 0, fire: 5, life: 40, death: 5, cold: 0, nature: 5 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 6, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'holy_heal',
-      xp: 400, passive: ['inspiration_damage 1', 'rite_of_battle 2'], ability: 'prayer_of_healing 1',
+      xp: 400, passive: ['inspiration_damage 1', 'rite_of_battle 1'], ability: 'prayer_of_healing 1',
     },
     battle_sister: {
       id: 'e811', f: 'e', t: 3,
@@ -1942,7 +1942,7 @@ const UNITS = {
       resistances: { air: 5, fire: 10, life: 40, death: 10, cold: 5, nature: 10 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 7, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'holy_heal',
-      xp: 1560, passive: ['inspiration_damage 1', 'rite_of_battle 2', 'pure_blood 1'], ability: 'prayer_of_healing 1',
+      xp: 1560, passive: ['inspiration_damage 1', 'rite_of_battle 1', 'pure_blood 1'], ability: 'prayer_of_healing 1',
     },
     sister_superior: {
       id: 'e8111', f: 'e', t: 4,
@@ -1955,7 +1955,7 @@ const UNITS = {
       resistances: { air: 10, fire: 10, life: 40, death: 10, cold: 10, nature: 10 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 8, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'holy_heal',
-      xp: 3640, passive: ['inspiration_damage 2', 'rite_of_battle 2', 'pure_blood 1'], ability: 'prayer_of_healing 2',
+      xp: 3640, passive: ['inspiration_damage 1', 'rite_of_battle 2', 'pure_blood 1'], ability: 'prayer_of_healing 2',
     },
     sister_guardian: {
       id: 'e82', f: 'e', t: 2,
@@ -1968,7 +1968,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 40, death: 10, cold: 0, nature: 5 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 6, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'holy_heal',
-      xp: 400, passive: ['inner_fire 1', 'stoicism 1', 'dispel 1'], ability: 'redemption 1',
+      xp: 400, passive: ['inner_fire 1', 'stoicism 1'], ability: 'redemption 1',
     },
     battle_guardian: {
       id: 'e821', f: 'e', t: 3,
@@ -1981,7 +1981,7 @@ const UNITS = {
       resistances: { air: 5, fire: 10, life: 40, death: 10, cold: 5, nature: 10 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 7, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'holy_heal',
-      xp: 1560, passive: ['inner_fire 1', 'stoicism 2', 'dispel 1'], ability: 'redemption 2',
+      xp: 1560, passive: ['inner_fire 1', 'stoicism 1', 'dispel 1'], ability: 'redemption 2',
     },
     sister_protector: {
       id: 'e8211', f: 'e', t: 4,
@@ -1994,7 +1994,7 @@ const UNITS = {
       resistances: { air: 10, fire: 15, life: 40, death: 15, cold: 10, nature: 10 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 8, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'holy_heal',
-      xp: 3640, passive: ['inner_fire 1', 'stoicism 2', 'dispel 2'], ability: 'redemption 2',
+      xp: 3640, passive: ['inner_fire 1', 'stoicism 1', 'dispel 2'], ability: 'redemption 2',
     },
     acolyte: {
       id: 'e2', f: 'e', t: 1,
@@ -2895,7 +2895,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 18, action_icon: 'vampire_sword.jpg', action_animation: 'sword_swing',
-      xp: 1560, passive: ['iron_will 1', 'parry 1', 'leech 1'], ability: 'exsanguinate 1',
+      xp: 1560, passive: ['iron_will 1', 'duelist 1', 'leech 1'], ability: 'exsanguinate 1',
     },
     sanguine_lord: {
       id: 'gs3111', f: 'g', t: 4,
@@ -2908,7 +2908,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 15, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 22, action_icon: 'vampire_sword.jpg', action_animation: 'sword_swing',
-      xp: 2900, passive: ['iron_will 2', 'parry 1', 'leech 1'], ability: 'exsanguinate 1',
+      xp: 2900, passive: ['iron_will 2', 'duelist 1', 'leech 1'], ability: 'exsanguinate 1',
     },
     necromancer: {
       id: 'gs32', f: 'g', t: 2,
@@ -3705,7 +3705,7 @@ const UNITS = {
         resistances: { air: 0, fire: 15, life: 40, death: 0, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 12, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-        xp: 540, passive: ['aggrails_blessing 1', 'desecrate 1', 'choir 1'], ability: null,
+        xp: 540, passive: ['aggrails_blessing 1', 'pure_blood 1', 'choir 1'], ability: null,
       },
       aggrails_crusader: {
         id: 'opb_e221', f: 'opb', t: 3,
@@ -3718,7 +3718,7 @@ const UNITS = {
         resistances: { air: 5, fire: 25, life: 45, death: 5, cold: 5, nature: 5 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 16, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-        xp: 1560, passive: ['aggrails_blessing 1', 'desecrate 1', 'choir 2'], ability: null,
+        xp: 1560, passive: ['aggrails_blessing 1', 'pure_blood 1', 'choir 2'], ability: null,
       },
       aggrails_lion: {
         id: 'opb_e2211', f: 'opb', t: 4,
@@ -3731,7 +3731,7 @@ const UNITS = {
         resistances: { air: 10, fire: 30, life: 50, death: 10, cold: 5, nature: 5 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'physical', action_power: 20, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-        xp: 4005, passive: ['aggrails_blessing 2', 'desecrate 2', 'choir 2'], ability: null,
+        xp: 4005, passive: ['aggrails_blessing 2', 'pure_blood 1', 'choir 2'], ability: null,
       },
       initiate: {
         id: 'opb_e3', f: 'opb', t: 1,
@@ -4120,7 +4120,7 @@ const UNITS = {
         id: 'dm_2111', f: 'dm', t: 4,
         name: 'Forgiven',
         name_ru: 'Прощенный',
-        tags: ['Holy', 'Knight', 'Spirit'],
+        tags: ['Holy', 'Knight'],
         pref_position: 'back',
         size: 'tile',
         hp: 55, armor: 15, initiative: 10,
