@@ -4,7 +4,7 @@ import { showCostBar, hideCostBar, primeCostBar } from '../cost-bar.js';
 import { SPELLS, SPELL_TIERS } from '../../data/spells.js';
 import { UNITS } from '../../data/units.js';
 import { LITANIES } from '../../data/litanies.js';
-import { getCalling } from '../../data/callings.js';
+import { getCalling, callingsForFaction } from '../../data/callings.js';
 
 // Mirrors litaniesUnlocked / LITANY_BUILDING_LEVEL in data/buildings.js — that
 // file is CommonJS (server-side only) and cannot be imported here, so the value
@@ -231,8 +231,12 @@ const TOME_TEXT = {
   // fills it. "Front column, top to bottom" made the reader rebuild that picture
   // from a sentence every time.
   litanyGridNote:  {
-    en: 'Your hero fills the lead cell. Each marked caller can have either of your faction’s two callings:',
-    ru: 'Герой занимает главную клетку. У каждого бойца в отмеченных клетках может быть одно из двух призваний вашей фракции:',
+    en: 'Your hero fills the lead cell. Put units with the listed callings in the other marked cells:',
+    ru: 'Герой занимает главную клетку. Поставьте бойцов с указанными призваниями в остальные отмеченные клетки:',
+  },
+  litanyStartingGridNote: {
+    en: 'Your hero fills the lead cell. Place one unit with each calling shown, one in front and one in back:',
+    ru: 'Герой занимает главную клетку. Поставьте бойцов с разными призваниями в переднюю и заднюю клетки:',
   },
   litanyColBack:   { en: 'Back',  ru: 'Тыл' },
   litanyColFront:  { en: 'Front', ru: 'Фронт' },
@@ -264,10 +268,6 @@ const TOME_TEXT = {
   litanyNoAnchor: {
     en: 'no unit required in this cell',
     ru: 'в этой клетке не требуется отдельный боец',
-  },
-  litanyAnyCalling: {
-    en: 'one of your faction’s two callings',
-    ru: 'одно из двух призваний вашей фракции',
   },
   litanyHeroHint: {
     en: 'your hero, in person',
@@ -779,6 +779,7 @@ export function renderSpellTome(root, { player }) {
     for (const [factionKey, faction] of Object.entries(UNITS)) indexUnits(faction, factionKey);
     const heroId = roster.find(unit => unit.is_hero === true)?.unit_data?.unit_id;
     const playerHero = unitById.get(heroId) || null;
+    const factionCallings = callingsForFaction(player.faction);
 
     // The lead IDs define which faction can field each formation. The common
     // opening litany lists every hero line and therefore appears for all three.
@@ -849,7 +850,8 @@ export function renderSpellTome(root, { player }) {
         // changes who speaks, not what must occupy the marked cell.
         if (cell.role === 'chorus') {
           if (cell.calling === 'any') {
-            const requirement = TOME_TEXT.litanyAnyCalling[lang];
+            const names = factionCallings.map(calling => lang === 'ru' ? calling.name_ru : calling.name);
+            const requirement = names.join(' + ');
             return `
             <div class="litany-grid-req litany-grid-req--chorus"
                  title="${escapeHtml(roleLabel)} — ${escapeHtml(requirement)}">
@@ -939,7 +941,7 @@ export function renderSpellTome(root, { player }) {
 
           <section class="litany-section">
             <h4 class="litany-section-title">${escapeHtml(t('litanyFormation'))}</h4>
-            <p class="litany-section-note">${escapeHtml(t('litanyGridNote'))}</p>
+            <p class="litany-section-note">${escapeHtml(t(def.availableFromStart ? 'litanyStartingGridNote' : 'litanyGridNote'))}</p>
             ${gridHtml}
           </section>
 

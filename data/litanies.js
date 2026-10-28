@@ -6,8 +6,8 @@
 //
 // Every entry defines a formation, availability, and a small bonus for the
 // matching side. A lead is a hero line; chorus cells are filled by assigned
-// callings. The opening litany is the exception: any hero can lead it, and its
-// two chorus cells accept distinct units with either of their faction's callings.
+// callings. The opening litany is the exception: any hero can lead it, with one
+// caller in the front column and one in the back, carrying different callings.
 //
 // ── The formation ─────────────────────────────────────────────────────────────
 //
@@ -94,8 +94,8 @@ const HERO_IDS = {
 
 const LITANIES = [
 
-  // The common opening litany is available before either building. Any two
-  // distinct units can fill its back-column chorus using their assigned calling.
+  // The common opening litany is available before either building. Its callers
+  // stand in opposite columns and carry the faction's two different callings.
   {
     id: 'first_chorus',
     name: 'The First Chorus',
@@ -103,9 +103,9 @@ const LITANIES = [
     availableFromStart: true,
     lead: { ids: [...HERO_IDS.empire, ...HERO_IDS.grail, ...HERO_IDS.choir] },
     formation: { cells: [
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'any' },
+      { key: 'A', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'any', calling_group: 'pair', calling_group_mode: 'distinct' },
       { key: 'B', row: 1, col: 'either', size: 'tile', role: 'lead' },
-      { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', calling: 'any' },
+      { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', calling: 'any', calling_group: 'pair', calling_group_mode: 'distinct' },
     ] },
     bonus: { hp_flat: 3 },
     message: 'All allies gain 3 max HP.',
@@ -277,7 +277,9 @@ export function matchLitanyFormation(def, units, { frontCol = 1 } = {}) {
       if (cell.role !== 'chorus') return false;
       if (cell.calling === 'any') {
         if (!unit.calling) return false;
-        if (cell.calling_group && groupCallings[cell.calling_group] && groupCallings[cell.calling_group] !== unit.calling) return false;
+        const groupedCalling = cell.calling_group && groupCallings[cell.calling_group];
+        if (groupedCalling && cell.calling_group_mode === 'distinct' && groupedCalling === unit.calling) return false;
+        if (groupedCalling && cell.calling_group_mode !== 'distinct' && groupedCalling !== unit.calling) return false;
         return true;
       }
       return !!cell.calling && unit.calling === cell.calling;
