@@ -157,16 +157,15 @@ function durationFor(errand, hours) {
 //   one unit's share of a battle   10 XP (level 1) to 26 XP (level 6)
 //   a level-6 battle               40 gold
 //   XP to advance a tier-1 unit    50-75      a tier-2 unit  300-360
-// One part at post level 1 for two hours is about one battle share. A unit
-// matching both tags doubles that, the post multiplies it (x1, x1.5, x2) and so
-// does the trip length (x1, x1.5, x2) — so the ceiling is a dual-tag unit at a
-// level-3 post for six hours, which is 160 XP and 160 gold.
+// XP is now twice the former base: one XP part is 40, or about four level-1
+// battle shares. A dual-tag unit at a tier-3/4 post earns 160 XP from the short
+// errand. The errand duration does not add another multiplier.
 // The SHORT pool. These are BASES: the post multiplies them (x1, x1.5, x2), so
 // the gold half runs 25 -> 38 -> 50 and tops out at 50, which is a level-6
 // battle's 40 and a bit. Written as the base rather than the ceiling because
 // that is what the multiplier takes; the ceiling is the number that was
 // agreed, and it is the one to check after changing anything here.
-const PART_XP    = 20;
+const PART_XP    = 40;
 const PART_GOLD  = 25;
 const PART_CRYST = 6;
 

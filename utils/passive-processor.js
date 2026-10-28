@@ -407,16 +407,18 @@ function dispatchPassive(trigger, owner, def, ctx) {
   const p = def.params || {};
   const abilityKey = def.id ?? def.name ?? null;
   const applyDispel = (targetUnit, polarity) => {
-    const removed = engine.dispelEffects(targetUnit, polarity, p.dispel_count);
-    for (const effect of removed) {
-      engine.pushLog({
-        type: 'passive', passive: def.name,
-        actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
-        targetId: targetUnit.id, targetName: targetUnit.unit_name, targetCell: targetUnit.cellIndex,
-        value: 1, heal: polarity === 'negative',
-        message: `${def.name} — ${targetUnit.unit_name}'s ${effect.name} ${polarity === 'negative' ? 'is cleansed' : 'is stripped away'}`,
-      });
-    }
+    // A passive Dispel rank removes points from one effect, not whole effect
+    // records. Stacked pools such as Bleed live in a single registry entry, so
+    // dispelEffects(count) would erase every stack when it selected that entry.
+    const reduced = engine.reduceEffect(targetUnit, polarity, p.dispel_count);
+    if (!reduced) return;
+    engine.pushLog({
+      type: 'passive', passive: def.name,
+      actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
+      targetId: targetUnit.id, targetName: targetUnit.unit_name, targetCell: targetUnit.cellIndex,
+      value: reduced.from - reduced.to, heal: polarity === 'negative',
+      message: `${def.name} — ${targetUnit.unit_name}'s ${reduced.name} ${polarity === 'negative' ? 'is cleansed' : 'is stripped away'} (${reduced.from} → ${reduced.to})`,
+    });
   };
   if (trigger === 'on_battle_start') {
     // ── Vows ────────────────────────────────────────────────────────────────
