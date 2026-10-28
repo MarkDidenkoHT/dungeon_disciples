@@ -4225,14 +4225,21 @@ class BattleEngine {
     try {
       if (!this._hpSeen) this._hpSeen = {};
       const hp = {};
+      if (!this._maxHpSeen) this._maxHpSeen = {};
+      const maxHp = {};
       for (const c of this.combatants || []) {
         if (c?.id == null) continue;
         if (this._hpSeen[c.id] !== c.battle_hp) {
           hp[c.id] = c.battle_hp;
           this._hpSeen[c.id] = c.battle_hp;
         }
+        if (this._maxHpSeen[c.id] !== c.max_hp) {
+          maxHp[c.id] = c.max_hp;
+          this._maxHpSeen[c.id] = c.max_hp;
+        }
       }
       if (Object.keys(hp).length) entry.hp = hp;
+      if (Object.keys(maxHp).length) entry.max_hp = maxHp;
     } catch {
       // Never let bookkeeping break combat resolution.
     }
@@ -4332,6 +4339,16 @@ class BattleEngine {
           c.battle_hp = Math.min(c.max_hp, c.battle_hp + bonus.hp_flat);
           c._base_max_hp = (c._base_max_hp ?? c.max_hp - bonus.hp_flat) + bonus.hp_flat;
         }
+        const amount = bonus.hp_flat;
+        const litanyName = match.def.name;
+        const affected = allies.length;
+        this.pushLog({
+          type: 'notice',
+          litany: match.def.id,
+          side,
+          message: `${litanyName} — all ${affected} allies gain ${amount} max HP.`,
+          message_ru: `${litanyName} — все союзники (${affected}) получают ${amount} к максимальному здоровью.`,
+        });
       }
       if (bonus.armor_flat > 0) for (const c of allies) addArmor(c, bonus.armor_flat);
       if (bonus.power_flat > 0) {
