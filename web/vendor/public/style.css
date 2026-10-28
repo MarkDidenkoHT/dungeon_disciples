@@ -10995,16 +10995,31 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   line-height: 1.4;
 }
 
-/* The target is ONE list for every litany, so it is drawn once between the
-   header and the cards rather than inside each of them. Same backing as the
-   header and the cards, because the tome's parchment art sits directly behind
-   this page and pale text on it is unreadable. */
+/* The shared trigger targets are named once above the litany cards. */
 .litany-page-target {
   margin-bottom: 12px;
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 120px), var(--surface);
+}
+
+.litany-target-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.litany-target-type {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 9px;
+  border: 1px solid var(--danger);
+  border-radius: 999px;
+  background: rgba(200, 74, 58, 0.08);
+  color: var(--text);
+  font-size: 0.76rem;
+  font-weight: 700;
 }
 
 .litany-list {
@@ -11213,86 +11228,6 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   text-overflow: ellipsis;
 }
 
-.litany-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 7px;
-  padding: 5px 8px;
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--border);
-  border-radius: 7px;
-  background: rgba(0, 0, 0, 0.22);
-}
-
-.litany-row-role {
-  margin-left: auto;
-  color: var(--muted);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-/* "any 5" — the row is a CHOICE, which a line of portraits does not say on its
-   own. Accented rather than muted: it changes what the row means, so it has to
-   survive a glance that skips the label. */
-/* The target is the other side's unit, so its band reads as a threat rather
-   than as a cell to fill. */
-.litany-row--target {
-  border-left-color: var(--danger);
-  background: rgba(200, 74, 58, 0.08);
-}
-
-.litany-row--target .litany-unit-chip {
-  box-shadow: 0 0 0 2px var(--danger);
-}
-
-/* Faces in a row. Names are gone, so the portrait has to carry the whole
-   recognition — hence the size. Wraps rather than scrolls: a role with five
-   candidates must not hide the fifth behind a gesture nobody knows is there.
-
-   The portraits FLEX rather than taking a fixed width. The tome's two side
-   arrows cost 26px each, so this page is ~322px inside a 375px phone, and five
-   48px faces plus their gaps need 268 of the 248 a row actually gets — one
-   orphan on a second line. Sharing the line down to a floor of 34px keeps a
-   role's candidates together on any width, and the 48px cap stops a lone lead
-   portrait from ballooning across the row. */
-.litany-unit-chips {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  min-width: 0;
-}
-
-.litany-unit-chip {
-  display: inline-flex;
-  flex: 0 0 auto;
-  width: 30px;
-  border-radius: 50%;
-  /* The ring reads as a frame around the face rather than a chip around a
-     label, now that there is no label to enclose. */
-  box-shadow: 0 0 0 1px var(--border);
-}
-
-.litany-unit-portrait {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  object-fit: cover;
-  display: block;
-  background: rgba(0, 0, 0, 0.3);
-}
-
-/* The lead is the one face that matters most in the column, so its frame is
-   the accent the row's left edge already uses. */
-.litany-grid-req--lead .litany-unit-chip,
-.litany-grid-req--hero .litany-unit-chip {
-  box-shadow: 0 0 0 2px var(--accent);
-}
-
 .litany-reward {
   color: var(--text);
   font-size: 0.8rem;
@@ -11328,7 +11263,6 @@ html[lang="ru"] .items-tab,
 html[lang="ru"] .library-line-label,
 html[lang="ru"] .library-section-label,
 html[lang="ru"] .library-tagchip-role,
-html[lang="ru"] .litany-row-role,
 html[lang="ru"] .litany-section-title,
 html[lang="ru"] .loading-title,
 html[lang="ru"] .modal-header-pill,
@@ -11621,4 +11555,19 @@ html[lang="ru"] .upgrade-unit-label {
   width: 100%;
   max-width: none;
   overflow-y: visible;
+}
+
+/* Keep embark panels scrollable without showing scrollbar chrome. */
+.screen-embark,
+.screen-embark *,
+.embark-modal-overlay,
+.embark-modal-overlay * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.screen-embark::-webkit-scrollbar,
+.screen-embark *::-webkit-scrollbar,
+.embark-modal-overlay::-webkit-scrollbar,
+.embark-modal-overlay *::-webkit-scrollbar {
+  display: none;
 }
