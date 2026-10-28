@@ -2298,13 +2298,10 @@ router.post('/roster/calling', requireAuth, async (req, res) => {
 
 // ── The oath ───────────────────────────────────────────────
 // Block 5 of the Temple's page, and the only one that never finishes. A unit
-// at the end of its branch keeps earning XP that buys nothing; the oath is what
-// that unit spends GOLD on instead, and the price climbs for ever - 1000, then
-// 1500, then 2000 (data/callings.js).
+// at the end of its branch spends its full XP threshold and escalating gold for
+// a permanent stat, then resets its accumulated XP to zero.
 //
-// The price is decided inside the transaction, from the count already stored,
-// because deciding it here is the race: two taps both read three oaths and both
-// pay the fourth price. See roster_oath_buy in sql/010_temple_devotion.sql.
+// The escalating gold price is calculated from the oath count at purchase time.
 router.post('/roster/oath', requireAuth, async (req, res) => {
   const { chat_id, roster_id } = req.body;
   if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });
@@ -2326,6 +2323,16 @@ router.post('/roster/oath', requireAuth, async (req, res) => {
     if (!rosterRows.length) return res.status(404).json({ error: 'Roster entry not found' });
 
     const row = rosterRows[0];
+    const unitDef = getUnitByDataId(row.unit_data?.unit_id);
+    if (!unitDef) return res.status(400).json({ error: 'Unit definition not found' });
+    const xpCost = Number(unitDef.xp ?? 0);
+    const currentXp = Number(row.unit_data?.current_xp ?? 0);
+    if (currentXp < xpCost) {
+      return res.status(400).json({
+        error: `Not enough XP. Need ${xpCost}, have ${currentXp}`,
+        code: 'insufficient_xp', item: 'xp', price: xpCost,
+      });
+    }
     if (!atEndOfBranch(faction, row.unit_data)) {
       return res.status(400).json({ error: 'That unit still has a branch to finish', code: 'oath_not_maxed' });
     }
@@ -2358,6 +2365,15 @@ router.post('/roster/oath', requireAuth, async (req, res) => {
         });
       }
       throw err;
+    }
+
+    // The oath consumes the unit's full XP threshold, including at max tier.
+    // Reset the accumulated XP to zero after a successful purchase.
+    if (xpCost > 0) {
+      await supabase(`/roster?id=eq.${encodeURIComponent(roster_id)}&chat_id=eq.${encodeURIComponent(chat_id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ unit_data: { ...row.unit_data, current_xp: 0 } }),
+      });
     }
 
     const [roster, resources] = await Promise.all([

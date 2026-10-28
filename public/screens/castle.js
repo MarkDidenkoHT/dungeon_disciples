@@ -267,6 +267,7 @@ const CASTLE_TEXT = {
   oathNext:     { en: n => `The next oath grants +${n} HP, for ever.`,
                   ru: n => `Следующий обет даёт +${n} ЗД навсегда.` },
   oathSwear:    { en: 'Swear',                                ru: 'Принести' },
+  oathNoXp:     { en: n => `Not enough XP: need ${n}`,        ru: n => `Недостаточно опыта: нужно ${n}` },
   oathWorking:  { en: 'Swearing…',                            ru: 'Приносим…' },
   devNeedsPrev: { en: n => `Finish “${n}” first`,             ru: n => `Сначала завершите: «${n}»` },
   oathNeedsBranch:{ en: 'Finish this unit\u2019s branch first',  ru: 'Сначала завершите ветку юнита' },
@@ -1745,7 +1746,9 @@ export function renderCastle(root, params = {}) {
     const sworn  = oathsSworn(row);
     const bonus  = devotionBonusHp(row);
     const price  = oathPrice(sworn);
-    const canPay = amountOf('gold') >= price;
+    const xpCost = Number(def?.xp ?? 0);
+    const currentXp = Number(row.unit_data?.current_xp ?? 0);
+    const canPay = amountOf('gold') >= price && currentXp >= xpCost;
 
     openModal(`${unitName(row, player)} — ${CASTLE_TEXT.oathSheet[castleLang]}`, `
       <div class="calling-sheet">
@@ -1756,10 +1759,12 @@ export function renderCastle(root, params = {}) {
             ${bonus > 0 ? `<span class="calling-opt-tag">${CASTLE_TEXT.oathBonus[castleLang](bonus)}</span>` : ''}
           </div>
           <p class="calling-opt-desc">${CASTLE_TEXT.oathNext[castleLang](oathBonusHp)}</p>
+          <p class="calling-opt-desc">${xpCost} XP · ${currentXp}/${xpCost} XP</p>
           <button type="button" class="calling-opt-btn" id="oath-swear" ${canPay ? '' : 'disabled'}>
             ${CASTLE_TEXT.oathSwear[castleLang]} · ${price} ${GOLD_ICON}
           </button>
-          ${canPay ? '' : `<p class="calling-opt-warn">${CASTLE_TEXT.callingNoGold[castleLang]}</p>`}
+          ${amountOf('gold') < price ? `<p class="calling-opt-warn">${CASTLE_TEXT.callingNoGold[castleLang]}</p>` : ''}
+          ${currentXp < xpCost ? `<p class="calling-opt-warn">${CASTLE_TEXT.oathNoXp[castleLang](xpCost)}</p>` : ''}
         </div>
       </div>`);
 
