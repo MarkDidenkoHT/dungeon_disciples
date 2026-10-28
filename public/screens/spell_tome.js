@@ -231,8 +231,8 @@ const TOME_TEXT = {
   // fills it. "Front column, top to bottom" made the reader rebuild that picture
   // from a sentence every time.
   litanyGridNote:  {
-    en: 'Your hero must fill the lead cell. Place units with the listed callings in the other marked cells:',
-    ru: 'Герой занимает главную клетку. Поставьте бойцов с указанными призваниями в остальные отмеченные клетки:',
+    en: 'Your hero fills the lead cell. Each marked caller can have either of your faction’s two callings:',
+    ru: 'Герой занимает главную клетку. У каждого бойца в отмеченных клетках может быть одно из двух призваний вашей фракции:',
   },
   litanyColBack:   { en: 'Back',  ru: 'Тыл' },
   litanyColFront:  { en: 'Front', ru: 'Фронт' },
@@ -266,8 +266,8 @@ const TOME_TEXT = {
     ru: 'в этой клетке не требуется отдельный боец',
   },
   litanyAnyCalling: {
-    en: same => same ? 'same calling as the other marked cell' : 'any assigned calling',
-    ru: same => same ? 'то же призвание, что и в другой отмеченной клетке' : 'любое назначенное призвание',
+    en: 'one of your faction’s two callings',
+    ru: 'одно из двух призваний вашей фракции',
   },
   litanyHeroHint: {
     en: 'your hero, in person',
@@ -742,9 +742,7 @@ export function renderSpellTome(root, { player }) {
   // The lock is cosmetic here; the battle server enforces the same building gate.
   let litaniesReady = false;
 
-  // Takes unit DEFS, already deduplicated by name — data/litanies.js lists every
-  // tier and branch that may fill a role, which is the same face over and over
-  // to a reader.
+  // Takes the player's hero definition for the lead cell.
   function litanyUnitChips(defs) {
     if (!defs.length) return '';
     // Faces, not a list. The name rides on `title` and `alt` so the portrait is
@@ -759,7 +757,7 @@ export function renderSpellTome(root, { player }) {
     }).join('')}</div>`;
   }
 
-  function renderLitanies(container) {
+  function renderLitanies(container, roster = []) {
     if (!container) return;
     const t = tomeText;
 
@@ -779,6 +777,8 @@ export function renderSpellTome(root, { player }) {
       }
     };
     for (const [factionKey, faction] of Object.entries(UNITS)) indexUnits(faction, factionKey);
+    const heroId = roster.find(unit => unit.is_hero === true)?.unit_data?.unit_id;
+    const playerHero = unitById.get(heroId) || null;
 
     // The lead IDs define which faction can field each formation. The common
     // opening litany lists every hero line and therefore appears for all three.
@@ -787,22 +787,6 @@ export function renderSpellTome(root, { player }) {
 
     // Only show faction rites this player can field, plus the common opening rite.
     const performable = LITANIES.filter(canPerform);
-
-    // One band, ONE LINE: the letter, then what fills that cell, then the role.
-    // It used to be a stacked card - a head row above a row of faces - which was
-    // the right shape when a cell named a list of units. A cell names a calling
-    // or a single line now, so the card was mostly air: the letter and the thing
-    // it points at sit side by side instead, and a formation of three reads in
-    // three lines rather than a page of scrolling.
-    const bandHtml = (role, label, ids, key = '') => {
-      const defs = dedupeByName(ids.map(id => unitById.get(id)).filter(Boolean));
-      return `
-        <div class="litany-row litany-row--${role}">
-          ${key ? `<span class="litany-row-key">${escapeHtml(key)}</span>` : ''}
-          ${litanyUnitChips(defs)}
-          ${label ? `<span class="litany-row-role">${escapeHtml(label)}</span>` : ''}
-        </div>`;
-    };
 
     const cards = performable.map((def, i) => {
       // A formation is a list of CELLS, each carrying its own letter, its grid
@@ -865,8 +849,7 @@ export function renderSpellTome(root, { player }) {
         // changes who speaks, not what must occupy the marked cell.
         if (cell.role === 'chorus') {
           if (cell.calling === 'any') {
-            const same = !!cell.calling_group;
-            const requirement = TOME_TEXT.litanyAnyCalling[lang](same);
+            const requirement = TOME_TEXT.litanyAnyCalling[lang];
             return `
             <div class="litany-grid-req litany-grid-req--chorus"
                  title="${escapeHtml(roleLabel)} — ${escapeHtml(requirement)}">
@@ -894,12 +877,10 @@ export function renderSpellTome(root, { player }) {
         }
         // 'lead' is a hero line; it is the only cell drawn as units rather than
         // as a calling.
-        const ids  = def.lead?.ids || [];
-        const defs = dedupeByName(ids.map(id => unitById.get(id)).filter(Boolean));
         return `
           <div class="litany-grid-req litany-grid-req--${cell.role}" title="${escapeHtml(roleLabel)}">
             ${keyTag}
-            ${litanyUnitChips(defs)}
+            ${litanyUnitChips(playerHero ? [playerHero] : [])}
           </div>`;
       };
 
@@ -1282,7 +1263,7 @@ export function renderSpellTome(root, { player }) {
       // costs no extra request. Re-rendered rather than patched: the page is
       // static apart from this one flag.
       litaniesReady = litaniesUnlocked(structData?.buildings_data);
-      renderLitanies(root.querySelector('#tome-litanies'));
+      renderLitanies(root.querySelector('#tome-litanies'), boot?.roster || []);
       // Off the player, not the network. `learned_spells` is a column on the
       // players row and arrives with /login, so the GET this replaced was
       // fetching something the client already held — every time the tab was

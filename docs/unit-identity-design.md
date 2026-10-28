@@ -96,8 +96,9 @@ The Russian is not a translation where a translation reads wrong, the same rule
 `RITE_TERMS` follows: "Крестовый поход" is the literal Crusade and is too long for a
 chip on a phone, so the calling is "Поход" - the march, the thing carried forward.
 
-The common starting litany is available without either building. Two units with the
-same assigned calling and a hero in the marked formation grant the whole side 3 max HP.
+The common starting litany is available without either building. Two distinct units with
+either of their faction's callings and a hero in the marked formation grant the whole
+side 3 max HP.
 Faction litanies unlock with the Proving Grounds and grant their listed formation bonus.
 Bot templates carry a `calling` per slot, so the enemy side can match formations too; a
 slot that names none gets one derived from its unit id, stably, so a template fields the

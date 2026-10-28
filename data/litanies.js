@@ -7,7 +7,7 @@
 // Every entry defines a formation, availability, and a small bonus for the
 // matching side. A lead is a hero line; chorus cells are filled by assigned
 // callings. The opening litany is the exception: any hero can lead it, and its
-// two chorus cells accept two distinct units carrying the same calling.
+// two chorus cells accept distinct units with either of their faction's callings.
 //
 // ── The formation ─────────────────────────────────────────────────────────────
 //
@@ -41,7 +41,7 @@
 //   role: 'lead'    the faction hero that anchors the formation.
 //   role: 'chorus'  a unit with the named calling. `calling: 'any'` accepts any
 //                   assigned calling; a shared `calling_group` can require
-//                   several cells to carry the same one.
+//                   several cells to carry the same one when a formation needs it.
 //
 // Faction-specific cells use only that faction's two assigned callings.
 //
@@ -94,9 +94,8 @@ const HERO_IDS = {
 
 const LITANIES = [
 
-  // The common opening litany is available before either building. Units keep
-  // the random calling assigned when recruited; two who happened to draw the
-  // same one can fill its simple back-column chorus.
+  // The common opening litany is available before either building. Any two
+  // distinct units can fill its back-column chorus using their assigned calling.
   {
     id: 'first_chorus',
     name: 'The First Chorus',
@@ -104,9 +103,9 @@ const LITANIES = [
     availableFromStart: true,
     lead: { ids: [...HERO_IDS.empire, ...HERO_IDS.grail, ...HERO_IDS.choir] },
     formation: { cells: [
-      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'any', calling_group: 'shared' },
+      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'any' },
       { key: 'B', row: 1, col: 'either', size: 'tile', role: 'lead' },
-      { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', calling: 'any', calling_group: 'shared' },
+      { key: 'C', row: 2, col: 'back', size: 'tile', role: 'chorus', calling: 'any' },
     ] },
     bonus: { hp_flat: 3 },
     message: 'All allies gain 3 max HP.',
