@@ -3,7 +3,7 @@ import { api, refreshResourceBar, resourceCache, structuresCache, bootstrapCache
 import { showCostBar, hideCostBar, primeCostBar } from '../cost-bar.js';
 import { SPELLS, SPELL_TIERS } from '../../data/spells.js';
 import { UNITS } from '../../data/units.js';
-import { LITANIES, LITANY_TARGETS } from '../../data/litanies.js';
+import { LITANIES } from '../../data/litanies.js';
 import { getCalling } from '../../data/callings.js';
 
 // Mirrors litaniesUnlocked / LITANY_BUILDING_LEVEL in data/buildings.js — that
@@ -212,8 +212,8 @@ const TOME_TEXT = {
   litaniesAria:  { en: w => w.many, ru: w => w.many },
   litaniesTitle: { en: w => w.many, ru: w => w.many },
   litaniesBlurb: {
-    en: w => `Kill an enemy hero or regional boss with your hero while the formation below is in place. Your hero stands in either cell of the middle row.`,
-    ru: w => `Убейте вражеского героя или регионального босса своим героем, пока построение ниже соблюдено. Ваш герой стоит в любой клетке среднего ряда.`,
+    en: w => `Match a formation before battle to give your whole deployed team a passive bonus. The opening litany is available from the start; the others require the Proving Grounds.`,
+    ru: w => `Соберите построение до боя, чтобы дать всему отряду пассивный бонус. Начальная литания доступна сразу, остальные требуют Ристалища.`,
   },
   litanyLocked: {
     en: `🔒 Requires Proving Grounds level ${LITANY_BUILDING_LEVEL}`,
@@ -223,24 +223,16 @@ const TOME_TEXT = {
     en: w => `Raise the Proving Grounds in your castle to drill your host in the ${w.manyLower}.`,
     ru: w => `Возведите Ристалище в замке, чтобы обучить войско ${w.dative}.`,
   },
+  litanyStarting: { en: 'Available from the start', ru: 'Доступна с начала игры' },
   litanyFormation: { en: 'Formation',   ru: 'Построение' },
-  litanyTarget:    { en: 'Target',      ru: 'Цель' },
-  // The target is ONE list shared by every litany (LITANY_TARGETS in
-  // data/litanies.js), so it is said once for the page instead of being repeated
-  // on all six cards. The note has to say that out loud — a Target section
-  // sitting above the list would otherwise read as belonging to the first card.
-  litanyTargetNote: {
-    en: w => `Every ${w.one} below triggers when your hero kills an enemy hero or regional boss. No other kill will do:`,
-    ru: w => `Каждая ${w.manyLower} ниже срабатывает, когда ваш герой убивает вражеского героя или регионального босса. Другая жертва не подойдёт:`,
-  },
   litanyReward:    { en: 'Reward',      ru: 'Награда' },
   // The formation is a PLACE on the board, not a list, so the card draws the
   // player's half of the battle grid and keys each marked cell to the band that
   // fills it. "Front column, top to bottom" made the reader rebuild that picture
   // from a sentence every time.
   litanyGridNote:  {
-    en: 'Your half of the battle grid — your hero stands in either middle-row cell; also man the other marked cells:',
-    ru: 'Ваша половина боевой сетки — герой стоит в любой клетке среднего ряда; займите и остальные отмеченные клетки:',
+    en: 'Your hero must fill the lead cell. Place units with the listed callings in the other marked cells:',
+    ru: 'Герой занимает главную клетку. Поставьте бойцов с указанными призваниями в остальные отмеченные клетки:',
   },
   litanyColBack:   { en: 'Back',  ru: 'Тыл' },
   litanyColFront:  { en: 'Front', ru: 'Фронт' },
@@ -272,6 +264,10 @@ const TOME_TEXT = {
   litanyNoAnchor: {
     en: 'no unit required in this cell',
     ru: 'в этой клетке не требуется отдельный боец',
+  },
+  litanyAnyCalling: {
+    en: same => same ? 'same calling as the other marked cell' : 'any assigned calling',
+    ru: same => same ? 'то же призвание, что и в другой отмеченной клетке' : 'любое назначенное призвание',
   },
   litanyHeroHint: {
     en: 'your hero, in person',
@@ -740,13 +736,10 @@ export function renderSpellTome(root, { player }) {
   renderLibrary(root.querySelector('#tome-library'));
 
   // ── Layer three: the Litanies ─────────────────────────────────────────────
-  // A codex page, not a shop: nothing here is bought. It shows the formation a
-  // litany demands, who may stand in each cell, what is said and what it pays.
-  // Locked until the Proving Grounds reaches its third level — shown rather than
-  // hidden, so the page teaches that the drill exists and what buys it.
+  // A codex page, not a shop: nothing here is bought. It shows each passive
+  // formation bonus and which units and callings fill its cells.
   //
-  // The lock is cosmetic here and real in utils/battle-engine.js (fireLitany);
-  // this page only mirrors it.
+  // The lock is cosmetic here; the battle server enforces the same building gate.
   let litaniesReady = false;
 
   // Takes unit DEFS, already deduplicated by name — data/litanies.js lists every
@@ -770,15 +763,8 @@ export function renderSpellTome(root, { player }) {
     if (!container) return;
     const t = tomeText;
 
-    // Role ids are matched against unit DEFINITION ids, and a litany spans two
-    // sides — profane_chorus is spoken by Empire units over a Choir hero — so
-    // the index is every unit in the game, not the player's faction.
-    //
-    // UNITS.enemies nests one level deeper than the playable factions — its
-    // values are encounter groups (crimson_basilica and the rest), not defs —
-    // so the walk recurses instead of reading one level. A flat read skipped
-    // every enemy silently, which is how Sister Aldra could be a litany target
-    // and still leave a blank space where her face belongs.
+    // Formation leads are matched against unit definition IDs. The index spans
+    // all factions because the opening litany can be led by any hero.
     const unitById = new Map();
     const factionOfUnitId = new Map();
     const indexUnits = (node, factionKey) => {
@@ -794,21 +780,12 @@ export function renderSpellTome(root, { player }) {
     };
     for (const [factionKey, faction] of Object.entries(UNITS)) indexUnits(faction, factionKey);
 
-    // Whose drill is this? The litany is performed by the side that supplies the
-    // LEAD — the unit that lands the real blow — so the player's own faction has
-    // to be able to field one. Derived rather than declared on the litany: the
-    // role id lists in data/litanies.js are already the authoring decision, and a
-    // `faction` field beside them would be a second copy to keep in step.
-    //
-    // No mercenary supplies a litany role, so the player's faction is the whole
-    // of what they can field for this purpose.
+    // The lead IDs define which faction can field each formation. The common
+    // opening litany lists every hero line and therefore appears for all three.
     const canPerform = def =>
       (def.lead?.ids || []).some(id => factionOfUnitId.get(id) === player.faction);
 
-    // Only the litanies this player could actually stage. A Choir player has no
-    // Inquisitor to lead Argent Hammer and never will, so listing it would be a
-    // page of units they cannot recruit — staging the execution of their own
-    // heroes, at that.
+    // Only show faction rites this player can field, plus the common opening rite.
     const performable = LITANIES.filter(canPerform);
 
     // One band, ONE LINE: the letter, then what fills that cell, then the role.
@@ -887,6 +864,16 @@ export function renderSpellTome(root, { player }) {
         // A chorus cell's calling is its formation requirement. `all_alive`
         // changes who speaks, not what must occupy the marked cell.
         if (cell.role === 'chorus') {
+          if (cell.calling === 'any') {
+            const same = !!cell.calling_group;
+            const requirement = TOME_TEXT.litanyAnyCalling[lang](same);
+            return `
+            <div class="litany-grid-req litany-grid-req--chorus"
+                 title="${escapeHtml(roleLabel)} — ${escapeHtml(requirement)}">
+              ${keyTag}
+              <span class="litany-calling-name">${escapeHtml(requirement)}</span>
+            </div>`;
+          }
           const calling = cell.calling ? getCalling(cell.calling) : null;
           if (!calling) {
             if (!cell.all_alive) return '';
@@ -905,8 +892,8 @@ export function renderSpellTome(root, { player }) {
               <span class="litany-calling-name">${escapeHtml(name)}</span>
             </div>`;
         }
-        // 'lead' is whoever lands the blow, always one of the faction's hero
-        // lines. It is the only cell drawn as units rather than as a calling.
+        // 'lead' is a hero line; it is the only cell drawn as units rather than
+        // as a calling.
         const ids  = def.lead?.ids || [];
         const defs = dedupeByName(ids.map(id => unitById.get(id)).filter(Boolean));
         return `
@@ -946,12 +933,10 @@ export function renderSpellTome(root, { player }) {
           </div>
         </div>`;
 
-      // The verses are deliberately NOT listed here. They are the moment itself,
-      // and reading them off a page before the battle spends them — the card
-      // teaches the formation and the payout, and the fight delivers the words.
       const reward = lang === 'ru'
-        ? (def.reward?.message_ru || def.reward?.message || '')
-        : (def.reward?.message || '');
+        ? (def.message_ru || def.message || '')
+        : (def.message || '');
+      const locked = !def.availableFromStart && !litaniesReady;
 
       // <details> rather than a button and a class: the open/closed state, the
       // keyboard handling and the aria-expanded wiring are the element's job,
@@ -962,11 +947,13 @@ export function renderSpellTome(root, { player }) {
       // hero the page arrives as a list of names to pick from rather than a
       // scroll through every formation.
       return `
-        <details class="litany-card${litaniesReady ? '' : ' litany-card--locked'}"${i === 0 ? ' open' : ''}>
+        <details class="litany-card${locked ? ' litany-card--locked' : ''}"${i === 0 ? ' open' : ''}>
           <summary class="litany-card-head">
             <span class="litany-card-caret" aria-hidden="true"></span>
             <h3 class="litany-name">${escapeHtml(lang === 'ru' ? (def.name_ru || def.name) : def.name)}</h3>
-            ${litaniesReady ? '' : `<span class="litany-lock">${escapeHtml(t('litanyLocked'))}</span>`}
+            ${def.availableFromStart
+              ? `<span class="litany-lock">${escapeHtml(t('litanyStarting'))}</span>`
+              : locked ? `<span class="litany-lock">${escapeHtml(t('litanyLocked'))}</span>` : ''}
           </summary>
 
           <section class="litany-section">
@@ -983,19 +970,7 @@ export function renderSpellTome(root, { player }) {
         </details>`;
     }).join('');
 
-    // Whose death a litany is staged around — the same answer for all six
-    // (LITANY_TARGETS in data/litanies.js), so it is drawn ONCE for the page.
-    // It used to be a section on every card, which was the same twelve faces
-    // repeated six times and read as if each litany had a quarrel of its own.
-    //
-    // Deduped by name, so the hero ids behind it come out as the nine hero
-    // lines and the three bosses — a reader recognises a face, not a tier.
-    const targetHtml = performable.length ? bandHtml('target', '', LITANY_TARGETS) : '';
-
-    // The lock only has something to say when this faction HAS a litany to
-    // unlock. Telling a host with none to go raise the Proving Grounds would
-    // point them at a building that would give them nothing.
-    const showLock = performable.length > 0 && !litaniesReady;
+    const showLock = performable.some(def => !def.availableFromStart) && !litaniesReady;
 
     container.innerHTML = `
       <div class="litany-page">
@@ -1008,12 +983,6 @@ export function renderSpellTome(root, { player }) {
               <span class="litany-lock-hint">${escapeHtml(t('litanyLockedHint'))}</span>
             </p>` : ''}
         </header>
-        ${targetHtml ? `
-          <section class="litany-page-target">
-            <h3 class="litany-section-title">${escapeHtml(t('litanyTarget'))}</h3>
-            <p class="litany-section-note">${escapeHtml(t('litanyTargetNote'))}</p>
-            ${targetHtml}
-          </section>` : ''}
         <div class="litany-list">${cards || `<p class="spells-empty">${escapeHtml(t('litanyNone'))}</p>`}</div>
       </div>`;
   }

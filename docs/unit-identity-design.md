@@ -75,38 +75,33 @@ the player's about a unit rather than the tree's, and it decides four things: wh
 rungs 1, 3 and 5 ask for, which stats the unit may raise, which passive the capstone
 can hand it, and **which litany cells the unit can stand in**.
 
-**Litanies read the calling.** A litany's chorus cells no longer name unit ids - they
-name a calling, and the unit standing there has to have it
-(see the header of [data/litanies.js](../data/litanies.js)).
-That is the calling's first visible, in-battle payoff and the reason it is a tactical
-choice rather than only a stat track: a *Vigil* and a *Crusade* in the right squares are
-what stages the execution. It also cuts 298 hardcoded ids out of
-[data/litanies.js](../data/litanies.js).
+**Litanies read the calling.** A litany's chorus cells name a calling, and the unit
+standing there has to have it (see [data/litanies.js](../data/litanies.js)). A matching
+formation grants its side a small passive stat bonus at battle start. The battle-prep
+screen previews the match with one short hero line, so players can complete the setup
+without waiting through a combat performance.
 
 **Partly built already.** The callings themselves, the storage and the litany half are
 in: [data/callings.js](../data/callings.js), `roster.calling` jsonb, and
 [sql/backfill_callings.sql](../sql/backfill_callings.sql) to seed every existing unit.
 The Chronicle screen, the rungs, the deeds and the oath track below are not.
 
-| Faction | callings | ids | `pays` in a litany |
-|---|---|---|---|
-| Empire | Vigil · Бдение / Crusade · Поход | `vigil` `crusade` | ally / enemy |
-| Grail of Sorrow | Denial · Отрицание / Acceptance · Смирение | `denial` `acceptance` | ally / enemy |
-| Choir of the Cursed | Descant · Дискант / Hunger · Голод | `descant` `hunger` | ally / enemy |
+| Faction | callings | ids |
+|---|---|---|
+| Empire | Vigil · Бдение / Crusade · Поход | `vigil` `crusade` |
+| Grail of Sorrow | Denial · Отрицание / Acceptance · Смирение | `denial` `acceptance` |
+| Choir of the Cursed | Descant · Дискант / Hunger · Голод | `descant` `hunger` |
 
 The Russian is not a translation where a translation reads wrong, the same rule
 `RITE_TERMS` follows: "Крестовый поход" is the literal Crusade and is too long for a
 chip on a phone, so the calling is "Поход" - the march, the thing carried forward.
 
-`pays` is which side of a litany's reward that calling's cell accounts for. The Grail's
-**Acceptance** is the enemy-facing one of its pair, which reads backwards until you hold
-the fiction: the Grail's violence is bought with its own blood, so *paying the price* is
-the aggressive calling and *Denial* - refusing that the loss happened - is the one that
-heals and wards.
-
-Bot templates carry a `calling` per slot, so the enemy side stages litanies the same
-way; a slot that names none gets one derived from its unit id, stably, so a template
-fields the same army every time it is drawn.
+The common starting litany is available without either building. Two units with the
+same assigned calling and a hero in the marked formation grant the whole side 3 max HP.
+Faction litanies unlock with the Proving Grounds and grant their listed formation bonus.
+Bot templates carry a `calling` per slot, so the enemy side can match formations too; a
+slot that names none gets one derived from its unit id, stably, so a template fields the
+same army every time it is drawn.
 
 **Where a calling is picked is the TEMPLE, not the Chronicle.** The two systems read the
 same `roster.calling` field and share nothing else: the Training Grounds teaches a squad
@@ -192,11 +187,10 @@ Counters are lifetime and never reset. **Everything counts in bot battles** — 
 is a battle, and a system that audits where the fight came from is a system that argues
 with the player about their own record.
 
-**The litany rung counts the squad, not the role.** Litany roles are hardcoded id lists
-([data/litanies.js](../data/litanies.js)), so most units can never be a lead or a
-chorister; a rung keyed to performing one would be unreachable for them. Standing on the
-board when the litany fires is the deed, and it still means the player built a squad that
-could sing.
+**The litany rung counts the squad, not the role.** Most units can never be a lead, so a
+rung keyed to leading one would be unreachable for them. Standing on the board when a
+formation matches is the deed, and it still means the player built a squad that could
+earn a passive bonus.
 
 ---
 

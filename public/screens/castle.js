@@ -277,8 +277,8 @@ const CASTLE_TEXT = {
   callingCurrent:{ en: 'Current',                             ru: 'Сейчас' },
   callingTake:  { en: 'Take this calling',                    ru: 'Принять призвание' },
   callingWorking:{ en: 'Changing…',                           ru: 'Меняем…' },
-  callingPays:  { en: s => s === 'ally' ? 'Pays the ally side in a litany' : 'Pays the enemy side in a litany',
-                  ru: s => s === 'ally' ? 'В литании платит союзной стороне' : 'В литании платит стороне врага' },
+  callingPays:  { en: () => 'Can anchor a litany formation',
+                  ru: () => 'Может занять место в построении литании' },
   callingNoGold:{ en: 'Not enough gold',                      ru: 'Недостаточно золота' },
   slotLocked:  { en: (n, l) => l > 1 ? `Locked — ${n} level ${l}` : `Locked — build ${n} first`,
                  ru: (n, l) => l > 1 ? `Заперто — ${n}, уровень ${l}` : `Заперто — сначала постройте: ${n}` },
@@ -1705,7 +1705,7 @@ export function renderCastle(root, params = {}) {
             <span class="calling-opt-name">${escapeHtml(callingName(c.id, castleLang))}</span>
             ${mine ? `<span class="calling-opt-tag">${CASTLE_TEXT.callingCurrent[castleLang]}</span>` : ''}
           </div>
-          <p class="calling-opt-desc">${CASTLE_TEXT.callingPays[castleLang](c.pays)}</p>
+          <p class="calling-opt-desc">${CASTLE_TEXT.callingPays[castleLang]()}</p>
           ${mine ? '' : buy}
         </div>`;
     }).join('');

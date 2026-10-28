@@ -18,13 +18,6 @@
 //                   visible payoff, and the reason it is a tactical choice and
 //                   not only a stat track.
 //
-// `pays` is the side a calling's reward lands on when it sings in a litany, and
-// it is the whole of the rule that used to be "the reward is what the chorus
-// did". A chorus of two Crusade cells pays the enemy side; one of each pays
-// both. It is read by nothing at run time - the engine applies the fields the
-// litany lists - but a litany whose reward disagrees with its cells' `pays` is
-// a bug in data/litanies.js, and the validator says so.
-//
 // THE RUSSIAN IS NOT A TRANSLATION where a translation reads wrong, the same
 // rule RITE_TERMS follows in public/screens/spell_tome.js. "Крестовый поход" is
 // the literal Crusade and is three syllables too long for a chip on a phone, so
@@ -34,23 +27,23 @@ const CALLINGS = {
   empire: [
     // Holding the line. The Empire's patience: the shield that is still there
     // in the morning.
-    { id: 'vigil',   name: 'Vigil',   name_ru: 'Бдение', pays: 'ally',  tint: '#6f8fbf' },
+    { id: 'vigil',   name: 'Vigil',   name_ru: 'Бдение', tint: '#6f8fbf' },
     // Carrying it forward.
-    { id: 'crusade', name: 'Crusade', name_ru: 'Поход',  pays: 'enemy', tint: '#c8803a' },
+    { id: 'crusade', name: 'Crusade', name_ru: 'Поход',  tint: '#c8803a' },
   ],
   grail_of_sorrow: [
     // Refusing the price - the Grail's healing and warding, which is a refusal
     // that the loss has happened at all.
-    { id: 'denial',     name: 'Denial',     name_ru: 'Отрицание', pays: 'ally',  tint: '#9b8fd0' },
+    { id: 'denial',     name: 'Denial',     name_ru: 'Отрицание', tint: '#9b8fd0' },
     // Paying it. The Grail's violence is bought with its own blood, which is
     // why this is the enemy-facing one and not the gentler of the two.
-    { id: 'acceptance', name: 'Acceptance', name_ru: 'Смирение',  pays: 'enemy', tint: '#b5556a' },
+    { id: 'acceptance', name: 'Acceptance', name_ru: 'Смирение',  tint: '#b5556a' },
   ],
   choir_of_the_cursed: [
     // Your own voice above the song.
-    { id: 'descant', name: 'Descant', name_ru: 'Дискант', pays: 'ally',  tint: '#5fa89b' },
+    { id: 'descant', name: 'Descant', name_ru: 'Дискант', tint: '#5fa89b' },
     // Power taken from others.
-    { id: 'hunger',  name: 'Hunger',  name_ru: 'Голод',   pays: 'enemy', tint: '#8aa83f' },
+    { id: 'hunger',  name: 'Hunger',  name_ru: 'Голод',   tint: '#8aa83f' },
   ],
 };
 

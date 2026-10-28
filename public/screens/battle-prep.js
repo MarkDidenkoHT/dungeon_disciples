@@ -15,6 +15,7 @@ import { createQueueController } from '../queue-client.js';
 import { ruleName } from '../../data/tourney.js';
 import { syncFormationSynergies } from '../formation-synergy-view.js';
 import { resolveSynergies } from '../../data/formation_synergies.js';
+import { matchAvailableLitany } from '../../data/litanies.js';
 
 // The ability/item inspect handler has to be on `document`, because these icons
 // also appear inside the body-level modal sheet, which is outside the screen
@@ -250,6 +251,12 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
         </div>
       </div>
 
+      <div id="battle-prep-litany" class="battle-prep-litany" hidden aria-live="polite">
+        <strong class="battle-prep-litany-name"></strong>
+        <span class="battle-prep-litany-line"></span>
+        <small class="battle-prep-litany-bonus"></small>
+      </div>
+
       <!-- Sits BELOW the grids: a launch button pinned to the top edge of the
            screen is awkward to reach on a phone. Your power on the left, the
            enemy's on the right, the button in the gap between them. Both sides
@@ -359,6 +366,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
   }
   let enemies          = [];
   let heroId           = null;
+  let litaniesUnlocked = false;
   let maxNonHero       = 2;
   let dragUnit         = null;
   let dragFromCell     = null;
@@ -999,6 +1007,46 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
     });
   }
 
+  function litanyPreviewUnits() {
+    const byUnit = new Map();
+    for (const [cell, occ] of Object.entries(occupied)) {
+      if (!occ) continue;
+      const id = String(occ.unitId);
+      if (!byUnit.has(id)) byUnit.set(id, { anchor: occ.anchor, footprint: [] });
+      byUnit.get(id).footprint.push(Number(cell));
+    }
+    return [...byUnit].flatMap(([id, placement]) => {
+      const unit = roster.find(u => String(u.id) === id);
+      if (!unit) return [];
+      const def = resolveUnitDef(unit);
+      const hp = Number(unit.unit_data?.current_hp ?? unit.unit_data?.hp ?? 1);
+      return [{
+        id,
+        unitId: def?.id ?? unit.unit_data?.unit_id ?? unit.unit_data?.id,
+        unit_name: unitName(unit),
+        calling: unitCallingId(unit),
+        alive: unit.unit_data?.alive !== false && hp > 0,
+        footprint: placement.footprint.sort((a, b) => a - b),
+      }];
+    });
+  }
+
+  function updateLitanyPreview() {
+    const panel = root.querySelector('#battle-prep-litany');
+    if (!panel) return;
+    const match = matchAvailableLitany(litanyPreviewUnits(), { frontCol: 1, unlocked: litaniesUnlocked });
+    if (!match) { panel.hidden = true; return; }
+    const def = match.def;
+    const localized = value => Array.isArray(value) ? value[L === 'ru' ? 1 : 0] : value;
+    const name = L === 'ru' ? (def.name_ru || def.name) : def.name;
+    const line = localized(def.prepLine) || '';
+    const hero = match.lead?.unit_name || (L === 'ru' ? 'Герой' : 'Hero');
+    panel.querySelector('.battle-prep-litany-name').textContent = name;
+    panel.querySelector('.battle-prep-litany-line').textContent = `${hero}: “${line}”`;
+    panel.querySelector('.battle-prep-litany-bonus').textContent = localized([def.message, def.message_ru]) || '';
+    panel.hidden = false;
+  }
+
   // How much initiative each unit is being handed right now, so the badge can
   // show a live number while the player is still arranging.
   //
@@ -1555,6 +1603,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
 
   function fullRefresh() {
     renderPlayerGrid();
+    updateLitanyPreview();
     // After the grid, because the bonds anchor on cell elements that the render
     // above has just replaced. Reattached first for the same reason the battle
     // screen does it on every render: the canvas sizes itself to the arena, and
@@ -2374,6 +2423,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
       const boot = await bootstrapCache.get(player.chat_id);
       const rosterData = boot.roster || [];
       regionProgress   = boot.progress || {};
+      litaniesUnlocked = boot.buildings?.litanies_unlocked === true;
       supplyState      = boot.supplies || null;
 
       items = boot.items || [];
@@ -2455,6 +2505,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
       attachPortraitEvents();
       attachGridDragEvents();
       updateLoyaltyHint();
+      updateLitanyPreview();
       checkReady();
     } catch (err) {
       console.error('Failed to initialise battle prep:', err);

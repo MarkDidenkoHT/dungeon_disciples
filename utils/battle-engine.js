@@ -6,7 +6,7 @@ const { columnAdjacentCells } = require('../data/formation_synergies.js');
 const { SPELLS } = require('../data/spells');
 const { aiDoctrineFor } = require('../data/ai_profiles.js');
 const { COMBAT_BARKS, BARK_CHANCES, HEAL_BARK_THRESHOLD_PCT } = require('../data/combat_barks');
-const { LITANIES, LITANY_TARGETS } = require('../data/litanies');
+const { matchAvailableLitany } = require('../data/litanies');
 const { callingIdOf } = require('../data/callings');
 
 // These actions let the player choose a valid ally to mend or an enemy to hit.
@@ -156,16 +156,15 @@ class BattleEngine {
     // roster ids, so the route credits only the side it is paying out and the
     // database refuses a row the caller does not own.
     this.deeds = { ...(state?.deeds || {}) };
-    // Litanies already spent this battle, as `<litany id>:<side>` (see
-    // data/litanies.js). Carried through getBattleData/rehydrate so a reload
-    // cannot replay one — and with it, hand out its reward a second time.
-    this.litaniesFired = [...(state?.litaniesFired || [])];
-    // The Proving Grounds' third level (litaniesUnlocked in data/buildings.js).
-    // Gates the PLAYER side only — an enemy formation that earns a litany stages
-    // it whatever the player has built, since it is their drill, not ours.
-    // Absent means unlocked: battles saved before the gate existed, and callers
-    // with no castle to read (bot sims, tests), must keep behaving as they did.
+    // Retain the old one-side field for saved battles; new battles gate each
+    // side independently, with the common opening litany always available.
     this.litaniesUnlocked = state?.litaniesUnlocked !== false;
+    this.litaniesUnlockedBySide = {
+      player: state?.litaniesUnlockedBySide?.player ?? this.litaniesUnlocked,
+      enemy: state?.litaniesUnlockedBySide?.enemy ?? true,
+    };
+    this.activeLitanies = { ...(state?.activeLitanies || {}) };
+    this._applyLitanyBonusesOnSetup = true;
     if (state) {
       this.combatants = state.combatants;
       this.round      = state.round;
@@ -327,8 +326,14 @@ class BattleEngine {
   async init() {
     this.ABILITIES = await getAbilities();
   }
-  static async fromSetup(playerUnits, enemyUnits, placement) {
+  static async fromSetup(playerUnits, enemyUnits, placement, options = {}) {
     const engine = new BattleEngine(null);
+    engine.litaniesUnlockedBySide = {
+      player: options.litaniesUnlockedBySide?.player ?? options.litaniesUnlocked ?? true,
+      enemy: options.litaniesUnlockedBySide?.enemy ?? options.enemyLitaniesUnlocked ?? true,
+    };
+    engine.litaniesUnlocked = engine.litaniesUnlockedBySide.player;
+    engine._applyLitanyBonusesOnSetup = options.applyLitanyBonuses !== false;
     await engine.init();
     engine.initCombatants(playerUnits, enemyUnits, placement);
     return engine;
@@ -348,6 +353,7 @@ class BattleEngine {
       this.combatants.push(this.createCombatant(e, 'enemy', cellIdx));
     });
     this.fireTrigger('on_battle_start', {});
+    if (this._applyLitanyBonusesOnSetup) this.applyLitanyBonuses();
   }
   createCombatant(unit, side, cellIdx) {
     // An EMPTY `unit_data` must not shadow a flat unit: a wrapper with no keys
@@ -1471,12 +1477,6 @@ class BattleEngine {
             this.creditDeed(actor, remaining);
             const dead = target.battle_hp <= 0;
             if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
-            // Stage a litany only after death passives resolve. Some champions
-            // survive a lethal blow (for example Malgrath's Undying), so HP
-            // reaching zero alone is not enough to earn the kill-triggered rite.
-            // Keep this before the action log so a real kill's verses still lead it.
-            const litany = dead && !target.alive
-              ? this.fireLitany(actor, target) : null;
             this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - remaining, killed: !target.alive });
             this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
             this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });
@@ -1484,13 +1484,8 @@ class BattleEngine {
             if (dead && !target.alive) {
               this.fireTrigger('on_kill', { actor, target, dmg: remaining, dying: null });
               this.fireTrigger('on_ally_death', { actor, target, dmg: remaining, dying: target });
-              // A litany owns the whole moment: no kill bark, no last words.
-              if (litany) {
-                this.applyLitanyReward(litany, actor);
-              } else {
-                this.checkBark('kill', actor, { target });
-                this.checkBark('death', target, { target: actor }); // the dying unit's last words; its "target" is the killer
-              }
+              this.checkBark('kill', actor, { target });
+              this.checkBark('death', target, { target: actor }); // the dying unit's last words; its "target" is the killer
             } else {
               this.checkBark('attack', actor, { target });
             }
@@ -1570,11 +1565,6 @@ class BattleEngine {
       this.creditDeed(actor, remaining);
       const dead = target.battle_hp <= 0;
       if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
-      // Match executeAction: a lethal hit is not a kill if a death passive
-      // brings the target back. Decide whether the litany fires from the final
-      // alive state, while still logging its verses before the killing blow.
-      const litany = dead && !target.alive
-        ? this.fireLitany(actor, target) : null;
       this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - remaining, killed: !target.alive });
       this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
       this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });
@@ -1582,12 +1572,8 @@ class BattleEngine {
       if (dead && !target.alive) {
         this.fireTrigger('on_kill', { actor, target, dmg: remaining, dying: null });
         this.fireTrigger('on_ally_death', { actor, target, dmg: remaining, dying: target });
-        if (litany) {
-          this.applyLitanyReward(litany, actor);
-        } else {
-          this.checkBark('kill', actor, { target });
-          this.checkBark('death', target, { target: actor });
-        }
+        this.checkBark('kill', actor, { target });
+        this.checkBark('death', target, { target: actor });
       } else {
         this.checkBark('attack', actor, { target });
       }
@@ -3551,11 +3537,11 @@ class BattleEngine {
       vows: this.vows,
       tally: this.tally,
       deeds: this.deeds,
-      // Once per battle means once per battle, reload or not.
-      litaniesFired: this.litaniesFired,
       // Carried so a mid-battle reload cannot re-read a castle that has changed
       // since the fight started.
       litaniesUnlocked: this.litaniesUnlocked,
+      litaniesUnlockedBySide: this.litaniesUnlockedBySide,
+      activeLitanies: this.activeLitanies,
       units:  this.combatants.map(c => ({
         id:               c.id,
         side:             c.side,
@@ -3681,7 +3667,11 @@ class BattleEngine {
     };
   }
   static async rehydrate(setup, battleData) {
-    const engine = await BattleEngine.fromSetup(setup.playerUnits, setup.enemies, setup.placement);
+    const engine = await BattleEngine.fromSetup(setup.playerUnits, setup.enemies, setup.placement, {
+      applyLitanyBonuses: false,
+      litaniesUnlockedBySide: battleData.litaniesUnlockedBySide,
+      litaniesUnlocked: battleData.litaniesUnlocked,
+    });
     // Banked power survives a reload. fromSetup starts both sides at zero, so
     // without this a player could reload to refill — and an enemy boss would
     // lose the charge it had built toward its own spell.
@@ -3692,8 +3682,12 @@ class BattleEngine {
     if (battleData.vows) engine.vows = { grave: 0, silence: 0, ...battleData.vows };
     engine.tally = { player: {}, enemy: {}, ...(battleData.tally || {}) };
     engine.deeds = { ...(battleData.deeds || {}) };
-    engine.litaniesFired = [...(battleData.litaniesFired || [])];
     engine.litaniesUnlocked = battleData.litaniesUnlocked !== false;
+    engine.litaniesUnlockedBySide = {
+      player: battleData.litaniesUnlockedBySide?.player ?? engine.litaniesUnlocked,
+      enemy: battleData.litaniesUnlockedBySide?.enemy ?? true,
+    };
+    engine.activeLitanies = { ...(battleData.activeLitanies || {}) };
     const stateById = {};
     for (const u of battleData.units) stateById[u.id] = u;
     for (const c of engine.combatants) {
@@ -4299,258 +4293,63 @@ class BattleEngine {
   }
 
   // ── Litanies ───────────────────────────────────────────────────────────────
-  // A scripted execution: the chorus strikes for show, the lead lands the real
-  // blow on the last verse, and the survivors pay for it. See
-  // data/litanies.js.
-  //
-  // Everything is matched by UNIT DEFINITION ID, never by tag or faction.
+  // A matching formation grants one passive bonus to its entire side at setup.
+  // Prep imports the same matcher, so the displayed result and server result
+  // use identical footprint, calling and hero rules.
   litanyUnitId(c) {
     return c?.unit_data?.unit_id ?? c?.unit_data?.id ?? null;
   }
 
-  // The speakers a litany's formation demands, keyed by cell letter ({ A, B, C })
-  // or by `all_alive` for the full living chorus, or null if a required cell is
-  // wrong. An all_alive chorus cell collects every living ally but the lead;
-  // when it names a calling, that cell still requires a matching anchor at its
-  // drawn position.
-  //
-  // TWO KINDS OF CELL, and what each one demands of its occupant:
-  //
-  //   'lead'    the acting unit itself, and its id must be in `def.lead.ids`,
-  //             which is always a HERO line. The only cell that kills.
-  //   'chorus'  any unit the PLAYER gave this cell's `calling` to
-  //             (data/callings.js), or every living ally except the lead when
-  //             `all_alive` is true.
-  //
-  // A formation is a list of CELLS, each naming its row AND its column, so a
-  // litany can put its lead on the line and its singers behind it — a priest
-  // does not belong in the front rank, and saying "the front column" for all
-  // three cells is what used to put one there. `col` is 'front' or 'back'
-  // RELATIVE TO THE ACTING SIDE, which is why it is a word here and a column
-  // index only at the last moment (frontColFor in data/formation_synergies.js).
-  //
-  // A cell is as big as the unit that stands in it. `size` says which:
-  //
-  //   'tile'    one cell, at (row, col); col 'either' accepts either column.
-  //   'row'     both columns of `row` — `col` is 'both' and is not read.
-  //   'column'  (row, col) and the row BELOW it, so `row` is the TOP of the two.
-  //
-  // The footprint the cell describes is matched against the occupant's OWN
-  // footprint, whole: a Golden Lion fills two cells and a litany that wants one
-  // has to say so. Matching an anchor index instead would have let a two-cell
-  // unit answer for a one-cell cell and left the other half of it unexamined.
-  litanyCellFootprints(cell, front) {
-    const size = cell.size ?? 'tile';
-    if (size === 'row') return [[cellIndex(cell.row, 0), cellIndex(cell.row, 1)]];
-    if (cell.col === 'either') return [[cellIndex(cell.row, 0)], [cellIndex(cell.row, 1)]];
-    const col = cell.col === 'back' ? 1 - front : front;
-    if (size === 'column') return [[cellIndex(cell.row, col), cellIndex(cell.row + 1, col)]];
-    return [[cellIndex(cell.row, col)]];
-  }
-
-  litanyOccupantForCell(cell, side, front, preferred = null) {
-    const wants = new Set(this.litanyCellFootprints(cell, front)
-      .map(footprint => footprint.slice().sort((a, b) => a - b).join(',')));
-    const matches = c =>
-      c.side === side && c.alive &&
-      wants.has(this.getFootprint(c).slice().sort((a, b) => a - b).join(','));
-    return (preferred && matches(preferred) ? preferred : null) || this.combatants.find(matches);
-  }
-
-  litanySpeakers(def, actor) {
-    const front = actor.side === 'enemy' ? 0 : 1;
-    const speakers = {};
-    const taken = new Set();
-    for (const cell of def.formation.cells) {
-      if (cell.role === 'chorus' && cell.all_alive) {
-        if (cell.calling) {
-          const anchor = this.litanyOccupantForCell(cell, actor.side, front);
-          if (!anchor || anchor._calling !== cell.calling || taken.has(anchor.id)) return null;
-          taken.add(anchor.id);
-        }
-        const chorus = this.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
-        if (!chorus.length) return null;
-        speakers[cell.key] = chorus;
-        speakers.all_alive = chorus;
-        continue;
-      }
-      const occ = this.litanyOccupantForCell(cell, actor.side, front,
-        cell.role === 'lead' ? actor : null);
-      if (!occ) return null;
-      // One unit cannot answer for two cells. Cells that overlap on the board are
-      // an authoring mistake rather than a state the engine can reach, so this is
-      // a guard, not a rule.
-      if (taken.has(occ.id)) return null;
-      if (cell.role === 'lead') {
-        if (occ !== actor) return null;
-      } else if (!cell.calling || occ._calling !== cell.calling) {
-        return null;
-      }
-      taken.add(occ.id);
-      speakers[cell.key] = occ;
-    }
-    return speakers;
-  }
-
-  // Called with a blow already known to be lethal, BEFORE the kill is logged —
-  // the chorus has to speak ahead of it. Returns the litany that fired (so the
-  // caller can pay the reward and suppress the ordinary kill/death barks), or
-  // null.
-  //
-  // The lead is whoever LANDS THE BLOW, and that is always one of the faction's
-  // own hero lines — two litanies per faction, six in all (data/litanies.js).
-  fireLitany(actor, target) {
-    // Not yet drilled. The blow still lands — it is simply an ordinary kill,
-    // with the ordinary kill and death barks the litany would have replaced.
-    if (actor.side === 'player' && !this.litaniesUnlocked) return null;
-    // Only a CHAMPION is worth the rite, and the list of them is ONE list shared
-    // by all six litanies (LITANY_TARGETS in data/litanies.js) — no litany
-    // carries a target of its own, so this is checked once, ahead of the loop,
-    // and an ordinary trooper's death never reaches it.
-    if (!LITANY_TARGETS.includes(this.litanyUnitId(target))) return null;
-    for (const def of LITANIES) {
-      if (def.once_per === 'battle' && this.litaniesFired.includes(`${def.id}:${actor.side}`)) continue;
-      if (!def.lead.ids.includes(this.litanyUnitId(actor))) continue;
-      const speakers = this.litanySpeakers(def, actor);
-      if (!speakers) continue;
-      this.litaniesFired.push(`${def.id}:${actor.side}`);
-      def.verses.forEach((v, i) => {
-        const named = speakers[v.speaker];
-        const chorus = Array.isArray(named) ? named : null;
-        const sp = chorus ? chorus[0] : named;
-        if (!sp) return;
-        // DERIVED, not authored, for every verse but the lethal one. A chorus
-        // cell no longer knows which unit will stand in it — a Vigil may be a
-        // priest or a shield-bearer — so the author cannot say in advance
-        // whether the verse is a blow or a rite. A unit whose action targets an
-        // ally performs over its own side ('support'); everything else swings at
-        // the victim ('visual'). The authored `strike` is kept as the fallback
-        // and is what the lethal verse always uses.
-        const strike = v.strike === 'lethal' || v.strike === 'line'
-          ? v.strike
-          : (this.isHealer(sp) ? 'support' : 'visual');
-        this.pushLog({
-          type: 'litany', litany: def.id, i, n: def.verses.length, strike,
-          ...(chorus
-            ? { chorus: true, chorusActorIds: chorus.map(c => c.id), actorName: 'Chorus' }
-            : { actorId: sp.id, actorName: sp.unit_name, actorCell: sp.cellIndex }),
-          targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
-          text: v.line[0], text_ru: v.line[1],
-        });
-      });
-      return def;
-    }
-    return null;
-  }
-
-  // Paid once the kill has been logged, so "every enemy still alive" means alive
-  // AFTER the body has dropped.
-  //
-  // A reward is any mix of the fields below, each a flat number in the litany's
-  // own object (data/litanies.js). Every one of them is PERMANENT for the
-  // battle: no rounds, no expiry, no dispel. That is the whole reason they are
-  // flat and small — the stats they move (initiative, armor, resistances,
-  // battle_hp) all ride through getBattleData, so a reload keeps the reward
-  // without a single line of duration bookkeeping.
-  //
-  //   enemy_initiative_flat  every living enemy loses this much initiative (min 1)
-  //   enemy_armor_flat       every living enemy loses this much armor (min 0)
-  //   enemy_damage_flat      every living enemy takes this much damage
-  //   enemy_decay_flat       every living enemy gains a decay pool this big, so
-  //                          healing is eaten before it reaches their HP
-  //   ally_heal_flat         every living ally heals this much
-  //   ally_shield_flat       every living ally gains a shield pool this big
-  //   ally_initiative_flat   every living ally gains this much initiative
-  //   ally_armor_flat        every living ally gains this much armor
-  //   ally_resist_flat       { school: amount } added to every living ally
-  //   ally_all_resist_flat   the same amount added to every school
-  //
-  // The damage is scripted, not an attack: it ignores armor and resistances and
-  // fires no on-hit triggers. A litany is a miracle, and the field it prints
-  // ("5 to every enemy") is the number a player should see happen. It CAN kill,
-  // so a death is closed out properly here.
-  //
-  // The reward is what the chorus SANG, so the fields on a litany follow the
-  // units its formation names: a heal action (a priest, a mender, an ash singer)
-  // pays ally_heal_flat, a shield action pays ally_shield_flat, a decay action
-  // pays enemy_decay_flat, and an attacker pays enemy_damage_flat or the stagger
-  // fields. Nothing here enforces that - it is an authoring rule in
-  // data/litanies.js - but a reward that does not match its singers is a bug in
-  // the data.
-  //
-  // What the reward does NOT do is respect the singers' own targeting rules: a
-  // litany heals every living ally, Construct and Zombie alike, where the
-  // priest's own Heal cannot touch either (TARGET_TAG_RULES). The miracle is the
-  // litany's, not the unit's.
-  applyLitanyReward(def, actor) {
-    const r = def?.reward;
-    if (!r) return;
-    const foes   = this.combatants.filter(c => c.side !== actor.side && c.alive);
-    const allies = this.combatants.filter(c => c.side === actor.side && c.alive);
-
-    if (r.enemy_initiative_flat > 0) {
-      for (const c of foes) c.initiative = Math.max(1, (c.initiative || 40) - r.enemy_initiative_flat);
-    }
-    if (r.enemy_armor_flat > 0) {
-      for (const c of foes) addArmor(c, -r.enemy_armor_flat);
-    }
-    if (r.ally_initiative_flat > 0) {
-      for (const c of allies) c.initiative = (c.initiative || 40) + r.ally_initiative_flat;
-    }
-    if (r.ally_armor_flat > 0) {
-      for (const c of allies) addArmor(c, r.ally_armor_flat);
-    }
-    if (r.ally_all_resist_flat > 0) {
-      for (const c of allies) for (const school of RESIST_SCHOOLS) addResist(c, school, r.ally_all_resist_flat);
-    }
-    for (const [school, amount] of Object.entries(r.ally_resist_flat || {})) {
-      if (!(amount > 0)) continue;
-      for (const c of allies) addResist(c, school, amount);
-    }
-    if (r.ally_heal_flat > 0) {
-      for (const c of allies) {
-        const healed = Math.min(r.ally_heal_flat, Math.max(0, c.max_hp - c.battle_hp));
-        if (healed <= 0) continue;
-        c.battle_hp += healed;
-        this.pushLog({
-          type: 'passive', litany: def.id,
-          actorName: actor.unit_name, actorCell: actor.cellIndex,
-          targetName: c.unit_name, targetCell: c.cellIndex,
-          message: `${def.name} — ${c.unit_name} heals ${healed}`,
-        });
-      }
-    }
-    if (r.enemy_decay_flat > 0) {
-      // Through applyDecay, so the pool caps and logs itself exactly as a Pale
-      // Mourner's own touch does.
-      for (const c of foes) this.applyDecay(c, r.enemy_decay_flat, { name: def.name, dispellable: false }, actor);
-    }
-    if (r.ally_shield_flat > 0) {
-      // Through grantShield, so the pool caps, registers its effect icon and
-      // logs itself the same way a Standart Bearer's own ward does.
-      for (const c of allies) this.grantShield(c, r.ally_shield_flat, { name: def.name, dispellable: false }, actor);
-    }
-    if (r.enemy_damage_flat > 0) {
-      for (const c of foes) {
-        const dealt = Math.min(r.enemy_damage_flat, c.battle_hp);
-        c.battle_hp = Math.max(0, c.battle_hp - r.enemy_damage_flat);
-        const dead = c.battle_hp <= 0;
-        if (dead) { c.alive = false; this.applyOnDeathPassives(c); }
-        this.pushLog({
-          type: 'passive', litany: def.id,
-          actorName: actor.unit_name, actorCell: actor.cellIndex,
-          targetName: c.unit_name, targetCell: c.cellIndex,
-          message: `${def.name} — ${c.unit_name} takes ${dealt}${dead ? ' 💀' : ''}`,
-        });
-      }
-    }
-
-    this.pushLog({
-      type: 'notice', litany: def.id,
-      message: r.message, message_ru: r.message_ru,
+  litanyFormationForSide(side) {
+    const units = this.combatants
+      .filter(c => c.side === side)
+      .map(c => ({
+        id: c.id,
+        unitId: this.litanyUnitId(c),
+        calling: c._calling,
+        alive: c.alive,
+        footprint: this.getFootprint(c),
+      }));
+    return matchAvailableLitany(units, {
+      frontCol: side === 'enemy' ? 0 : 1,
+      unlocked: this.litaniesUnlockedBySide[side],
     });
   }
 
+  applyLitanyBonuses() {
+    if (this._litanyBonusesApplied) return;
+    this._litanyBonusesApplied = true;
+    for (const side of ['player', 'enemy']) {
+      const match = this.litanyFormationForSide(side);
+      if (!match) continue;
+      this.activeLitanies[side] = match.def.id;
+      const allies = this.combatants.filter(c => c.side === side && c.alive);
+      const bonus = match.def.bonus || {};
+
+      if (bonus.hp_flat > 0) {
+        for (const c of allies) {
+          c.max_hp += bonus.hp_flat;
+          c.battle_hp = Math.min(c.max_hp, c.battle_hp + bonus.hp_flat);
+          c._base_max_hp = (c._base_max_hp ?? c.max_hp - bonus.hp_flat) + bonus.hp_flat;
+        }
+      }
+      if (bonus.armor_flat > 0) for (const c of allies) addArmor(c, bonus.armor_flat);
+      if (bonus.power_flat > 0) {
+        for (const c of allies) {
+          c.unit_data.action_power = (Number(c.unit_data.action_power ?? c.unit_data.action?.value) || 0) + bonus.power_flat;
+        }
+      }
+      for (const [school, amount] of Object.entries(bonus.resist_flat || {})) {
+        if (amount > 0) for (const c of allies) addResist(c, school, amount);
+      }
+      if (bonus.shield_flat > 0) {
+        for (const c of allies) {
+          this.grantShield(c, bonus.shield_flat,
+            { name: match.def.name, dispellable: false }, match.lead, { atStart: true });
+        }
+      }
+    }
+  }
   checkBark(triggerKey, owner, ctx = {}) {
     if (!owner) return;
     if (triggerKey === 'heal_low_hp') {

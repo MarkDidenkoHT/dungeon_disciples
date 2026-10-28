@@ -1845,6 +1845,9 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       // blueprints (data/items.js `requires`) without a second round-trip.
       progress: player?.progress || {},
       buildings: {
+        // The battle-prep preview uses this same server-side gate for advanced
+        // litanies. The opening formation bonus is always available.
+        litanies_unlocked: litaniesUnlocked(structRows[0]?.buildings_data),
         pools:                BUILDING_POOLS,
         slot_categories:      SLOT_CATEGORIES,
         slot_layers:          SLOT_LAYERS,
@@ -2977,9 +2980,11 @@ async function creditBattleDevotion(chat_id, battle_data, side = 'player') {
     if (!mine.length) return;
 
     const deeds = battle_data.deeds || {};
-    // `litaniesFired` is `<litany id>:<side>`, one entry per litany per side.
-    const litanies = (battle_data.litaniesFired || [])
-      .filter(k => String(k).endsWith(`:${side}`)).length;
+    // One matched formation grants one passive litany for this battle. Retain
+    // the old field as a fallback for fights saved before the passive system.
+    const litanies = battle_data.activeLitanies?.[side]
+      ? 1
+      : (battle_data.litaniesFired || []).filter(k => String(k).endsWith(`:${side}`)).length;
 
     const bumps = {};
     for (const u of mine) {
@@ -4819,8 +4824,9 @@ router.post('/battle/create', requireAuth, async (req, res) => {
     const enemies = getEncounter(region_id, level);
     if (!enemies.length) return res.status(400).json({ error: 'No enemies for this region/level' });
 
-    const engine = await BattleEngine.fromSetup(playerUnits, enemies, placement);
-    engine.litaniesUnlocked = await litaniesUnlockedFor(chat_id);
+    const engine = await BattleEngine.fromSetup(playerUnits, enemies, placement, {
+      litaniesUnlockedBySide: { player: await litaniesUnlockedFor(chat_id), enemy: true },
+    });
 
     // Spells are no longer chosen before the fight. They are cast IN battle by
     // the hero, paid for with power earned during it (POST /battle/cast), so
@@ -5263,14 +5269,16 @@ async function createPvpBattle(a, b, { battle_id = null, mode = null } = {}) {
     buildArmyFor(b.chat_id, b.formation.playerUnitIds),
   ]);
 
+  const [aLitaniesUnlocked, bLitaniesUnlocked] = await Promise.all([
+    litaniesUnlockedFor(a.chat_id),
+    litaniesUnlockedFor(b.chat_id),
+  ]);
   const engine = await BattleEngine.fromSetup(
     armyA,
     asEnemySide(armyB, b.formation.placement || {}),
     a.formation.placement || {},
+    { litaniesUnlockedBySide: { player: aLitaniesUnlocked, enemy: bLitaniesUnlocked } },
   );
-  // Only the 'player' side is gated, and in a duel that side is A's army. B
-  // fights from the 'enemy' side, which is ungated by design — see fireLitany.
-  engine.litaniesUnlocked = await litaniesUnlockedFor(a.chat_id);
 
   engine.firePendingRoundEffects();
   // Deliberately NO runAiTurns: both sides are people, and the first turn
@@ -5644,8 +5652,9 @@ router.post('/colossus/attack', requireAuth, async (req, res) => {
     const boss = COL.buildColossusBoss(mine.hp);
     if (!boss) return res.status(500).json({ error: 'Colossus unit is missing from data/units.js' });
 
-    const engine = await BattleEngine.fromSetup(playerUnits, cloneArmy([boss]), placement);
-    engine.litaniesUnlocked = await litaniesUnlockedFor(chat_id);
+    const engine = await BattleEngine.fromSetup(playerUnits, cloneArmy([boss]), placement, {
+      litaniesUnlockedBySide: { player: await litaniesUnlockedFor(chat_id), enemy: true },
+    });
     engine.firePendingRoundEffects();
     if (!engine.done) engine.runAiTurns();
 
@@ -5739,8 +5748,9 @@ async function createBotBattle(entry, { template, bandId, rules = null }) {
   const playerUnits = await buildArmyFor(entry.chat_id, entry.formation.playerUnitIds);
   const placement   = entry.formation.placement || {};
 
-  const engine = await BattleEngine.fromSetup(playerUnits, cloneArmy(army), placement);
-  engine.litaniesUnlocked = await litaniesUnlockedFor(entry.chat_id);
+  const engine = await BattleEngine.fromSetup(playerUnits, cloneArmy(army), placement, {
+    litaniesUnlockedBySide: { player: await litaniesUnlockedFor(entry.chat_id), enemy: true },
+  });
   engine.firePendingRoundEffects();
   // The bot may hold the first turn; it takes it now, as a region encounter does.
   if (!engine.done) engine.runAiTurns();
