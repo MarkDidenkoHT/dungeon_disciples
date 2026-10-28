@@ -2078,6 +2078,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   function applyPanelMode() {
     if (!ui?.battleInfo) return;
     const info = panelMode === 'info';
+    if (info && ui.battleLog.classList.contains('battle-log--expanded')) {
+      ui.battleLog.classList.remove('battle-log--expanded');
+      ui.screen.classList.remove('screen-battle--log-expanded');
+      ui.logToggle.textContent = '▲';
+      ui.logToggle.title = BT.expandLog[BL];
+      ui.logToggle.setAttribute('aria-label', BT.expandLog[BL]);
+      ui.logToggle.setAttribute('aria-expanded', 'false');
+    }
     ui.battleInfo.classList.toggle('hidden', !info);
     ui.battleLog.classList.toggle('hidden', info);
     ui.logToggle?.parentElement?.classList.toggle('hidden', info);
@@ -2212,9 +2220,24 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       ui.logToggle.setAttribute('aria-expanded', String(expanded));
     };
     ui.logToggle?.addEventListener('click', () => {
+      const targets = [ui.battleLog, ui.logToggle.parentElement].map(el => ({
+        el, rect: el.getBoundingClientRect(),
+      }));
       const expanded = ui.battleLog.classList.toggle('battle-log--expanded');
       ui.screen.classList.toggle('screen-battle--log-expanded', expanded);
       applyLogToggle();
+      targets.forEach(({ el, rect }) => {
+        const next = el.getBoundingClientRect();
+        if (!rect.width || !rect.height || !next.width || !next.height) return;
+        const dx = rect.left - next.left;
+        const dy = rect.top - next.top;
+        const sx = rect.width / next.width;
+        const sy = rect.height / next.height;
+        el.animate([
+          { transformOrigin: 'top left', transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
+          { transformOrigin: 'top left', transform: 'translate(0, 0) scale(1, 1)' },
+        ], { duration: 240, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      });
     });
     applyLogToggle();
     applyPanelMode();

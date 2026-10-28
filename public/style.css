@@ -4136,6 +4136,10 @@ button.cost-bar-item:active { transform: scale(0.9); }
   justify-content: center;
   border-top: 1px solid var(--border);
   background: var(--bg);
+  max-height: 22px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: max-height 220ms ease, opacity 180ms ease, transform 220ms ease, bottom 220ms ease;
 }
 .battle-log-toggle {
   background: none;
@@ -4162,6 +4166,10 @@ button.cost-bar-item:active { transform: scale(0.9); }
   display: flex;
   flex-direction: column;
   gap: 2px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: flex 240ms ease, height 240ms ease, min-height 240ms ease,
+    padding 240ms ease, opacity 180ms ease, transform 240ms ease;
 }
 
 .battle-log::-webkit-scrollbar { display: none; }
@@ -4191,10 +4199,34 @@ button.cost-bar-item:active { transform: scale(0.9); }
   padding: 8px 12px;
   overflow-y: auto;
   background: var(--bg);
+  opacity: 1;
+  transform: translateY(0);
+  transition: flex 240ms ease, min-height 240ms ease, padding 240ms ease,
+    opacity 180ms ease, transform 240ms ease;
 }
+.battle-log.hidden { display: flex !important; }
+.battle-info.hidden { display: block !important; }
 .battle-info.hidden,
-.battle-log.hidden,
-.battle-log-bar.hidden { display: none; }
+.battle-log.hidden {
+  flex: 0 0 0;
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  overflow: hidden;
+}
+.battle-log-bar.hidden {
+  display: flex !important;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(6px);
+  overflow: hidden;
+  pointer-events: none;
+  border-top-width: 0;
+  margin-top: 0;
+}
 
 .binfo { display: flex; flex-direction: column; gap: 10px; }
 .binfo-unit {
