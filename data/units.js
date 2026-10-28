@@ -4241,5 +4241,23 @@ const UNITS = {
   },
 };
 
+// Hero unit definitions use the `h_` id namespace, across every tier and
+// branch. Give them the same explicit tag used by boss definitions so screens
+// and filters can describe hero units without inferring it from portraits.
+function tagHeroUnits(node) {
+  for (const value of Object.values(node || {})) {
+    if (!value || typeof value !== 'object') continue;
+    if (typeof value.id === 'string') {
+      if (value.id.startsWith('h_')) {
+        value.tags ||= [];
+        if (!value.tags.includes('Hero')) value.tags.push('Hero');
+      }
+    } else {
+      tagHeroUnits(value);
+    }
+  }
+}
+tagHeroUnits(UNITS);
+
 export { UNITS, UNIT_ABILITIES };
 if (typeof module !== 'undefined') module.exports = { UNITS, UNIT_ABILITIES };
