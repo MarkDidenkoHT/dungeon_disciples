@@ -2220,6 +2220,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       ui.logToggle.setAttribute('aria-expanded', String(expanded));
     };
     ui.logToggle?.addEventListener('click', () => {
+      const wasExpanded = ui.battleLog.classList.contains('battle-log--expanded');
       const targets = [ui.battleLog, ui.logToggle.parentElement].map(el => ({
         el, rect: el.getBoundingClientRect(),
       }));
@@ -2229,6 +2230,37 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       targets.forEach(({ el, rect }) => {
         const next = el.getBoundingClientRect();
         if (!rect.width || !rect.height || !next.width || !next.height) return;
+        if (wasExpanded && el === ui.battleLog) {
+          // Keep the expanded panel anchored to the bottom while it shrinks.
+          // Moving the already-collapsed flex box only slides its short top
+          // section, which makes the rest of the log appear to disappear.
+          el.style.position = 'absolute';
+          el.style.transition = 'none';
+          el.style.left = '0';
+          el.style.right = '0';
+          el.style.bottom = '0';
+          el.style.zIndex = '19';
+          el.style.flex = 'none';
+          el.style.height = `${rect.height}px`;
+          el.getBoundingClientRect();
+          el.style.transition = 'height 560ms cubic-bezier(.45, 0, .25, 1)';
+          el.style.height = `${next.height}px`;
+          const clean = () => {
+            el.removeEventListener('transitionend', onEnd);
+            el.style.position = '';
+            el.style.left = '';
+            el.style.right = '';
+            el.style.bottom = '';
+            el.style.zIndex = '';
+            el.style.flex = '';
+            el.style.height = '';
+            el.style.transition = '';
+          };
+          const onEnd = event => { if (event.propertyName === 'height') clean(); };
+          el.addEventListener('transitionend', onEnd);
+          window.setTimeout(clean, 700);
+          return;
+        }
         const dx = rect.left - next.left;
         const dy = rect.top - next.top;
         el.animate([
