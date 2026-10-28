@@ -289,8 +289,8 @@ const BT = {
                    ru: (a, t, v) => `${a} лечит ${t} на <span class="log-val-heal">${v}</span>` },
   logHit:        { en: (a, t, v) => `${a} hit ${t} for <span class="log-val">${v}</span>`,
                    ru: (a, t, v) => `${a} бьёт ${t} на <span class="log-val">${v}</span>` },
-  logEmpower:    { en: (a, t, v) => `${a} empowers ${t}: <span class="log-val-shield">+${v}%</span> action power on the next action`,
-                   ru: (a, t, v) => `${a} усиливает ${t}: <span class="log-val-shield">+${v}%</span> к силе следующего действия` },
+  logEmpower:    { en: (a, t, v) => `${a} empowers ${t}: <span class="log-val-shield">+${v}</span> action power on the next action`,
+                   ru: (a, t, v) => `${a} усиливает ${t}: <span class="log-val-shield">+${v}</span> к силе следующего действия` },
   logResisted:   { en: (p, r) => ` <span class="log-resisted">(${p} power, ${r} resisted)</span>`,
                    ru: (p, r) => ` <span class="log-resisted">(${p} силы, ${r} поглощено)</span>` },
   // Was ALSO called logPower, silently overwriting the entry above it — so the
@@ -2241,8 +2241,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // direction asked for — 0 in the other direction so only one of the two
   // icons is ever active.
   function dmgMultPct(occ, dir) {
-    const m = (Number(st(occ, '_dmg_mult') ?? 1) || 1) *
-              (1 + (Number(st(occ, '_empower_bonus_pct')) || 0) / 100);
+    const m = Number(st(occ, '_dmg_mult') ?? 1) || 1;
     if (dir === 'up')   return m > 1 ? Math.round((m - 1) * 100) : 0;
     return m < 1 ? Math.round((1 - m) * 100) : 0;
   }
@@ -2287,7 +2286,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // it actually moves damage by and split across the two tables by direction:
     // above 1 it is a buff, below 1 a debuff.
     { key: 'empowered',   icon: 'blood_frenzy.jpg',  en: 'Empowered', ru: 'Усиление',   n: c => dmgMultPct(c, 'up'),   unit: 'pct' },
-    { key: 'empower-action', icon: 'blood_frenzy.jpg', en: 'Empowered next action', ru: 'Усилено следующее действие', n: c => num(c, '_empower_bonus_pct'), unit: 'pct' },
+    { key: 'empower-action', icon: 'blood_frenzy.jpg', en: 'Empowered next action', ru: 'Усилено следующее действие', n: c => num(c, '_empower_bonus_flat'), unit: 'power' },
     // Max HP bought with oaths at the Temple (data/callings.js, block 5). Not a
     // battle effect at all — it is already inside max_hp before the fight
     // starts — but it is the only thing an oath buys, and folded into the HP bar

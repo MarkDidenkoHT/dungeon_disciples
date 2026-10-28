@@ -980,7 +980,7 @@ class BattleEngine {
   }
   clearEmpower(unit) {
     if (!unit) return;
-    unit._empower_bonus_pct = 0;
+    unit._empower_bonus_flat = 0;
   }
   getValidTargets(actor, forAbility = false) {
     if (forAbility) {
@@ -1096,7 +1096,7 @@ class BattleEngine {
     // Heal equals the unit's action_power — no hidden multiplier. (Previously
     // ×1.3, which made a power-10 healer restore 13 and read as a bug.)
     const power = data.action_power ?? data.action?.value ?? 15;
-    return Math.ceil(power * (1 + (Number(actor._empower_bonus_pct) || 0) / 100));
+    return Math.ceil(power + (Number(actor._empower_bonus_flat) || 0));
   }
   // ── Battle Fatigue (see BATTLE_FATIGUE) ─────────────────────────────────────
   // Current healing-reduction percentage from fatigue (0 until it kicks in).
@@ -1314,9 +1314,9 @@ class BattleEngine {
     // reason `sacrifice` is above: the AI drives every turn through 'attack'.
     const poolAction = this.getActionKey(actor);
     if (poolAction === 'shield' || poolAction === 'decay') {
-      actor._empower_used_this_action = (actor._empower_bonus_pct ?? 0) > 0;
+      actor._empower_used_this_action = (actor._empower_bonus_flat ?? 0) > 0;
       const basePower = Number(actor.unit_data?.action_power ?? actor.unit_data?.action?.value ?? 0);
-      const power     = Math.ceil(basePower * (1 + (Number(actor._empower_bonus_pct) || 0) / 100));
+      const power     = Math.ceil(basePower + (Number(actor._empower_bonus_flat) || 0));
       const maxHits = Math.max(1, Number(actor.unit_data?.targets ?? 1));
       const list    = maxHits > 1 ? this.getValidTargets(actor).slice(0, maxHits) : [target];
       const label   = { name: poolAction === 'shield' ? 'Shield' : 'Decay', dispellable: true };
@@ -1338,22 +1338,23 @@ class BattleEngine {
     }
 
     if (poolAction === 'empower') {
-      const previousPct = Number(target._empower_bonus_pct) || 0;
-      if (previousPct > 0) this.clearEmpower(target);
-      const bonusPct = Math.max(0, Number(actor.unit_data?.action_power ?? actor.unit_data?.action?.value ?? 0)) * 10;
-      target._empower_bonus_pct = bonusPct;
-      const targetPower = Math.max(0, Number(target.unit_data?.action_power ?? target.unit_data?.action?.value ?? 0));
-      this.creditDeed(actor, Math.floor(targetPower * bonusPct / 100));
+      const previousBonus = Number(target._empower_bonus_flat) || 0;
+      if (previousBonus > 0) this.clearEmpower(target);
+      const baseBonus = Math.max(0, Number(actor.unit_data?.action_power ?? actor.unit_data?.action?.value ?? 0));
+      const ampPct = this.buffAmpPctFor(actor.side);
+      const bonusFlat = Math.max(0, baseBonus + Math.trunc(baseBonus * ampPct / 100));
+      target._empower_bonus_flat = bonusFlat;
+      this.creditDeed(actor, bonusFlat);
       this.pushLog({
         type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
         targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
         actionKind: 'empower',
-        value: bonusPct,
-        message: `${actor.unit_name} empowers ${target.unit_name} — +${bonusPct}% action power on the next action`,
+        value: bonusFlat,
+        message: `${actor.unit_name} empowers ${target.unit_name} — +${bonusFlat} action power on the next action`,
       });
       // Empower is a support action too: let pool-trigger passives such as
       // Dispel remove an ally's negative effects when the buff is applied.
-      this.fireTrigger('on_pool', { actor, target, dmg: bonusPct, dying: null });
+      this.fireTrigger('on_pool', { actor, target, dmg: bonusFlat, dying: null });
       if (actor.id !== target.id) {
         this.fireTrigger('on_receive_ally_buff', { actor, target, dmg: 0, dying: null });
       }
@@ -1361,7 +1362,7 @@ class BattleEngine {
       return this.afterAction(actor);
     }
 
-    actor._empower_used_this_action = (actor._empower_bonus_pct ?? 0) > 0;
+    actor._empower_used_this_action = (actor._empower_bonus_flat ?? 0) > 0;
 
     if (this.isHealer(actor) || dualActionHeal) {
       if (actor._mothers_kiss) {
@@ -1394,7 +1395,7 @@ class BattleEngine {
       // runs per-target damage and all the on-hit machinery.
       const maxTargets = Math.max(1, Number(actor.unit_data?.targets ?? 1));
       if (maxTargets > 1) {
-        actor._empower_used_this_action = (actor._empower_bonus_pct ?? 0) > 0;
+        actor._empower_used_this_action = (actor._empower_bonus_flat ?? 0) > 0;
         const list = this.getValidTargets(actor).slice(0, maxTargets);
         // A full-field sweep used to drink a full drain off every unit it
         // touched: Lifesteal, Communion and Leech are per-hit, so a targets:6
@@ -1445,7 +1446,7 @@ class BattleEngine {
           }
         }
       }
-      actor._empower_used_this_action = (actor._empower_bonus_pct ?? 0) > 0;
+      actor._empower_used_this_action = (actor._empower_bonus_flat ?? 0) > 0;
       // Dodge — every Nth physical attack against this unit is avoided entirely.
       if ((actor.unit_data?.damage_source ?? 'physical') === 'physical') {
         const dodgeDef = this.resolveAllPassiveDefs(target).find(d => d.params?.dodge_every != null);
@@ -2086,7 +2087,7 @@ class BattleEngine {
       actor.acted_this_round = true;
       return this.afterAction(actor);
     }
-    actor._empower_used_this_action = (actor._empower_bonus_pct ?? 0) > 0;
+    actor._empower_used_this_action = (actor._empower_bonus_flat ?? 0) > 0;
     const raw    = this.calcHeal(actor);
     const factor = 1 - Math.min(100, (target._infect_stacks ?? 0) * 10) / 100;
     const afterDecay = this.absorbWithDecay(target, Math.floor(raw * factor));
@@ -3596,7 +3597,7 @@ class BattleEngine {
           _debuff_reduction:   c._debuff_reduction,
           _infect_stacks:      c._infect_stacks,
           _dmg_mult:           c._dmg_mult,
-          _empower_bonus_pct:  c._empower_bonus_pct ?? 0,
+          _empower_bonus_flat: c._empower_bonus_flat ?? 0,
           _fear_dmg_reduction: c._fear_dmg_reduction,
           // Derived, not stored: the ward reads the passive and the living ally
           // count every time it is asked, so it is computed here for the
@@ -3752,7 +3753,7 @@ class BattleEngine {
       c._debuff_reduction  = b._debuff_reduction  ?? 0;
       c._infect_stacks = b._infect_stacks ?? Math.round((b._healing_reduction ?? 0) / 10);
       c._dmg_mult          = b._dmg_mult          ?? 1;
-      c._empower_bonus_pct = b._empower_bonus_pct ?? 0;
+      c._empower_bonus_flat = b._empower_bonus_flat ?? 0;
       c._fear_dmg_reduction = b._fear_dmg_reduction ?? 0;
       c._terror_reduction  = b._terror_reduction  ?? 0;
       c._terror_rounds     = b._terror_rounds     ?? 0;

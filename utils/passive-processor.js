@@ -1621,7 +1621,8 @@ function wardReductionFor(attacker, target, damageSource, UNIT_ABILITIES, engine
 }
 function calcDamageWithPassives(actor, target, UNIT_ABILITIES, engine) {
   const data = actor.unit_data || actor;
-  let power = data.action_power ?? data.action?.value ?? 12;
+  let power = (data.action_power ?? data.action?.value ?? 12)
+    + (Number(actor._empower_bonus_flat) || 0);
   const defs = resolvePassiveDefs(actor, UNIT_ABILITIES);
   const p = Object.assign({}, ...defs.map(d => d.params || {}));
   if (p.execute_bonus_pct != null && p.execute_threshold_pct != null) {
@@ -1639,8 +1640,7 @@ function calcDamageWithPassives(actor, target, UNIT_ABILITIES, engine) {
     const bonus = pctFor(p, engine, actor.side, 'vs_tag_dmg_bonus_pct', 'vs_tag_dmg_bonus_pct_per_tag');
     if (bonus) power = Math.floor(power * (1 + bonus / 100));
   }
-  const empowerMultiplier = 1 + (Number(actor._empower_bonus_pct) || 0) / 100;
-  const rawDmg = Math.floor(power * (actor._dmg_mult ?? 1) * empowerMultiplier);
+  const rawDmg = Math.floor(power * (actor._dmg_mult ?? 1));
   const damageSource = data.damage_source ?? 'physical';
   const resistances = target.unit_data?.resistances ?? target.resistances ?? {};
   let dmg = rawDmg;
