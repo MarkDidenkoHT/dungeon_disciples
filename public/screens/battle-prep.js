@@ -263,13 +263,14 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
           </span>
         </div>
 
-        <button id="ready-btn" class="battle-prep-enter-btn${isPvp ? ' battle-prep-enter-btn--queue' : ''}"
+        <button id="ready-btn" class="battle-prep-enter-btn${isPvp ? ' battle-prep-enter-btn--pvp' : ''}"
                 disabled aria-label="${isPvpInvite ? BP_TEXT.acceptChallenge[L] : isPvp ? BP_TEXT.enterQueue[L] : BP_TEXT.toBattle[L]}">
-          ${isPvp
-            ? `<span class="battle-prep-queue-label">${isPvpInvite ? BP_TEXT.acceptChallenge[L] : BP_TEXT.enterQueue[L]}</span>`
-            : `<img src="${assetUrl(`/assets/icons/ui/to_battle.png`)}" alt="${BP_TEXT.toBattle[L]}"
-                    onerror="this.replaceWith(document.createTextNode('⚔'))">`}
+          <img src="${assetUrl('/assets/icons/ui/to_battle.png')}"
+               alt="${isPvpInvite ? BP_TEXT.acceptChallenge[L] : isPvp ? BP_TEXT.enterQueue[L] : BP_TEXT.toBattle[L]}"
+               onerror="this.replaceWith(document.createTextNode('⚔'))">
         </button>
+
+        ${mode === 'pvp_quick' ? `<button id="pvp-challenge-link" class="battle-prep-enter-btn battle-prep-enter-btn--pvp battle-prep-enter-btn--ready pvp-challenge-link-btn" type="button" aria-label="${BP_TEXT.createChallenge[L]}" title="${BP_TEXT.createChallenge[L]}"><img src="${assetUrl('/assets/icons/ui/to_battle_quick.png')}" alt="${BP_TEXT.createChallenge[L]}" onerror="this.replaceWith(document.createTextNode('⚡'))"></button>` : ''}
 
         ${isPvp || isColossus ? '' : `
         <button id="quick-battle-btn" class="battle-prep-enter-btn battle-prep-enter-btn--quick"
@@ -286,8 +287,6 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
           </span>
         </div>
       </div>
-
-      ${mode === 'pvp_quick' ? `<button id="pvp-challenge-link" class="pvp-challenge-link-btn" type="button">${BP_TEXT.createChallenge[L]}</button>` : ''}
 
       ${isPvp || isColossus ? '' : `
       <div class="prep-level-slider" id="prep-level-slider">

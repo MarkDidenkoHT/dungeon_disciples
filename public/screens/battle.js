@@ -3412,6 +3412,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         if (!newLogs.length) {
           // State update only, no new log entries - just reconcile state
           state = { ...data.state, log: state.log || [] };
+          // A PvP concession resolves the battle without appending a combat
+          // log entry. Handle the terminal state here too; otherwise the board
+          // only appears to stop responding until a reload enters the result
+          // screen from the saved battle snapshot.
+          if (data.done) {
+            await renderResult(data.winner);
+            return true;
+          }
           render();
           return true;
         }
