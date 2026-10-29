@@ -264,7 +264,7 @@ const UNITS = {
       hp: 45, armor: 0, initiative: 40,
       resistances: { air: 0, fire: 40, life: 0, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 12, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 12, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
       passive: 'fellfire 1', ability: null,
       building_slot: 'slot_0', xp: 100
     },
@@ -278,7 +278,7 @@ const UNITS = {
       hp: 55, armor: 0, initiative: 40,
       resistances: { air: 0, fire: 40, life: 0, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
       passive: ['fellfire 1', 'dissipate 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -292,7 +292,7 @@ const UNITS = {
       hp: 65, armor: 0, initiative: 40,
       resistances: { air: 0, fire: 40, life: 0, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
       passive: ['fellfire 2', 'dissipate 1'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
@@ -306,7 +306,7 @@ const UNITS = {
       hp: 75, armor: 0, initiative: 40,
       resistances: { air: 0, fire: 40, life: 0, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
       passive: ['fellfire 2', 'dissipate 1', 'clear_shot 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -320,7 +320,7 @@ const UNITS = {
       hp: 75, armor: 0, initiative: 40,
       resistances: { air: 0, fire: 40, life: 0, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
       passive: ['fellfire 2', 'dissipate 2'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -334,7 +334,7 @@ const UNITS = {
       hp: 50, armor: 5, initiative: 40,
       resistances: { air: 0, fire: 40, life: 0, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 16, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
       passive: ['fellfire 1', 'find_weakness 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -348,7 +348,7 @@ const UNITS = {
       hp: 55, armor: 10, initiative: 40,
       resistances: { air: 0, fire: 40, life: 0, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 20, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
       passive: ['fellfire 1', 'find_weakness 2'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
@@ -362,7 +362,7 @@ const UNITS = {
       hp: 65, armor: 10, initiative: 40,
       resistances: { air: 0, fire: 40, life: 0, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
       passive: ['fellfire 1', 'find_weakness 2', 'execute 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -376,7 +376,7 @@ const UNITS = {
       hp: 60, armor: 15, initiative: 40,
       resistances: { air: 0, fire: 40, life: 0, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 24, action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
       passive: ['fellfire 1', 'find_weakness 2', 'recuperate 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -572,7 +572,7 @@ const UNITS = {
       hp: 50, armor: 30, initiative: 50,
       resistances: { air: 10, fire: 10, life: 10, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 20, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+      damage_source: 'physical', action_power: 20, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw', action_sfx: 'throw_rock',
       xp: 230, passive: ['unbreakable 1', 'aegis 1'], ability: 'stone_form 1',
     },
     stone_gargoyle: {
@@ -585,7 +585,7 @@ const UNITS = {
       hp: 70, armor: 35, initiative: 50,
       resistances: { air: 20, fire: 20, life: 20, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 28, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+      damage_source: 'physical', action_power: 28, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw', action_sfx: 'throw_rock',
       xp: 1250, passive: ['unbreakable 2', 'aegis 1', 'resist_aura_death 1'], ability: 'stone_form 1',
     },
     onyx_gargoyle: {
@@ -598,7 +598,7 @@ const UNITS = {
       hp: 75, armor: 40, initiative: 50,
       resistances: { air: 25, fire: 25, life: 25, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 34, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+      damage_source: 'physical', action_power: 34, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw', action_sfx: 'throw_rock',
       xp: 4055, passive: ['unbreakable 2', 'aegis 1', 'resist_aura_death 2'], ability: 'stone_form 2',
     },
     obsidian_gargoyle: {
@@ -611,7 +611,7 @@ const UNITS = {
       hp: 90, armor: 45, initiative: 50,
       resistances: { air: 30, fire: 30, life: 30, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'physical', action_power: 40, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+      damage_source: 'physical', action_power: 40, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw', action_sfx: 'throw_rock',
       xp: 7280, passive: ['unbreakable 2', 'aegis 2', 'resist_aura_death 2'], ability: 'stone_form 2',
     },
     quartz_gargoyle: {
@@ -624,7 +624,7 @@ const UNITS = {
       hp: 70, armor: 30, initiative: 50,
       resistances: { air: 10, fire: 10, life: 10, death: 20, cold: 20, nature: 20 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'physical', action_power: 12, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+      damage_source: 'physical', action_power: 12, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw', action_sfx: 'throw_rock',
       xp: 1250, passive: ['unbreakable 2', 'aegis 1', 'resist_aura_cold 1'], ability: 'stone_form 1',
     },
     azurite_gargoyle: {
@@ -637,7 +637,7 @@ const UNITS = {
       hp: 85, armor: 30, initiative: 50,
       resistances: { air: 10, fire: 10, life: 10, death: 25, cold: 25, nature: 25 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'physical', action_power: 16, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+      damage_source: 'physical', action_power: 16, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw', action_sfx: 'throw_rock',
       xp: 4055, passive: ['unbreakable 2', 'aegis 2', 'resist_aura_cold 1'], ability: 'stone_form 2',
     },
     malachite_gargoyle: {
@@ -650,7 +650,7 @@ const UNITS = {
       hp: 110, armor: 30, initiative: 50,
       resistances: { air: 10, fire: 10, life: 10, death: 30, cold: 30, nature: 30 },
       action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-      damage_source: 'physical', action_power: 20, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+      damage_source: 'physical', action_power: 20, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw', action_sfx: 'throw_rock',
       xp: 7280, passive: ['unbreakable 2', 'aegis 2', 'resist_aura_cold 2'], ability: 'stone_form 2',
     },
     alabaster_gargoyle: {
@@ -2019,7 +2019,7 @@ const UNITS = {
       hp: 50, armor: 10, initiative: 25,
       resistances: { air: 5, fire: 5, life: 40, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 10, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 10, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       xp: 480, passive: ['aegis 1', 'iron_will 1'], ability: 'sanctuary 1',
     },
     mithrails_champion: {
@@ -2058,7 +2058,7 @@ const UNITS = {
       hp: 55, armor: 20, initiative: 25,
       resistances: { air: 10, fire: 10, life: 40, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 12, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 12, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       xp: 1560, passive: ['aegis 1', 'iron_will 1', 'unbreakable 1'], ability: 'sanctuary 2',
     },
     mithrails_paragon: {
@@ -2071,7 +2071,7 @@ const UNITS = {
       hp: 65, armor: 25, initiative: 25,
       resistances: { air: 15, fire: 15, life: 40, death: 15, cold: 15, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 14, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 14, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       xp: 4005, passive: ['aegis 1', 'iron_will 2', 'unbreakable 1'], ability: 'sanctuary 2',
     },
     priest: {
@@ -4233,7 +4233,7 @@ const UNITS = {
         hp: 10000, armor: 25, initiative: 40,
         resistances: { air: 25, fire: 25, life: 40, death: 15, cold: 25, nature: 25 },
         action: 'attack', target_type: 'enemy', targets: 6, range: 3,
-        damage_source: 'physical', action_power: 14, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw',
+        damage_source: 'physical', action_power: 14, action_icon: 'throw_stone.jpg', action_animation: 'stone_throw', action_sfx: 'throw_rock',
         xp: 0, passive: ['unbreakable 2', 'stoicism 1'], ability: null,
         spell_cycle: true,
       },
