@@ -2221,6 +2221,19 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     };
     ui.logToggle?.addEventListener('click', () => {
       const wasExpanded = ui.battleLog.classList.contains('battle-log--expanded');
+      if (!wasExpanded) {
+        // A collapsed log stays pinned to the exact flex-layout bounds reached
+        // by the previous collapse. Restore normal flow before expanding it.
+        ui.battleLog.style.position = '';
+        ui.battleLog.style.left = '';
+        ui.battleLog.style.right = '';
+        ui.battleLog.style.top = '';
+        ui.battleLog.style.bottom = '';
+        ui.battleLog.style.zIndex = '';
+        ui.battleLog.style.flex = '';
+        ui.battleLog.style.height = '';
+        ui.battleLog.style.transition = '';
+      }
       const targets = [ui.battleLog, ui.logToggle.parentElement].map(el => ({
         el, rect: el.getBoundingClientRect(),
       }));
@@ -2258,13 +2271,16 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             { top: `${toTop}px`, height: `${collapsedRect.height}px` },
           ], { duration: 560, easing: 'cubic-bezier(.45, 0, .25, 1)' });
           const clean = () => {
-            el.style.position = '';
-            el.style.left = '';
-            el.style.right = '';
+            // Keep the panel at the animated endpoint. Returning it to flex
+            // flow here causes a second, visible snap after the collapse.
+            el.style.position = 'absolute';
+            el.style.left = '0';
+            el.style.right = '0';
             el.style.top = '';
-            el.style.zIndex = '';
-            el.style.flex = '';
-            el.style.height = '';
+            el.style.bottom = '0';
+            el.style.zIndex = '19';
+            el.style.flex = 'none';
+            el.style.height = `${collapsedRect.height}px`;
             el.style.transition = '';
           };
           animation.onfinish = clean;
