@@ -322,7 +322,7 @@
             "banneret_hall"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Life": 30,
             "Crystals_Air": 8
           }
@@ -338,7 +338,7 @@
             "gonfalonier_hall"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Air": 12,
             "Crystals_Nature": 12
@@ -372,7 +372,7 @@
             "blade_guard_hall"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Life": 30,
             "Crystals_Nature": 8
           }
@@ -388,7 +388,7 @@
             "sniper_nest"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Air": 12,
             "Crystals_Frost": 12
@@ -417,7 +417,7 @@
             "vindicator_barracks"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Death": 12,
             "Crystals_Frost": 12
@@ -446,7 +446,7 @@
             "blade_master_hall"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Fire": 12,
             "Crystals_Air": 12
@@ -478,7 +478,7 @@
             "knights_stables"
           ],
           "cost": {
-            "gold": 65,
+            "gold": 90,
             "Crystals_Life": 45,
             "Crystals_Frost": 12,
             "Crystals_Nature": 12
@@ -495,7 +495,7 @@
             "retributor_stables"
           ],
           "cost": {
-            "gold": 94,
+            "gold": 144,
             "Crystals_Life": 72,
             "Crystals_Frost": 18,
             "Crystals_Nature": 18
@@ -542,7 +542,7 @@
             "golden_lion_lab"
           ],
           "cost": {
-            "gold": 65,
+            "gold": 90,
             "Crystals_Life": 45,
             "Crystals_Death": 12,
             "Crystals_Frost": 12
@@ -559,7 +559,7 @@
             "golden_lion_den"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Air": 12,
             "Crystals_Frost": 12
@@ -591,7 +591,7 @@
             "siege_dreadnought_workshop"
           ],
           "cost": {
-            "gold": 65,
+            "gold": 90,
             "Crystals_Life": 45,
             "Crystals_Fire": 12,
             "Crystals_Death": 12
@@ -608,7 +608,7 @@
             "dreadnought_foundry"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Fire": 12,
             "Crystals_Air": 12
@@ -658,7 +658,7 @@
             "mechanic_den_2"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Life": 30,
             "Crystals_Fire": 8,
             "Crystals_Nature": 8
@@ -676,7 +676,7 @@
             "armsmaster_hall"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Fire": 12,
             "Crystals_Nature": 12
@@ -724,7 +724,7 @@
             "flamethrower_post"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Life": 30,
             "Crystals_Fire": 8,
             "Crystals_Nature": 8
@@ -741,7 +741,7 @@
             "devastator_battery"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Fire": 12,
             "Crystals_Nature": 12
@@ -773,7 +773,7 @@
             "flamethrower_foundry"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Fire": 12,
             "Crystals_Nature": 12
@@ -823,7 +823,7 @@
             "mithrails_warden_keep"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Life": 30,
             "Crystals_Death": 8,
             "Crystals_Nature": 8
@@ -840,7 +840,7 @@
             "mithrails_paragon_keep"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Air": 12,
             "Crystals_Frost": 12
@@ -887,7 +887,7 @@
             "mithrails_exemplar_keep"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Air": 12,
             "Crystals_Fire": 12
@@ -905,7 +905,7 @@
             "seraphic_shrine"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Life": 30,
             "Crystals_Nature": 8
           }
@@ -921,7 +921,7 @@
             "high_priest_shrine"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Fire": 12,
             "Crystals_Nature": 12
@@ -953,7 +953,7 @@
             "seraph_shrine"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Air": 12,
             "Crystals_Nature": 12
@@ -1002,7 +1002,7 @@
             "mithrails_will_temple"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Life": 30,
             "Crystals_Air": 8,
             "Crystals_Fire": 8
@@ -1019,7 +1019,7 @@
             "mithrails_verdict_temple"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Air": 12,
             "Crystals_Fire": 12
@@ -1066,7 +1066,7 @@
             "battle_sister_chapel"
           ],
           "cost": {
-            "gold": 75
+            "gold": 100
           }
         },
         {
@@ -1080,7 +1080,7 @@
             "sister_superior_chapel"
           ],
           "cost": {
-            "gold": 150
+            "gold": 200
           }
         },
         {
@@ -1106,7 +1106,7 @@
             "battle_guardian_chapel"
           ],
           "cost": {
-            "gold": 75
+            "gold": 100
           }
         },
         {
@@ -1120,7 +1120,7 @@
             "sister_protector_chapel"
           ],
           "cost": {
-            "gold": 150
+            "gold": 200
           }
         },
         {
@@ -1166,7 +1166,7 @@
             "cinder_forge"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Life": 30,
             "Crystals_Fire": 8,
             "Crystals_Air": 8
@@ -1183,7 +1183,7 @@
             "ash_priest_sanctum"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Fire": 12,
             "Crystals_Air": 12
@@ -1215,7 +1215,7 @@
             "dragon_knight_forge"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Fire": 12,
             "Crystals_Air": 12
@@ -1247,7 +1247,7 @@
             "cryomancer_tower"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Life": 30,
             "Crystals_Frost": 8,
             "Crystals_Air": 8
@@ -1264,7 +1264,7 @@
             "winter_magus_tower"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Fire": 12,
             "Crystals_Frost": 12
@@ -1297,7 +1297,7 @@
             "aegis_bastion"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Life": 30,
             "Crystals_Air": 8
           }
@@ -1313,7 +1313,7 @@
             "archon_sanctum"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Air": 12,
             "Crystals_Frost": 12
@@ -1345,7 +1345,7 @@
             "aegis_citadel"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Life": 48,
             "Crystals_Air": 12,
             "Crystals_Frost": 12
@@ -2016,7 +2016,7 @@
             "praetor_pit"
           ],
           "cost": {
-            "gold": 65,
+            "gold": 90,
             "Crystals_Fire": 45,
             "Crystals_Air": 12,
             "Crystals_Death": 12
@@ -2034,7 +2034,7 @@
             "decimator_pit"
           ],
           "cost": {
-            "gold": 94,
+            "gold": 144,
             "Crystals_Fire": 72,
             "Crystals_Air": 18,
             "Crystals_Death": 18
@@ -2080,7 +2080,7 @@
             "chanter_chamber"
           ],
           "cost": {
-            "gold": 65,
+            "gold": 90,
             "Crystals_Fire": 45,
             "Crystals_Death": 12
           }
@@ -2097,7 +2097,7 @@
             "doomchanter_chamber"
           ],
           "cost": {
-            "gold": 94,
+            "gold": 144,
             "Crystals_Fire": 72,
             "Crystals_Death": 18
           }
@@ -2157,7 +2157,7 @@
             "pyre_watch"
           ],
           "cost": {
-            "gold": 65,
+            "gold": 90,
             "Crystals_Fire": 45,
             "Crystals_Life": 12
           }
@@ -2174,7 +2174,7 @@
             "pyre_choir_hall"
           ],
           "cost": {
-            "gold": 94,
+            "gold": 144,
             "Crystals_Fire": 72,
             "Crystals_Life": 18,
             "Crystals_Air": 12
@@ -2240,7 +2240,7 @@
             "onyx_gargoyle_den"
           ],
           "cost": {
-            "gold": 65,
+            "gold": 90,
             "Crystals_Fire": 45,
             "Crystals_Air": 12,
             "Crystals_Life": 12
@@ -2257,7 +2257,7 @@
             "obsidian_gargoyle_den"
           ],
           "cost": {
-            "gold": 94,
+            "gold": 144,
             "Crystals_Fire": 72,
             "Crystals_Air": 18,
             "Crystals_Death": 18
@@ -2289,7 +2289,7 @@
             "azurite_gargoyle_den"
           ],
           "cost": {
-            "gold": 65,
+            "gold": 90,
             "Crystals_Fire": 45,
             "Crystals_Death": 12,
             "Crystals_Frost": 12
@@ -2307,7 +2307,7 @@
             "alabaster_gargoyle_den"
           ],
           "cost": {
-            "gold": 94,
+            "gold": 144,
             "Crystals_Fire": 72,
             "Crystals_Frost": 18,
             "Crystals_Death": 18
@@ -2354,7 +2354,7 @@
             "slagstone_gargoyle_den"
           ],
           "cost": {
-            "gold": 75
+            "gold": 100
           }
         },
         {
@@ -2368,7 +2368,7 @@
             "magma_gargoyle_den"
           ],
           "cost": {
-            "gold": 150
+            "gold": 200
           }
         },
         {
@@ -2411,7 +2411,7 @@
             "pain_projector_den"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Fire": 30,
             "Crystals_Life": 8,
             "Crystals_Death": 8
@@ -2428,7 +2428,7 @@
             "broken_vessel_altar"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Fire": 48,
             "Crystals_Death": 12
           }
@@ -2459,7 +2459,7 @@
             "agony_engine_den"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Fire": 48,
             "Crystals_Death": 12
           }
@@ -2507,7 +2507,7 @@
             "nether_lord_hall"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Fire": 30,
             "Crystals_Life": 8
           }
@@ -2523,7 +2523,7 @@
             "nether_sovereign_hall"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Fire": 48,
             "Crystals_Life": 12
           }
@@ -2553,7 +2553,7 @@
             "shrouded_peer_hall"
           ],
           "cost": {
-            "gold": 75
+            "gold": 100
           }
         },
         {
@@ -2568,7 +2568,7 @@
             "dread_herald_hall"
           ],
           "cost": {
-            "gold": 150
+            "gold": 200
           }
         },
         {
@@ -2623,7 +2623,7 @@
             "inferno_spawn_pit"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Fire": 30,
             "Crystals_Frost": 8
           }
@@ -2639,7 +2639,7 @@
             "inferno_scion_crucible"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Fire": 48,
             "Crystals_Life": 12
           }
@@ -2670,7 +2670,7 @@
             "cinder_spawn_pit"
           ],
           "cost": {
-            "gold": 75
+            "gold": 100
           }
         },
         {
@@ -2684,7 +2684,7 @@
             "pyroclast_spawn_pit"
           ],
           "cost": {
-            "gold": 150
+            "gold": 200
           }
         },
         {
@@ -2727,7 +2727,7 @@
             "choir_ascendant_shrine"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Fire": 30,
             "Crystals_Life": 8,
             "Crystals_Death": 8
@@ -2744,7 +2744,7 @@
             "choir_exalted_shrine"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Fire": 48,
             "Crystals_Life": 12,
             "Crystals_Death": 12
@@ -2776,7 +2776,7 @@
             "ash_precentor_chancel"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Fire": 30,
             "Crystals_Life": 12,
             "Crystals_Air": 5
@@ -2793,7 +2793,7 @@
             "ash_hierophant_chancel"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Fire": 48,
             "Crystals_Life": 18,
             "Crystals_Air": 8
@@ -3466,7 +3466,7 @@
             "plague_knight_barrow"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Death": 30,
             "Crystals_Air": 8,
             "Crystals_Frost": 8
@@ -3483,7 +3483,7 @@
             "plague_knight_mausoleum"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Death": 48,
             "Crystals_Nature": 12,
             "Crystals_Air": 12
@@ -3515,7 +3515,7 @@
             "abomination_vat"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Death": 30,
             "Crystals_Air": 8,
             "Crystals_Frost": 8
@@ -3532,7 +3532,7 @@
             "abomination_crucible"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Death": 48,
             "Crystals_Air": 12,
             "Crystals_Frost": 12
@@ -3564,7 +3564,7 @@
             "blightwalker_mire"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Death": 30,
             "Crystals_Air": 8,
             "Crystals_Nature": 8
@@ -3581,7 +3581,7 @@
             "blightwalker_fen"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Death": 48,
             "Crystals_Air": 12,
             "Crystals_Nature": 12
@@ -3629,7 +3629,7 @@
             "chosen_chapel"
           ],
           "cost": {
-            "gold": 65,
+            "gold": 90,
             "Crystals_Death": 45,
             "Crystals_Nature": 12
           }
@@ -3646,7 +3646,7 @@
             "consecrated_sanctum"
           ],
           "cost": {
-            "gold": 94,
+            "gold": 144,
             "Crystals_Death": 72,
             "Crystals_Life": 18
           }
@@ -3711,7 +3711,7 @@
             "blood_knight_crypt"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Death": 30,
             "Crystals_Air": 8
           }
@@ -3727,7 +3727,7 @@
             "crimson_archon_tower"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Death": 48,
             "Crystals_Nature": 12
           }
@@ -3743,7 +3743,7 @@
             "sanguine_lord_crypt"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Death": 48,
             "Crystals_Life": 12
           }
@@ -3783,7 +3783,7 @@
             "death_lord_crypt"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Death": 30,
             "Crystals_Frost": 8
           }
@@ -3799,7 +3799,7 @@
             "mothers_hand_ossuary"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Death": 48,
             "Crystals_Life": 12
           }
@@ -3829,7 +3829,7 @@
             "plague_lord_lab"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Death": 30,
             "Crystals_Nature": 8
           }
@@ -3845,7 +3845,7 @@
             "plague_archon_lab"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Death": 48,
             "Crystals_Nature": 12
           }
@@ -3893,7 +3893,7 @@
             "grail_angel_shrine"
           ],
           "cost": {
-            "gold": 65,
+            "gold": 90,
             "Crystals_Death": 45,
             "Crystals_Frost": 12,
             "Crystals_Nature": 12
@@ -3910,7 +3910,7 @@
             "grail_archangel_shrine"
           ],
           "cost": {
-            "gold": 94,
+            "gold": 144,
             "Crystals_Death": 72,
             "Crystals_Frost": 18,
             "Crystals_Nature": 18
@@ -3939,7 +3939,7 @@
             "sorrow_vessel_vault"
           ],
           "cost": {
-            "gold": 65,
+            "gold": 90,
             "Crystals_Death": 45,
             "Crystals_Fire": 12
           }
@@ -3955,7 +3955,7 @@
             "sorrow_reliquary_vault"
           ],
           "cost": {
-            "gold": 94,
+            "gold": 144,
             "Crystals_Death": 72,
             "Crystals_Fire": 18
           }
@@ -4000,7 +4000,7 @@
             "grail_keeper_chamber"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Death": 30,
             "Crystals_Fire": 8,
             "Crystals_Frost": 8
@@ -4017,7 +4017,7 @@
             "grail_custodian_chamber"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Death": 48,
             "Crystals_Fire": 12,
             "Crystals_Frost": 12
@@ -4049,7 +4049,7 @@
             "grieving_custodian_chamber"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Death": 30,
             "Crystals_Nature": 8
           }
@@ -4065,7 +4065,7 @@
             "grieving_warden_chamber"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Death": 48,
             "Crystals_Frost": 12
           }
@@ -4113,7 +4113,7 @@
             "wraith_hall"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Death": 30,
             "Crystals_Frost": 8
           }
@@ -4129,7 +4129,7 @@
             "revenant_hall"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Death": 48,
             "Crystals_Frost": 12
           }
@@ -4157,7 +4157,7 @@
             "phantom_mist"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Death": 30,
             "Crystals_Frost": 8
           }
@@ -4173,7 +4173,7 @@
             "nightmare_mist"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Death": 48,
             "Crystals_Frost": 12
           }
@@ -4219,7 +4219,7 @@
             "pale_matriarch_barrow"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Death": 30,
             "Crystals_Frost": 8
           }
@@ -4235,7 +4235,7 @@
             "pale_sovereign_barrow"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Death": 48,
             "Crystals_Frost": 12
           }
@@ -4263,7 +4263,7 @@
             "pale_abbess_chantry"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Death": 30,
             "Crystals_Frost": 8,
             "Crystals_Air": 8
@@ -4280,7 +4280,7 @@
             "pale_prioress_chantry"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Death": 48,
             "Crystals_Air": 12,
             "Crystals_Frost": 12
@@ -4309,7 +4309,7 @@
             "pale_lamenter_shrine"
           ],
           "cost": {
-            "gold": 35,
+            "gold": 60,
             "Crystals_Death": 30,
             "Crystals_Nature": 8
           }
@@ -4325,7 +4325,7 @@
             "pale_dirge_shrine"
           ],
           "cost": {
-            "gold": 46,
+            "gold": 96,
             "Crystals_Death": 48,
             "Crystals_Nature": 12,
             "Crystals_Frost": 12
@@ -4370,7 +4370,7 @@
             "mothers_grief_font"
           ],
           "cost": {
-            "gold": 75
+            "gold": 100
           }
         },
         {
@@ -4384,7 +4384,7 @@
             "mothers_anguish_font"
           ],
           "cost": {
-            "gold": 150
+            "gold": 200
           }
         },
         {
@@ -4410,7 +4410,7 @@
             "mothers_shroud_reliquary"
           ],
           "cost": {
-            "gold": 75
+            "gold": 100
           }
         },
         {
@@ -4424,7 +4424,7 @@
             "mothers_mantle_reliquary"
           ],
           "cost": {
-            "gold": 150
+            "gold": 200
           }
         },
         {
@@ -4450,7 +4450,7 @@
             "mothers_vessel_altar"
           ],
           "cost": {
-            "gold": 75
+            "gold": 100
           }
         },
         {
@@ -4464,7 +4464,7 @@
             "mothers_font_altar"
           ],
           "cost": {
-            "gold": 150
+            "gold": 200
           }
         },
         {
