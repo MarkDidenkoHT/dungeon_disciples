@@ -62,6 +62,20 @@ html, body {
   height: 100%;
 }
 
+/* Ambient faction motes: visible over screen art, while remaining inert. */
+#ambient-particles {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  pointer-events: none;
+  opacity: 0.9;
+  mix-blend-mode: screen;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #ambient-particles { opacity: 0.72; }
+}
+
 #shell {
   display: flex;
   flex-direction: column;
@@ -1103,10 +1117,12 @@ button:active:not(:disabled) { opacity: 0.75; }
 /* "/" means either tag qualifies, "+" means both are required. */
 .errand-offer-join { color: var(--muted); font-size: 0.72rem; font-weight: 700; }
 
-/* The token IS the grand errand's headline, so it is drawn bigger than a gold
-   or crystal icon rather than at chip scale. */
-.errand-reward-chip--token { font-size: 0.74rem; }
-.errand-reward-chip--token .res-icon-img { width: 17px; height: 17px; }
+/* One treatment for every reward chip, regular or grand. A regular errand pays
+   resources and a grand one pays a token, but the chip is the same object
+   either way. Sizing only the TOKEN icon left the resource icons sitting at
+   .res-icon-img's 35px default, so a regular errand drew 35px gold next to
+   11px text and its reward boxes came out twice the height of a grand one's. */
+.errand-reward-chip .res-icon-img { width: 17px; height: 17px; }
 .errand-token-name { font-weight: 600; }
 
 .errand-desc--detail {
@@ -1835,7 +1851,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   animation: sheet-up 0.22s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.modal--errands-expanded { height: min(92%, 760px); }
 
 @keyframes sheet-up {
   from { transform: translateY(100%); }
@@ -2760,6 +2775,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .embark-card {
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: flex-end;
   min-height: 150px;
@@ -2776,6 +2793,16 @@ button.cost-bar-item:active { transform: scale(0.9); }
      back to `default` and kills pointer events. */
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+}
+
+.embark-card-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
 }
 
 .embark-card--disabled { opacity: 0.55; }
@@ -2967,10 +2994,24 @@ button.cost-bar-item:active { transform: scale(0.9); }
   letter-spacing: 0.02em;
 }
 
+/* The card used to be dimmed whole with opacity: 0.5, which halved its art
+   along with everything else. That reads fine on bright region art, but
+   Darkwood is near-black to begin with and at half strength the card looked
+   empty — the picture was there, just invisible against the page. Dim the
+   CONTENT and desaturate the ART instead: the region still reads as
+   unavailable, and its art survives. */
 .embark-card--coming-soon {
-  opacity: 0.5;
   cursor: default;
   pointer-events: none;
+}
+
+.embark-card--coming-soon .embark-card-bg {
+  filter: grayscale(0.7);
+}
+
+.embark-card--coming-soon .embark-card-info,
+.embark-card--coming-soon .embark-card-badge--soon {
+  opacity: 0.6;
 }
 
 .embark-region-block--coming-soon .embark-level-row {
@@ -4095,6 +4136,11 @@ button.cost-bar-item:active { transform: scale(0.9); }
   justify-content: center;
   border-top: 1px solid var(--border);
   background: var(--bg);
+  max-height: 22px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: max-height 520ms cubic-bezier(.45, 0, .25, 1), opacity 420ms ease,
+    transform 520ms cubic-bezier(.45, 0, .25, 1), bottom 520ms cubic-bezier(.45, 0, .25, 1);
 }
 .battle-log-toggle {
   background: none;
@@ -4121,6 +4167,11 @@ button.cost-bar-item:active { transform: scale(0.9); }
   display: flex;
   flex-direction: column;
   gap: 2px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: flex 520ms cubic-bezier(.45, 0, .25, 1), height 520ms cubic-bezier(.45, 0, .25, 1),
+    min-height 520ms cubic-bezier(.45, 0, .25, 1), padding 520ms cubic-bezier(.45, 0, .25, 1),
+    opacity 420ms ease, transform 520ms cubic-bezier(.45, 0, .25, 1);
 }
 
 .battle-log::-webkit-scrollbar { display: none; }
@@ -4150,10 +4201,35 @@ button.cost-bar-item:active { transform: scale(0.9); }
   padding: 8px 12px;
   overflow-y: auto;
   background: var(--bg);
+  opacity: 1;
+  transform: translateY(0);
+  transition: flex 520ms cubic-bezier(.45, 0, .25, 1), min-height 520ms cubic-bezier(.45, 0, .25, 1),
+    padding 520ms cubic-bezier(.45, 0, .25, 1), opacity 420ms ease,
+    transform 520ms cubic-bezier(.45, 0, .25, 1);
 }
+.battle-log.hidden { display: flex !important; }
+.battle-info.hidden { display: block !important; }
 .battle-info.hidden,
-.battle-log.hidden,
-.battle-log-bar.hidden { display: none; }
+.battle-log.hidden {
+  flex: 0 0 0;
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  overflow: hidden;
+}
+.battle-log-bar.hidden {
+  display: flex !important;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(6px);
+  overflow: hidden;
+  pointer-events: none;
+  border-top-width: 0;
+  margin-top: 0;
+}
 
 .binfo { display: flex; flex-direction: column; gap: 10px; }
 .binfo-unit {
@@ -5109,6 +5185,10 @@ button.cost-bar-item:active { transform: scale(0.9); }
   align-items: center;
   position: relative;
 }
+
+.battle-prep-enter-btn--pvp img { width: clamp(48px, 14vw, 72px); }
+.pvp-challenge-link-btn { cursor: pointer; }
+.pvp-challenge-link-btn:disabled { cursor: wait; }
 
 .quick-note {
   position: absolute;
@@ -8165,29 +8245,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   text-overflow: ellipsis;
 }
 
-/* Which option is on the card. The picker's sheet title is the QUESTION
-   ("Choose Unit"), and the portrait art deliberately carries no name, so the
-   unit being chosen was the one thing on screen without one. */
-.castle-slider-pick {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 6px;
-  padding: 2px 6px 4px;
-}
-
-.castle-slider-pick-name {
-  font-size: 0.86rem;
-  font-weight: 700;
-  color: var(--accent);
-  text-align: center;
-}
-
-.castle-slider-pick-of {
-  font-size: 0.66rem;
-  color: var(--muted);
-  flex: 0 0 auto;
-}
 
 .track-action-row {
   /* ONE source of truth for the height of everything in the row — the action
@@ -10026,35 +10083,7 @@ body[data-faction="grail_of_sorrow"] .tutorial-ring {
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
 }
 
-.battle-prep-enter-btn--queue {
-  line-height: 1.1;
-  padding: 10px 16px;
-  margin: 0;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: linear-gradient(180deg, rgba(28, 31, 40, 0.95), rgba(17, 19, 24, 0.95));
-}
-
-.battle-prep-queue-label {
-  display: block;
-  position: relative;
-  z-index: 1;
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-.battle-prep-enter-btn--queue.battle-prep-enter-btn--ready {
-  border-color: var(--accent);
-  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.30), rgba(var(--accent-rgb), 0.10));
-}
-
-.battle-prep-enter-btn--queue.battle-prep-enter-btn--ready .battle-prep-queue-label {
-  color: var(--accent-bright);
-  text-shadow: 0 0 8px rgba(var(--accent-rgb), 0.8);
-}
+.battle-prep-enter-btn--pvp:disabled { cursor: not-allowed; }
 
 .pvp-queue-overlay {
   position: fixed;
