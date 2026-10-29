@@ -138,7 +138,7 @@ const UNITS = {
       hp: 45, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'choir_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 8, action_icon: 'flame_wave.jpg', action_animation: 'holy_shock',
+      damage_source: 'fire', action_power: 8, action_icon: 'flame_wave.jpg', action_animation: 'fire_shock', action_sfx: 'fire_spell_impact',
       passive: 'divided_flame 1', ability: null,
       building_slot: 'slot_0', xp: 100
     },
@@ -152,7 +152,7 @@ const UNITS = {
       hp: 50, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'choir_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10, action_icon: 'flame_wave.jpg', action_animation: 'holy_shock',
+      damage_source: 'fire', action_power: 10, action_icon: 'flame_wave.jpg', action_animation: 'fire_shock', action_sfx: 'fire_spell_impact',
       passive: ['divided_flame 1', 'choir 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -166,7 +166,7 @@ const UNITS = {
       hp: 55, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'choir_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'holy_shock',
+      damage_source: 'fire', action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'fire_shock', action_sfx: 'fire_spell_impact',
       passive: ['divided_flame 1', 'choir 2'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
@@ -180,7 +180,7 @@ const UNITS = {
       hp: 65, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'choir_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 14, action_icon: 'flame_wave.jpg', action_animation: 'holy_shock',
+      damage_source: 'fire', action_power: 14, action_icon: 'flame_wave.jpg', action_animation: 'fire_shock', action_sfx: 'fire_spell_impact',
       passive: ['divided_flame 2', 'choir 2'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -194,7 +194,7 @@ const UNITS = {
       hp: 116, armor: 4, initiative: 30,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'choir_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 14, action_icon: 'flame_wave.jpg', action_animation: 'holy_shock',
+      damage_source: 'fire', action_power: 14, action_icon: 'flame_wave.jpg', action_animation: 'fire_shock', action_sfx: 'fire_spell_impact',
       passive: ['divided_flame 1', 'choir 2', 'stoicism 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -208,7 +208,7 @@ const UNITS = {
       hp: 55, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'choir_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 10, action_icon: 'flame_wave.jpg', action_animation: 'holy_shock',
+      damage_source: 'fire', action_power: 10, action_icon: 'flame_wave.jpg', action_animation: 'fire_shock', action_sfx: 'fire_spell_impact',
       passive: ['divided_flame 1', 'sovereigns_levy 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -222,7 +222,7 @@ const UNITS = {
       hp: 65, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'choir_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'holy_shock',
+      damage_source: 'fire', action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'fire_shock', action_sfx: 'fire_spell_impact',
       passive: ['divided_flame 2', 'sovereigns_levy 1'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
@@ -236,7 +236,7 @@ const UNITS = {
       hp: 75, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'choir_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 14, action_icon: 'flame_wave.jpg', action_animation: 'holy_shock',
+      damage_source: 'fire', action_power: 14, action_icon: 'flame_wave.jpg', action_animation: 'fire_shock', action_sfx: 'fire_spell_impact',
       passive: ['divided_flame 2', 'sovereigns_levy 2'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -250,7 +250,7 @@ const UNITS = {
       hp: 75, armor: 0, initiative: 35,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'choir_shock', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 14, action_icon: 'flame_wave.jpg', action_animation: 'holy_shock',
+      damage_source: 'fire', action_power: 14, action_icon: 'flame_wave.jpg', action_animation: 'fire_shock', action_sfx: 'fire_spell_impact',
       passive: ['divided_flame 2', 'sovereigns_levy 1', 'stoicism 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -442,7 +442,7 @@ const UNITS = {
       hp: 140, armor: 20, initiative: 30,
       resistances: { air: 5, fire: 40, life: 0, death: 5, cold: 0, nature: 5 },
       action: 'choir_shock', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 30, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 30, action_icon: 'mace.jpg', action_animation: 'fire_shock', action_sfx: 'fire_spell_impact',
       xp: 8200, passive: ['rage 2', 'vengeance 2', 'warding 2'], ability: 'pact 2',
     },
     chorister: {
@@ -897,7 +897,7 @@ const UNITS = {
       hp: 55, armor: 5, initiative: 10,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'fire', action_power: 6, action_icon: 'fire_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'fire', action_power: 6, action_icon: 'fire_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 110, passive: ['volcanic_skin 1', 'unending_servitude 1'], ability: 'verse_of_cataclysm 1',
     },
     blaze_spawn: {
@@ -910,7 +910,7 @@ const UNITS = {
       hp: 65, armor: 5, initiative: 10,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'fire', action_power: 8, action_icon: 'fire_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'fire', action_power: 8, action_icon: 'fire_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 540, passive: ['volcanic_skin 1', 'last_verse 1', 'unending_servitude 1'], ability: 'verse_of_cataclysm 1',
     },
     inferno_spawn: {
@@ -923,7 +923,7 @@ const UNITS = {
       hp: 70, armor: 10, initiative: 10,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'fire', action_power: 12, action_icon: 'fire_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'fire', action_power: 12, action_icon: 'fire_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 1860, passive: ['volcanic_skin 2', 'last_verse 1', 'unending_servitude 1'], ability: 'verse_of_cataclysm 2',
     },
     inferno_scion: {
@@ -936,7 +936,7 @@ const UNITS = {
       hp: 75, armor: 15, initiative: 10,
       resistances: { air: 0, fire: 40, life: 0, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'fire', action_power: 14, action_icon: 'fire_claw.jpg', action_animation: 'claw_strike',
+      damage_source: 'fire', action_power: 14, action_icon: 'fire_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 1860, passive: ['volcanic_skin 2', 'last_verse 2', 'unending_servitude 1'], ability: 'verse_of_cataclysm 2',
     },
     ember_spawn: {
@@ -988,7 +988,7 @@ const UNITS = {
       hp: 35, armor: 0, initiative: 30,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 12,  action_icon: 'fire_bolt.jpg',  action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 12,  action_icon: 'fire_bolt.jpg',  action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
       xp: 75, passive: 'burn 1', ability: 'mark_of_ash 1',
     },  
     choir_servant: {
@@ -1001,7 +1001,7 @@ const UNITS = {
       hp: 40, armor: 5, initiative: 30,
       resistances: { air: 0, fire: 30, life: 25, death: 5, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 16,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 16,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
       xp: 400, passive: ['burn 1', 'fellfire 1'], ability: 'mark_of_ash 1',
     },
     choir_ascendant: {
@@ -1014,7 +1014,7 @@ const UNITS = {
       hp: 45, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 35, life: 25, death: 10, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 20,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 20,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
       xp: 1350, passive: ['burn 2', 'fellfire 1'], ability: 'mark_of_ash 1',
     },
     choir_exalted: {
@@ -1027,7 +1027,7 @@ const UNITS = {
       hp: 55, armor: 10, initiative: 30,
       resistances: { air: 0, fire: 45, life: 25, death: 15, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-      damage_source: 'fire', action_power: 24,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt',
+      damage_source: 'fire', action_power: 24,  action_icon: 'fire_bolt.jpg', action_animation: 'fire_bolt', action_sfx: 'fire_spell_impact',
       xp: 3380, passive: ['burn 2', 'fellfire 2'], ability: 'mark_of_ash 1',
     },
     ash_cantor: {
@@ -1040,7 +1040,7 @@ const UNITS = {
       hp: 40, armor: 5, initiative: 30,
       resistances: { air: 5, fire: 30, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 8, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 8, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash', action_sfx: 'fire_spell_impact',
       xp: 400, passive: ['renew 1', 'resist_aura_fire 1'], ability: 'rite_of_reclamation 1',
     },
     ash_precentor: {
@@ -1053,7 +1053,7 @@ const UNITS = {
       hp: 50, armor: 5, initiative: 30,
       resistances: { air: 10, fire: 35, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 10, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 10, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash', action_sfx: 'fire_spell_impact',
       xp: 1350, passive: ['renew 1', 'resist_aura_fire 2'], ability: 'rite_of_reclamation 2',
     },
     ash_liturgist: {
@@ -1066,7 +1066,7 @@ const UNITS = {
       hp: 55, armor: 10, initiative: 30,
       resistances: { air: 10, fire: 40, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash',
+      damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash', action_sfx: 'fire_spell_impact',
       xp: 1820, passive: ['renew 1', 'resist_aura_fire 2', 'dispel 1'], ability: 'rite_of_reclamation 2',
     },
   },

@@ -3727,6 +3727,151 @@ export async function fire_bolt(cellEl, opts = {}) {
 }
 
 
+// ── fire_shock — a close, jagged flame current ───────────────────────────────
+// The bolt does not fly like a fire_bolt: it gathers at the caster, lashes
+// across the gap as a forked current, then detonates in a sharp shock ring.
+// The Choir Regent and Decimator share the same demonic fire power at different
+// ranges, so the path stretches or snaps short according to their target.
+export async function fire_shock(cellEl, opts = {}) {
+  console.log('[battle-fx] fire_shock START', cellEl?.dataset?.id,
+    '->', opts.targetCell?.dataset?.id, 'heal:', opts.isHeal === true);
+  if (!cellEl || !app || !window.PIXI) return;
+
+  const sourceId = cellEl.dataset.id;
+  const targetId = opts.targetCell?.dataset?.id || sourceId;
+  const heal     = opts.isHeal === true;
+  const clamp01  = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const rand     = (a, b) => a + Math.random() * (b - a);
+  const lerp     = (a, b, t) => a + (b - a) * t;
+  const TAU      = Math.PI * 2;
+  const ADD      = PIXI.BLEND_MODES.ADD;
+
+  const CORE  = 0xfff1c4;
+  const FLAME = 0xff8a24;
+  const DEEP  = 0xe43b12;
+
+  const SEGMENTS = 10;
+  const jitter   = Array.from({ length: SEGMENTS + 1 }, () => rand(-1, 1));
+  const branches = [
+    { at: 0.38, side: rand(-1, 1), reach: rand(0.12, 0.22) },
+    { at: 0.70, side: rand(-1, 1), reach: rand(0.10, 0.18) },
+  ];
+  const sparks = Array.from({ length: 20 }, () => ({
+    angle: rand(0, TAU), speed: rand(0.55, 1.25), size: rand(1.8, 4.2), delay: rand(0, 0.18),
+  }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(6)];
+  const glowG   = new PIXI.Graphics(); glowG.blendMode = ADD;
+  const current = new PIXI.Graphics(); current.blendMode = ADD;
+  const ringG   = new PIXI.Graphics(); ringG.blendMode = ADD;
+  layer.addChild(glowLayer, current, ringG);
+  glowLayer.addChild(glowG);
+  app.stage.addChild(layer);
+
+  function drawCurrent(g, sx, sy, tx, ty, R, reach, width, color, alpha, phase) {
+    if (reach <= 0 || alpha <= 0) return;
+    const dx = tx - sx, dy = ty - sy;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len, ny = dx / len;
+    const pointAt = f => {
+      const envelope = Math.sin(f * Math.PI);
+      const kick = jitter[Math.min(SEGMENTS, Math.round(f * SEGMENTS))] * R * 0.20 * envelope;
+      const ripple = Math.sin(phase + f * 30) * R * 0.025 * envelope;
+      return [sx + dx * f + nx * (kick + ripple), sy + dy * f + ny * (kick + ripple)];
+    };
+
+    g.lineStyle(width, color, alpha);
+    let drawn = false;
+    for (let i = 0; i <= SEGMENTS; i++) {
+      const f = i / SEGMENTS;
+      if (f > reach) break;
+      const [x, y] = pointAt(f);
+      if (!drawn) { g.moveTo(x, y); drawn = true; }
+      else g.lineTo(x, y);
+    }
+    g.lineStyle(0);
+
+    for (const branch of branches) {
+      if (reach < branch.at) continue;
+      const [bx, by] = pointAt(branch.at);
+      const endX = bx + nx * R * branch.reach * branch.side;
+      const endY = by + ny * R * branch.reach * branch.side;
+      g.lineStyle(Math.max(1, width * 0.48), color, alpha * 0.78);
+      g.moveTo(bx, by);
+      g.lineTo(endX, endY);
+      g.lineStyle(0);
+    }
+  }
+
+  await animate(680, t => {
+    const sb = cellBoundsFor(sourceId);
+    const tb = cellBoundsFor(targetId);
+    if (!sb || !tb) { layer.visible = false; return; }
+    layer.visible = true;
+
+    const sx = sb.x + sb.width / 2, sy = sb.y + sb.height / 2;
+    const tx = tb.x + tb.width / 2, ty = tb.y + tb.height / 2;
+    const R  = Math.min(tb.width, tb.height);
+    const windup  = clamp01(t / 0.20);
+    const strike  = clamp01((t - 0.16) / 0.40);
+    const impact  = clamp01((t - 0.48) / 0.52);
+    const flicker = 0.82 + Math.sin(t * 82) * 0.12 + Math.sin(t * 37) * 0.06;
+
+    glowG.clear(); current.clear(); ringG.clear();
+
+    if (!heal) {
+      // A hot knot forms at the caster before the electrical flame current snaps out.
+      const charge = Math.sin(windup * Math.PI * 0.5);
+      softGlow(glowG, sx, sy, R * (0.16 + charge * 0.20), DEEP, 0.62 * charge);
+      softGlow(glowG, sx, sy, R * (0.08 + charge * 0.11), CORE, 0.92 * charge);
+
+      const reach = strike < 1 ? strike : 1;
+      const phase = t * 40;
+      drawCurrent(glowG, sx, sy, tx, ty, R, reach, R * 0.19, DEEP, 0.62 * flicker, phase);
+      drawCurrent(current, sx, sy, tx, ty, R, reach, R * 0.075, FLAME, 0.96 * flicker, phase);
+      drawCurrent(current, sx, sy, tx, ty, R, reach, R * 0.026, CORE, 0.98, phase + 1.4);
+    }
+
+    // A jagged ring and outward sparks make the hit read as a shock, not a projectile bloom.
+    if (impact > 0 || heal) {
+      const pulse = heal ? clamp01(t / 0.75) : impact;
+      const fade = heal ? 1 - pulse * 0.72 : 1 - pulse;
+      const radius = R * (heal ? 0.18 + pulse * 0.78 : 0.12 + pulse * 0.94);
+      const count = 18;
+      ringG.lineStyle(Math.max(1.5, R * 0.045 * fade), FLAME, 0.9 * fade);
+      for (let i = 0; i <= count; i++) {
+        const a = (i % count) / count * TAU;
+        const tooth = i % 2 === 0 ? 1 : 0.76;
+        const wobble = 1 + Math.sin(a * 5 + t * 24) * 0.035;
+        const x = tx + Math.cos(a) * radius * tooth * wobble;
+        const y = ty + Math.sin(a) * radius * tooth * wobble;
+        if (i === 0) ringG.moveTo(x, y); else ringG.lineTo(x, y);
+      }
+      ringG.lineStyle(0);
+
+      softGlow(glowG, tx, ty, R * (0.42 * fade + (heal ? 0.08 : 0)), DEEP, 0.66 * fade);
+      softGlow(glowG, tx, ty, R * 0.22 * fade, FLAME, 0.92 * fade);
+      softGlow(glowG, tx, ty, R * 0.09 * fade, CORE, 0.95 * fade);
+
+      for (let i = 0; i < sparks.length; i++) {
+        const spark = sparks[i];
+        const s = clamp01((pulse - spark.delay) / (1 - spark.delay));
+        if (s <= 0) continue;
+        const distance = R * spark.speed * s;
+        const x = tx + Math.cos(spark.angle) * distance;
+        const y = ty + Math.sin(spark.angle) * distance + s * s * R * 0.16;
+        softGlow(current, x, y, spark.size * (1 - s * 0.48), i % 3 === 0 ? CORE : FLAME, (1 - s) * 0.95);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] fire_shock END', sourceId, '->', targetId);
+}
+
+
 // Heavy ranged PHYSICAL shot — hurled stone, siege shell, rifle ball. Kept
 // deliberately distinct from arrow_shot: no arc, no fletching, no drawn-bow
 // hold. A muzzle flash, a dense slug crossing in a straight line, and a
@@ -7415,6 +7560,7 @@ export const EFFECTS = {
   haunt,
   blood_bolt,
   fire_bolt,
+  fire_shock,
   arrow_shot,
   cannon_shot,
   stone_throw,
