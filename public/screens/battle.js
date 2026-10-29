@@ -2232,13 +2232,20 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         if (!rect.width || !rect.height || !next.width || !next.height) return;
         if (wasExpanded && el === ui.battleLog) {
           // Animate the whole panel from its expanded bounds to its collapsed
-          // bounds. Letting flex sizing and min-height transition together
-          // makes the content jump in stages as the flex layout recalculates.
+          // bounds. Suppress CSS transitions while measuring the collapsed
+          // flex layout so the target is the final bottom position, not its
+          // first intermediate frame.
+          const bar = ui.logToggle.parentElement;
+          const barTransition = bar.style.transition;
+          bar.style.transition = 'none';
+          el.style.transition = 'none';
+          el.getBoundingClientRect();
+          const collapsedRect = el.getBoundingClientRect();
+          bar.style.transition = barTransition;
           const parentRect = el.parentElement.getBoundingClientRect();
           const fromTop = rect.top - parentRect.top;
-          const toTop = next.top - parentRect.top;
+          const toTop = collapsedRect.top - parentRect.top;
           el.style.position = 'absolute';
-          el.style.transition = 'none';
           el.style.left = '0';
           el.style.right = '0';
           el.style.top = `${fromTop}px`;
@@ -2248,7 +2255,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           el.getBoundingClientRect();
           const animation = el.animate([
             { top: `${fromTop}px`, height: `${rect.height}px` },
-            { top: `${toTop}px`, height: `${next.height}px` },
+            { top: `${toTop}px`, height: `${collapsedRect.height}px` },
           ], { duration: 560, easing: 'cubic-bezier(.45, 0, .25, 1)' });
           const clean = () => {
             el.style.position = '';
