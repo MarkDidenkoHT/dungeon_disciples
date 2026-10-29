@@ -1302,6 +1302,34 @@ export function getSheetBody() {
 
 let _subSheetEl = null;
 
+// A SUB-SHEET WHOSE BODY PUSHES A PANEL OVER ITSELF needs its ✕ to pop that
+// panel before it closes the sheet. The header's button is the only close a
+// player sees — it is the big one, at the top, labelled Close — so wiring it
+// straight to closeSubSheet made the inner panel's own back arrow the only way
+// to reach the content underneath, and tapping the obvious control threw the
+// whole sheet away instead. The castle's item picker is the case that proved
+// it: it opens with the worn item's card pushed over the item grid, and ✕
+// dropped the player back to the unit card having never seen the grid at all.
+//
+// A handler returns true to say "I consumed this close" — one owner at a time,
+// cleared whenever the sheet's content is replaced or it actually closes, so a
+// stale handler can never swallow the close of a later sheet.
+let _subSheetBack = null;
+export function onSubSheetBack(fn) {
+  _subSheetBack = fn;
+  return () => { if (_subSheetBack === fn) _subSheetBack = null; };
+}
+
+// Every route a player can close the sub-sheet by goes through here.
+function requestSubSheetClose() {
+  if (_subSheetBack) {
+    let consumed = false;
+    try { consumed = _subSheetBack() === true; } catch { consumed = false; }
+    if (consumed) return;
+  }
+  closeSubSheet();
+}
+
 function ensureSubSheet() {
   if (_subSheetEl) return _subSheetEl;
 
@@ -1318,8 +1346,8 @@ function ensureSubSheet() {
     </div>
   `;
 
-  overlay.querySelector('.modal-close-btn').addEventListener('click', closeSubSheet);
-  overlay.addEventListener('click', e => { if (e.target === overlay) closeSubSheet(); });
+  overlay.querySelector('.modal-close-btn').addEventListener('click', requestSubSheetClose);
+  overlay.addEventListener('click', e => { if (e.target === overlay) requestSubSheetClose(); });
 
   document.body.appendChild(overlay);
   _subSheetEl = overlay;
@@ -1328,6 +1356,9 @@ function ensureSubSheet() {
 
 export function openSubSheet(title, bodyHtml, badgesHtml = '') {
   const overlay = ensureSubSheet();
+  // New content, new owner: whoever opens the sheet registers its own back
+  // handler afterwards, and the previous screen's must not outlive its HTML.
+  _subSheetBack = null;
   overlay.querySelector('.modal-title-text').textContent = title;
   overlay.querySelector('.modal-header-badges').innerHTML = badgesHtml;
   overlay.querySelector('.modal-body').innerHTML = bodyHtml;
@@ -1335,6 +1366,7 @@ export function openSubSheet(title, bodyHtml, badgesHtml = '') {
 }
 
 export function closeSubSheet() {
+  _subSheetBack = null;
   if (!_subSheetEl) return;
   _subSheetEl.classList.add('hidden');
 }

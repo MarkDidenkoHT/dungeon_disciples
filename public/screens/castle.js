@@ -24,7 +24,7 @@ import {
   RESIST_ICONS, RESIST_ORDER,
   resolveAbility, renderModalContent, openSheet, closeSheet, getSheetBody, GOLD_ICON,
   setSheetTitle, setSheetBadges,
-  openSubSheet, closeSubSheet, getSubSheetBody, cap, onSheetClose, RESOURCE_BAR_SLOTS, CROSSROAD_SIGIL_SLOT, gameConfirm,
+  openSubSheet, closeSubSheet, getSubSheetBody, onSubSheetBack, cap, onSheetClose, RESOURCE_BAR_SLOTS, CROSSROAD_SIGIL_SLOT, gameConfirm,
   buildUnitCard, getActionLabel, buildAbilityModalParts, buildStatDescription,
   renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
   handleUnitInspect, unitName, buildingLabel, enableTrackSwipe, escapeHtml,
@@ -3577,6 +3577,19 @@ export function renderCastle(root, params = {}) {
       const wornIdx = currentList().findIndex(e => String(e.item.equipped_by) === String(rosterId));
       if (wornIdx >= 0) lib?.openAt(wornIdx);
     }
+
+    // ✕ POPS THE CARD BEFORE IT CLOSES THE SHEET. The card is pushed over the
+    // grid inside this sheet's body, so the header's ✕ is sitting directly above
+    // it and is the obvious way to dismiss it — but it used to close the whole
+    // picker, which is why opening on the worn item appeared to lead nowhere:
+    // the grid behind it was never reachable except through the panel's own
+    // small back arrow. Now the first ✕ drops to the item list and the second
+    // leaves the picker, which is what the back arrow already did.
+    onSubSheetBack(() => {
+      if (!lib?.isOpen()) return false;   // nothing pushed — let the sheet close
+      lib.close();
+      return true;
+    });
 
     // Onboarding points at the Equip button, which now lives in the item's own
     // card — so the lesson opens that card before the spotlight looks for it.
