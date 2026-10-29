@@ -12,7 +12,7 @@ const UNITS = {
       hp: 75, armor: 20, initiative: 45,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 14, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 14, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       passive: 'rage 1', ability: null,
       building_slot: 'slot_0', xp: 100
     },
@@ -26,7 +26,7 @@ const UNITS = {
       hp: 85, armor: 20, initiative: 45,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 18, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 18, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       passive: ['rage 1', 'chorus_of_war 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -40,7 +40,7 @@ const UNITS = {
       hp: 95, armor: 20, initiative: 45,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       passive: ['rage 1', 'chorus_of_war 2'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
@@ -54,7 +54,7 @@ const UNITS = {
       hp: 105, armor: 20, initiative: 45,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       passive: ['rage 1', 'chorus_of_war 2', 'command 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -68,7 +68,7 @@ const UNITS = {
       hp: 100, armor: 25, initiative: 45,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       passive: ['rage 1', 'chorus_of_war 2', 'inspiration_max_hp 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -82,7 +82,7 @@ const UNITS = {
       hp: 85, armor: 20, initiative: 45,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 18, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 18, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       passive: ['rage 1', 'blood_frenzy 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -96,7 +96,7 @@ const UNITS = {
       hp: 95, armor: 20, initiative: 50,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       passive: ['rage 1', 'blood_frenzy 1', 'execute 1'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
@@ -110,7 +110,7 @@ const UNITS = {
       hp: 105, armor: 20, initiative: 55,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       passive: ['rage 1', 'blood_frenzy 1', 'execute 2'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -124,7 +124,7 @@ const UNITS = {
       hp: 100, armor: 25, initiative: 55,
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       passive: ['rage 1', 'blood_frenzy 2', 'execute 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -1082,7 +1082,7 @@ const UNITS = {
       hp: 65, armor: 20, initiative: 35,
       resistances: { air: 5, fire: 5, life: 40, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 10, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 10, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing', action_sfx: 'mace_swing',
       passive: 'mithrails_light 1', ability: null,
       building_slot: 'slot_0', xp: 100
     },
@@ -1096,7 +1096,7 @@ const UNITS = {
       hp: 70, armor: 25, initiative: 35,
       resistances: { air: 5, fire: 15, life: 40, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 14, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 14, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing', action_sfx: 'mace_swing',
       passive: ['mithrails_light 1', 'protector 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -1110,7 +1110,7 @@ const UNITS = {
       hp: 80, armor: 25, initiative: 35,
       resistances: { air: 15, fire: 15, life: 40, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 18, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 18, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing', action_sfx: 'mace_swing',
       passive: ['mithrails_light 1', 'protector 2'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
@@ -1124,7 +1124,7 @@ const UNITS = {
       hp: 90, armor: 25, initiative: 35,
       resistances: { air: 5, fire: 5, life: 40, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 22, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 22, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing', action_sfx: 'mace_swing',
       passive: ['mithrails_light 2', 'protector 2'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -1138,7 +1138,7 @@ const UNITS = {
       hp: 85, armor: 30, initiative: 35,
       resistances: { air: 5, fire: 5, life: 40, death: 10, cold: 5, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 22, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 22, action_icon: 'holy_attack.jpg', action_animation: 'sword_swing', action_sfx: 'mace_swing',
       passive: ['mithrails_light 1', 'protector 2', 'aegis 1' ], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -2334,7 +2334,7 @@ const UNITS = {
       hp: 70, armor: 10, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 12, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 12, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
       passive: 'lifesteal 1', ability: null,
       building_slot: 'slot_0', xp: 100
     },
@@ -2348,7 +2348,7 @@ const UNITS = {
       hp: 80, armor: 10, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 16, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 16, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
       passive: ['lifesteal 1', 'banquet 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -2362,7 +2362,7 @@ const UNITS = {
       hp: 90, armor: 10, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 20, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
       passive: ['lifesteal 2', 'banquet 1'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
@@ -2376,7 +2376,7 @@ const UNITS = {
       hp: 100, armor: 10, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
       passive: ['lifesteal 2', 'banquet 1', 'impale 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -2390,7 +2390,7 @@ const UNITS = {
       hp: 100, armor: 10, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 25, action_icon: 'blood_pierce.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
       passive: ['lifesteal 2', 'banquet 1', 'iron_will 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -2460,7 +2460,7 @@ const UNITS = {
       hp: 75, armor: 20, initiative: 35,
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 12, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 12, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       passive: 'horde 1', ability: null,
       building_slot: 'slot_0', xp: 100
     },
@@ -2474,7 +2474,7 @@ const UNITS = {
       hp: 80, armor: 25, initiative: 35,
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 16, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 16, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       passive: ['horde 1', 'protector 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -2488,7 +2488,7 @@ const UNITS = {
       hp: 90, armor: 25, initiative: 35,
       resistances: { air: 10, fire: 0, life: 0, death: 40, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       passive: ['horde 2', 'protector 1'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
@@ -2502,7 +2502,7 @@ const UNITS = {
       hp: 100, armor: 25, initiative: 35,
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       passive: ['horde 2', 'protector 1', 'aura_of_decay 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -2516,7 +2516,7 @@ const UNITS = {
       hp: 95, armor: 30, initiative: 35,
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       passive: ['horde 2', 'protector 1', 'stoicism 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -2530,7 +2530,7 @@ const UNITS = {
       hp: 85, armor: 20, initiative: 40,
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'physical', action_power: 20, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       passive: ['horde 1', 'infect 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
@@ -2544,7 +2544,7 @@ const UNITS = {
       hp: 90, armor: 25, initiative: 45,
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 29, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'death', action_power: 29, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       passive: ['horde 1', 'infect 2'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
@@ -2558,7 +2558,7 @@ const UNITS = {
       hp: 100, armor: 25, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 35, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'death', action_power: 35, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       passive: ['horde 1', 'infect 2', 'undying 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -2572,7 +2572,7 @@ const UNITS = {
       hp: 100, armor: 25, initiative: 50,
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 35, action_icon: 'mace.jpg', action_animation: 'mace_swing',
+      damage_source: 'death', action_power: 35, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
       passive: ['horde 2', 'infect 2'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
@@ -2894,7 +2894,7 @@ const UNITS = {
       hp: 60, armor: 15, initiative: 40,
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 18, action_icon: 'vampire_sword.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 18, action_icon: 'vampire_sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
       xp: 1560, passive: ['iron_will 1', 'duelist 1', 'leech 1'], ability: 'exsanguinate 1',
     },
     sanguine_lord: {
@@ -2907,7 +2907,7 @@ const UNITS = {
       hp: 70, armor: 15, initiative: 40,
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 15, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 22, action_icon: 'vampire_sword.jpg', action_animation: 'sword_swing',
+      damage_source: 'physical', action_power: 22, action_icon: 'vampire_sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
       xp: 2900, passive: ['iron_will 2', 'duelist 1', 'leech 1'], ability: 'exsanguinate 1',
     },
     necromancer: {
@@ -3115,7 +3115,7 @@ const UNITS = {
       hp: 110, armor: 10, initiative: 20,
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 0, nature: 0 },
       action: 'Mend Flesh', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 10, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
+      damage_source: null, action_power: 10, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh', action_sfx: 'soul_whisper',
       xp: 1250, passive: ['vitality 2', 'eternal_grief 1', 'dispel 1'], ability: 'raise_dead 2',
     },
     sorrow_vessel: {
@@ -3128,7 +3128,7 @@ const UNITS = {
       hp: 115, armor: 20, initiative: 20,
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 0, nature: 0 },
       action: 'Mend Flesh', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 16, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
+      damage_source: null, action_power: 16, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh', action_sfx: 'soul_whisper',
       xp: 4055, passive: ['vitality 2', 'eternal_grief 1', 'dispel 2'], ability: 'raise_dead 2',
     },
     sorrow_reliquary: {
@@ -3141,7 +3141,7 @@ const UNITS = {
       hp: 130, armor: 20, initiative: 20,
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 0, nature: 10 },
       action: 'Mend Flesh', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 22, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh',
+      damage_source: null, action_power: 22, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh', action_sfx: 'soul_whisper',
       xp: 4055, passive: ['vitality 3', 'eternal_grief 1', 'dispel 2'], ability: 'raise_dead 2',
     },
     grail_acolyte: {
@@ -3388,7 +3388,7 @@ const UNITS = {
       hp: 45, armor: 10, initiative: 20,
       resistances: { air: 5, fire: 0, life: 0, death: 40, cold: 15, nature: 0 },
       action: 'pale_embrace', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 6, action_icon: 'haunt.jpg', action_animation: 'pale_embrace',
+      damage_source: null, action_power: 6, action_icon: 'haunt.jpg', action_animation: 'pale_embrace', action_sfx: 'soul_whisper',
       xp: 400, passive: ['ethereal_form 1', 'unending_servitude 1', 'eternal_grief 1'], ability: 'mothers_blessing 1',
     },
     pale_abbess: {
@@ -3401,7 +3401,7 @@ const UNITS = {
       hp: 55, armor: 10, initiative: 40,
       resistances: { air: 10, fire: 0, life: 0, death: 40, cold: 15, nature: 0 },
       action: 'pale_embrace', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 8, action_icon: 'haunt.jpg', action_animation: 'pale_embrace',
+      damage_source: null, action_power: 8, action_icon: 'haunt.jpg', action_animation: 'pale_embrace', action_sfx: 'soul_whisper',
       xp: 1520, passive: ['ethereal_form 2', 'unending_servitude 1', 'eternal_grief 1'], ability: 'mothers_blessing 1',
     },
     pale_prioress: {
@@ -3414,7 +3414,7 @@ const UNITS = {
       hp: 65, armor: 10, initiative: 40,
       resistances: { air: 15, fire: 0, life: 0, death: 40, cold: 15, nature: 5 },
       action: 'pale_embrace', target_type: 'ally', targets: 6, range: 3,
-      damage_source: null, action_power: 10, action_icon: 'haunt.jpg', action_animation: 'pale_embrace',
+      damage_source: null, action_power: 10, action_icon: 'haunt.jpg', action_animation: 'pale_embrace', action_sfx: 'soul_whisper',
       xp: 3120, passive: ['ethereal_form 2', 'unending_servitude 1', 'eternal_grief 2'], ability: 'mothers_blessing 2',
     },
     pale_mourner: {
@@ -4191,7 +4191,7 @@ const UNITS = {
         hp: 120, armor: 20, initiative: 35,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: 'death', action_power: 20, action_animation: 'sword_swing',
+        damage_source: 'death', action_power: 20, action_animation: 'sword_swing', action_sfx: 'mace_swing',
         xp: 1920, passive: ['iron_will 1', 'undying 1', 'stoicism 1'], ability: null,
       },
       malgrath_the_undying_2: {
@@ -4204,7 +4204,7 @@ const UNITS = {
         hp: 150, armor: 20, initiative: 35,
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: 'death', action_power: 25, action_animation: 'sword_swing',
+        damage_source: 'death', action_power: 25, action_animation: 'sword_swing', action_sfx: 'mace_swing',
         xp: 2705, passive: ['iron_will 2', 'undying 1', 'stoicism 1'], ability: null,
       },
 
@@ -4218,7 +4218,7 @@ const UNITS = {
         hp: 180, armor: 25, initiative: 35,
         resistances: { air: 10, fire: 10, life: 0, death: 50, cold: 10, nature: 10 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-        damage_source: 'death', action_power: 32, action_animation: 'sword_swing',
+        damage_source: 'death', action_power: 32, action_animation: 'sword_swing', action_sfx: 'mace_swing',
         xp: 2915, passive: ['iron_will 2', 'undying 2', 'stoicism 1'], ability: null,
       },
     },
