@@ -2231,34 +2231,37 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         const next = el.getBoundingClientRect();
         if (!rect.width || !rect.height || !next.width || !next.height) return;
         if (wasExpanded && el === ui.battleLog) {
-          // Keep the expanded panel anchored to the bottom while it shrinks.
-          // Moving the already-collapsed flex box only slides its short top
-          // section, which makes the rest of the log appear to disappear.
+          // Animate the whole panel from its expanded bounds to its collapsed
+          // bounds. Letting flex sizing and min-height transition together
+          // makes the content jump in stages as the flex layout recalculates.
+          const parentRect = el.parentElement.getBoundingClientRect();
+          const fromTop = rect.top - parentRect.top;
+          const toTop = next.top - parentRect.top;
           el.style.position = 'absolute';
           el.style.transition = 'none';
           el.style.left = '0';
           el.style.right = '0';
-          el.style.bottom = '0';
+          el.style.top = `${fromTop}px`;
           el.style.zIndex = '19';
           el.style.flex = 'none';
           el.style.height = `${rect.height}px`;
           el.getBoundingClientRect();
-          el.style.transition = 'height 560ms cubic-bezier(.45, 0, .25, 1)';
-          el.style.height = `${next.height}px`;
+          const animation = el.animate([
+            { top: `${fromTop}px`, height: `${rect.height}px` },
+            { top: `${toTop}px`, height: `${next.height}px` },
+          ], { duration: 560, easing: 'cubic-bezier(.45, 0, .25, 1)' });
           const clean = () => {
-            el.removeEventListener('transitionend', onEnd);
             el.style.position = '';
             el.style.left = '';
             el.style.right = '';
-            el.style.bottom = '';
+            el.style.top = '';
             el.style.zIndex = '';
             el.style.flex = '';
             el.style.height = '';
             el.style.transition = '';
           };
-          const onEnd = event => { if (event.propertyName === 'height') clean(); };
-          el.addEventListener('transitionend', onEnd);
-          window.setTimeout(clean, 700);
+          animation.onfinish = clean;
+          animation.oncancel = clean;
           return;
         }
         const dx = rect.left - next.left;
