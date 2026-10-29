@@ -1473,7 +1473,7 @@ const UNITS = {
       hp: 50, armor: 15, initiative: 40,
       resistances: { air: 0, fire: 0, life: 40, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 14, action_icon: 'spear.jpg', action_animation: 'impale', action_sfx: 'spear_thrust',
+      damage_source: 'physical', action_power: 12, action_icon: 'spear.jpg', action_animation: 'impale', action_sfx: 'spear_thrust',
       xp: 480, passive: ['impale 1', 'iron_will 1'], ability: 'shield_bash 1',
     },
     crossbowman: {
@@ -1512,7 +1512,7 @@ const UNITS = {
       hp: 65, armor: 20, initiative: 40,
       resistances: { air: 5, fire: 0, life: 40, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 18, action_icon: 'spear.jpg', action_animation: 'impale', action_sfx: 'spear_thrust',
+      damage_source: 'physical', action_power: 16, action_icon: 'spear.jpg', action_animation: 'impale', action_sfx: 'spear_thrust',
       xp: 1560, passive: ['impale 1', 'iron_will 1', 'protector 1'], ability: 'shield_bash 2', 
     },
     vindicator: {
@@ -1525,7 +1525,7 @@ const UNITS = {
       hp: 75, armor: 20, initiative: 40,
       resistances: { air: 10, fire: 0, life: 40, death: 10, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 22, action_icon: 'spear.jpg', action_animation: 'impale', action_sfx: 'spear_thrust',
+      damage_source: 'physical', action_power: 20, action_icon: 'spear.jpg', action_animation: 'impale', action_sfx: 'spear_thrust',
       xp: 3600, passive: ['impale 1', 'iron_will 1', 'protector 2'], ability: 'shield_bash 2', 
     },
     blade_guard: {
@@ -1538,7 +1538,7 @@ const UNITS = {
       hp: 60, armor: 15, initiative: 45,
       resistances: { air: 5, fire: 0, life: 40, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 20, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
+      damage_source: 'physical', action_power: 18, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
       xp: 1560, passive: ['execute 1', 'iron_will 1', 'duelist 1'], ability: 'lions_roar 2',
     },
     blade_master: {
@@ -1551,7 +1551,7 @@ const UNITS = {
       hp: 70, armor: 15, initiative: 50,
       resistances: { air: 5, fire: 0, life: 40, death: 0, cold: 5, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'physical', action_power: 25, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
+      damage_source: 'physical', action_power: 22, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
       xp: 3640, passive: ['execute 2', 'iron_will 1', 'duelist 1'], ability: 'lions_roar 2',
     },
     horseman: {
