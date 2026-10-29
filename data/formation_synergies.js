@@ -230,19 +230,6 @@ const FORMATION_SYNERGIES = {
     label: 'Inspiration', label_ru: 'Вдохновение',
   },
 
-  inspiration_max_hp: {
-    id: 'inspiration_max_hp',
-    source:   { ability: 'inspiration_max_hp' },
-    partner:  {},
-    relation: 'column_adjacent',
-    multi:    true,
-    present:  'flash',
-    effect:   'inspiration_flash',
-    fx: INSPIRATION_FX,
-    buff: { icon: 'inspiration_max_hp.jpg', suffix: '', valueParam: 'inspiration_value_per_tag' },
-    label: 'Inspiration', label_ru: 'Вдохновение',
-  },
-
   inspiration_armor: {
     id: 'inspiration_armor',
     source:   { ability: 'inspiration_armor' },

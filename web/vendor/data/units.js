@@ -69,7 +69,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
-      passive: ['rage 1', 'chorus_of_war 2', 'inspiration_max_hp 1'], ability: null,
+      passive: ['rage 1', 'chorus_of_war 2', 'warding 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
     black_castellan_path_b_t2: {
@@ -83,7 +83,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 18, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
-      passive: ['rage 1', 'blood_frenzy 1'], ability: null,
+      passive: ['rage 1', 'pierce 1'], ability: null,
       building_slot: 'slot_0', xp: 480
     },
     black_castellan_path_b_t3: {
@@ -97,7 +97,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
-      passive: ['rage 1', 'blood_frenzy 1', 'execute 1'], ability: null,
+      passive: ['rage 1', 'pierce 1', 'execute 1'], ability: null,
       building_slot: 'slot_0', xp: 1560
     },
     black_castellan_path_b_t4: {
@@ -111,7 +111,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
-      passive: ['rage 1', 'blood_frenzy 1', 'execute 2'], ability: null,
+      passive: ['rage 1', 'pierce 1', 'execute 2'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
     black_castellan_path_b_t4_alt: {
@@ -125,7 +125,7 @@ const UNITS = {
       resistances: { air: 0, fire: 25, life: 25, death: 0, cold: 0, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 28, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
-      passive: ['rage 1', 'blood_frenzy 2', 'execute 1'], ability: null,
+      passive: ['rage 1', 'pierce 2', 'execute 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
     choir_regent: {

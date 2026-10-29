@@ -2357,15 +2357,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // initiative actually handed over, summed if two of them reach this unit.
     { key: 'inspiration', icon: 'inspiration_initiative.jpg', en: 'Inspiration', ru: 'Вдохновение', n: c => num(c, '_inspiration_initiative'), unit: 'initiative' },
     { key: 'inspiration-dmg', icon: 'inspiration_damage.jpg', en: 'Inspiration', ru: 'Вдохновение', n: c => num(c, '_inspiration_damage'), unit: 'power' },
-    { key: 'inspiration-hp',  icon: 'inspiration_max_hp.jpg', en: 'Inspiration', ru: 'Вдохновение', n: c => num(c, '_inspiration_max_hp'),  unit: 'max_hp' },
     { key: 'inspiration-armor', icon: 'inspiration_armor.jpg', en: 'Inspiration', ru: 'Вдохновение', n: c => num(c, '_inspiration_armor'), unit: 'armor' },
     // Chorus borrows command.jpg; it has no art of its own yet.
     { key: 'chorus',      icon: 'command.jpg', en: 'Chorus of War', ru: 'Хор Войны',  n: c => num(c, '_chorus_power'),      unit: 'power' },
     // _dmg_mult is a multiplier, not a stack, so it is printed as the percentage
     // it actually moves damage by and split across the two tables by direction:
     // above 1 it is a buff, below 1 a debuff.
-    { key: 'empowered',   icon: 'blood_frenzy.jpg',  en: 'Empowered', ru: 'Усиление',   n: c => dmgMultPct(c, 'up'),   unit: 'pct' },
-    { key: 'empower-action', icon: 'blood_frenzy.jpg', en: 'Empowered next action', ru: 'Усилено следующее действие', n: c => num(c, '_empower_bonus_flat'), unit: 'power' },
+    { key: 'empowered',   icon: 'rage.jpg',  en: 'Empowered', ru: 'Усиление',   n: c => dmgMultPct(c, 'up'),   unit: 'pct' },
+    { key: 'empower-action', icon: 'rage.jpg', en: 'Empowered next action', ru: 'Усилено следующее действие', n: c => num(c, '_empower_bonus_flat'), unit: 'power' },
     // Max HP bought with oaths at the Temple (data/callings.js, block 5). Not a
     // battle effect at all — it is already inside max_hp before the fight
     // starts — but it is the only thing an oath buys, and folded into the HP bar
@@ -2384,7 +2383,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     { key: 'bleed',   icon: 'bleed.jpg',   en: 'Bleeding',         ru: 'Кровотечение',   n: c => num(c, '_bleed_dmg'),          unit: 'dmg' },
     { key: 'poison',  icon: 'poison.jpg',  en: 'Poisoned',         ru: 'Отравление',     n: c => num(c, '_poison_dmg'),         unit: 'dmg' },
     { key: 'chill',   icon: 'chill.jpg',   en: 'Chilled',          ru: 'Обморожение',    n: c => num(c, '_chill_dmg'),          unit: 'dmg' },
-    { key: 'stun',    icon: 'stun.jpg',    en: 'Stunned',          ru: 'Оглушение',      n: c => num(c, '_stun_rounds'),        unit: 'rounds' },
     { key: 'terror',  icon: 'terror.jpg',  en: 'Terror',           ru: 'Ужас',           n: c => num(c, '_terror_rounds'),      unit: 'rounds' },
     { key: 'fear',    icon: 'fear.jpg',    en: 'Fear',             ru: 'Страх',          n: c => num(c, '_fear_dmg_reduction'), unit: 'pct' },
     { key: 'infect',  icon: 'infect.jpg',  en: 'Healing reduced',  ru: 'Лечение снижено', n: c => num(c, '_infect_stacks'), unit: 'stacks', detail: c => `${num(c, '_infect_stacks') * 10}%` },
