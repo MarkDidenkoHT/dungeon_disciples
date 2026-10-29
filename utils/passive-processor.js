@@ -1835,12 +1835,24 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   }
   if (p.resurrect_hp_pct != null && target) {
     if (engine.consumeVow?.('grave')) {
-      engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, heal: false, message: `${def.name} fails — a Vow of the Grave holds ${target.unit_name} down` });
+      // Left without `ability`, as it always was — the client falls back to the
+      // actor's own ability for the picture either way, so naming the key here
+      // would change nothing except to make a swallowed raise look deliberate.
+      engine.pushLog({ type: 'ability', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex, heal: false, message: `${def.name} fails — a Vow of the Grave holds ${target.unit_name} down` });
       return true;
     }
     target.alive = true;
-    target.battle_hp = Math.floor(target.max_hp * p.resurrect_hp_pct / 100);
-    engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — resurrected at ${target.battle_hp} HP` });
+    // Never 0. A 25% raise on a small body floors to nothing, and a unit standing
+    // at 0 HP while `alive` is true is a unit the next tick kills again — the same
+    // reason the spell-side resurrect (applySpellParams in utils/battle-engine.js)
+    // has always clamped to 1.
+    target.battle_hp = Math.max(1, Math.floor(target.max_hp * p.resurrect_hp_pct / 100));
+    // `ability` and the two ids are what the client resolves the animation and
+    // the cell by (effectForEntry / targetCellFor in public/screens/battle.js).
+    // Without them the entry was matched by cell-and-name alone, which is the
+    // weakest of the three fallbacks and the only one that can pick the wrong
+    // unit when two sides hold the same index.
+    engine.pushLog({ type: 'ability', ability: abilityKey, actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex, value: target.battle_hp, heal: true, message: `${def.name} — resurrected at ${target.battle_hp} HP` });
     // Raising either half of a guardian bond raises both and re-forms it. One
     // resurrection, one Vow charge (spent above) — see restoreBondOnRevive.
     engine.restoreBondOnRevive?.(target, p.resurrect_hp_pct);

@@ -4494,6 +4494,20 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .battle-cell--targetable:active { background: #3a1818 !important; }
 .battle-cell--dead { opacity: 0.35; filter: grayscale(1); cursor: default; }
 
+/* A CORPSE CAN BE A TARGET. Every resurrect in the game aims at one (Raise Dead,
+   Redemption, Reforge, Second Thirst, Rite of Reclamation — target 'ally_dead'
+   in data/unit_abilities.js), and the dead rule above then greyed the dashed
+   target outline down to 35% opacity, fully desaturated, under a cursor that
+   says the cell cannot be clicked. The cell WAS selectable the whole time; it
+   just looked exactly like every other corpse, so a resurrect read as an
+   ability with no legal target. Lit like any other target instead — still
+   dimmer than a living unit, so the body still reads as a body. */
+.battle-cell--dead.battle-cell--targetable {
+  opacity: 0.85;
+  filter: none;
+  cursor: pointer;
+}
+
 @keyframes anim-hit {
   0%   { box-shadow: inset 0 0 0 3px rgba(200, 60, 40, 0); background: transparent; }
   20%  { box-shadow: inset 0 0 0 3px rgba(200, 60, 40, 0.9); background: rgba(200, 60, 40, 0.25); }

@@ -2012,18 +2012,76 @@ export async function repair(cellEl) {
 
 
 
-// ── raise_dead — necrotic resurrection: ground-crack miasma, bone lightning ────
+// ── The resurrection picture, in five liveries ────────────────────────────────
+// Every resurrect in the game is the same three-phase sequence (see below); only
+// the colours differ, because a Seraph calling a knight back from the dead is not
+// a Necromancer hauling a zombie up out of the soil.
+//
+// `tag_required` on the ability says which livery it is — Zombie necrotic, Holy
+// radiant, Construct forge-lit, Vampire crimson, Demon infernal. One palette per
+// slot the animation paints, so a new resurrect is a palette and an alias rather
+// than a second copy of 400 lines.
+const RAISE_PALETTES = {
+  // Raise Dead, as it has always looked: sickly green and violet.
+  necrotic: {
+    crack: 0x1a0033, crackGlow: 0x6600aa,
+    wispA:  0x44cc44, wispB: 0x9933cc,
+    bolt:   0xaaffaa, flash: 0xccffcc,
+    bloomA: 0x33aa33, bloomB: 0x9933cc, pulse: 0x226622,
+    mote:   0x55dd55, ringA: 0x44cc44, ringB: 0x9922bb,
+  },
+  // Redemption — dawn light pouring into the grave. Gold and white, no rot.
+  radiant: {
+    crack: 0x3a2a00, crackGlow: 0xffcc44,
+    wispA:  0xffdd77, wispB: 0xfff3cc,
+    bolt:   0xffeeaa, flash: 0xffffff,
+    bloomA: 0xffcc44, bloomB: 0xfff6dd, pulse: 0x886622,
+    mote:   0xffe699, ringA: 0xffd755, ringB: 0xfff2bb,
+  },
+  // Reforge — the body is a machine, so it comes back off the anvil: iron blue
+  // struck through with forge orange.
+  forge: {
+    crack: 0x1a1a22, crackGlow: 0xff7722,
+    wispA:  0xffaa44, wispB: 0x88aacc,
+    bolt:   0xffcc88, flash: 0xffffff,
+    bloomA: 0xff8833, bloomB: 0xaaccee, pulse: 0x663311,
+    mote:   0xffbb66, ringA: 0xff9944, ringB: 0x7799bb,
+  },
+  // Second Thirst — blood called back into a body that never truly let go.
+  crimson: {
+    crack: 0x220006, crackGlow: 0xaa0022,
+    wispA:  0xdd2244, wispB: 0x661122,
+    bolt:   0xff6677, flash: 0xffdde2,
+    bloomA: 0xcc1133, bloomB: 0x882244, pulse: 0x550a18,
+    mote:   0xee4466, ringA: 0xdd2244, ringB: 0x991133,
+  },
+  // Rite of Reclamation — the Court takes its own back. Ember orange under a
+  // violet pall.
+  infernal: {
+    crack: 0x1a0014, crackGlow: 0x7722aa,
+    wispA:  0xff6622, wispB: 0xaa33dd,
+    bolt:   0xffaa66, flash: 0xffeedd,
+    bloomA: 0xff5511, bloomB: 0x8833cc, pulse: 0x55112a,
+    mote:   0xff8844, ringA: 0xff6622, ringB: 0x9933bb,
+  },
+};
+
+// ── raise_dead — resurrection: ground-crack miasma, bone lightning ────────────
 // A dramatic three-phase resurrection sequence:
-//   crack (.0–.35)   dark fissures open in the ground beneath the cell, sickly
-//                    green-purple miasma seeps upward;
-//   surge (.30–.68)  bone-white crackling lightning threads converge from the
-//                    four corners into the cell, building to a blinding flash;
-//   bloom (.65–1.0)  a corrupted life-bloom erupts—violet-green rings expand,
-//                    necrotic motes rain down, and the cell settles into an
-//                    ominous pulsing aura.
-export async function raise_dead(cellEl) {
-  console.log('[battle-fx] raise_dead START', cellEl?.dataset?.id);
+//   crack (.0–.35)   dark fissures open in the ground beneath the cell, and the
+//                    livery's miasma seeps upward;
+//   surge (.30–.68)  crackling lightning threads converge from the four corners
+//                    into the cell, building to a blinding flash;
+//   bloom (.65–1.0)  a life-bloom erupts — rings expand, motes rain down, and
+//                    the cell settles into a pulsing aura.
+//
+// `palette` picks the livery (see RAISE_PALETTES); the Redemption, Reforge,
+// Second Thirst and Rite of Reclamation aliases below are this same animation
+// with a different one, which is why none of them has its own code.
+export async function raise_dead(cellEl, opts = {}) {
+  console.log('[battle-fx] raise_dead START', cellEl?.dataset?.id, opts?.palette || 'necrotic');
   if (!cellEl || !app || !window.PIXI) return;
+  const P = RAISE_PALETTES[opts?.palette] || RAISE_PALETTES.necrotic;
   const dataId = cellEl.dataset.id;
   const TAU = Math.PI * 2;
   const rand = (a, b) => a + Math.random() * (b - a);
@@ -2084,7 +2142,7 @@ export async function raise_dead(cellEl) {
         const ang = (i / numCracks) * TAU + 0.3;
         const len = R * 0.6 * crack;
         const cAlpha = crack * (1 - bloom * 0.7);
-        crackG.lineStyle(1.5, 0x1a0033, cAlpha * 0.9);
+        crackG.lineStyle(1.5, P.crack, cAlpha * 0.9);
         let px = cx, py = cy;
         const segs = 5;
         for (let s = 1; s <= segs; s++) {
@@ -2096,7 +2154,7 @@ export async function raise_dead(cellEl) {
           px = nx; py = ny;
         }
         // Glow along each crack
-        miasmaG.lineStyle(3, 0x6600aa, cAlpha * 0.25);
+        miasmaG.lineStyle(3, P.crackGlow, cAlpha * 0.25);
         miasmaG.moveTo(cx, cy);
         miasmaG.lineTo(cx + Math.cos(ang) * len, cy + Math.sin(ang) * len);
       }
@@ -2111,8 +2169,8 @@ export async function raise_dead(cellEl) {
       const wx = b.x + w.fx * b.width;
       const wy = b.y + b.height - phase * b.height * 1.1;
       const wAlpha = Math.sin(phase * Math.PI) * 0.45 * miasmaDuration;
-      softGlow(miasmaG, wx, wy, w.size, 0x44cc44, wAlpha * 0.5);
-      softGlow(miasmaG, wx, wy, w.size * 0.6, 0x9933cc, wAlpha * 0.65);
+      softGlow(miasmaG, wx, wy, w.size, P.wispA, wAlpha * 0.5);
+      softGlow(miasmaG, wx, wy, w.size * 0.6, P.wispB, wAlpha * 0.65);
     }
 
     // ── Lightning branches converging from corners ─────────────────────────────
@@ -2126,7 +2184,7 @@ export async function raise_dead(cellEl) {
         const progress = Math.min(surge * 1.3, 1); // slightly lead the surge
         const endX = lerp(startX, cx, progress);
         const endY = lerp(startY, cy, progress);
-        [[3, 0xaaffaa, 0.5], [1.5, 0xffffff, 0.35]].forEach(([w, col, la]) => {
+        [[3, P.bolt, 0.5], [1.5, 0xffffff, 0.35]].forEach(([w, col, la]) => {
           boltG.lineStyle(w, col, la * boltA);
           boltG.moveTo(startX, startY);
           for (let s = 1; s <= segs; s++) {
@@ -2141,7 +2199,7 @@ export async function raise_dead(cellEl) {
       // Central flash at peak surge
       if (surge > 0.75) {
         const flashA = (surge - 0.75) / 0.25 * boltA;
-        softGlow(boltG, cx, cy, R * 0.6 * flashA, 0xccffcc, flashA * 0.7);
+        softGlow(boltG, cx, cy, R * 0.6 * flashA, P.flash, flashA * 0.7);
         softGlow(boltG, cx, cy, R * 0.3 * flashA, 0xffffff, flashA * 0.5);
       }
     }
@@ -2150,12 +2208,12 @@ export async function raise_dead(cellEl) {
     bloomG.clear();
     if (bloom > 0) {
       const pop = bloom < 0.5 ? bloom / 0.5 : 1 - (bloom - 0.5) / 0.5;
-      softGlow(bloomG, cx, cy, R * (0.6 + bloom * 0.6), 0x33aa33, 0.5 * pop);
-      softGlow(bloomG, cx, cy, R * (0.3 + bloom * 0.4), 0x9933cc, 0.4 * pop);
+      softGlow(bloomG, cx, cy, R * (0.6 + bloom * 0.6), P.bloomA, 0.5 * pop);
+      softGlow(bloomG, cx, cy, R * (0.3 + bloom * 0.4), P.bloomB, 0.4 * pop);
       // Persistent ominous pulse after the flash
       if (bloom > 0.5) {
         const pulse = 0.5 + 0.5 * Math.sin(time * 1.2);
-        softGlow(bloomG, cx, cy, R * 0.55, 0x226622, 0.25 * pulse * bloom);
+        softGlow(bloomG, cx, cy, R * 0.55, P.pulse, 0.25 * pulse * bloom);
       }
     }
 
@@ -2166,14 +2224,14 @@ export async function raise_dead(cellEl) {
       if (phase <= 0) continue;
       const mx2 = b.x + m.fx * b.width;
       const my2 = b.y + phase * b.height * 1.1;
-      softGlow(moteG, mx2, my2, m.size * (1 - phase * 0.4), 0x55dd55, (1 - phase) * 0.75);
+      softGlow(moteG, mx2, my2, m.size * (1 - phase * 0.4), P.mote, (1 - phase) * 0.75);
     }
 
     // ── Expanding necrotic rings on bloom ─────────────────────────────────────
     ringG.clear();
     if (bloom > 0) {
       // Two offset rings for a more eerie feel.
-      [[0, 0x44cc44], [0.15, 0x9922bb]].forEach(([offset, col]) => {
+      [[0, P.ringA], [0.15, P.ringB]].forEach(([offset, col]) => {
         const rb = clamp01((bloom - offset) / (1 - offset));
         if (rb <= 0) return;
         ringG.lineStyle(2.5, col, (1 - rb) * 0.8);
@@ -2185,6 +2243,20 @@ export async function raise_dead(cellEl) {
   layer.destroy({ children: true });
   console.log('[battle-fx] raise_dead END', dataId);
 }
+
+// The other four resurrects, each the same sequence in its own livery. Aliased
+// rather than copied — same arrangement as pale_embrace and song_of_ash below —
+// so the picture can never drift between them.
+//
+// These exist because an ability with no entry in EFFECTS animates NOTHING (see
+// effectForEntry in public/screens/battle.js, which falls back to the ability's
+// base key): Redemption, Reforge, Second Thirst and Rite of Reclamation all
+// resurrected silently, with no flash and no sound, which reads in the fight as
+// the ability having failed.
+export const redemption           = (cellEl, opts = {}) => raise_dead(cellEl, { ...opts, palette: 'radiant'  });
+export const reforge              = (cellEl, opts = {}) => raise_dead(cellEl, { ...opts, palette: 'forge'    });
+export const second_thirst        = (cellEl, opts = {}) => raise_dead(cellEl, { ...opts, palette: 'crimson'  });
+export const rite_of_reclamation  = (cellEl, opts = {}) => raise_dead(cellEl, { ...opts, palette: 'infernal' });
 
 // ── shield_bash — a heavy metallic impact ring and recoil flash ───────────────
 // The attacker telegraphs a bash (brief windup flash), then a heavy silver
@@ -7543,6 +7615,11 @@ export const EFFECTS = {
   pale_embrace: mothers_blessing,
   cleanse,
   raise_dead,
+  // The same resurrection, one livery each (see RAISE_PALETTES).
+  redemption,
+  reforge,
+  second_thirst,
+  rite_of_reclamation,
   shield_bash,
   arcane_bolt,
   poison_dart,
