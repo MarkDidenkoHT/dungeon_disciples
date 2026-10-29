@@ -982,7 +982,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
     const actorTags = actor.unit_data?.tags ?? actor.tags ?? [];
     const alone = p.tag_exclusive == null || tagCount(engine, owner.side, p.tag_exclusive) <= 1;
     if (alone && (!p.ally_tag_required || actorTags.includes(p.ally_tag_required))) {
-      // applyDecay clamps to POOL_CAP_PCT of the target's max HP and logs the
+      // applyDecay clamps to DECAY_CAP_PCT of the target's max HP and logs the
       // pool itself, so a long fight cannot pile this up without bound and no
       // extra log line is needed here.
       engine.applyDecay(target, p.ally_hit_decay, def, owner);
@@ -1218,7 +1218,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target._infect_stacks });
       }
     }
-    // ── Decay: stacking anti-heal pool on the TARGET (see POOL_CAP_PCT).
+    // ── Decay: stacking anti-heal pool on the TARGET (see DECAY_CAP_PCT).
     // `owner` is named as the source so the log — and with it the client's
     // animation grouping, which keys on the actor — credits the unit whose
     // passive it is rather than falling back to the victim.

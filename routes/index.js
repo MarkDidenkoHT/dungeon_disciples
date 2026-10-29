@@ -2962,6 +2962,27 @@ function withBonusHp(rosterRows, hpBonus) {
   });
 }
 
+// The same flat Temple HP, for the flat units a bot template fields. A bot has
+// no castle of its own, so it borrows the QUEUEING PLAYER's Temple: the point of
+// the bonus is that a level-5 Temple makes the player's line tougher, and an
+// opponent that never got it turned the building into a difficulty discount.
+// Mirroring it keeps the fight where the ⚔ bands say it is.
+//
+// Bot units are FLAT (no `unit_data` wrapper, see buildBotArmy), so the bonus
+// goes on `hp` — which createCombatant reads when `max_hp` is absent. `_temple_hp`
+// rides along so the grid draws the same badge it draws on the player's side.
+//
+// Applied to the army BEFORE it is stored on the battle record, so a reload
+// rehydrates the same bodies rather than re-deriving them without the bonus.
+function withBotTempleHp(army, hpBonus) {
+  if (!hpBonus) return army || [];
+  return (army || []).map(u => {
+    const hp = Number(u?.hp);
+    if (!Number.isFinite(hp)) return u;
+    return { ...u, hp: hp + hpBonus, _temple_hp: hpBonus };
+  });
+}
+
 // ── Devotion, the Temple's record ──────────────────────────────────────────
 // Counters live in `roster.devotion` and are added in the database, never read
 // then written from here (sql/010_temple_devotion.sql).
@@ -5793,7 +5814,10 @@ async function createBotBattle(entry, { template, bandId, rules = null }) {
   // Under the same rules the player queued under: the army the rule check passed
   // is the army that takes the field, so the bot cannot field gear or a Loyalty
   // bill the player was forbidden to bring.
-  const army = buildBotArmy(template, bandId, rules);
+  const army = withBotTempleHp(
+    buildBotArmy(template, bandId, rules),
+    await unitHpBonusFor(entry.chat_id),
+  );
   if (!army.length) throw new Error(`Bot template ${template.id} has no units for ${bandId}`);
 
   const playerUnits = await buildArmyFor(entry.chat_id, entry.formation.playerUnitIds);

@@ -44,11 +44,18 @@ const BATTLE_FATIGUE = {
 //   _decay   absorbs incoming HEALING point for point, and is spent doing it
 //
 // The cap is what keeps them honest — a stack applied twenty times on a
-// 40 HP recruit cannot exceed 20, so neither pool can make a unit unkillable
-// or unhealable no matter how many applications land. Both are expressed as a
-// percentage of max_hp rather than a flat number for the same reason: the same
-// ability reads the same on a hero and on a chaff unit.
-const POOL_CAP_PCT = 50;
+// 40 HP recruit cannot exceed its share, so neither pool can make a unit
+// unkillable or unhealable no matter how many applications land. Both are
+// expressed as a percentage of max_hp rather than a flat number for the same
+// reason: the same ability reads the same on a hero and on a chaff unit.
+//
+// A fifth each. Half was far too much on both counts: a body able to soak half
+// its own HP again before taking a scratch outlived everything the rest of the
+// kit can put out, and a decay pool that deep shut a healer off for the whole
+// fight rather than taxing it. Kept as two constants even at the same value,
+// because the two pools answer to different kit and will not move together.
+const SHIELD_CAP_PCT = 20;
+const DECAY_CAP_PCT  = 20;
 
 // Bracing. Added to the unit's armor AND to every resistance for the round, so
 // it works against a sword and a firebolt alike — it used to feed armor only,
@@ -430,8 +437,8 @@ class BattleEngine {
       _effects:           [],
       _effect_seq:        0,
       _hot:               0,
-      _shield:            0,   // damage this unit can still absorb  (see POOL_CAP_PCT)
-      _decay:             0,   // healing this unit can still lose   (see POOL_CAP_PCT)
+      _shield:            0,   // damage this unit can still absorb  (see SHIELD_CAP_PCT)
+      _decay:             0,   // healing this unit can still lose   (see DECAY_CAP_PCT)
       _stacks:            {},
       _flags:             {},
       _dmg_mult:          1,
@@ -1124,10 +1131,12 @@ class BattleEngine {
     return 1 - this.fatigueHealReductionPct() / 100;
   }
   // ── Shield / Decay ────────────────────────────────────────────────────────
-  // Both pools cap at the SAME share of the target's own max HP, so a stacking
+  // Each pool caps at its own share of the target's own max HP, so a stacking
   // application saturates instead of growing without bound. Returns what was
   // actually added, which is what a dispel has to hand back.
-  poolCap(unit) { return Math.max(0, Math.floor((unit?.max_hp ?? 0) * POOL_CAP_PCT / 100)); }
+  poolCap(unit, pct) { return Math.max(0, Math.floor((unit?.max_hp ?? 0) * pct / 100)); }
+  shieldCap(unit) { return this.poolCap(unit, SHIELD_CAP_PCT); }
+  decayCap(unit)  { return this.poolCap(unit, DECAY_CAP_PCT); }
 
   // The cap is a share of max_hp, and max_hp MOVES: an ally_max_hp_bonus is
   // handed back when the unit granting it dies, so a pool that was legal when
@@ -1136,9 +1145,10 @@ class BattleEngine {
   // max_hp scattered across the passives.
   clampPools(unit) {
     if (!unit) return;
-    const cap = this.poolCap(unit);
-    if ((unit._shield ?? 0) > cap) unit._shield = cap;
-    if ((unit._decay  ?? 0) > cap) unit._decay  = cap;
+    const shieldMax = this.shieldCap(unit);
+    const decayMax  = this.decayCap(unit);
+    if ((unit._shield ?? 0) > shieldMax) unit._shield = shieldMax;
+    if ((unit._decay  ?? 0) > decayMax)  unit._decay  = decayMax;
   }
 
   // `source` is whoever granted it, when there is one — an action names its
@@ -1152,7 +1162,7 @@ class BattleEngine {
   // playback has to wait for it.
   grantShield(target, amount, def, source = null, { atStart = false } = {}) {
     if (!target || !target.alive || !(amount > 0)) return 0;
-    const cap    = this.poolCap(target);
+    const cap    = this.shieldCap(target);
     const before = target._shield ?? 0;
     const added  = Math.min(cap, before + amount) - before;
     if (added <= 0) return 0;
@@ -1186,7 +1196,7 @@ class BattleEngine {
 
   applyDecay(target, amount, def, source = null) {
     if (!target || !target.alive || !(amount > 0)) return 0;
-    const cap    = this.poolCap(target);
+    const cap    = this.decayCap(target);
     const before = target._decay ?? 0;
     const added  = Math.min(cap, before + amount) - before;
     if (added <= 0) return 0;

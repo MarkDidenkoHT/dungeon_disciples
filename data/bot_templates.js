@@ -163,14 +163,17 @@ const BOT_TEMPLATES = [
     faction: 'grail_of_sorrow',
     name: 'Plague',
     bands: {
+      // The Carried Cup: Denial on cell 0, Acceptance on cell 1, the hero on 2.
+      // Both callings are NAMED rather than left to botCalling's hash, which was
+      // handing all six slots Denial and leaving the rite one speaker short.
       band_500: [
         { unit: 'gs611',     cell: 5, item_id: 'shroud_of_the_fallen' },
         { unit: 'gs1111',     cell: 4, item_id: 'iron_armor' },
         { unit: 'gs831',     cell: 3, item_id: 'dark_determination' },
         { unit: 'h_g_2_a41', cell: 2, item_id: 'gift_of_eternity', hero: true,
           spells: [{ spell_id: 'g_spell_7', power: 3 }, { spell_id: 'g_spell_9', power: 5 }] },
-        { unit: 'gs321',     cell: 1, item_id: 'veil_of_discord' },
-        { unit: 'gs1111',     cell: 0, item_id: 'might_of_the_pure' },
+        { unit: 'gs321',     cell: 1, calling: 'acceptance', item_id: 'veil_of_discord' },
+        { unit: 'gs1111',     cell: 0, calling: 'denial', item_id: 'might_of_the_pure' },
       ],
     },
     variants: {
@@ -295,19 +298,24 @@ const BOT_TEMPLATES = [
     faction: 'empire',
     name: 'Holy Construct',
     bands: {
+      // Duty Eternal: Vigil on cell 1 and cell 4, the hero on 3. The Artificer
+      // moves to 5 so the hero can take the middle - it reaches the back line
+      // from either square.
       band_500: [
-        { unit: 'e621',      cell: 1, item_id: 'crystal_exoskeleton' },
+        { unit: 'e621',      cell: 1, calling: 'vigil', item_id: 'crystal_exoskeleton' },
         { unit: 'e3111',     cell: 0, item_id: 'sanctified_bulwark' },
-        { unit: 'e71',       cell: 3, item_id: 'codex_aeternum' },
-        { unit: 'h_e_3_a41', cell: 5, item_id: 'might_of_the_pure', hero: true,
+        { unit: 'e71',       cell: 5, item_id: 'codex_aeternum' },
+        { unit: 'h_e_3_a41', cell: 3, item_id: 'might_of_the_pure', hero: true,
           spells: [{ spell_id: 'e_spell_3', power: 3 }, { spell_id: 'e_spell_9', power: 5 }] },
-        { unit: 'e6112',     cell: 4, item_id: 'everliving_stalk' },
+        { unit: 'e6112',     cell: 4, calling: 'vigil', item_id: 'everliving_stalk' },
       ],
+      // Duty Eternal, the same three places as band_500; here the Artificer takes
+      // cell 4 itself as the second Vigil anchor.
       band_300: [
-        { unit: 'e621',     cell: 1, item_id: 'crystal_exoskeleton' },
+        { unit: 'e621',     cell: 1, calling: 'vigil', item_id: 'crystal_exoskeleton' },
         { unit: 'e311',     cell: 0, item_id: 'sanctified_bulwark' },
-        { unit: 'e71',      cell: 3, item_id: 'codex_aeternum' },
-        { unit: 'h_e_3_a3', cell: 5, item_id: 'might_of_the_pure', hero: true,
+        { unit: 'e71',      cell: 4, calling: 'vigil', item_id: 'codex_aeternum' },
+        { unit: 'h_e_3_a3', cell: 3, item_id: 'might_of_the_pure', hero: true,
           spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_9', power: 4 }] },
       ],
       band_200: [
@@ -491,28 +499,34 @@ const BOT_TEMPLATES = [
     faction: 'empire',
     name: 'Mage College',
     bands: {
+      // Argent Hammer: Crusade on cell 0 and cell 4, the hero on 3. The spare
+      // Battlemage drops to 5, which is where the hero stood.
       band_500: [
-        { unit: 'dm_e111',   cell: 0, item_id: 'forbidden_vow' },
+        { unit: 'dm_e111',   cell: 0, calling: 'crusade', item_id: 'forbidden_vow' },
         { unit: 'e4121',     cell: 2, item_id: 'lightbringer' },
-        { unit: 'e4111',     cell: 3, item_id: 'dragon_skin' },
+        { unit: 'e4111',     cell: 5, item_id: 'dragon_skin' },
         { unit: 'e4111',     cell: 1, item_id: 'fire_staff' },
-        { unit: 'e4321',     cell: 4, item_id: 'sanctified_bulwark' },
-        { unit: 'h_e_2_a41', cell: 5, item_id: 'might_of_the_pure', hero: true,
+        { unit: 'e4321',     cell: 4, calling: 'crusade', item_id: 'sanctified_bulwark' },
+        { unit: 'h_e_2_a41', cell: 3, item_id: 'might_of_the_pure', hero: true,
           spells: [{ spell_id: 'e_spell_10', power: 3 }, { spell_id: 'e_spell_9', power: 5 }] },
       ],
+      // Argent Hammer, as band_500 - only the hero moves, 5 to 3.
       band_300: [
-        { unit: 'dm_e111',  cell: 0, item_id: 'forbidden_vow' },
+        { unit: 'dm_e111',  cell: 0, calling: 'crusade', item_id: 'forbidden_vow' },
         { unit: 'e412',     cell: 2, item_id: 'lightbringer' },
         { unit: 'e411',     cell: 1, item_id: 'fire_staff' },
-        { unit: 'e432',     cell: 4, item_id: 'crystal_shield' },
-        { unit: 'h_e_2_a3', cell: 5, item_id: 'might_of_the_pure', hero: true,
+        { unit: 'e432',     cell: 4, calling: 'crusade', item_id: 'crystal_shield' },
+        { unit: 'h_e_2_a3', cell: 3, item_id: 'might_of_the_pure', hero: true,
           spells: [{ spell_id: 'e_spell_10', power: 2 }, { spell_id: 'e_spell_9', power: 4 }] },
       ],
+      // Too few bodies for a Crusade pair in both front rows, so this band stages
+      // The First Chorus instead: two DIFFERENT callings on cells 0 and 5 with
+      // the hero between them.
       band_200: [
-        { unit: 'dm_e11',   cell: 0, item_id: 'iron_sword' },
+        { unit: 'dm_e11',   cell: 0, calling: 'vigil', item_id: 'iron_sword' },
         { unit: 'e41',      cell: 1, item_id: 'orb_of_fire' },
-        { unit: 'e43',      cell: 3, item_id: 'caster_hat' },
-        { unit: 'h_e_2_a2', cell: 5, item_id: 'codex_militarum', hero: true,
+        { unit: 'e43',      cell: 5, calling: 'crusade', item_id: 'caster_hat' },
+        { unit: 'h_e_2_a2', cell: 3, item_id: 'codex_militarum', hero: true,
           spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_9', power: 3 }] },
       ],
     },
@@ -522,28 +536,33 @@ const BOT_TEMPLATES = [
     faction: 'empire',
     name: 'Templars',
     bands: {
+      // Argent Hammer: Crusade on cell 0 and cell 4, the hero on 2. The Templar
+      // and the hero swap squares - both are front-line, so neither minds.
       band_500: [
-        { unit: 'e2111',   cell: 0, item_id: 'lightbringer' },
-        { unit: 'e2121',   cell: 2, item_id: 'aegis_of_the_first_ward' },
-        { unit: 'h_e_1211', cell: 4, item_id: 'might_of_the_pure', hero: true,
+        { unit: 'e2111',   cell: 0, calling: 'crusade', item_id: 'lightbringer' },
+        { unit: 'e2121',   cell: 4, calling: 'crusade', item_id: 'aegis_of_the_first_ward' },
+        { unit: 'h_e_1211', cell: 2, item_id: 'might_of_the_pure', hero: true,
           spells: [{ spell_id: 'e_spell_3', power: 3 }, { spell_id: 'e_spell_8', power: 5 }] },
         { unit: 'e2211',   cell: 1, item_id: 'travelers_bedroll' },
         { unit: 'e2221',   cell: 3, item_id: 'codex_aeternum' },
         { unit: 'e1311',   cell: 5, item_id: 'knights_oath' },
       ],
+      // Argent Hammer, the same swap as band_500.
       band_300: [
-        { unit: 'e211',    cell: 0, item_id: 'lightbringer' },
-        { unit: 'e212',    cell: 2, item_id: 'knights_oath' },
-        { unit: 'h_e_121', cell: 4, item_id: 'might_of_the_pure', hero: true,
+        { unit: 'e211',    cell: 0, calling: 'crusade', item_id: 'lightbringer' },
+        { unit: 'e212',    cell: 4, calling: 'crusade', item_id: 'knights_oath' },
+        { unit: 'h_e_121', cell: 2, item_id: 'might_of_the_pure', hero: true,
           spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_8', power: 4 }] },
         { unit: 'e221',    cell: 1, item_id: 'travelers_bedroll' },
         { unit: 'e131',    cell: 3, item_id: 'codex_aeternum' },
       ],
+      // Duty Eternal rather than Argent Hammer: the hero already holds cell 2, so
+      // the cheaper rite is the one whose anchors this band can actually fill.
       band_200: [
-        { unit: 'e21',     cell: 0, item_id: 'lightbringer' },
+        { unit: 'e21',     cell: 4, calling: 'vigil', item_id: 'lightbringer' },
         { unit: 'h_e_11',  cell: 2, item_id: 'lion_signet', hero: true,
           spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_7', power: 3 }] },
-        { unit: 'e22',     cell: 1, item_id: 'travelers_bedroll' },
+        { unit: 'e22',     cell: 1, calling: 'vigil', item_id: 'travelers_bedroll' },
       ],
     },
   },
@@ -579,26 +598,31 @@ const BOT_TEMPLATES = [
     faction: 'choir_of_the_cursed',
     name: 'Infernal Court',
     bands: {
+      // The Taken Breath: Descant on cell 1, Hunger on cell 4, the hero on 3.
+      // The lineup already stood this way - it only ever lacked the two callings.
       band_500: [
         { unit: 'd7111',     cell: 0, item_id: 'burning_fury' },
         { unit: 'd7111',     cell: 2, item_id: 'dragon_skin' },
-        { unit: 'd4111',     cell: 4, item_id: 'crystal_shield' },
-        { unit: 'd6111',     cell: 1, item_id: 'court_regalia' },
+        { unit: 'd4111',     cell: 4, calling: 'hunger', item_id: 'crystal_shield' },
+        { unit: 'd6111',     cell: 1, calling: 'descant', item_id: 'court_regalia' },
         { unit: 'h_d_3_a41', cell: 3, item_id: 'burning_tyrant', hero: true,
           spells: [{ spell_id: 'd_spell_7', power: 3 }, { spell_id: 'd_spell_10', power: 5 }] },
         { unit: 'd5211',     cell: 5, item_id: 'ember_mantle' },
       ],
+      // The Iron Homily: Hunger on cell 0, Descant on cell 5, the hero on 3.
       band_300: [
-        { unit: 'd711',     cell: 0, item_id: 'burning_fury' },
+        { unit: 'd711',     cell: 0, calling: 'hunger', item_id: 'burning_fury' },
         { unit: 'd411',     cell: 2, item_id: 'crystal_shield' },
         { unit: 'd611',     cell: 1, item_id: 'court_regalia' },
         { unit: 'h_d_3_a3', cell: 3, item_id: 'orb_of_fire', hero: true,
           spells: [{ spell_id: 'd_spell_7', power: 2 }, { spell_id: 'd_spell_10', power: 4 }] },
-        { unit: 'd521',     cell: 5, item_id: 'ember_mantle' },
+        { unit: 'd521',     cell: 5, calling: 'descant', item_id: 'ember_mantle' },
       ],
+      // The Taken Breath: the Seneschal crosses to cell 4 as the Hunger anchor,
+      // with Descant on 1 and the hero on 3.
       band_200: [
-        { unit: 'd71',      cell: 0, item_id: 'burning_fury' },
-        { unit: 'd61',      cell: 1, item_id: 'court_regalia' },
+        { unit: 'd71',      cell: 4, calling: 'hunger', item_id: 'burning_fury' },
+        { unit: 'd61',      cell: 1, calling: 'descant', item_id: 'court_regalia' },
         { unit: 'h_d_3_a2', cell: 3, item_id: 'orb_of_fire', hero: true,
           spells: [{ spell_id: 'd_spell_7', power: 2 }, { spell_id: 'd_spell_3', power: 3 }] },
       ],
@@ -609,28 +633,31 @@ const BOT_TEMPLATES = [
     faction: 'grail_of_sorrow',
     name: 'Grail Ghosts',
     bands: {
+      // The Carried Cup: Denial on cell 0, Acceptance on cell 1, the hero on 3.
       band_500: [
         { unit: 'h_g_3_b41',     cell: 3,  item_id: 'knights_oath', hero: true,
           spells: [{ spell_id: 'g_spell_3', power: 3 }, { spell_id: 'g_spell_10', power: 5 }] },
         { unit: 'gs7111',        cell: 2,  item_id: 'crystal_shield' },                 
         { unit: 'gs7311',        cell: 4,  item_id: 'iron_greaves' }, 
-        { unit: 'gs7211',        cell: 0,  item_id: 'caster_hat' },
-        { unit: 'gs6211',        cell: 1,  item_id: 'veil_of_discord' },          
+        { unit: 'gs7211',        cell: 0, calling: 'denial',  item_id: 'caster_hat' },
+        { unit: 'gs6211',        cell: 1, calling: 'acceptance',  item_id: 'veil_of_discord' },          
         { unit: 'dm_e311',       cell: 5,  item_id: 'ember_mantle' },                            
       ],
+      // The Carried Cup, the same three places as band_500.
       band_300: [
         { unit: 'h_g_3_b3',    cell: 3, item_id: 'knights_oath', hero: true,
           spells: [{ spell_id: 'g_spell_3', power: 2 }, { spell_id: 'g_spell_10', power: 4 }] },
-        { unit: 'gs711',       cell: 0, item_id: 'crystal_shield' },
+        { unit: 'gs711',       cell: 0, calling: 'denial', item_id: 'crystal_shield' },
         { unit: 'gs711',       cell: 4, item_id: 'iron_greaves' },
-        { unit: 'gs721',       cell: 1, item_id: 'caster_hat' },   
+        { unit: 'gs721',       cell: 1, calling: 'acceptance', item_id: 'caster_hat' },   
         { unit: 'dm_e311',     cell: 5, item_id: 'ember_mantle' },
       ],
+      // The Carried Cup: the Warden crosses to cell 0 to anchor Denial.
       band_200: [
         { unit: 'h_g_3_b2',    cell: 3, item_id: 'knights_oath', hero: true,
           spells: [{ spell_id: 'g_spell_3', power: 2 }, { spell_id: 'g_spell_5', power: 3 }] },
-        { unit: 'gs711',       cell: 2, item_id: 'iron_shield' },
-        { unit: 'gs72',        cell: 1, item_id: 'caster_hat' },
+        { unit: 'gs711',       cell: 0, calling: 'denial', item_id: 'iron_shield' },
+        { unit: 'gs72',        cell: 1, calling: 'acceptance', item_id: 'caster_hat' },
         { unit: 'dm_e31',      cell: 5, item_id: 'ember_mantle' },
       ],
     },

@@ -920,7 +920,7 @@ export async function empower(cellEl, opts = {}) {
 }
 
 // ── shield_ward / decay_touch ─────────────────────────────────────────────────
-// The two POOL effects (see POOL_CAP_PCT in utils/battle-engine.js), built as
+// The two POOL effects (see SHIELD_CAP_PCT / DECAY_CAP_PCT in utils/battle-engine.js), built as
 // siblings of holy_heal so a ward and a mend read as the same KIND of event —
 // something washing over a unit — and are told apart by colour and direction:
 //

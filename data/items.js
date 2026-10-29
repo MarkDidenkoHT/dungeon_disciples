@@ -156,7 +156,7 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: null,
     adds_tag:     null,
-    stat_mods:    { hp: 2, armor: 3, cold_resist: 5 },
+    stat_mods:    { hp: 5, armor: 3, cold_resist: 5 },
     passive:      'protector 2',
     icon:         'crystal_shield',
     rarity:       'epic',
