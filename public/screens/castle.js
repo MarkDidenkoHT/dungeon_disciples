@@ -25,7 +25,7 @@ import {
   resolveAbility, renderModalContent, openSheet, closeSheet, getSheetBody, GOLD_ICON,
   setSheetTitle, setSheetBadges,
   openSubSheet, closeSubSheet, getSubSheetBody, cap, onSheetClose, RESOURCE_BAR_SLOTS, CROSSROAD_SIGIL_SLOT, gameConfirm,
-  buildUnitCard, getActionLabel, buildAbilityModalParts,
+  buildUnitCard, getActionLabel, buildAbilityModalParts, buildStatDescription,
   renderItemSlotIcon, withEquippedItem, resolveUnitDef, itemName, itemRarity,
   handleUnitInspect, unitName, buildingLabel, enableTrackSwipe, escapeHtml,
   playAdPlaceholder as playAd,
@@ -3449,6 +3449,21 @@ export function renderCastle(root, params = {}) {
         ? rosterCache.find(u => String(u.id) === String(it.equipped_by))
         : null;
       const holderName = holder ? (resolveUnitDef(holder)?.name ?? '') : '';
+
+      // The passive SPELLED OUT, the way the catalog card on the items screen
+      // does it (buildCatalogItemCard in public/screens/items.js) — what the
+      // item's passive actually does is the whole reason to equip one, and this
+      // card used to render it as a bare name you had to tap to read, one modal
+      // deep, while choosing. Static rather than a button for the same reason
+      // the item modal's is (see renderItemPassive in public/utils.js): the
+      // description it would open is already here.
+      const passiveDef  = stats.passive ? resolveAbility(stats.passive) : null;
+      const passiveDesc = passiveDef ? buildStatDescription(passiveDef, 'passive') : '';
+      const passiveHtml = passiveDef
+        ? `${renderItemPassive(stats, { interactive: false })}
+           ${passiveDesc ? `<div class="item-modal-passive-desc">${escapeHtml(passiveDesc)}</div>` : ''}`
+        : '';
+
       const countLine  = entry.count > 1
         ? `×${entry.count}`
         : (holderName ? `${CASTLE_TEXT.equippedOn[castleLang]} ${holderName}` : '');
@@ -3469,7 +3484,7 @@ export function renderCastle(root, params = {}) {
             <div class="item-card-main">
               <div class="item-card-name">${itemName(it, player)}</div>
               <div class="item-card-stats">${itemStatModsHtml(stats.stat_mods)}</div>
-              ${renderItemPassive(stats)}
+              ${passiveHtml}
               <div class="item-card-tags">${renderItemTags(stats, { unitTags })}</div>
             </div>
           </div>
@@ -3539,14 +3554,32 @@ export function renderCastle(root, params = {}) {
       onFilterChange: ({ rarity: r, stat }) => { rarity = r; statFilter = stat; },
     }) : null;
 
+    // A UNIT THAT IS ALREADY WEARING SOMETHING OPENS ON IT. Tapping an occupied
+    // item slot asks "what has this unit got on?", and the answer was a grid of
+    // every item in the stash with the worn one sitting first but closed — so
+    // reading the thing you tapped took a second tap, and the Unequip button was
+    // two taps away. currentList() already hoists the worn copy to the front for
+    // the same reason, so this just finishes the thought and opens its card over
+    // the grid; the back arrow drops to the full list, which is what an EMPTY
+    // slot still opens on, since there is nothing to read yet.
+    const wornIdx = currentList().findIndex(e => String(e.item.equipped_by) === String(rosterId));
+    if (wornIdx >= 0) lib?.openAt(wornIdx);
+
     // Onboarding points at the Equip button, which now lives in the item's own
     // card — so the lesson opens that card before the spotlight looks for it.
     openTutorialItem = () => {
-      if (!rootEl?.isConnected || lib?.isOpen()) return;
+      if (!rootEl?.isConnected) return;
       const list = currentList();
       const idx  = list.findIndex(e =>
         (e.item.item_stats?.key || e.item.item_stats?.icon) === TUTORIAL_ITEM_KEY);
-      if (idx >= 0 || list.length) lib?.openAt(idx >= 0 ? idx : 0);
+      const want = idx >= 0 ? idx : 0;
+      // Bails only when the lesson's card is the one already open, not whenever
+      // ANYTHING is open: a unit wearing something now opens on its own item
+      // (above), and the old blanket check read that as "the player is already
+      // looking at something" and left the spotlight hunting a button on a card
+      // that was never opened.
+      if (lib?.isOpen() && lib.openIndex() === want) return;
+      if (list.length) lib?.openAt(want);
     };
 
     shell?.addEventListener('click', async e => {

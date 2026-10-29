@@ -3993,7 +3993,7 @@ const UNITS = {
         resistances: { air: 25, fire: 25, life: 25, death: 25, cold: 50, nature: 25 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'cold', action_power: 20, action_icon: 'frost_claw.jpg', action_animation: 'frost_claw', action_sfx: 'frost_spell_impact',
-        xp: 4055, passive: ['resist_aura_cold 2', 'rimeguard 2', 'stoicism 1'], ability: null,
+        xp: 4055, passive: ['resist_aura_cold 2', 'rimeguard 2', 'stoicism 2'], ability: null,
       },
       cryodrox: {
         id: 'mv_e4', f: 'mv', t: 2,
@@ -4033,7 +4033,7 @@ const UNITS = {
         resistances: { air: 50, fire: 50, life: 50, death: 50, cold: 50, nature: 50 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'cold', action_power: 50, action_icon: 'frost_claw.jpg', action_animation: 'frost_claw', action_sfx: 'frost_spell_impact',
-        xp: 2005, passive: ['chill 2', 'dissipate 2', 'stoicism 1'], ability: null,
+        xp: 2005, passive: ['chill 2', 'dissipate 2', 'stoicism 2'], ability: null,
       },
     },
 
