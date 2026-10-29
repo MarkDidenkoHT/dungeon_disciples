@@ -3366,7 +3366,19 @@ export function renderCastle(root, params = {}) {
     const unitDef  = resolveUnitDef(unit);
     const unitTags = (unitDef?.tags || []).filter(Boolean);
 
-    let filter     = 'equippable';   // 'equippable' | 'owned'
+    // What the unit has on, if anything. It decides two things together, which
+    // is why it is read here rather than inside the list builder: the card the
+    // picker opens on, and WHICH LIST IS BEHIND THAT CARD.
+    const wornItem = equippedItemFor(rosterId);
+
+    // An occupied slot opens on the full stash, not on the equippable subset.
+    // Closing the worn item's card is the player saying "show me the others",
+    // and 'equippable' answers that with a list filtered down to what this unit
+    // can wear right now — which hides the very items they are looking for,
+    // including anything worn by somebody else that they might take off it. An
+    // EMPTY slot still opens on 'equippable': there is no card over it, the
+    // grid IS the answer, and narrowing it to what fits is the help.
+    let filter     = wornItem ? 'owned' : 'equippable';   // 'equippable' | 'owned'
     let rarity     = 'all';
     let statFilter = 'all';
 
@@ -3560,10 +3572,11 @@ export function renderCastle(root, params = {}) {
     // reading the thing you tapped took a second tap, and the Unequip button was
     // two taps away. currentList() already hoists the worn copy to the front for
     // the same reason, so this just finishes the thought and opens its card over
-    // the grid; the back arrow drops to the full list, which is what an EMPTY
-    // slot still opens on, since there is nothing to read yet.
-    const wornIdx = currentList().findIndex(e => String(e.item.equipped_by) === String(rosterId));
-    if (wornIdx >= 0) lib?.openAt(wornIdx);
+    // the grid. Closing it drops to the owned list underneath (see `filter`).
+    if (wornItem) {
+      const wornIdx = currentList().findIndex(e => String(e.item.equipped_by) === String(rosterId));
+      if (wornIdx >= 0) lib?.openAt(wornIdx);
+    }
 
     // Onboarding points at the Equip button, which now lives in the item's own
     // card — so the lesson opens that card before the spotlight looks for it.
