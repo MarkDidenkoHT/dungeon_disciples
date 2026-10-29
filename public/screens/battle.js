@@ -1265,6 +1265,39 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const actionRaw = actor.unit_data?.action;
     const actionKey = typeof actionRaw === 'string' ? actionRaw : actionRaw?.id;
 
+    // THE ABILITY IS ANSWERED FIRST, before any of the action-specific rules
+    // below, because an armed ability has nothing to do with the unit's basic
+    // action — exactly the order the server uses (getValidTargets in
+    // utils/battle-engine.js tests `forAbility` on its first line).
+    //
+    // It used to sit after the `sacrifice` and `empower` branches, which RETURN.
+    // Every Redemption carrier in the game acts with Empower (Sister Guardian,
+    // Battle Guardian, Sister Protector in data/units.js), so arming Redemption
+    // on one of them returned Empower's list — living allies — and the corpse the
+    // ability exists to raise was never in it. The cell lit nothing and could not
+    // be tapped, while the server would have accepted the cast perfectly well.
+    // Any active on a unit whose action takes this shortcut had the same problem.
+    if (forAbility) {
+      const key    = actor.unit_data?.ability || actor.unit_data?.active_ability;
+      const def    = key ? UNIT_ABILITIES[key] : null;
+      const ttype  = def?.target ?? 'enemy';
+      const tagReq = def?.params?.tag_required ?? null;
+      let cands = [];
+      // 'any' — both sides are legal; the ability decides heal vs damage from
+      // the side of whoever is tapped.
+      if      (ttype === 'any')        cands = state.combatants.filter(c => c.alive);
+      else if (ttype === 'self')       cands = [actor];
+      else if (ttype === 'enemy')      cands = state.combatants.filter(c => c.side !== actor.side && c.alive);
+      else if (ttype === 'ally')       cands = state.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
+      else if (ttype === 'ally_any')   cands = state.combatants.filter(c => c.side === actor.side && c.alive);
+      else if (ttype === 'all_allies') cands = state.combatants.filter(c => c.side === actor.side && c.alive);
+      else if (ttype === 'ally_dead')  cands = state.combatants.filter(c => c.side === actor.side && !c.alive && (!tagReq || (c.unit_data?.tags ?? []).includes(tagReq)));
+      else if (ttype === 'ally_tagged') cands = state.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id && (!tagReq || (c.unit_data?.tags ?? []).includes(tagReq)));
+      else cands = state.combatants.filter(c => c.side !== actor.side && c.alive);
+      cands.forEach(c => targets.add(c.id));
+      return targets;
+    }
+
     if (actionKey === 'sacrifice') {
       state.combatants.filter(c => c.alive && c.side === actor.side && c.id !== actor.id).forEach(c => targets.add(c.id));
       return targets;
@@ -1286,27 +1319,6 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         // Keep each action's ally restrictions aligned with the server.
         .filter(c => c.alive && c.side === actor.side && passesTagRules(c, actionKey))
         .forEach(c => targets.add(c.id));
-    }
-
-    if (forAbility) {
-      const key    = actor.unit_data?.ability || actor.unit_data?.active_ability;
-      const def    = key ? UNIT_ABILITIES[key] : null;
-      const ttype  = def?.target ?? 'enemy';
-      const tagReq = def?.params?.tag_required ?? null;
-      let cands = [];
-      // 'any' — both sides are legal; the ability decides heal vs damage from
-      // the side of whoever is tapped.
-      if      (ttype === 'any')        cands = state.combatants.filter(c => c.alive);
-      else if (ttype === 'self')       cands = [actor];
-      else if (ttype === 'enemy')      cands = state.combatants.filter(c => c.side !== actor.side && c.alive);
-      else if (ttype === 'ally')       cands = state.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
-      else if (ttype === 'ally_any')   cands = state.combatants.filter(c => c.side === actor.side && c.alive);
-      else if (ttype === 'all_allies') cands = state.combatants.filter(c => c.side === actor.side && c.alive);
-      else if (ttype === 'ally_dead')  cands = state.combatants.filter(c => c.side === actor.side && !c.alive && (!tagReq || (c.unit_data?.tags ?? []).includes(tagReq)));
-      else if (ttype === 'ally_tagged') cands = state.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id && (!tagReq || (c.unit_data?.tags ?? []).includes(tagReq)));
-      else cands = state.combatants.filter(c => c.side !== actor.side && c.alive);
-      cands.forEach(c => targets.add(c.id));
-      return targets;
     }
 
     if (isHeal && !isDualTargetAction) {
