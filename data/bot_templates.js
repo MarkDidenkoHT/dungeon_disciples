@@ -169,24 +169,24 @@ const BOT_TEMPLATES = [
       band_500: [
         { unit: 'gs611',     cell: 5, item_id: 'shroud_of_the_fallen' },
         { unit: 'gs1111',     cell: 4, item_id: 'iron_armor' },
-        { unit: 'gs831',     cell: 3, item_id: 'dark_determination' },
+        { unit: 'gs8311',    cell: 3, item_id: 'dark_determination' },
         { unit: 'h_g_2_a41', cell: 2, item_id: 'gift_of_eternity', hero: true,
           spells: [{ spell_id: 'g_spell_7', power: 3 }, { spell_id: 'g_spell_9', power: 5 }] },
-        { unit: 'gs321',     cell: 1, calling: 'acceptance', item_id: 'veil_of_discord' },
+        { unit: 'gs3211',    cell: 1, calling: 'acceptance', item_id: 'veil_of_discord' },
         { unit: 'gs1111',     cell: 0, calling: 'denial', item_id: 'might_of_the_pure' },
       ],
     },
     variants: {
       // Gearless. Two of the authored items grant Zombie to bodies that are not
-      // one (a Spirit Wraith, a Vampire Vessel), so stripping them takes the
+      // one (a Spirit Wraith, a Vampire Font), so stripping them takes the
       // Zombie count 6 to 4 and weakens `horde` and `aura_of_decay` on four
       // separate units at once. This lineup is Zombie down to the last slot,
-      // which also keeps the Death Lord's `mend flesh` — Zombie-only — spoilt
+      // which also keeps Mother's Hand's `mend flesh` — Zombie-only — spoilt
       // for choice.
       bare_steel: {
         band_500: [
           { unit: 'gs1111', cell: 0 },
-          { unit: 'gs321',  cell: 1 },
+          { unit: 'gs3211', cell: 1 },
           { unit: 'h_g_2_a41', cell: 2, hero: true,
             spells: [{ spell_id: 'g_spell_7', power: 3 }, { spell_id: 'g_spell_9', power: 5 }] },
           { unit: 'gs8211', cell: 3 },
@@ -194,14 +194,14 @@ const BOT_TEMPLATES = [
           { unit: 'gs3311', cell: 5 },
         ],
       },
-      // Nothing above Rare. The Vessel is a Blood Bond carrier and the only
+      // Nothing above Rare. The Font is a Blood Bond carrier and the only
       // Vampire it can bond to in this squad is the HERO standing beside it,
       // whose Vampire comes from `gift_of_eternity` — a rarity the cap takes
-      // away. Downgraded, the bond cannot form and the Vessel does not act at
+      // away. Downgraded, the bond cannot form and the Font does not act at
       // all (action 'none'), so the squad fields five units and a passenger.
       //
       // The whole Vampire half of this lineup is item-granted, so there is no
-      // body to bond to at any price. The Vessel's own sibling is the answer, the
+      // body to bond to at any price. The Font's own cousin is the answer, the
       // same swap `bare_steel` above makes for the same reason: Mother's Grief is
       // the tier and the cell, natively BOTH Zombie and Vampire, and it acts.
       plain_gear: {
@@ -211,7 +211,7 @@ const BOT_TEMPLATES = [
           { unit: 'gs811',     cell: 3, item_id: 'dark_determination' },
           { unit: 'h_g_2_a41', cell: 2, item_id: 'gift_of_eternity', hero: true,
             spells: [{ spell_id: 'g_spell_7', power: 3 }, { spell_id: 'g_spell_9', power: 5 }] },
-          { unit: 'gs321',     cell: 1, item_id: 'veil_of_discord' },
+          { unit: 'gs3211',    cell: 1, item_id: 'veil_of_discord' },
           { unit: 'gs1111',    cell: 0, item_id: 'might_of_the_pure' },
         ],
       },
