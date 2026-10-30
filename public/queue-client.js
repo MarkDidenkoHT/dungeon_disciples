@@ -17,9 +17,10 @@ export function createQueueController({ playerId, mode = 'pvp_quick', onMatched,
   let retries = 0;
   let onVisible = null;
 
-  // Short, because this is the whole safety net whenever the stream is down and
-  // because a poll is also what drives a matchmaking pass server-side. Two
-  // players are paired the moment the bands allow it, not a poll interval later.
+  // Short, because this is the whole safety net whenever the stream is down.
+  // Two players are paired by the server the instant the second one enqueues,
+  // and the SSE stream above carries that straight to this client — this timer
+  // is only what finds the answer when that stream is not up.
   const POLL_MS = 1500;
 
   // A queue stream dies for ordinary reasons — a locked phone, a proxy timeout —
@@ -86,10 +87,9 @@ export function createQueueController({ playerId, mode = 'pvp_quick', onMatched,
     if (stopped || settled) return;
     try {
       const data = await api(`/pvp/status?chat_id=${encodeURIComponent(playerId)}`);
-      // The poll is the whole safety net when the stream is down, and it is also
-      // what drives a matchmaking pass server-side — the power bands widen with
-      // waiting, so a pair that was illegal on arrival becomes legal purely
-      // through time, and somebody has to ask.
+      // The poll is the whole safety net when the stream is down, and it also
+      // drives a matchmaking pass server-side — the bot deadline is a deadline,
+      // so somebody has to ask whether it has passed.
       if (data?.status === 'matched') { settle(onMatched, data); return; }
       // Neither waiting nor matched: cancelled elsewhere, or swept for age.
       if (data?.status !== 'waiting') settle(onEnded, data);

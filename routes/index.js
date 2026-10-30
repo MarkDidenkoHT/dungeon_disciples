@@ -5336,12 +5336,12 @@ router.post('/battle/action', requireAuth, async (req, res) => {
 async function createPvpBattle(a, b, { battle_id = null, mode = null } = {}) {
   battle_id ||= `pvp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
-  const [armyA, armyB] = await Promise.all([
+  // All four at once. The armies and the two castle reads are independent, and
+  // awaiting them as two groups spent a round trip on nothing — with two players
+  // sitting on a "match found" overlay waiting for it.
+  const [armyA, armyB, aLitaniesUnlocked, bLitaniesUnlocked] = await Promise.all([
     buildArmyFor(a.chat_id, a.formation.playerUnitIds),
     buildArmyFor(b.chat_id, b.formation.playerUnitIds),
-  ]);
-
-  const [aLitaniesUnlocked, bLitaniesUnlocked] = await Promise.all([
     litaniesUnlockedFor(a.chat_id),
     litaniesUnlockedFor(b.chat_id),
   ]);
@@ -5789,6 +5789,21 @@ router.post('/colossus/attack', requireAuth, async (req, res) => {
 
 const BOT_FALLBACK_MS = 30000;
 
+// The duel is STARTED this long before the deadline, so it is finished AT it.
+//
+// Building one is half a dozen Supabase round trips (the roster, the castle, the
+// items, the state row, the opening log) and they are not free: waiting for the
+// clock to read 30s and only then starting the work is what made the match land
+// at 35. The reads below are parallel now, which is most of the fix, but they
+// still cost what a round trip costs, so the work starts early and the player
+// gets their opponent on the mark they were promised.
+//
+// The cost of the lead is a window at the end of the wait in which a human
+// arriving would have paired instead. It is as short as the work is, and anyone
+// who was ALREADY in the queue was paired the instant they arrived — so what is
+// at stake is only somebody turning up inside this last second.
+const BOT_PREP_LEAD_MS = 1200;
+
 // The template ids of this player's last bot battles, newest first, for faction
 // rotation. Read from the records so a restart does not reset it.
 async function recentBotTemplateIds(chat_id) {
@@ -5811,20 +5826,25 @@ function botOpponentCard(template) {
 async function createBotBattle(entry, { template, bandId, rules = null }) {
   const battle_id = `pvpbot_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
+  // All three reads at once. They are independent — the castle, the roster and
+  // the castle again — and awaiting them one after another put three round trips
+  // between the deadline and the duel for no reason at all.
+  const [hpBonus, playerUnits, litanies] = await Promise.all([
+    unitHpBonusFor(entry.chat_id),
+    buildArmyFor(entry.chat_id, entry.formation.playerUnitIds),
+    litaniesUnlockedFor(entry.chat_id),
+  ]);
+
   // Under the same rules the player queued under: the army the rule check passed
   // is the army that takes the field, so the bot cannot field gear or a Loyalty
   // bill the player was forbidden to bring.
-  const army = withBotTempleHp(
-    buildBotArmy(template, bandId, rules),
-    await unitHpBonusFor(entry.chat_id),
-  );
+  const army = withBotTempleHp(buildBotArmy(template, bandId, rules), hpBonus);
   if (!army.length) throw new Error(`Bot template ${template.id} has no units for ${bandId}`);
 
-  const playerUnits = await buildArmyFor(entry.chat_id, entry.formation.playerUnitIds);
-  const placement   = entry.formation.placement || {};
+  const placement = entry.formation.placement || {};
 
   const engine = await BattleEngine.fromSetup(playerUnits, cloneArmy(army), placement, {
-    litaniesUnlockedBySide: { player: await litaniesUnlockedFor(entry.chat_id), enemy: true },
+    litaniesUnlockedBySide: { player: litanies, enemy: true },
   });
   engine.firePendingRoundEffects();
   // The bot may hold the first turn; it takes it now, as a region encounter does.
@@ -5855,17 +5875,20 @@ async function createBotBattle(entry, { template, bandId, rules = null }) {
     battle_kind: 'pvp_bot',
   });
 
-  if (battle_data.tourney_id) {
-    await countTourneyBattle(battle_data.tourney_id, entry.chat_id)
-      .catch(err => console.error('Tourney battle count failed:', err.message));
-  }
-
-  try {
-    const initialEvents = Array.isArray(engine.log) ? engine.log : [];
-    if (initialEvents.length) await appendBattleLogEntries(battle_id, initialEvents);
-  } catch (err) {
-    console.error('Failed to persist initial bot battle log:', err);
-  }
+  // Both after the row exists (they reference it) but neither before the other:
+  // the tourney tally and the opening log are the last two round trips the
+  // player is waiting on, and nothing reads one from the other.
+  const initialEvents = Array.isArray(engine.log) ? engine.log : [];
+  await Promise.all([
+    battle_data.tourney_id
+      ? countTourneyBattle(battle_data.tourney_id, entry.chat_id)
+          .catch(err => console.error('Tourney battle count failed:', err.message))
+      : null,
+    initialEvents.length
+      ? appendBattleLogEntries(battle_id, initialEvents)
+          .catch(err => console.error('Failed to persist initial bot battle log:', err))
+      : null,
+  ]);
 
   return { record, battle_id };
 }
@@ -5875,13 +5898,21 @@ async function createBotBattle(entry, { template, bandId, rules = null }) {
 async function assignBots() {
   // Both queues: nobody should sit out their tourney evening because the other
   // entrants happen to be between battles.
+  // BOT_PREP_LEAD_MS early, so the duel is ready at the deadline rather than a
+  // few round trips past it.
+  const dueAt = Math.max(0, BOT_FALLBACK_MS - BOT_PREP_LEAD_MS);
   const waiting = [
-    ...pvpQueue.overdue(BOT_FALLBACK_MS, 'pvp_quick'),
-    ...pvpQueue.overdue(BOT_FALLBACK_MS, TOURNEY_MODE),
+    ...pvpQueue.overdue(dueAt, 'pvp_quick'),
+    ...pvpQueue.overdue(dueAt, TOURNEY_MODE),
   ];
   for (const entry of waiting) {
-    const recent = await recentBotTemplateIds(entry.chat_id);
-    // The read above is a window: the player may have left, re-queued or been paired.
+    // Faction rotation and the tourney's rules are both needed before a template
+    // can be picked, and neither depends on the other.
+    const [recent, rules] = await Promise.all([
+      recentBotTemplateIds(entry.chat_id),
+      entry.tourney_id ? tourneyRulesFor(entry.tourney_id) : null,
+    ]);
+    // The reads above are a window: the player may have left, re-queued or been paired.
     if (pvpQueue.get(entry.chat_id) !== entry) continue;
 
     // In a tourney the bot fights under the same rules as the player. The army is
@@ -5889,18 +5920,13 @@ async function assignBots() {
     // about gear or Loyalty costs the bot what it costs the player instead of
     // striking the template off the list. What survives the check is what fights.
     let allow = null;
-    let rules = null;
-    if (entry.tourney_id) {
-      rules = await tourneyRulesFor(entry.tourney_id);
-      if (rules?.length) {
-        allow = (template, bandId) => {
-          const squad = botArmyAsSquad(template, bandId, rules);
-          return squad.units.length > 0
-            && checkTourneyRules(squad.units, rules, { itemsByRosterId: squad.itemsByRosterId }).length === 0;
-        };
-      } else {
-        rules = null;
-      }
+    const liveRules = rules?.length ? rules : null;
+    if (liveRules) {
+      allow = (template, bandId) => {
+        const squad = botArmyAsSquad(template, bandId, liveRules);
+        return squad.units.length > 0
+          && checkTourneyRules(squad.units, liveRules, { itemsByRosterId: squad.itemsByRosterId }).length === 0;
+      };
     }
 
     const picked = pickBotTemplate({ power: entry.power, recent, allow });
@@ -5909,21 +5935,24 @@ async function assignBots() {
       // quiet no-op: without this the player sits in the queue for the rest of the
       // evening waiting for an opponent that is never offered.
       console.error(`[pvp] no legal bot for ${entry.chat_id} (⚔ ${entry.power})`
-        + `${rules ? ` under ${rules.join(', ')}` : ''}: keeping them queued for a person`);
+        + `${liveRules ? ` under ${liveRules.join(', ')}` : ''}: keeping them queued for a person`);
       continue;
     }
 
     pvpQueue.leave(entry.chat_id);
     markPairing(entry.chat_id);
     try {
-      const created = await createBotBattle(entry, { ...picked, rules });
-      await clearQueueRows([entry.chat_id]);
+      const created = await createBotBattle(entry, { ...picked, rules: liveRules });
       const card = botOpponentCard(picked.template);
       noteMatch(entry.chat_id, created.battle_id, card);
       const delivered = battleBus.publish(pvpRoom(entry.chat_id), {
         status: 'matched', mode: entry.mode, opponent: card, battle_id: created.battle_id,
       }, { event: 'pvp' });
       console.log(`[pvp] bot ${picked.template.id}/${picked.bandId} -> ${entry.chat_id} (⚔ ${entry.power}): delivered to ${delivered} stream(s)`);
+      // AFTER the nudge: the row in pvp_queue is the durable record, not the
+      // thing the player is waiting for, and awaiting its delete before telling
+      // them put a whole round trip between their duel and their screen.
+      await clearQueueRows([entry.chat_id]);
     } catch (err) {
       console.error('Failed to build a bot duel:', err);
       clearPairing(entry.chat_id);
@@ -6266,9 +6295,10 @@ function noteMatch(chat_id, battle_id, opponent = null) {
 
 // Pair everyone who can now be paired, and build their duels.
 //
-// Runs on a timer as well as on every status poll, because the power bands
-// widen with waiting: two players out of range when the second one queued come
-// into range purely through time passing, and nothing else would ever look.
+// Pairing itself happens in enqueue(), the moment the second player arrives —
+// this pass exists for the two things no arrival can trigger: handing a bot to
+// someone nobody turned up for, and the queue-invariant sweep in matchWaiting
+// (see utils/pvp-queue.js). Runs on a timer and on every status poll.
 let matchmakingRunning = false;
 async function runMatchmaking() {
   if (matchmakingRunning) return;          // one pass at a time; the next tick retries
@@ -6283,11 +6313,17 @@ async function runMatchmaking() {
         // The one who waited longer creates, so seating is deterministic.
         const [first, second] = a.enqueuedAt <= b.enqueuedAt ? [a, b] : [b, a];
         const created = await createPvpBattle(first, second);
-        await clearQueueRows([first.chat_id, second.chat_id]);
 
-        for (const [me, them] of [[first, second], [second, first]]) {
+        // Both cards together, and BEFORE the loop: fetching one inside it meant
+        // the second player was told about the duel a whole round trip after the
+        // first one — the two devices visibly disagreeing about when the match
+        // happened, which is exactly the symptom this used to produce.
+        const [firstCard, secondCard] = await Promise.all([
+          pvpOpponentCard(first.chat_id), pvpOpponentCard(second.chat_id),
+        ]);
+
+        for (const [me, card] of [[first, secondCard], [second, firstCard]]) {
           noteMatch(me.chat_id, created.battle_id);
-          const card = await pvpOpponentCard(them.chat_id);
           const delivered = battleBus.publish(pvpRoom(me.chat_id), {
             status: 'matched', mode: me.mode, opponent: card, battle_id: created.battle_id,
           }, { event: 'pvp' });
@@ -6297,6 +6333,10 @@ async function runMatchmaking() {
           // that takes a poll interval to land.
           console.log(`[pvp] match ${created.battle_id} -> ${me.chat_id}: delivered to ${delivered} stream(s)`);
         }
+
+        // After both nudges, for the same reason as in assignBots: pvp_queue is
+        // the durable record of what happened, not a step on the way there.
+        await clearQueueRows([first.chat_id, second.chat_id]);
       } catch (err) {
         console.error('Failed to build a matched duel:', err);
         // Neither player is left believing in a duel that does not exist.
@@ -6311,8 +6351,16 @@ async function runMatchmaking() {
   }
 }
 
+// How often the queue is looked at. A pass over an empty queue sorts an empty
+// map and does nothing else, so this is cheap enough to run often — and the
+// interval is pure latency for everyone in the queue: a pair that becomes legal, or a wait
+// that crosses the bot deadline, is not acted on until the next tick. At 1500ms
+// that was up to a second and a half added to every single match, which is most
+// of why a 30-second bot deadline was never seen to fire before 32.
+const MATCHMAKING_TICK_MS = 400;
+
 // Unref'd: a queue nobody is in must not hold the process open.
-const matchmakingTimer = setInterval(() => { runMatchmaking().catch(() => {}); }, 1500);
+const matchmakingTimer = setInterval(() => { runMatchmaking().catch(() => {}); }, MATCHMAKING_TICK_MS);
 if (typeof matchmakingTimer.unref === 'function') matchmakingTimer.unref();
 
 // POST /pvp/enqueue — join the queue with the formation just arranged in prep.
@@ -6508,9 +6556,22 @@ router.post('/pvp/enqueue', requireAuth, async (req, res) => {
   }
 
   try {
-    // The same guard region battles use. Queueing while a fight is open would
-    // hand this player a second one the moment they matched.
-    const existing = await getActiveBattle(chat_id);
+    // Every pre-flight read at once. They are three independent reads — the open
+    // battle, the squad, the tourney window — and running them in a row delayed
+    // the moment the entry is stamped, which is the moment the queue's clock (and
+    // so the 30-second bot deadline) starts. The player's own timer started when
+    // they tapped, so every round trip spent here is a second the bot appears to
+    // be late by. Order only matters for the refusals, and those are decided
+    // below from all three answers.
+    const [existing, squad, tourney] = await Promise.all([
+      // The same guard region battles use. Queueing while a fight is open would
+      // hand this player a second one the moment they matched.
+      getActiveBattle(chat_id),
+      loadSquad(chat_id, units),
+      // Read speculatively: for a quick match there is nothing to read.
+      mode === TOURNEY_MODE ? openTourney() : null,
+    ]);
+
     if (existing) {
       return res.status(400).json({ error: 'A battle is already in progress', code: 'battle_in_progress' });
     }
@@ -6519,16 +6580,13 @@ router.post('/pvp/enqueue', requireAuth, async (req, res) => {
     // opponent now.
     forgetMatch(chat_id);
 
-    const squad = await loadSquad(chat_id, units);
     if (squad.error) return res.status(400).json({ error: squad.error, code: 'invalid_squad' });
 
     // A tourney entry is a quick match with three extra gates: the window has to
     // be open, the player has to have battles left, and the squad has to obey
     // today's rules. All three are re-checked here because the client's copy of
     // them is only there to explain itself.
-    let tourney = null;
     if (mode === TOURNEY_MODE) {
-      tourney = await openTourney();
       if (!tourney) return res.status(400).json({ error: 'No tourney is running', code: 'tourney_closed' });
 
       const entry = await ensureTourneyEntry(tourney.id, chat_id);
@@ -6556,7 +6614,11 @@ router.post('/pvp/enqueue', requireAuth, async (req, res) => {
     });
 
     if (!result.matched) {
-      await writeQueueRow(result.entry);
+      // Not awaited. pvp_queue is the durable record of an entry the map already
+      // holds, and the player is waiting on this response to start their timer:
+      // a failed or slow write there must never be a slow enqueue, and
+      // writeQueueRow already swallows its own errors.
+      writeQueueRow(result.entry);
       if (!previousEntry || previousEntry.mode !== mode) {
         notifyAdminPvpQueue({
           chat_id: String(chat_id),
@@ -6565,7 +6627,18 @@ router.post('/pvp/enqueue', requireAuth, async (req, res) => {
           waiting: pvpQueue.size(),
         }).catch(err => console.error('Admin PvP queue notify failed:', err.message));
       }
-      return res.json({ status: 'waiting', queued_at: result.entry.enqueuedAt, waiting: pvpQueue.size() });
+      // `now` is here so the client can show the queue's REAL age rather than
+      // its own. Its timer starts when the player taps; the deadline is measured
+      // from `queued_at`, a round trip later. Without the pair, the overlay
+      // counts a second or two that the server has never heard of, and a bot on
+      // the 30-second mark reads as 0:32.
+      return res.json({
+        status: 'waiting',
+        queued_at: result.entry.enqueuedAt,
+        now: Date.now(),
+        bot_after_ms: BOT_FALLBACK_MS,
+        waiting: pvpQueue.size(),
+      });
     }
 
     // Paired. The duel is built here, from the two formations already stored,
@@ -6629,7 +6702,15 @@ router.get('/pvp/status', requireAuth, async (req, res) => {
   if (match) return res.json({ status: 'matched', battle_id: match.battle_id, opponent: match.opponent });
 
   const entry = pvpQueue.get(chat_id);
-  if (entry) return res.json({ status: 'waiting', queued_at: entry.enqueuedAt, waiting: pvpQueue.size() });
+  if (entry) {
+    return res.json({
+      status: 'waiting',
+      queued_at: entry.enqueuedAt,
+      now: Date.now(),
+      bot_after_ms: BOT_FALLBACK_MS,
+      waiting: pvpQueue.size(),
+    });
+  }
 
   // Paired, duel still being built. Still 'waiting' as far as the player is
   // concerned — they are seconds from a battle, not out of the queue.

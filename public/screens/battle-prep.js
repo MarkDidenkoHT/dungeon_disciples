@@ -2198,7 +2198,18 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
     });
 
     try {
-      await queueController.start({ playerUnitIds, placement }, playerArmyPower());
+      const queued = await queueController.start({ playerUnitIds, placement }, playerArmyPower());
+      // Re-anchor the overlay to the SERVER's clock. The timer above started when
+      // the player tapped; the queue's own clock — and so the 30-second bot
+      // deadline — starts when the entry was stamped, a round trip later. Counting
+      // from the tap made a bot that arrived exactly on the mark read as 0:32, and
+      // the hint next to it promises 30. The two timestamps come back together, so
+      // the difference is measured rather than guessed and the device's own clock
+      // never enters into it.
+      if (queued?.status === 'waiting' && queued.queued_at && queued.now) {
+        const serverAgeMs = Math.max(0, queued.now - queued.queued_at);
+        showQueueOverlay(Date.now() - serverAgeMs);
+      }
     } catch (err) {
       console.error('Failed to join queue:', err);
       stopQueue();
