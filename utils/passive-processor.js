@@ -649,7 +649,21 @@ function dispatchPassive(trigger, owner, def, ctx) {
       const inspVal = p.inspiration_value_per_tag != null
         ? p.inspiration_value_per_tag * tagCount(engine, owner.side, p.tag_required)
         : p.inspiration_value;
-      let targets = inspVal > 0 ? engine.getInspirationTargets(owner) : [];
+      // `inspiration_all_allies` makes the aura army-wide. The armor and
+      // initiative Inspirations take it: column adjacency reached two allies at
+      // best and, from a corner, nobody — so the buff was decided by where the
+      // captain happened to fit rather than by the squad that was built. The
+      // damage Inspiration keeps the adjacency, because a flat +power to six
+      // units is a different ability.
+      //
+      // Self is excluded either way, which is what `getInspirationTargets` has
+      // always done: this inspires the people around you.
+      let targets = [];
+      if (inspVal > 0) {
+        targets = p.inspiration_all_allies
+          ? engine.combatants.filter(c => c.alive && c.side === owner.side && c.id !== owner.id)
+          : engine.getInspirationTargets(owner);
+      }
       // An optional target tag can narrow who receives this Inspiration. The
       // armor Inspiration omits it, so every adjacent ally can benefit.
       if (p.inspiration_target_tag) {
@@ -694,7 +708,8 @@ function dispatchPassive(trigger, owner, def, ctx) {
           null,
           INSPIRATION_DISPLAY_FIELD[p.inspiration_stat] ?? null);
         const statLabel = p.inspiration_stat === 'damage' ? 'power' : p.inspiration_stat;
-        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: targets.map(t => t.unit_name).join(', '), value: inspVal, message: `${def.name} — +${inspVal} ${statLabel} to adjacent allies in column` });
+        const reach = p.inspiration_all_allies ? 'all allies' : 'adjacent allies in column';
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: targets.map(t => t.unit_name).join(', '), value: inspVal, message: `${def.name} — +${inspVal} ${statLabel} to ${reach}` });
       }
     }
 

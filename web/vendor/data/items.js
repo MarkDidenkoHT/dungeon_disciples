@@ -137,7 +137,7 @@ const ITEM_DEFS = {
     tag_required: null,
     adds_tag:     'Construct',
     stat_mods:    { hp: 3, armor: 3, cold_resist: 5 },
-    passive:      'magic_attunement 1',
+    passive:      'unbreakable 2',
     blocked_tags: ['Spirit', 'Demon'],      
     icon:         'crystal_exoskeleton',
     rarity:       'mythic',
@@ -1085,8 +1085,8 @@ const ITEM_DEFS = {
     max_targets:  1,
     requires_action: 'damage',
     adds_tag:     'Vampire',
-    stat_mods:    { action_power: 3, hp: 3 },
-    passive:      'bleed 1',
+    stat_mods:    { action_power: 3, hp: 3, life_resist: 5 },
+    passive:      'bleed 2',
     icon:         'staff_of_thaumaturgy',
     rarity:       'mythic',
     unique:       true,
@@ -1707,8 +1707,14 @@ const ITEM_DOWNGRADES = {
   // that are already Demons — or where the tag fed nothing but the item's own
   // passive, which leaves with it.
   aldras_patience:         ['shard_of_hate'],
-  crystal_exoskeleton:     ['attuned_focus'],
   staff_of_thaumaturgy:    ['orb_of_pure_blood', 'lion_signet'],
+
+  // `crystal_exoskeleton` used to sit in the group above, on `attuned_focus`,
+  // because both carried `magic_attunement`. Its passive is `unbreakable 2` now
+  // and NO Rare carries any rank of Unbreakable, so there is no family left to
+  // preserve — which makes the armour and the cold resist the thing worth
+  // keeping, and `attuned_focus` (3 HP and nothing else) the wrong rung for it.
+  crystal_exoskeleton:     ['frost_cloak', 'cold_resistance_potion'],
 
   // No Rare carries `dispel`, `leech`, `heartpiercer` or `mithrails_light`, so
   // these four fall to the nearest stat line that is still LEGAL on the carrier:
@@ -1730,6 +1736,24 @@ const ITEM_DOWNGRADES = {
   knights_oath:            ['iron_shield', 'padded_armor'],
   might_of_the_pure:       ['lion_signet', 'seal_of_power'],
   sanctified_bulwark:      ['iron_shield', 'padded_armor'],
+
+  // Four pieces the bot squads now field (data/bot_templates.js) that had no
+  // rungs at all — on a "nothing above Rare" day they were removed OUTRIGHT
+  // rather than coming down, which the audit reports as a gutted army.
+  //
+  // `hatemace` keeps its passive FAMILY at the first rung, the way
+  // `aldras_patience` does: aggrails_blessing 2 becomes rank 1 on the shard,
+  // then falls to the bare power line. The other three have no Rare carrying
+  // their passive, so they come down to the nearest stat line that is still
+  // legal on the carrier — neither `iron_armor` nor `padded_armor` is tag-gated,
+  // so the Skeleton-locked barrier can still wear them.
+  hatemace:                ['shard_of_hate', 'seal_of_power'],
+  bone_barrier:            ['iron_armor', 'padded_armor'],
+  champions_belt:          ['codex_aeternum', 'padded_armor'],
+  // The resist is the point of this one, so the bottom rung is the potion that
+  // carries the same school — the pattern `burning_tyrant` and
+  // `aegis_of_the_first_ward` already use for their fire resist.
+  sanctified_reliquary_of_dawn: ['reliquary_of_dawn', 'death_resistance_potion'],
 };
 
 export {

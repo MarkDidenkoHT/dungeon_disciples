@@ -2356,6 +2356,13 @@ const UNIT_ABILITIES = {
     description_ru: "Один раз за бой этот юнит возвращается к жизни в начале следующего хода с 15% HP за каждый тег Зомби среди союзников (включая себя).",
     params: { reanimate: true, reanimate_hp_pct_per_zombie: 15 },
   },
+  // `inspiration_all_allies` is what makes this an army-wide aura rather than a
+  // placement puzzle. Column adjacency asked the player to stand the Engineer
+  // between the two units it was meant to armour, which on a 2x3 board reaches
+  // two allies at best and nothing at all from a corner — the buff was decided
+  // by where the captain happened to fit, not by the squad. The VALUE still
+  // multiplies by the Engineer count, so the aura is paid for by committing to
+  // the tag.
   'inspiration_armor 1': {
     id: 'inspiration_armor 1',
     name: 'Inspiration',
@@ -2363,9 +2370,9 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'Adjacent allies in the same column gain 2 armor per Engineer ally on the field.',
-    description_ru: "Соседние союзники в том же столбце получают по 2 брони за каждого союзного инженера.",
-    params: { inspiration_stat: 'armor', inspiration_value_per_tag: 2, tag_required: 'Engineer' },
+    description: 'All allies gain 2 armor per Engineer ally on the field.',
+    description_ru: "Все союзники получают по 2 брони за каждого союзного инженера.",
+    params: { inspiration_stat: 'armor', inspiration_value_per_tag: 2, tag_required: 'Engineer', inspiration_all_allies: true },
   },
   // Nine units — six Artificers, the Mechanic line's top three — have asked for
   // this rank since before it existed, so their Inspiration has been inert.
@@ -2381,9 +2388,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'Adjacent allies in the same column gain 3 armor per Engineer ally on the field.',
-    description_ru: "Соседние союзники в том же столбце получают по 3 брони за каждого союзного инженера.",
-    params: { inspiration_stat: 'armor', inspiration_value_per_tag: 3, tag_required: 'Engineer' },
+    description: 'All allies gain 3 armor per Engineer ally on the field.',
+    description_ru: "Все союзники получают по 3 брони за каждого союзного инженера.",
+    params: { inspiration_stat: 'armor', inspiration_value_per_tag: 3, tag_required: 'Engineer', inspiration_all_allies: true },
   },
   'inspiration_initiative 1': {
     id: 'inspiration_initiative 1',
@@ -2392,9 +2399,13 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'Adjacent allies in the same column gain 2 initiative per Caster ally on the field.',
-    description_ru: "Соседние союзники в том же столбце получают по 2 инициативы за каждого союзного заклинателя.",
-    params: { inspiration_stat: 'initiative', inspiration_value_per_tag: 2, tag_required: 'Caster' },
+    // FLAT, and deliberately small. Initiative is turn order, not a stat that
+    // scales gracefully: 3 per Caster across a whole army is every ally acting
+    // first forever, which is not a buff but a different game. 1 and 2 are a
+    // nudge in the queue, which is what an aura on six units should be.
+    description: 'All allies gain 1 initiative.',
+    description_ru: "Все союзники получают 1 инициативы.",
+    params: { inspiration_stat: 'initiative', inspiration_value: 1, inspiration_all_allies: true },
   },
   'inspiration_initiative 2': {
     id: 'inspiration_initiative 2',
@@ -2403,9 +2414,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
-    description: 'Adjacent allies in the same column gain 3 initiative per Caster ally on the field.',
-    description_ru: "Соседние союзники в том же столбце получают по 3 инициативы за каждого союзного заклинателя.",
-    params: { inspiration_stat: 'initiative', inspiration_value_per_tag: 3, tag_required: 'Caster' },
+    description: 'All allies gain 2 initiative.',
+    description_ru: "Все союзники получают 2 инициативы.",
+    params: { inspiration_stat: 'initiative', inspiration_value: 2, inspiration_all_allies: true },
   },
   'inspiration_damage 1': {
     id: 'inspiration_damage 1',

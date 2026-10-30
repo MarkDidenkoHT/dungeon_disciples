@@ -298,23 +298,49 @@ const BOT_TEMPLATES = [
     faction: 'empire',
     name: 'Holy Construct',
     bands: {
-      // Duty Eternal: Vigil on cell 1 and cell 4, the hero on 3. The Artificer
-      // moves to 5 so the hero can take the middle - it reaches the back line
-      // from either square.
+      // NO LITANY, deliberately. This band used to stage Duty Eternal (Vigil on
+      // cells 1 and 4, the hero on 3) and it no longer matches: the litany's
+      // third cell is a Vigil CHORUS on cell 4, and the hero stands there now.
+      // A hero fills the 'lead' role and can never fill a chorus one, so the
+      // squad trades 5 shield on every ally for the arrangement below. The Vigil
+      // on cell 1 is kept because it is still the litany's first anchor — move
+      // the hero back to cell 3 and give cell 4 a Vigil tile and Duty Eternal
+      // comes back on its own.
+      //
+      // What this DOES fix is worse than what it costs. Mithrails Light sat on
+      // cell 5 carrying `unity 1`, which bonds to a HOLY ally sharing its row;
+      // cell 5's row held cell 4, the Armsmaster, which is Engineer/Construct.
+      // The bond never formed, and an unbonded guardian's action is 'none' — it
+      // stood in a six-cell grid doing nothing for the whole battle. On cell 1
+      // its row holds the Golden Lion, which `sanctified_bulwark` makes Holy.
+      //
+      // The Artificer is pref_position 'back' with range 3, so cell 4 exposes it
+      // a rank further forward than it wants.
       band_500: [
-        { unit: 'e621',      cell: 1, calling: 'vigil', item_id: 'crystal_exoskeleton' },
+        { unit: 'e7111',     cell: 1, calling: 'vigil', item_id: 'codex_aeternum' },
         { unit: 'e3111',     cell: 0, item_id: 'sanctified_bulwark' },
-        { unit: 'e71',       cell: 5, item_id: 'codex_aeternum' },
-        { unit: 'h_e_3_a41', cell: 3, item_id: 'might_of_the_pure', hero: true,
+        { unit: 'e6211',     cell: 5, item_id: 'crystal_exoskeleton' },
+        { unit: 'h_e_3_a41', cell: 4, item_id: 'might_of_the_pure', hero: true,
           spells: [{ spell_id: 'e_spell_3', power: 3 }, { spell_id: 'e_spell_9', power: 5 }] },
-        { unit: 'e6112',     cell: 4, calling: 'vigil', item_id: 'everliving_stalk' },
+        { unit: 'e6111',     cell: 3, item_id: 'champions_belt' },
       ],
-      // Duty Eternal, the same three places as band_500; here the Artificer takes
-      // cell 4 itself as the second Vigil anchor.
+      // Duty Eternal, which this band still stages: Vigil on cells 1 and 4 with
+      // the hero on 3. band_500 above gave that up; this one keeps it.
       band_300: [
-        { unit: 'e621',     cell: 1, calling: 'vigil', item_id: 'crystal_exoskeleton' },
+        // Mithrails Light and the Devastator trade cells. `unity 1` bonds to a
+        // HOLY ally sharing its row, and on cell 4 its row held cell 5, which is
+        // empty in this band — so the bond never formed and the carrier's action
+        // is 'none': it stood there all battle doing nothing. On cell 1 its row
+        // holds the Automaton, which `sanctified_bulwark` makes Holy.
+        //
+        // The two Vigil callings stay on cells 1 and 4 because they are Duty
+        // Eternal's anchors, not the units' own property. The cost is the
+        // Devastator standing a rank further forward than it would like, which
+        // is a ranged unit taking more hits — against a quarter of the army
+        // being inert, that is not a close call.
+        { unit: 'e71',      cell: 1, calling: 'vigil', item_id: 'codex_aeternum' },
         { unit: 'e311',     cell: 0, item_id: 'sanctified_bulwark' },
-        { unit: 'e71',      cell: 4, calling: 'vigil', item_id: 'codex_aeternum' },
+        { unit: 'e621',     cell: 4, calling: 'vigil', item_id: 'crystal_exoskeleton' },
         { unit: 'h_e_3_a3', cell: 3, item_id: 'might_of_the_pure', hero: true,
           spells: [{ spell_id: 'e_spell_3', power: 2 }, { spell_id: 'e_spell_9', power: 4 }] },
       ],
@@ -502,9 +528,18 @@ const BOT_TEMPLATES = [
       // Argent Hammer: Crusade on cell 0 and cell 4, the hero on 3. The spare
       // Battlemage drops to 5, which is where the hero stood.
       band_500: [
-        { unit: 'dm_e111',   cell: 0, calling: 'crusade', item_id: 'forbidden_vow' },
-        { unit: 'e4121',     cell: 2, item_id: 'lightbringer' },
-        { unit: 'e4111',     cell: 5, item_id: 'dragon_skin' },
+        { unit: 'dm_e111',   cell: 0, calling: 'crusade', item_id: 'bone_barrier' },
+        // Was `lightbringer`, which is Knight-gated — the Dragonic Blade is
+        // Caster/Warrior, so the item was inert on it and no body in this squad
+        // can legally carry it (the two Aegis units are Knights but do not
+        // attack, and `lightbringer` needs an attacker). `hatemace` is the same
+        // rarity and the same +5 power with no tag gate.
+        { unit: 'e4121',     cell: 2, item_id: 'hatemace' },
+        // Was a second Ash Hierophant on dragon_skin — two of the same body in
+        // one squad, and the Dragon tag it bought was read by nothing here. The
+        // High Priest brings renew/vitality the college had no source for, and
+        // the Reliquary is Holy-gated, which the Priest satisfies natively.
+        { unit: 'e2211',     cell: 5, item_id: 'sanctified_reliquary_of_dawn' },
         { unit: 'e4111',     cell: 1, item_id: 'fire_staff' },
         { unit: 'e4321',     cell: 4, calling: 'crusade', item_id: 'sanctified_bulwark' },
         { unit: 'h_e_2_a41', cell: 3, item_id: 'might_of_the_pure', hero: true,
@@ -513,7 +548,8 @@ const BOT_TEMPLATES = [
       // Argent Hammer, as band_500 - only the hero moves, 5 to 3.
       band_300: [
         { unit: 'dm_e111',  cell: 0, calling: 'crusade', item_id: 'forbidden_vow' },
-        { unit: 'e412',     cell: 2, item_id: 'lightbringer' },
+        // Knight-gated on a Caster/Warrior, as in band_500 above.
+        { unit: 'e412',     cell: 2, item_id: 'hatemace' },
         { unit: 'e411',     cell: 1, item_id: 'fire_staff' },
         { unit: 'e432',     cell: 4, calling: 'crusade', item_id: 'crystal_shield' },
         { unit: 'h_e_2_a3', cell: 3, item_id: 'might_of_the_pure', hero: true,
@@ -575,14 +611,26 @@ const BOT_TEMPLATES = [
         { unit: 'd1111',     cell: 0, item_id: 'crystal_shield' },
         { unit: 'h_d_1_a41', cell: 4, item_id: 'burning_fury', hero: true,
           spells: [{ spell_id: 'd_spell_3', power: 3 }, { spell_id: 'd_spell_9', power: 5 }] },
-        { unit: 'd1211',     cell: 1, item_id: 'ember_mantle' },
+        // The Archchanter was a COLUMN on cells 1 and 3. Two Court tiles stand
+        // on exactly those cells for exactly the same 2 Loyalty, so the
+        // footprint and the bill are unchanged and the back rank gains a second
+        // body instead of one tall one — which is a second target to kill and a
+        // second resist aura (death from the Peer, life from the Herald).
+        { unit: 'd6212',     cell: 1, item_id: 'ember_mantle' },
+        { unit: 'd6211',     cell: 3 },
         { unit: 'd2111',     cell: 5, item_id: 'caster_hat' },
       ],
       band_300: [
         { unit: 'd111',     cell: 0, item_id: 'crystal_shield' },
         { unit: 'h_d_1_a3', cell: 4, item_id: 'burning_fury', hero: true,
           spells: [{ spell_id: 'd_spell_3', power: 2 }, { spell_id: 'd_spell_9', power: 4 }] },
-        { unit: 'd121',     cell: 1, item_id: 'ember_mantle' },
+        // Was the Chanter, a COLUMN. Praetor's column is 2 Loyalty and the
+        // Chanter's another 2, which with the Pyre Warden came to 5 against a
+        // tier-3 hero's cap of 4 — an army no player could field. The Shrouded
+        // Peer is the same Court/Caster back-line job for 1, which brings the
+        // squad to exactly 4 and matches what band_500 now does with its own
+        // Archchanter column.
+        { unit: 'd621',     cell: 1, item_id: 'ember_mantle' },
         { unit: 'd211',     cell: 5, item_id: 'caster_hat' },
       ],
       band_200: [
@@ -591,6 +639,23 @@ const BOT_TEMPLATES = [
           spells: [{ spell_id: 'd_spell_3', power: 2 }, { spell_id: 'd_spell_5', power: 3 }] },
         { unit: 'd21',      cell: 1, item_id: 'caster_hat' },
       ],
+    },
+    variants: {
+      // Loyalty 3. The Praetor's column is 2 of the 3 on its own, so subtraction
+      // had to throw away a whole body to fit and came out at 70% of what the
+      // cap can actually field. Three tiles spend the same 3 and put FOUR units
+      // on the grid — the Vessel holds the front line the column used to, and
+      // the two casters are the squad's damage either way. Same reasoning, and
+      // the same shape, as choir_dual_gargoyles' lean_squad above.
+      lean_squad: {
+        band_300: [
+          { unit: 'd411',     cell: 0, item_id: 'crystal_shield' },
+          { unit: 'h_d_1_a3', cell: 4, item_id: 'burning_fury', hero: true,
+            spells: [{ spell_id: 'd_spell_3', power: 2 }, { spell_id: 'd_spell_9', power: 4 }] },
+          { unit: 'd621',     cell: 1, item_id: 'ember_mantle' },
+          { unit: 'd211',     cell: 5, item_id: 'caster_hat' },
+        ],
+      },
     },
   },
   {
@@ -638,8 +703,8 @@ const BOT_TEMPLATES = [
         { unit: 'h_g_3_b41',     cell: 3,  item_id: 'knights_oath', hero: true,
           spells: [{ spell_id: 'g_spell_3', power: 3 }, { spell_id: 'g_spell_10', power: 5 }] },
         { unit: 'gs7111',        cell: 2,  item_id: 'crystal_shield' },                 
-        { unit: 'gs7311',        cell: 4,  item_id: 'iron_greaves' }, 
-        { unit: 'gs7211',        cell: 0, calling: 'denial',  item_id: 'caster_hat' },
+        { unit: 'gs7311',        cell: 4,  item_id: 'caster_hat' }, 
+        { unit: 'gs7211',        cell: 0, calling: 'denial',  item_id: 'might_of_the_pure' },
         { unit: 'gs6211',        cell: 1, calling: 'acceptance',  item_id: 'veil_of_discord' },          
         { unit: 'dm_e311',       cell: 5,  item_id: 'ember_mantle' },                            
       ],

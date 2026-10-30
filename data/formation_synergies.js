@@ -190,13 +190,15 @@ const FORMATION_SYNERGIES = {
   // same deliberately: the rank changes how much initiative is granted, and the
   // number is already on the buff icon.
   //
-  // `partner: {}` is every ally. The tag on the ability scales the VALUE (2 per
-  // Caster ally) — it never decides who is eligible.
+  // `partner: {}` is every ally, and `any_ally` is every PLACEMENT — together
+  // that is the whole squad. The initiative and armor Inspirations are
+  // army-wide auras now (see data/unit_abilities.js); only the damage one below
+  // still pays its own column, so it keeps `column_adjacent`.
   inspiration_initiative: {
     id: 'inspiration_initiative',
     source:   { ability: 'inspiration_initiative' },
     partner:  {},
-    relation: 'column_adjacent',
+    relation: 'any_ally',
     multi:    true,
     present:  'flash',
     effect:   'inspiration_flash',
@@ -234,7 +236,7 @@ const FORMATION_SYNERGIES = {
     id: 'inspiration_armor',
     source:   { ability: 'inspiration_armor' },
     partner:  {},
-    relation: 'column_adjacent',
+    relation: 'any_ally',
     multi:    true,
     present:  'flash',
     effect:   'inspiration_flash',
