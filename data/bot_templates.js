@@ -188,14 +188,17 @@ const BOT_TEMPLATES = [
         { unit: 'gs1111',    cell: 4, item_id: 'dark_determination' },
         // Unity bonds to a HOLY ally standing directly in front, which here is
         // cell 2 — the hero. A Grail Warden is Knight/Zombie and nothing else,
-        // so `sanctified_bulwark` below is not decoration: without it the bond
-        // never forms, and an unbonded guardian's action is 'none'. It takes the
-        // Font's old cell and the iron armour the Champion just gave up, which
-        // is worth double on this body: half of it is handed to the host.
-        { unit: 'dm_2112',   cell: 3, item_id: 'iron_armor' },
-        { unit: 'h_g_2_b42', cell: 2, item_id: 'sanctified_bulwark', hero: true,
+        // so the Holy on `champions_belt` below is not decoration: without it
+        // the bond never forms, and an unbonded guardian's action is 'none'.
+        //
+        // The Veil is worth double on this body — half of a guardian is handed
+        // to its host — and the aura it carries reaches the whole line whether
+        // the Forsaken is bonded or not, because a passenger's passives still
+        // trigger.
+        { unit: 'dm_2112',   cell: 3, item_id: 'veil_of_discord' },
+        { unit: 'h_g_2_b42', cell: 2, item_id: 'champions_belt', hero: true,
           spells: [{ spell_id: 'g_spell_7', power: 3 }, { spell_id: 'g_spell_9', power: 5 }] },
-        { unit: 'gs3211',    cell: 1, calling: 'acceptance', item_id: 'veil_of_discord' },
+        { unit: 'gs3211',    cell: 1, calling: 'acceptance', item_id: 'knights_oath' },
         { unit: 'gs1111',    cell: 0, calling: 'denial', item_id: 'might_of_the_pure' },
       ],
     },
@@ -217,16 +220,19 @@ const BOT_TEMPLATES = [
           { unit: 'gs3311', cell: 5 },
         ],
       },
-      // Nothing above Rare. The Font is a Blood Bond carrier and the only
-      // Vampire it can bond to in this squad is the HERO standing beside it,
-      // whose Vampire comes from `gift_of_eternity` — a rarity the cap takes
-      // away. Downgraded, the bond cannot form and the Font does not act at
-      // all (action 'none'), so the squad fields five units and a passenger.
+      // Nothing above Rare. Same failure as ever, one bond further along: the
+      // authored band's guardian is the Forsaken, Unity wants a HOLY host
+      // directly in front of it, and the hero's Holy comes from
+      // `champions_belt` — a rarity the cap takes away. Checked rather than
+      // assumed: run band_500 through this rule with the variant suppressed and
+      // no bond forms at all, leaving the Forsaken with action 'none' in a
+      // six-cell grid.
       //
-      // The whole Vampire half of this lineup is item-granted, so there is no
-      // body to bond to at any price. The Font's own cousin is the answer, the
-      // same swap `bare_steel` above makes for the same reason: Mother's Grief is
-      // the tier and the cell, natively BOTH Zombie and Vampire, and it acts.
+      // Mother's Hand is natively Holy and cannot help, because she stands in
+      // the BACK rank herself and a host has to be in front of its guardian.
+      // So the answer is the same as `bare_steel`'s: give cell 3 a body that
+      // acts without needing a bond at all. Mother's Grief is the tier and the
+      // cell, natively both Zombie and Vampire.
       plain_gear: {
         band_500: [
           { unit: 'gs611',     cell: 5, item_id: 'shroud_of_the_fallen' },
