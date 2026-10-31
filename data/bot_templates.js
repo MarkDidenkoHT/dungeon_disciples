@@ -174,14 +174,29 @@ const BOT_TEMPLATES = [
       // The Carried Cup: Denial on cell 0, Acceptance on cell 1, the hero on 2.
       // Both callings are NAMED rather than left to botCalling's hash, which was
       // handing all six slots Denial and leaving the rite one speaker short.
+      //
+      // No Vampire anywhere in this band any more. The Mother's Font held the
+      // only one, and the hero's `gift_of_eternity` was there to BE its Blood
+      // Bond partner — one item bought purely to make another slot work. The
+      // Forsaken carries Unity instead, which asks for Holy, and the Zombie
+      // half of the squad is what everything else here already reads.
       band_500: [
         { unit: 'gs611',     cell: 5, item_id: 'shroud_of_the_fallen' },
-        { unit: 'gs1111',     cell: 4, item_id: 'iron_armor' },
-        { unit: 'gs8311',    cell: 3, item_id: 'dark_determination' },
-        { unit: 'h_g_2_a41', cell: 2, item_id: 'gift_of_eternity', hero: true,
+        // Dark Determination off the Font, which no longer exists. The Champion
+        // is already a Zombie, so what it buys is `horde` on top of `horde` —
+        // rank 1 and rank 1 stack to rank 2 at combatant creation.
+        { unit: 'gs1111',    cell: 4, item_id: 'dark_determination' },
+        // Unity bonds to a HOLY ally standing directly in front, which here is
+        // cell 2 — the hero. A Grail Warden is Knight/Zombie and nothing else,
+        // so `sanctified_bulwark` below is not decoration: without it the bond
+        // never forms, and an unbonded guardian's action is 'none'. It takes the
+        // Font's old cell and the iron armour the Champion just gave up, which
+        // is worth double on this body: half of it is handed to the host.
+        { unit: 'dm_2112',   cell: 3, item_id: 'iron_armor' },
+        { unit: 'h_g_2_b42', cell: 2, item_id: 'sanctified_bulwark', hero: true,
           spells: [{ spell_id: 'g_spell_7', power: 3 }, { spell_id: 'g_spell_9', power: 5 }] },
         { unit: 'gs3211',    cell: 1, calling: 'acceptance', item_id: 'veil_of_discord' },
-        { unit: 'gs1111',     cell: 0, calling: 'denial', item_id: 'might_of_the_pure' },
+        { unit: 'gs1111',    cell: 0, calling: 'denial', item_id: 'might_of_the_pure' },
       ],
     },
     variants: {
