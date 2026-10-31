@@ -270,14 +270,29 @@ const BOT_TEMPLATES = [
       // The First Sorrow: Acceptance on cell 0 (front, row 0), Acceptance on
       // cell 5 (back, row 2), the hero leading from row 1. +5 armor army-wide,
       // which is what a squad that wins slowly wants.
+      //
+      // Two pieces of gear here are bought for their TAG, and they feed each
+      // other's carriers rather than their own:
+      //
+      //   might_of_the_pure grants Caster, so the Lord on cell 4 becomes the
+      //   fourth one on the field — and `hemorrhage` bleeds 4 per Caster ally
+      //   while `vitality` hands out HP by the same count, both on the Archons.
+      //
+      //   knights_oath grants Knight, so the Custodian becomes the third — and
+      //   `iron_will` is HP, armour and (at rank 3) power per Knight ally, on
+      //   both Lords.
+      //
+      // The Caster piece also stacks `iron_will 2` onto the Lord's own, which
+      // reaches rank 3: the rank that adds power, and the reason the Custodian's
+      // Knight is worth more than it looks.
       band_500: [
-        { unit: 'gs3111',    cell: 0, calling: 'acceptance', item_id: 'blessed_spear' },
+        { unit: 'gs3111',    cell: 0, calling: 'acceptance', item_id: 'codex_aeternum' },
         { unit: 'h_g_1_b41', cell: 2, item_id: 'gift_of_eternity', hero: true,
           spells: [{ spell_id: 'g_spell_10', power: 3 }, { spell_id: 'g_spell_9', power: 5 }] },
-        { unit: 'gs3111',    cell: 4, item_id: 'hatemace' },
+        { unit: 'gs3111',    cell: 4, item_id: 'might_of_the_pure' },
         { unit: 'gs3121',    cell: 1, item_id: 'envy' },
         { unit: 'gs3121',    cell: 3, item_id: 'hunger' },
-        { unit: 'gs5111',    cell: 5, calling: 'acceptance', item_id: 'codex_aeternum' },
+        { unit: 'gs5111',    cell: 5, calling: 'acceptance', item_id: 'knights_oath' },
       ],
       // One Lord, not two. A tier-3 hero caps Loyalty at 4 and five tiles cost
       // five — so a body goes, and it is the half the squad can best do without:
