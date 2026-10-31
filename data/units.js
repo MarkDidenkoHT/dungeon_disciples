@@ -4072,7 +4072,7 @@ const UNITS = {
         pref_position: 'front',
         size: 'tile',
         hp: 70, armor: 20, initiative: 25,
-        resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 20, nature: 0 },
+        resistances: { air: 0, fire: 5, life: 5, death: 50, cold: 20, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'death', action_power: 16, action_icon: 'undead_sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
         xp: 1015, passive: ['iron_will 1', 'heartpiercer 1', 'infect 2'], ability: 'terror 2',

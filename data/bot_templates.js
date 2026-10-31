@@ -5,6 +5,7 @@ import { TOURNEY_RULES_BY_ID, RARITY_ORDER } from './tourney.js';
 import { getEquipBlock } from './item_rules.js';
 import { UNIT_ABILITIES } from './unit_abilities.js';
 import { callingsForFaction } from './callings.js';
+import { applyEngraving, checkEngravingForUnit } from './engravings.js';
 
 // Hand-made PvP bot armies: one faction's build, with a version per power band.
 // Slots follow embark encounters. Cells:
@@ -14,6 +15,12 @@ import { callingsForFaction } from './callings.js';
 // Column 0 (cells 0/2/4) is the front line, column 1 (cells 1/3/5) the back.
 // A row unit anchors on 0/2/4, a column unit on its top cell.
 // `hero: true` marks the hero; `spells` are cast by the boss spell AI.
+// `engraving` is the same { combo, tier, plus, minus } a player's roster row
+// carries (data/engravings.js) and is applied the same way: after the item, so
+// the pair reads item-then-engraving exactly as rosterUnitPower builds a
+// player's unit. checkBotTemplate runs it through checkEngravingForUnit, which
+// is what catches a penalty the unit cannot afford — a sacrifice that floors
+// away is a free engraving no player could buy.
 
 // Inclusive on both ends. Players below 200 meet band_200 (see botBandFor).
 const BOT_BANDS = [
@@ -589,20 +596,29 @@ const BOT_TEMPLATES = [
       // Argent Hammer: Crusade on cell 0 and cell 4, the hero on 3. The spare
       // Battlemage drops to 5, which is where the hero stood.
       band_500: [
-        { unit: 'dm_e111',   cell: 0, calling: 'crusade', item_id: 'bone_barrier' },
-        // Was `lightbringer`, which is Knight-gated — the Dragonic Blade is
-        // Caster/Warrior, so the item was inert on it and no body in this squad
+        // Bone Barrier makes the Death Knight a Caster, which is the only reason
+        // a Skeleton belongs at the front of a college. The engraving is the
+        // same one a player buys: Epic Bulwark, three points of Life resist for
+        // three of armour. It can afford the −6 — 20 armour natively, 25 with
+        // the Barrier on — and life resist is the school this squad is worst
+        // against, with four Empire casters behind it and nothing warding it.
+        { unit: 'dm_e111',   cell: 0, calling: 'crusade', item_id: 'bone_barrier',
+          engraving: { combo: 'bulwark', tier: 'epic', plus: { life_resist: 3 }, minus: { armor: 3 } } },
+        // Not `lightbringer`, which is Knight-gated — the Dragonic Blade is
+        // Caster/Warrior, so that item was inert on it and no body in this squad
         // can legally carry it (the two Aegis units are Knights but do not
-        // attack, and `lightbringer` needs an attacker). `hatemace` is the same
-        // rarity and the same +5 power with no tag gate.
-        { unit: 'e4121',     cell: 2, item_id: 'hatemace' },
+        // attack, and `lightbringer` needs an attacker). `gift_of_eternity` has
+        // no tag gate at all, and the Blade is the one unit here that can spend
+        // the 3 armour and 3 HP on staying in the front rank long enough to
+        // burn twice.
+        { unit: 'e4121',     cell: 2, item_id: 'gift_of_eternity' },
         // Was a second Ash Hierophant on dragon_skin — two of the same body in
         // one squad, and the Dragon tag it bought was read by nothing here. The
         // High Priest brings renew/vitality the college had no source for, and
         // the Reliquary is Holy-gated, which the Priest satisfies natively.
         { unit: 'e2211',     cell: 5, item_id: 'sanctified_reliquary_of_dawn' },
         { unit: 'e4111',     cell: 1, item_id: 'fire_staff' },
-        { unit: 'e4321',     cell: 4, calling: 'crusade', item_id: 'sanctified_bulwark' },
+        { unit: 'e4321',     cell: 4, calling: 'crusade', item_id: 'malgraths_sigil' },
         { unit: 'h_e_2_a41', cell: 3, item_id: 'might_of_the_pure', hero: true,
           spells: [{ spell_id: 'e_spell_10', power: 3 }, { spell_id: 'e_spell_9', power: 5 }] },
       ],
@@ -1072,10 +1088,15 @@ function buildBotArmy(template, bandId, rules = null) {
       if (!unit) return null;
       const itemDef = slot.item_id ? ITEM_DEFS[slot.item_id] : null;
       if (itemDef) unit = applyItemModifiers(unit, itemDef);
+      // After the item, matching rosterUnitPower in utils/army-power.js. It has
+      // to be this way round: the floors clamp against the unit as it stands,
+      // so an engraving's penalty is paid out of the armor the item just gave.
+      if (slot.engraving) unit = applyEngraving(unit, slot.engraving);
       return {
         ...unit,
         cell: slot.cell,
         item_id: slot.item_id || null,
+        engraving: slot.engraving || null,
         is_hero: !!slot.hero,
         spells: slot.spells || [],
         calling: botCalling(template, slot),
@@ -1163,6 +1184,17 @@ function checkBotTemplate(template) {
       // nothing at run time to say why.
       if (slot.calling && !callingsForFaction(template?.faction).some(c => c.id === slot.calling)) {
         at(`${label}: calling "${slot.calling}" is not one of ${template?.faction}'s two`);
+      }
+
+      // Against the unit WITH its item on, the same order buildBotArmy applies
+      // them in — an engraving whose cost the bare unit cannot pay may still be
+      // affordable once the item's armor is counted.
+      if (slot.engraving) {
+        const worn = slot.item_id && ITEM_DEFS[slot.item_id]
+          ? applyItemModifiers(def, ITEM_DEFS[slot.item_id])
+          : def;
+        const bad = checkEngravingForUnit(worn, slot.engraving);
+        if (bad) at(`${label}: engraving — ${bad}`);
       }
 
       const spells = slot.spells || [];

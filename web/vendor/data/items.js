@@ -1161,7 +1161,10 @@ const ITEM_DEFS = {
     name_ru:      'Костяной Барьер',
     faction:      null,
     tag_required: 'Skeleton',
-    adds_tag:     null,
+    // A Skeleton reading its own bones. The Barrier is the one piece of armour
+    // that TEACHES — which is what puts a Death Knight in a college lineup
+    // without changing a thing about the Death Knight.
+    adds_tag:     'Caster',
     stat_mods:    { hp: 3, armor: 5 },
     passive:      'bone_armor 1',
     icon:         'bone_barrier',
@@ -1778,8 +1781,16 @@ const ITEM_DOWNGRADES = {
   // these are the two Rares that carry the same +3 power, the half of the spear
   // a Knight in the front rank is actually swinging.
   blessed_spear:           ['morning_star', 'shard_of_hate'],
+  // The Barrier grants Caster, and neither rung does — so on a capped night the
+  // Death Knight wearing it is a Skeleton Knight again. That is the right
+  // trade: the tag buys it a place in a college lineup, and losing it costs
+  // nothing the squad is built on.
   bone_barrier:            ['iron_armor', 'padded_armor'],
   champions_belt:          ['codex_aeternum', 'padded_armor'],
+  // No Rare carries `iron_will`, and the Sigil's Skeleton tag feeds nothing on
+  // the Aegis Sentinel that wears it — so what comes down is the stat line, and
+  // `codex_aeternum` is the closest (3 armour, 2 HP against the Sigil's 3 and 3).
+  malgraths_sigil:         ['codex_aeternum', 'padded_armor'],
   // The resist is the point of this one, so the bottom rung is the potion that
   // carries the same school — the pattern `burning_tyrant` and
   // `aegis_of_the_first_ward` already use for their fire resist.
