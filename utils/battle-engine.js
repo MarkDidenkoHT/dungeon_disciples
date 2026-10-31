@@ -876,6 +876,22 @@ class BattleEngine {
   // charge, already spent by the caller for the unit that was named — and the bond
   // is formed again from what came back.
 
+  // Orders a list of corpses for a resurrect: guardians last.
+  //
+  // Raising either end of a bond brings both back (restoreBondOnRevive), so a
+  // guardian is never a WASTED cast — but it is the wrong half to aim at. The
+  // guardian comes back as a passenger: invulnerable, untargetable, action
+  // 'none'. Aimed at anyone else, the cast buys a unit that fights. The AI used
+  // to take `targets[0]`, which is combatant order, so whether it raised a
+  // guardian or a fighter came down to where the guardian happened to stand.
+  //
+  // Only an ORDERING, not a filter: a field whose only corpse is a guardian
+  // still gets it raised, with its host, rather than the ability going unused.
+  preferFightersAmongFallen(fallen) {
+    const isGuardian = c => c?._unity_host_id != null;
+    return [...fallen].sort((a, b) => Number(isGuardian(a)) - Number(isGuardian(b)));
+  }
+
   // The other half of `unit`'s bond, by whichever end of it `unit` holds.
   bondPartnerOf(unit) {
     const id = unit?._unity_host_id ?? unit?._unity_bonded_id;
@@ -2716,7 +2732,8 @@ class BattleEngine {
     const hasPositive = c => (c._effects || []).some(e => e.polarity === 'positive' && dispellable(e)) || (c._dmg_mult || 1) > 1;
 
     // Resurrect a fallen ally — always worth it when a valid corpse exists.
-    if (p.resurrect_hp_pct != null) return targets[0];
+    // Guardians sort to the back: see preferFightersAmongFallen.
+    if (p.resurrect_hp_pct != null) return this.preferFightersAmongFallen(targets)[0];
     // Cleanse — only if an ally actually carries a debuff.
     if (p.dispel_negative != null) return targets.find(hasNegative) || null;
     // Purge — only if an enemy actually carries a buff.
@@ -3865,14 +3882,16 @@ class BattleEngine {
     if (scope === 'single_ally')  return this.combatants.filter(c => c.side === allySide  && c.alive && targetable(c) && (String(c._rosterId) === String(targetId) || String(c._sourceId) === String(targetId) || String(c.id) === String(targetId)));
     if (scope === 'single_enemy') return this.combatants.filter(c => c.side === enemySide && c.alive && targetable(c) && (String(c.id) === String(targetId) || String(c._sourceId) === String(targetId)));
     // The only scope that looks for the DEAD — a boss resurrect picks its own
-    // corpse (the first to fall), so it needs no target from the caller.
+    // corpse, so it needs no target from the caller. Guardians sort last (see
+    // preferFightersAmongFallen), the same preference the unit-ability AI makes.
     //
     // Deliberately NOT filtered by `_untargetable`: a bonded passenger keeps the
     // flag after it dies with its host, and whether a resurrect should be able to
     // raise one is a separate question from whether a spell may touch a LIVING
-    // one. Left as it was rather than changed in passing.
+    // one. It still can, when it is all that is left.
     if (scope === 'single_dead_ally') {
-      const fallen = this.combatants.filter(c => c.side === allySide && !c.alive);
+      const fallen = this.preferFightersAmongFallen(
+        this.combatants.filter(c => c.side === allySide && !c.alive));
       return fallen.length ? [fallen[0]] : [];
     }
     if (scope === 'tag_allies') {

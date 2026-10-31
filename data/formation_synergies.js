@@ -44,8 +44,12 @@ const frontColFor = side => (side === 'enemy' ? 0 : 1);
 // few rules that need to know which way a side is facing.
 const RELATIONS = {
   // NOT directional, despite the names: on a two-column board "the other column
-  // in the same row" is the whole of it, and this is the rule Unity has always
-  // used. partner_behind below is the one that really knows front from back.
+  // in the same row" is the whole of it. Unity and Blood Bond used to sit on
+  // `front` for exactly that reason, and it is why a guardian could be placed
+  // ahead of its host; they are on partner_in_front now. Nothing in the registry
+  // reads these two today — kept because `same_row_any` below is the honest name
+  // for what they compute, and a rule that genuinely means one direction should
+  // reach for the directional pair instead.
   front:     (a, b) => sharesRowAcrossColumns(a, b),
   behind:    (a, b) => sharesRowAcrossColumns(a, b),
   // The partner stands in the BACK rank, directly behind a source that stands in
@@ -56,6 +60,20 @@ const RELATIONS = {
     const back  = 1 - front;
     return a.some(x => cellCol(x) === front &&
                   b.some(y => cellCol(y) === back && cellRow(x) === cellRow(y)));
+  },
+  // The exact mirror, and what the guardian bonds use. The source stands in the
+  // BACK rank and shelters behind the partner it is feeding, directly in front.
+  //
+  // This replaced `front` on Unity and Blood Bond, which did not care which way
+  // round the pair stood. A guardian is invulnerable, untargetable and acts
+  // 'none' — put it in the FRONT rank and it is an indestructible wall that
+  // melee cannot get past, for as long as its host behind it stays up. The bond
+  // is supposed to cost the guardian its own body, not buy the squad a shield.
+  partner_in_front: (a, b, source) => {
+    const front = frontColFor(source.side);
+    const back  = 1 - front;
+    return a.some(x => cellCol(x) === back &&
+                  b.some(y => cellCol(y) === front && cellRow(x) === cellRow(y)));
   },
   same_row:  (a, b) => a.some(x => b.some(y => cellRow(x) === cellRow(y))),
   same_col:  (a, b) => a.some(x => b.some(y => cellCol(x) === cellCol(y))),
@@ -157,7 +175,8 @@ const FORMATION_SYNERGIES = {
     id: 'unity_bond',
     source:   { ability: 'unity 1' },
     partner:  { tag: 'Holy' },
-    relation: 'front',
+    // The guardian must stand BEHIND the ally it carries. See partner_in_front.
+    relation: 'partner_in_front',
     present:  'tether',
     effect:   'unity_bond',
     fx: {
@@ -175,7 +194,7 @@ const FORMATION_SYNERGIES = {
     id: 'blood_bond',
     source:   { ability: 'blood_bond 1' },
     partner:  { tag: 'Vampire' },
-    relation: 'front',
+    relation: 'partner_in_front',
     present:  'tether',
     effect:   'blood_bond',
     fx: {
