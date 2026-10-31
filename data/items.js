@@ -502,6 +502,25 @@ const ITEM_DEFS = {
     item_cost:    { mothers_gift: 1},
     requires:     { region: 'any', level: 1 },
   },
+  // The first item whose penalty is the point. Blood Bolt scales off the Vampire
+  // count, so Envy wants a wide Vampire line — and it buys that reach by making
+  // the wearer act last, which is where a splash that reads every enemy's Bleed
+  // wants to be anyway: after the bleeders have had their turn to apply it.
+  envy: {
+    key:          'envy',
+    name:         'Envy',
+    name_ru:      'Зависть',
+    faction:      null,
+    tag_required: ['Vampire', 'Caster'],
+    adds_tag:     null,
+    stat_mods:    { hp: 5, action_power: 2, armor: 2, initiative: -5 },
+    passive:      'blood_bolt 1',
+    icon:         'envy',
+    rarity:       'epic',
+    unique:       true,
+    cost:         { Gold: 220, Crystals_Death: 30, Crystals_Life: 20, vial_of_pure_blood: 2 },
+    item_cost:    { vampirics_dagger: 1 },
+  },
   dark_determination: {
     key:          'dark_determination',
     name:         "Dark Determination",

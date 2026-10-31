@@ -2589,6 +2589,35 @@ const UNIT_ABILITIES = {
     description_ru: "Атаки этого юнита также наносят 30% своего урона каждому врагу с ознобом.",
     params: { fellfire_pct: 30, fellfire_dot: 'chill' },
   },
+  // Fellfire's opposite number, for the Vampires: same shape, same family of
+  // params, reading Bleed instead of Burn. Gated on Vampire rather than Caster
+  // so a Grail caster line scales it off the bodies it already fields, and the
+  // trigger is on_hit — item_rules refuses it on anything that does not attack,
+  // which is why Mother's Chalice line (action 'none') cannot wear Envy.
+  'blood_bolt 1': {
+    id: 'blood_bolt 1',
+    name: 'Blood Bolt',
+    name_ru: "Кровавая Стрела",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: "This unit's attacks also deal 5% of their damage per Vampire ally to every bleeding enemy.",
+    description_ru: "Атаки этого юнита также наносят по 5% своего урона за каждого союзного вампира каждому истекающему кровью врагу.",
+    params: { fellfire_pct_per_tag: 5, tag_required: 'Vampire', fellfire_dot: 'bleed' },
+    effect_name: 'blood_spatter',
+  },
+  'blood_bolt 2': {
+    id: 'blood_bolt 2',
+    name: 'Blood Bolt',
+    name_ru: "Кровавая Стрела",
+    rank: 2,
+    type: 'passive',
+    trigger: 'on_hit',
+    description: "This unit's attacks also deal 8% of their damage per Vampire ally to every bleeding enemy.",
+    description_ru: "Атаки этого юнита также наносят по 8% своего урона за каждого союзного вампира каждому истекающему кровью врагу.",
+    params: { fellfire_pct_per_tag: 8, tag_required: 'Vampire', fellfire_dot: 'bleed' },
+    effect_name: 'blood_spatter',
+  },
   'mark_of_ash 1': {
     id: 'mark_of_ash 1',
     name: 'Mark of Ash',

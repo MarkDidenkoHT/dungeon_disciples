@@ -61,6 +61,15 @@ function tagCount(engine, side, tag) {
 
 // A percentage that may be flat or scaled per tag. Returns 0 when neither is
 // declared, so a caller can multiply unconditionally.
+// Which DoT the fellfire family splashes off, and the school its splash lands
+// in. Keyed by `fellfire_dot` in an ability's params: Fellfire itself names
+// none and gets Burn, Hungering Frost names 'chill', Blood Bolt 'bleed'.
+const FELLFIRE_DOTS = {
+  burn:  { field: 'dot_dmg',    school: 'fire' },
+  chill: { field: '_chill_dmg', school: 'cold' },
+  bleed: { field: '_bleed_dmg', school: 'physical' },
+};
+
 function pctFor(p, engine, side, flatKey, perTagKey) {
   if (p[perTagKey] != null) return p[perTagKey] * tagCount(engine, side, p.tag_required);
   return p[flatKey] ?? 0;
@@ -1193,14 +1202,18 @@ function dispatchPassive(trigger, owner, def, ctx) {
       }
     }
     if (p.fellfire_pct != null || p.fellfire_pct_per_tag != null) {
-      // Splash a fraction of the damage to every OTHER burning enemy.
-      const splashField = p.fellfire_dot === 'chill' ? '_chill_dmg' : 'dot_dmg';
+      // Splash a fraction of the damage to every OTHER enemy already carrying
+      // this passive's DoT. `fellfire_dot` names which one; absent means Burn,
+      // the original. The splash lands in the DoT's own school so resists read
+      // the way the status reads — Bleed ticks physical (battle-engine.js), so
+      // Blood Bolt's splash does too.
+      const dot = FELLFIRE_DOTS[p.fellfire_dot] ?? FELLFIRE_DOTS.burn;
       const burning = engine.combatants.filter(c =>
-        c.side !== owner.side && c.alive && !c._untargetable && c.id !== target.id && (c[splashField] ?? 0) > 0
+        c.side !== owner.side && c.alive && !c._untargetable && c.id !== target.id && (c[dot.field] ?? 0) > 0
       );
       for (const b of burning) {
         const splash = Math.max(1, Math.floor(dmg * pctFor(p, engine, owner.side, "fellfire_pct", "fellfire_pct_per_tag") / 100));
-        hurt(b, splash, engine, p.fellfire_dot === 'chill' ? 'cold' : 'fire');
+        hurt(b, splash, engine, dot.school);
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: b.unit_name, targetId: b.id, targetCell: b.cellIndex, value: splash, heal: false });
         if (b.battle_hp <= 0) {
           b.alive = false;
