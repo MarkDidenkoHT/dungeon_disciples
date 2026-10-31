@@ -171,8 +171,15 @@ const ITEM_DEFS = {
     tag_required: 'Knight',
     adds_tag:     null,
     stat_mods:    { hp: 5, fire_resist: 5, death_resist: 5 },
-    passive:      'radiance 3',
-    allowed_unit_ids: ['e2121', 'e212'],
+    // Was `radiance 3` and locked to two unit ids by `allowed_unit_ids`. The
+    // lock is gone — `tag_required: 'Knight'` is the gate that was doing the
+    // real work — so any Knight may carry it now.
+    //
+    // Separately and NOT fixed by that: data/embark.js hands this to
+    // crimson_basilica's Exalted Herald, which is Demon/Holy. It failed the
+    // allowlist before and it fails the Knight gate now, so that encounter slot
+    // is still pairing an item with a body that cannot legally wear it.
+    passive:      'radiance 2',
     icon:         'aegis_of_the_first_ward',
     rarity:       'mythic',
     unique:       true,

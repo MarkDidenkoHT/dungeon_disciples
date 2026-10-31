@@ -326,13 +326,20 @@ const BOT_TEMPLATES = [
     faction: 'choir_of_the_cursed',
     name: 'Demon Archers',
     bands: {
+      // NOT `oathbreaker` on either Stalker, though it was asked for: the item is
+      // `tag_required: 'Holy'` because its whole job is to STRIP Holy and hand
+      // back Demon. A Crimson Stalker is Demon/Archer already, and after these
+      // swaps no body in this band carries Holy at all, so there is nobody here
+      // it could legally go on. The boots stay.
       band_500: [
-        { unit: 'opb_e41',   cell: 1, item_id: 'ranger_boots' },
-        { unit: 'd521',      cell: 5, item_id: 'veil_of_discord' },
+        { unit: 'opb_e411',  cell: 1, item_id: 'ranger_boots' },
+        { unit: 'd6212',     cell: 5, item_id: 'veil_of_discord' },
         { unit: 'opb_e411',  cell: 3, item_id: 'aldras_patience' },
         { unit: 'h_d_1_a41', cell: 4, item_id: 'burning_fury', hero: true,
           spells: [{ spell_id: 'd_spell_3', power: 3 }, { spell_id: 'd_spell_10', power: 5 }] },
-        { unit: 'd111',      cell: 0, item_id: 'crystal_shield' },
+        // A column on cell 0, so it stands across 0 and 2 — the same 2 Loyalty
+        // the Praetor cost, which keeps the band at 5 of 5.
+        { unit: 'd1112',     cell: 0, item_id: 'crystal_shield' },
       ],
       band_300: [
         { unit: 'opb_e41',  cell: 1, item_id: 'ranger_boots' },

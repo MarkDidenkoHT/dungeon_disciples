@@ -11511,6 +11511,7 @@ html[lang="ru"] .upgrade-unit-label {
   font-size: 0.56rem;
   line-height: 1.2;
   text-align: center;
+  word-break: break-word;
   min-height: 2.4em;
   display: -webkit-box;
   -webkit-line-clamp: 2;

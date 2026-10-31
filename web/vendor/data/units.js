@@ -443,7 +443,7 @@ const UNITS = {
       resistances: { air: 5, fire: 40, life: 10, death: 5, cold: 5, nature: 5 },
       action: 'choir_shock', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 30, action_icon: 'mace.jpg', action_animation: 'fire_shock', action_sfx: 'fire_spell_impact',
-      xp: 8200, passive: ['rage 2', 'vengeance 2', 'warding 2'], ability: 'pact 2',
+      xp: 8200, passive: ['rage 2', 'aegis 2', 'warding 2'], ability: 'pact 2',
     },
     chorister: {
       id: 'd12', f: 'd', t: 2,
