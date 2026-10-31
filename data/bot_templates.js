@@ -61,8 +61,9 @@ const BOT_TEMPLATES = [
       //
       // So this lineup buys both tags NATIVELY, off the Mother's line
       // (Zombie/Vampire on one body) with the Chalice kept for `blood_bond`.
-      // The Chalice shares a ROW with a Vampire in every band, because that is
-      // what the bond's `front` relation asks for.
+      // The Chalice stands in the BACK rank with a Vampire directly in front of
+      // it in every band, which is what the bond's partner_in_front relation
+      // asks for (data/formation_synergies.js).
       bare_steel: {
         band_500: [
           { unit: 'gs2111', cell: 0 },
@@ -215,6 +216,66 @@ const BOT_TEMPLATES = [
           { unit: 'gs1111',    cell: 0, item_id: 'might_of_the_pure' },
         ],
       },
+    },
+  },
+  {
+    // A squad built around ONE number: the Bleed on the enemy, and how many
+    // different things in this lineup read it.
+    //
+    //   the Archons APPLY it      — `bleed` on hit, and `hemorrhage` adds 4 more
+    //                               per Caster ally, which is what the hero and
+    //                               the Custodian are standing there being
+    //   the Lords CASH it         — `leech` adds the target's whole Bleed to the
+    //                               blow and heals them for it, and
+    //                               `exsanguinate` makes that Bleed permanent,
+    //                               so it never stops paying
+    //   Envy SPREADS it           — Blood Bolt splashes every OTHER bleeding
+    //                               enemy, which by round two is all of them
+    //
+    // Every body is natively Vampire, so nothing here is held up by an item's
+    // `adds_tag`: strip the gear and the engine still runs, just slower. That is
+    // deliberate — see what `bare_steel` has to do to grail_zombie_vamp.
+    id: 'grail_blood_rite',
+    faction: 'grail_of_sorrow',
+    name: 'Blood Rite',
+    bands: {
+      // The First Sorrow: Acceptance on cell 0 (front, row 0), Acceptance on
+      // cell 5 (back, row 2), the hero leading from row 1. +5 armor army-wide,
+      // which is what a squad that wins slowly wants.
+      band_500: [
+        { unit: 'gs3111',    cell: 0, calling: 'acceptance', item_id: 'blessed_spear' },
+        { unit: 'h_g_1_b41', cell: 2, item_id: 'gift_of_eternity', hero: true,
+          spells: [{ spell_id: 'g_spell_10', power: 3 }, { spell_id: 'g_spell_9', power: 5 }] },
+        { unit: 'gs3111',    cell: 4, item_id: 'hatemace' },
+        { unit: 'gs3121',    cell: 1, item_id: 'envy' },
+        { unit: 'gs3121',    cell: 3, item_id: 'hunger' },
+        { unit: 'gs5111',    cell: 5, calling: 'acceptance', item_id: 'codex_aeternum' },
+      ],
+      // One Lord, not two. A tier-3 hero caps Loyalty at 4 and five tiles cost
+      // five — so a body goes, and it is the half the squad can best do without:
+      // the Mages APPLY the Bleed, and one Knight is enough to cash it.
+      band_300: [
+        { unit: 'gs311',    cell: 0, calling: 'acceptance', item_id: 'morning_star' },
+        { unit: 'h_g_1_b3', cell: 2, item_id: 'gift_of_eternity', hero: true,
+          spells: [{ spell_id: 'g_spell_10', power: 2 }, { spell_id: 'g_spell_9', power: 4 }] },
+        { unit: 'gs312',    cell: 1, item_id: 'envy' },
+        { unit: 'gs312',    cell: 3, item_id: 'hunger' },
+        { unit: 'gs511',    cell: 5, calling: 'acceptance', item_id: 'codex_aeternum' },
+      ],
+      // No Knight at all, and not by choice: the line branches at tier 2 — the
+      // Blood Adept becomes EITHER the Crimson Mage or the Blood Knight — so
+      // the earliest Knight is tier 3 and there is nothing to field here. The
+      // Adepts bleed and the hero does the hitting.
+      //
+      // No litany either: every tier-2 body in this build prefers the back rank,
+      // and The First Sorrow needs a chorus cell in the FRONT one.
+      band_200: [
+        { unit: 'h_g_1_b2', cell: 2, item_id: 'vampirics_dagger', hero: true,
+          spells: [{ spell_id: 'g_spell_3', power: 2 }, { spell_id: 'g_spell_7', power: 2 }] },
+        { unit: 'gs31',     cell: 1, item_id: 'orb_of_pure_blood' },
+        { unit: 'gs31',     cell: 3, item_id: 'life_charm' },
+        { unit: 'gs51',     cell: 5, item_id: 'codex_aeternum' },
+      ],
     },
   },
   {

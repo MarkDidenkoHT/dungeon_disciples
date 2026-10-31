@@ -1727,6 +1727,13 @@ const ITEM_DOWNGRADES = {
   // passive, which leaves with it.
   aldras_patience:         ['shard_of_hate'],
   staff_of_thaumaturgy:    ['orb_of_pure_blood', 'lion_signet'],
+  // Both ride grail_blood_rite, whose whole build is the Bleed on the enemy and
+  // the units that read it. Neither passive has a Rare rung of its own — there
+  // is no `leech` or `blood_bolt` below Epic — so these keep the BUILD instead:
+  // `orb_of_pure_blood` applies more of the number the squad is playing for, and
+  // the dagger's `lifesteal` is the nearest thing to drinking it back.
+  envy:                    ['orb_of_pure_blood', 'vampirics_dagger'],
+  hunger:                  ['vampirics_dagger', 'orb_of_pure_blood'],
 
   // `crystal_exoskeleton` used to sit in the group above, on `attuned_focus`,
   // because both carried `magic_attunement`. Its passive is `unbreakable 2` now
@@ -1767,6 +1774,10 @@ const ITEM_DOWNGRADES = {
   // legal on the carrier — neither `iron_armor` nor `padded_armor` is tag-gated,
   // so the Skeleton-locked barrier can still wear them.
   hatemace:                ['shard_of_hate', 'seal_of_power'],
+  // `heartpiercer` exists at no rarity but Epic, so there is no family to keep:
+  // these are the two Rares that carry the same +3 power, the half of the spear
+  // a Knight in the front rank is actually swinging.
+  blessed_spear:           ['morning_star', 'shard_of_hate'],
   bone_barrier:            ['iron_armor', 'padded_armor'],
   champions_belt:          ['codex_aeternum', 'padded_armor'],
   // The resist is the point of this one, so the bottom rung is the potion that
