@@ -2725,7 +2725,7 @@ const UNITS = {
       hp: 55, armor: 5, initiative: 20,
       resistances: { air: 10, fire: 0, life: 0, death: 40, cold: 10, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 10, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
+      damage_source: 'nature', action_power: 10, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 480, passive: ['horde 1', 'poison 1'], ability: 'shared_suffering 1',
     },
     plague_knight: {
@@ -2738,7 +2738,7 @@ const UNITS = {
       hp: 60, armor: 15, initiative: 20,
       resistances: { air: 10, fire: 10, life: 0, death: 40, cold: 10, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 12, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
+      damage_source: 'nature', action_power: 14, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 1560, passive: ['horde 1', 'poison 2'], ability: 'shared_suffering 1',
     },
     plague_knight2: {
@@ -2751,7 +2751,7 @@ const UNITS = {
       hp: 65, armor: 20, initiative: 20,
       resistances: { air: 10, fire: 10, life: 0, death: 40, cold: 15, nature: 15 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
-      damage_source: 'death', action_power: 16, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
+      damage_source: 'nature', action_power: 18, action_icon: 'infected_claw.jpg', action_animation: 'claw_strike', action_sfx: 'claw_light',
       xp: 1560, passive: ['horde 1', 'poison 2', 'aura_of_decay 1'], ability: 'shared_suffering 1',
     },
     cannibal_ghoul: {
