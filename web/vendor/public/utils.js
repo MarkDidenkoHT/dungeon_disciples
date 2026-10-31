@@ -222,14 +222,26 @@ export function playPageTurnSound() {
   audio.play().catch(() => {});
 }
 
-export const CRYSTAL_ICONS = {
-  Crystals_Life:   `<img src="${assetUrl('/assets/icons/recources/life.png')}"   class="res-icon-img" alt="Life">`,
-  Crystals_Fire:   `<img src="${assetUrl('/assets/icons/recources/fire.png')}"   class="res-icon-img" alt="Fire">`,
-  Crystals_Death:  `<img src="${assetUrl('/assets/icons/recources/death.png')}"  class="res-icon-img" alt="Death">`,
-  Crystals_Frost:  `<img src="${assetUrl('/assets/icons/recources/cold.png')}"   class="res-icon-img" alt="Frost">`,
-  Crystals_Nature: `<img src="${assetUrl('/assets/icons/recources/nature.png')}" class="res-icon-img" alt="Nature">`,
-  Crystals_Air:    `<img src="${assetUrl('/assets/icons/recources/air.png')}" class="res-icon-img" alt="Air">`,
+// The raw art paths, so a caller that builds its own <img> (the heal control on
+// the HP bar wants one sized like a token button, not like a resource chip) can
+// have the same crystal without re-deriving the filename — cold.png is Frost.
+export const CRYSTAL_ICON_SRC = {
+  Crystals_Life:   '/assets/icons/recources/life.png',
+  Crystals_Fire:   '/assets/icons/recources/fire.png',
+  Crystals_Death:  '/assets/icons/recources/death.png',
+  Crystals_Frost:  '/assets/icons/recources/cold.png',
+  Crystals_Nature: '/assets/icons/recources/nature.png',
+  Crystals_Air:    '/assets/icons/recources/air.png',
 };
+
+const CRYSTAL_ALT = {
+  Crystals_Life: 'Life', Crystals_Fire: 'Fire',   Crystals_Death: 'Death',
+  Crystals_Frost: 'Frost', Crystals_Nature: 'Nature', Crystals_Air: 'Air',
+};
+
+export const CRYSTAL_ICONS = Object.fromEntries(
+  Object.entries(CRYSTAL_ICON_SRC).map(([type, src]) =>
+    [type, `<img src="${assetUrl(src)}" class="res-icon-img" alt="${CRYSTAL_ALT[type]}">`]));
 
 export const GOLD_ICON = `<img src="${assetUrl('/assets/icons/recources/gold.png')}" class="res-icon-img" alt="Gold">`;
 export const CROSSROAD_SIGIL_ICON = `<img src="${assetUrl('/assets/icons/recources/crossroad_sigil.svg')}" class="res-icon-img" alt="Crossroad Sigil">`;
@@ -838,9 +850,27 @@ export function renderUnitProgressRow(progress, opts = {}) {
   const tomeHtml = tokenBtn(opts.tome, 'tome-btn', '/assets/icons/ui/tome_of_experience.png',
     uiText('Use Tome of Knowledge', 'Использовать том знаний'),
     uiText('You have no Tomes of Knowledge', 'У вас нет томов знаний'));
-  const potionHtml = tokenBtn(opts.potion, 'potion-btn', '/assets/icons/ui/health_potion.png',
-    uiText('Use Health Potion', 'Использовать зелье здоровья'),
-    uiText('You have no Health Potions', 'У вас нет зелий здоровья'));
+  // ONE control for mending, on the HP bar, whichever way the player can pay.
+  // The crystal Heal used to be a labelled button in the card's action overlay,
+  // which meant the two ways to fix the same unit lived in two different places
+  // and swapped as the pouch emptied — the potion vanished from the bar and a
+  // word appeared over the portrait. Same slot now: a potion while any are
+  // held, the heal SPELL when none are, drawn with the crystal it spends. The
+  // spell variant keeps the `.heal-btn` class and both data attributes, so the
+  // castle's existing handler and the onboarding step find it unchanged.
+  const potionHtml = opts.potion?.spell
+    ? (() => {
+        const sp = opts.potion.spell;
+        return `<button class="heal-btn unit-progress-tome unit-progress-tome--spell"
+               data-roster-id="${sp.rosterId}" data-spell-id="${sp.spellId}"
+               title="${sp.label}" aria-label="${sp.label}">
+         <img src="${assetUrl(sp.icon)}" alt="" onerror="this.style.display='none'">
+         <span class="unit-progress-tome-count">${sp.amount}</span>
+       </button>`;
+      })()
+    : tokenBtn(opts.potion, 'potion-btn', '/assets/icons/ui/health_potion.png',
+        uiText('Use Health Potion', 'Использовать зелье здоровья'),
+        uiText('You have no Health Potions', 'У вас нет зелий здоровья'));
 
   // Potion under the left stat column, tome under the right one, the two bars
   // stacked between them within the buttons' height.

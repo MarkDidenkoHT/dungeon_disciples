@@ -30,6 +30,7 @@ import {
   handleUnitInspect, unitName, buildingLabel, enableTrackSwipe, escapeHtml,
   playAdPlaceholder as playAd,
   renderItemPassive, renderItemTags, renderHeroSpellSlot, unitCallingId,
+  CRYSTAL_ICON_SRC,
 } from '../utils.js';
 import { getEquipBlock } from '../../data/item_rules.js';
 import { missingRequiredTags } from '../../data/items.js';
@@ -2068,7 +2069,11 @@ export function renderCastle(root, params = {}) {
       awaits: true,
       ready:  () => !!slotWithBuilding(slotOfUnit(woundedTutorialUnit())),
       open:   () => openSlotUnitSheet(slotOfUnit(woundedTutorialUnit())),
-      target: () => getSheetBody()?.querySelector('.heal-btn'),
+      // On the HP bar, inside the card: potionForUnit forces the spell variant
+      // for the whole of this lesson, so `.heal-btn` is there to point at even
+      // when the player is holding potions. The potion fallback in the selector
+      // is a seatbelt for a faction with no single-ally heal to teach.
+      target: () => getSheetBody()?.querySelector('.heal-btn, .potion-btn'),
     },
     {
       id: 'go_embark',
@@ -2563,7 +2568,6 @@ export function renderCastle(root, params = {}) {
                    && stored.current_hp < stored.max_hp;
 
     const resurrectionSpell = SPELLS[player.faction]?.find(s => s.usage === 'roster' && s.target_scope === 'single_ally');
-    const healSpell         = SPELLS[player.faction]?.find(s => s.effect_type === 'heal' && s.target_scope === 'single_ally');
 
     // Offered whenever a unit is dead or hurt, INCLUDING when the player cannot
     // afford (or has not learned) the spell — that gap is the whole point of it.
@@ -2592,21 +2596,18 @@ export function renderCastle(root, params = {}) {
           ${CASTLE_TEXT.resurrect[castleLang]} (${spellCostLabel(resurrectionSpell)})
         </button>` : '';
 
-    const healHtml = isDamaged && healSpell && tokenCount('health_potion') <= 0 ? `
-        <button class="heal-btn" data-roster-id="${rosterUnit.id}" data-spell-id="${healSpell.id}">
-          ${CASTLE_TEXT.heal[castleLang]} (${spellCostLabel(healSpell)})
-        </button>` : '';
-
-    // The Tome is NOT here. It moved onto the XP bar in the card itself (see
-    // tomeForUnit and renderUnitProgressRow): the bar is the only thing a tome
-    // changes, so the control belongs on it, and the icon carries the count that
-    // the labelled button used to. Heal and Resurrect stay — they act on the
-    // portrait, not on a bar.
-    if (!favorHtml && !resurrectHtml && !healHtml) return '';
+    // Neither the Tome nor the Heal is here. Both moved onto the card's own bars
+    // (see tomeForUnit and potionForUnit): a tome changes the XP bar and a mend
+    // changes the HP bar, so each control sits on the thing it moves, and its
+    // icon carries the count or the price the labelled button used to spell out.
+    // Heal in particular shares one slot with the Health Potion — two ways to
+    // pay for the same fix, in one place. Resurrect stays: it acts on the
+    // portrait, not on a bar, and a dead unit has no bars to speak of.
+    if (!favorHtml && !resurrectHtml) return '';
     // ONE overlay holding favor + spell, stacked, so favor sits directly above
     // the spell button instead of the two being positioned independently.
-    // A dead unit's button owns the middle of the card; a wounded one is still
-    // playable, so --heal drops its buttons low and out of the way.
+    // A dead unit's button owns the middle of the card; a living one is still
+    // playable, so --heal drops its favor button low and out of the way.
     return `
       <div class="unit-card-overlay unit-card-overlay--actions ${alive ? 'unit-card-overlay--heal' : ''}">
         ${favorHtml}
@@ -2624,17 +2625,51 @@ export function renderCastle(root, params = {}) {
     return { rosterId: rosterUnit.id, count: tokenCount('tome_of_knowledge') };
   }
 
-  // Same for the Health Potion on the HP bar. A unit already at full health gets
-  // it disabled too, with its own reason, rather than a potion wasted.
+  // Same for the Health Potion on the HP bar — and for the crystal Heal, which
+  // is the same button. One place to mend a unit, paying with whatever the
+  // player has: a potion while any are held, the faction's heal spell when the
+  // pouch is empty. A unit already at full health gets it disabled, with its own
+  // reason, rather than a potion wasted.
+  //
+  // DURING THE HEAL LESSON THE SPELL WINS even with potions in the pouch. The
+  // onboarding step points at this control to teach casting Heal, and a potion
+  // there would teach tapping a consumable instead — and would leave the step
+  // pointing at a button that does something else. It is also why the spell is
+  // offered without checking the purse or the spellbook: that gap is what the
+  // server's error message is for, and the lesson hands the player the crystals.
   function potionForUnit(rosterUnit) {
     const d = rosterUnit?.unit_data;
     if (!d || d.alive === false) return null;
     const max = Number(d.max_hp ?? 0);
     const cur = Number(d.current_hp ?? max);
+    const full   = max > 0 && cur >= max;
+    const potions = tokenCount('health_potion');
+    const teaching = !isTutorialDone(player, 'spell_heal');
+
+    if (!full && (teaching || potions <= 0)) {
+      const spell = SPELLS[player.faction]?.find(s => s.effect_type === 'heal' && s.target_scope === 'single_ally');
+      // One crystal type, three of them, for every faction's mend — the button
+      // carries that pair the way the potion carries its count.
+      const [type, amt] = Object.entries(spell?.cost?.crystals || {}).find(([, a]) => a > 0) || [];
+      if (spell && type) {
+        return {
+          rosterId: rosterUnit.id,
+          count:    potions,
+          spell: {
+            rosterId: rosterUnit.id,
+            spellId:  spell.id,
+            icon:     CRYSTAL_ICON_SRC[type],
+            amount:   amt,
+            label:    `${CASTLE_TEXT.heal[castleLang]} — ${spellCostLabel(spell)}`,
+          },
+        };
+      }
+    }
+
     return {
       rosterId: rosterUnit.id,
-      count:    tokenCount('health_potion'),
-      blocked:  max > 0 && cur >= max ? (castleLang === 'ru' ? 'Боец полностью здоров' : 'Unit is already at full health') : '',
+      count:    potions,
+      blocked:  full ? (castleLang === 'ru' ? 'Боец полностью здоров' : 'Unit is already at full health') : '',
     };
   }
 
@@ -3249,24 +3284,25 @@ export function renderCastle(root, params = {}) {
       if (tokenBtn?.classList.contains('tome-btn')) { useTome(tokenBtn.dataset.rosterId, rosterUnit); return; }
       if (tokenBtn) { usePotion(tokenBtn.dataset.rosterId, rosterUnit); return; }
 
-      // Stat / ability / resist inspection, same as every other unit card.
-      if (handleUnitInspect(e, openAbilityModal)) return;
-
-      const itemSlot = e.target.closest('[data-item-slot]');
-      if (itemSlot) { openSlotItemPicker(slot, itemSlot.dataset.rosterId); return; }
-
-      const favorBtn = e.target.closest('.favor-btn:not([disabled])');
-      if (favorBtn) { runFavor(slot, favorBtn.dataset.rosterId); return; }
-
+      // Resurrect and Heal, BEFORE handleUnitInspect for the same reason the two
+      // above are: the Heal is now a control on the card's HP bar, so the generic
+      // inspector gets the click first and would answer it looking for a stat.
       const resurrectBtn = e.target.closest('.resurrect-btn');
       const healBtn      = e.target.closest('.heal-btn');
       if (resurrectBtn || healBtn) {
         const btn  = resurrectBtn || healBtn;
         const path = resurrectBtn ? '/roster/resurrect' : '/roster/heal';
-        btn.disabled    = true;
-        btn.textContent = resurrectBtn
-          ? CASTLE_TEXT.resurrecting[castleLang]
-          : CASTLE_TEXT.healing[castleLang];
+        btn.disabled = true;
+        // The Heal on the HP bar is an icon, not a word: writing "Healing…"
+        // into it would throw out the crystal and the price and leave text in a
+        // 32px square. It greys out instead, the same way an empty token does.
+        if (btn.classList.contains('unit-progress-tome')) {
+          btn.classList.add('unit-progress-tome--off');
+        } else {
+          btn.textContent = resurrectBtn
+            ? CASTLE_TEXT.resurrecting[castleLang]
+            : CASTLE_TEXT.healing[castleLang];
+        }
         // Read BEFORE the await: reloadFromBootstrap re-renders the castle, and
         // this button — with its dataset — is gone by the time the call returns.
         const rosterId = btn.dataset.rosterId;
@@ -3303,9 +3339,20 @@ export function renderCastle(root, params = {}) {
           } catch (err) {
             alert(err?.message || String(err));
             btn.disabled = false;
+            btn.classList.remove('unit-progress-tome--off');
           }
         })();
+        return;
       }
+
+      // Stat / ability / resist inspection, same as every other unit card.
+      if (handleUnitInspect(e, openAbilityModal)) return;
+
+      const itemSlot = e.target.closest('[data-item-slot]');
+      if (itemSlot) { openSlotItemPicker(slot, itemSlot.dataset.rosterId); return; }
+
+      const favorBtn = e.target.closest('.favor-btn:not([disabled])');
+      if (favorBtn) { runFavor(slot, favorBtn.dataset.rosterId); return; }
     });
 
     bindRow();

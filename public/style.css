@@ -2629,6 +2629,19 @@ button.cost-bar-item:active { transform: scale(0.9); }
   50%      { box-shadow: 0 0 6px 1px rgba(255, 110, 110, 0.75); border-color: #ff9a9a; transform: scale(1.04); }
 }
 
+/* With the pouch empty the same slot casts the heal SPELL, and it breathes
+   green — the crystal price is in the badge where the potion count was, so the
+   colour is what says "this one costs crystals" before the icon is read. */
+.heal-btn.unit-progress-tome {
+  border-color: #5fd08a;
+  background: radial-gradient(circle at 50% 40%, rgba(90, 220, 140, 0.32), rgba(10, 40, 22, 0.85) 75%);
+  animation-name: heal-spell-pulse;
+}
+@keyframes heal-spell-pulse {
+  0%, 100% { box-shadow: 0 0 2px 0 rgba(90, 220, 140, 0.4); border-color: #3f9c66; transform: scale(1); }
+  50%      { box-shadow: 0 0 6px 1px rgba(110, 240, 160, 0.75); border-color: #a6f0c4; transform: scale(1.04); }
+}
+
 /* None to spend: still there, so the player knows the thing exists, but dead. */
 .unit-progress-tome.unit-progress-tome--off {
   animation: none;
@@ -3815,17 +3828,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   cursor: pointer;
 }
 .resurrect-btn[disabled] { opacity: 0.6; cursor: default; }
-
-.heal-btn {
-  background: linear-gradient(180deg,#16a34a,#0f7a37);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-weight: 700;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.6);
-  cursor: pointer;
-}
-.heal-btn[disabled] { opacity: 0.6; cursor: default; }
 
 /* Tome of Knowledge, in the same overlay as Heal and Resurrect. Purple rather
    than green or red: it is neither a repair nor an emergency, and reading as a
