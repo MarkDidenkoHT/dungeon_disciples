@@ -1,4 +1,4 @@
-const { runTrigger, calcDamageWithPassives, wardReductionFor, getAbilityTargets, executeActiveAbility, stackPassiveKeys, effectiveArmor, effectiveResist, MITIGATION_CAP_PCT, addArmor, addResist, clampDefenses, formGuardianBond, bondAbilityFor } = require('./passive-processor');
+const { runTrigger, calcDamageWithPassives, wardReductionFor, getAbilityTargets, executeActiveAbility, stackPassiveKeys, effectiveArmor, effectiveResist, MITIGATION_CAP_PCT, addArmor, addResist, clampDefenses, formGuardianBond, bondAbilityFor, resolvePassiveDefs } = require('./passive-processor');
 const { filterByTagRules } = require('./tag-rules.js');
 // Inspiration's reach is also the 'column_adjacent' relation a battle-prep
 // preview draws from, so the rule is defined once, there.
@@ -2667,6 +2667,51 @@ class BattleEngine {
     return this._aiClaimState;
   }
 
+  // ── Staying on one target ─────────────────────────────────────────────────
+  // Some passives only pay if the unit keeps hitting the SAME enemy, and the
+  // progress is thrown away the moment it swings elsewhere:
+  //
+  //   find_weakness  the bonus lives on the ATTACKER and remembers which target
+  //                  it was built against. A different target resets it to one
+  //                  stack (see stack_bonus_pct in passive-processor.js).
+  //   death_mark     the stacks sit on the VICTIM and burst at three. Walking
+  //                  away leaves them stranded on somebody nobody is hitting.
+  //
+  // Read off the actor's LIVE passives — any param carrying a `stack_key` —
+  // rather than from the unit-id table in data/ai_profiles.js, which is keyed by
+  // encounter and would miss every other unit, every item that grants one of
+  // these, and every unit that gains one later.
+  aiStackPlans(actor) {
+    const out = [];
+    for (const def of resolvePassiveDefs(actor, this.ABILITIES)) {
+      const p = def?.params || {};
+      if (!p.stack_key) continue;
+      if (p.stack_bonus_pct != null)  out.push({ key: p.stack_key, on: 'owner' });
+      else if (p.stacks_needed != null) out.push({ key: p.stack_key, on: 'target', needed: p.stacks_needed });
+    }
+    return out;
+  }
+
+  // What keeping `actor` on `t` is worth, in the same points aiPickActionTarget
+  // scores in. Capped below the kill weight (100000) ON PURPOSE: a killing blow
+  // on somebody else is the one thing allowed to pull a stacker off its mark,
+  // and nothing else is.
+  aiStackHold(actor, t, plans) {
+    let hold = 0;
+    for (const plan of plans) {
+      if (plan.on === 'owner') {
+        const built = actor._stacks?.[plan.key] ?? 0;
+        if (built > 0 && actor._stacks?.[plan.key + '_target'] === t.id) hold += 50000;
+      } else {
+        // Including marks an ALLY put there: two carriers converging on one
+        // victim reach the burst sooner than each tending its own.
+        const have = t._stacks?.[plan.key] ?? 0;
+        if (have > 0) hold += 20000 * Math.min(have, Math.max(1, (plan.needed ?? 1) - 1));
+      }
+    }
+    return hold;
+  }
+
   // Picks the best target for a basic action. Healers ALWAYS mend the ally with
   // the lowest current HP (preferring wounded ones, so a full-HP unit is never
   // chosen while someone is hurt); attackers prefer a target they can kill this
@@ -2691,12 +2736,20 @@ class BattleEngine {
       return pool.slice().sort((a, b) => a.battle_hp - b.battle_hp)[0];
     }
     const doctrine = aiDoctrineFor(actor);
+    const plans    = this.aiStackPlans(actor);
     let best = null, bestScore = -Infinity;
     for (const t of targets) {
       const dmg    = this.calcDamageValue(actor, t);
       const lethal = dmg >= t.battle_hp ? 1 : 0;
       // Kills first; then raw damage; then favour finishing lower-HP targets.
       let score = lethal * 100000 + dmg - t.battle_hp * 0.5;
+      // Hold the mark. Skipped when this hit would kill anyway (nothing to keep
+      // building) and when an ally has already claimed the kill — stacks spent
+      // on a corpse are stacks thrown away, the same reasoning the frost branch
+      // below makes about doomed targets.
+      if (plans.length && !lethal && !this.aiClaimState().doomed.has(t.id)) {
+        score += this.aiStackHold(actor, t, plans);
+      }
       // A frost line wants MORE chilled targets, not one dead one: every chilled
       // enemy is another Hungering Frost splash on every later hit. Claims are
       // what actually spread them — reading _chill_dmg alone fails whenever the

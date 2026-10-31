@@ -380,10 +380,10 @@ const BOT_TEMPLATES = [
       band_500: [
         { unit: 'e7111',     cell: 1, calling: 'vigil', item_id: 'codex_aeternum' },
         { unit: 'e3111',     cell: 0, item_id: 'sanctified_bulwark' },
-        { unit: 'e6211',     cell: 5, item_id: 'crystal_exoskeleton' },
+        { unit: 'e6211',     cell: 3, item_id: 'crystal_exoskeleton' },
         { unit: 'h_e_3_a41', cell: 4, item_id: 'might_of_the_pure', hero: true,
           spells: [{ spell_id: 'e_spell_3', power: 3 }, { spell_id: 'e_spell_9', power: 5 }] },
-        { unit: 'e6111',     cell: 3, item_id: 'champions_belt' },
+        { unit: 'e6111',     cell: 5, item_id: 'champions_belt' },
       ],
       // Duty Eternal, which this band still stages: Vigil on cells 1 and 4 with
       // the hero on 3. band_500 above gave that up; this one keeps it.
