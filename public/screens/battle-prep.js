@@ -50,6 +50,8 @@ const BP_TEXT = {
   hiddenSpell: { en: 'This group has an enemy that casts spells',
                  ru: 'В этой группе есть враг, применяющий заклинания' },
   goBack:      { en: 'Go Back', ru: 'Назад' },
+  bondBroken:  { en: 'No bond — this unit will not act. It needs the right ally standing directly in front of it.',
+                 ru: 'Нет связи — этот боец не будет действовать. Ему нужен подходящий союзник прямо перед ним.' },
   continueOn:  { en: 'Continue', ru: 'Продолжить' },
   undoFirst:   { en: 'Undo active spell first', ru: 'Сначала отмените активное заклинание' },
   moreFollowers: {
@@ -982,6 +984,40 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
     return out;
   }
 
+  // Which abilities make a unit a GUARDIAN — one that hands itself to an ally
+  // and does nothing on its own until it does. Read off the live definitions
+  // rather than naming 'unity 1' and 'blood_bond 1', so a third bond is covered
+  // without touching this file. Same rule as BOND_ABILITY_KEYS in
+  // utils/bot-template-audit.js and scripts/check-bot-formations.js.
+  const GUARDIAN_KEYS = Object.entries(UNIT_ABILITIES)
+    .filter(([, def]) => def?.params?.bond_synergy || def?.params?.unity_bond === true)
+    .map(([key]) => key);
+
+  // The player-facing twin of the guardian check in check-bot-formations.js.
+  //
+  // An unbonded guardian is not a weaker unit, it is a NON-unit: its action is
+  // 'none', so it holds a cell for the whole battle, does nothing, and dies for
+  // free. Nothing on the grid says so — the bond simply never draws — and the
+  // rule it is failing is invisible: the partner is matched on a TAG, and the
+  // guardian has to stand BEHIND it (see partner_in_front in
+  // data/formation_synergies.js). A new player meets this at tier 1, where the
+  // Blessed Soul is one of the three units they own.
+  //
+  // Returns the unit ids to mark. Recomputed from the live placement on every
+  // refresh rather than fired once on drop, because the bond also breaks when
+  // the PARTNER moves away or loses the tag its item was granting.
+  function unbondedGuardianIds(units) {
+    const carriers = units.filter(u => (u.abilityKeys ?? []).some(k => GUARDIAN_KEYS.includes(k)));
+    if (!carriers.length) return new Set();
+    // Matched on the bond's SOURCE ABILITY, not on `present: 'tether'`. Both
+    // guardian bonds happen to draw as tethers, but that is a presentation
+    // field and this is a mechanical test.
+    const bonded = new Set(resolveSynergies(units)
+      .filter(b => GUARDIAN_KEYS.includes(b.def?.source?.ability))
+      .map(b => b.sourceId));
+    return new Set(carriers.filter(u => !bonded.has(u.id)).map(u => u.id));
+  }
+
   // The enemy formation, in the same shape. Enemies are already shown openly on
   // their grid — only the EMPTY cells are fogged — so previewing their bonds
   // reveals nothing that is not on screen anyway.
@@ -1174,7 +1210,10 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
 
   function renderPlayerGrid() {
     const grid = root.querySelector('#player-grid');
-    const inspBuffs = inspirationBuffs(synergyUnits());
+    // One pass of the adapter for both readers: they must judge the same board.
+    const sUnits    = synergyUnits();
+    const inspBuffs = inspirationBuffs(sUnits);
+    const unbonded  = unbondedGuardianIds(sUnits);
     grid.innerHTML = Array.from({ length: ROWS * COLS }, (_, i) => {
       const occ = occupied[i];
       if (occ && occ.anchor === i) {
@@ -1204,13 +1243,20 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
         });
         const spellDot = spellBuffs.length > 0 ? `<span class="battle-cell-spell-dot">✦</span>` : '';
         const inspBadge = inspirationBadgeHtml(withCastleHpBadges(inspBuffs.get(occ.unitId), unit));
-        return `<div class="battle-cell battle-cell--placed ${isHero ? 'battle-cell--hero' : ''} ${isAlive ? '' : 'battle-cell--dead'}"
+        // Warns, never blocks — the same contract the position barks keep: the
+        // placement is legal, the unit just will not do anything there.
+        const bondBroken = unbonded.has(occ.unitId);
+        const bondWarn   = bondBroken
+          ? `<span class="battle-cell-bond-warn" title="${BP_TEXT.bondBroken[L]}" aria-label="${BP_TEXT.bondBroken[L]}">⚠</span>`
+          : '';
+        return `<div class="battle-cell battle-cell--placed ${isHero ? 'battle-cell--hero' : ''} ${isAlive ? '' : 'battle-cell--dead'} ${bondBroken ? 'battle-cell--bond-broken' : ''}"
                      data-i="${i}" style="grid-row:span ${rowSpan};grid-column:span ${colSpan};">
           ${portraitUrl ? `<img class="battle-cell-portrait" src="${portraitUrl}" alt="${name}" onerror="this.style.display='none'">` : ''}
           <div class="battle-cell-info">
             ${hpBarHtml(isAlive ? currentHp : 0, maxHp)}
           </div>
           ${spellDot}
+          ${bondWarn}
           ${inspBadge}
           <span class="battle-cell-remove" data-remove="${i}">✕</span>
         </div>`;

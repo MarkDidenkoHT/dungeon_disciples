@@ -11521,6 +11521,33 @@ html[lang="ru"] .upgrade-unit-label {
   overflow: hidden;
 }
 
+/* An unbonded guardian in battle prep. Loud on purpose: the unit is not weaker
+   for standing here, it is INERT — action 'none' for the whole fight — and
+   nothing else on the grid says so, because the bond it is missing simply never
+   draws. See unbondedGuardianIds() in public/screens/battle-prep.js. */
+.battle-cell--bond-broken {
+  outline: 2px solid var(--danger, #d9534f);
+  outline-offset: -2px;
+  animation: bond-broken-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes bond-broken-pulse {
+  0%, 100% { outline-color: var(--danger, #d9534f); }
+  50%      { outline-color: transparent; }
+}
+
+.battle-cell-bond-warn {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 0.7rem;
+  line-height: 1;
+  color: var(--danger, #d9534f);
+  text-shadow: 0 0 3px #000, 0 0 2px #000;
+  pointer-events: none;
+  z-index: 3;
+}
+
 .item-tile-badge {
   position: absolute;
   top: 2px;
