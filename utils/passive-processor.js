@@ -2403,5 +2403,5 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   return true;
 }
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { MITIGATION_CAP_PCT, effectiveArmor, effectiveResist, addArmor, addResist, clampDefenses, runTrigger, calcDamageWithPassives, wardReductionFor, getAbilityTargets, executeActiveAbility, resolveAbilityDef, resolvePassiveDefs, stackPassiveKeys, formGuardianBond, bondAbilityFor };
+  module.exports = { MITIGATION_CAP_PCT, effectiveArmor, effectiveResist, addArmor, addResist, clampDefenses, runTrigger, calcDamageWithPassives, wardReductionFor, getAbilityTargets, executeActiveAbility, resolveAbilityDef, resolvePassiveDefs, stackPassiveKeys, formGuardianBond, bondAbilityFor, FELLFIRE_DOTS };
 }

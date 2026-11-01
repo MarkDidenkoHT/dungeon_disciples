@@ -779,6 +779,19 @@ const BOT_TEMPLATES = [
     },
   },
   {
+    // The hero is here for `fellfire`: "also deal X% of their damage to every
+    // BURNING enemy". The splash skips the unit being hit, so a squad whose only
+    // Burn comes from the hero's own item can never trigger it — it burns the one
+    // body its own splash excludes, and by its next swing that Burn has ticked
+    // away. The court played that way for a long time: 107 hero swings across
+    // the three bands, 0 splashes.
+    //
+    // So the Spawn line carries `fire_staff` rather than `burning_fury` in every
+    // band. It is epic for epic and the body is a Demon/Caster that attacks, so
+    // it is the one slot that can hold a second Burn: army power moves by 1-2
+    // points and the hero finally has something to read. The Spawn is slow (10)
+    // and burns at the END of the round, which is in time — its victim's tick
+    // comes round after, later than the hero's turn. See aiFellfireSpread.
     id: 'choir_infernal_court',
     faction: 'choir_of_the_cursed',
     name: 'Infernal Court',
@@ -786,7 +799,7 @@ const BOT_TEMPLATES = [
       // The Taken Breath: Descant on cell 1, Hunger on cell 4, the hero on 3.
       // The lineup already stood this way - it only ever lacked the two callings.
       band_500: [
-        { unit: 'd7111',     cell: 0, item_id: 'burning_fury' },
+        { unit: 'd7111',     cell: 0, item_id: 'fire_staff' },
         { unit: 'd7111',     cell: 2, item_id: 'dragon_skin' },
         { unit: 'd4111',     cell: 4, calling: 'hunger', item_id: 'crystal_shield' },
         { unit: 'd6111',     cell: 1, calling: 'descant', item_id: 'court_regalia' },
@@ -796,7 +809,7 @@ const BOT_TEMPLATES = [
       ],
       // The Iron Homily: Hunger on cell 0, Descant on cell 5, the hero on 3.
       band_300: [
-        { unit: 'd711',     cell: 0, calling: 'hunger', item_id: 'burning_fury' },
+        { unit: 'd711',     cell: 0, calling: 'hunger', item_id: 'fire_staff' },
         { unit: 'd411',     cell: 2, item_id: 'crystal_shield' },
         { unit: 'd611',     cell: 1, item_id: 'court_regalia' },
         { unit: 'h_d_3_a3', cell: 3, item_id: 'orb_of_fire', hero: true,
@@ -806,7 +819,7 @@ const BOT_TEMPLATES = [
       // The Taken Breath: the Seneschal crosses to cell 4 as the Hunger anchor,
       // with Descant on 1 and the hero on 3.
       band_200: [
-        { unit: 'd71',      cell: 4, calling: 'hunger', item_id: 'burning_fury' },
+        { unit: 'd71',      cell: 4, calling: 'hunger', item_id: 'fire_staff' },
         { unit: 'd61',      cell: 1, calling: 'descant', item_id: 'court_regalia' },
         { unit: 'h_d_3_a2', cell: 3, item_id: 'orb_of_fire', hero: true,
           spells: [{ spell_id: 'd_spell_7', power: 2 }, { spell_id: 'd_spell_3', power: 3 }] },

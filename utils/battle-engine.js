@@ -1,4 +1,4 @@
-const { runTrigger, calcDamageWithPassives, wardReductionFor, getAbilityTargets, executeActiveAbility, stackPassiveKeys, effectiveArmor, effectiveResist, MITIGATION_CAP_PCT, addArmor, addResist, clampDefenses, formGuardianBond, bondAbilityFor, resolvePassiveDefs } = require('./passive-processor');
+const { runTrigger, calcDamageWithPassives, wardReductionFor, getAbilityTargets, executeActiveAbility, stackPassiveKeys, effectiveArmor, effectiveResist, MITIGATION_CAP_PCT, addArmor, addResist, clampDefenses, formGuardianBond, bondAbilityFor, resolvePassiveDefs, FELLFIRE_DOTS } = require('./passive-processor');
 const { filterByTagRules } = require('./tag-rules.js');
 // Inspiration's reach is also the 'column_adjacent' relation a battle-prep
 // preview draws from, so the rule is defined once, there.
@@ -79,6 +79,11 @@ const AI_MAX_DEFENDS_IN_A_ROW_LARGE = 1;
 // progress already paid for, a hand-off is only an opportunity, so a stacker
 // holding its mark outranks one. See aiBleedHandoff.
 const AI_BLEED_HANDOFF = 10000;
+
+// What spreading a DoT onto a fresh enemy is worth to an ally whose Fellfire /
+// Hungering Frost / Blood Bolt splashes off it. Same bracket as the hand-off
+// above, and for the same reason — see aiFellfireSpread.
+const AI_FELLFIRE_SPREAD = 10000;
 
 // Drain off a full-field sweep. Lifesteal, Communion and Leech all pay per hit,
 // so an attacker that strikes the whole enemy field drew six drains from one
@@ -2432,7 +2437,15 @@ class BattleEngine {
     for (const c of this.combatants) {
       this.clampPools(c);
       c.acted_this_round   = false;
-      c.dot_dmg = 0;
+      // Burn is NOT wiped here. It used to be — `c.burn = 0`, from when Burn was
+      // a round-scoped counter — and the line survived the rename to `dot_dmg`
+      // (b493858) into a model where a DoT ticks at the start of its VICTIM's
+      // turn and clears itself there. Two things were lost at every round
+      // boundary: a Burn applied after its victim had already moved, which was
+      // deleted before it could ever tick, and Mark of Ash's `_dot_permanent`,
+      // which is restored onto `dot_dmg` right after each tick and was wiped
+      // again a moment later. Bleed and Chill never had this line, which is why
+      // they behave as their text says and Burn did not.
 
       if (c._terror_rounds > 0) {
         c._terror_rounds--;
@@ -2782,7 +2795,11 @@ class BattleEngine {
   // as aiStackHold: a killing blow somewhere else still wins, and so does a
   // much bigger hit. This only ever decides between targets the AI was already
   // close to indifferent about.
-  // Will a Bleed applied to `t` right now still be on it when `ally` acts?
+  //
+  // Burn, Chill and Bleed all live and die the same way, so the window test is
+  // shared with the Fellfire family below.
+
+  // Will a DoT applied to `t` right now still be on it when `ally` acts?
   //   t has NOT acted yet  — its tick comes this round, so the ally has to be
   //                          ahead of it in what is LEFT of the order.
   //   t has already acted  — its tick is next round, so any ally still owed a
@@ -2790,15 +2807,29 @@ class BattleEngine {
   //                          moved needs to be faster than t to beat it there.
   // Ties lose: equal initiative is settled by nothing the AI can read (see
   // getActingOrder), so a tie is not a window worth aiming for.
-  aiBleedSurvivesTo(ally, t) {
+  aiDotSurvivesTo(ally, t) {
     if (!t.acted_this_round) return !ally.acted_this_round && ally.initiative > t.initiative;
     return !ally.acted_this_round || ally.initiative > t.initiative;
   }
 
+  // Which DoTs this unit lays down with its basic attack. Poison shares the
+  // `dot_dmg_pct` param with Burn and is told apart the same way the handler
+  // tells them apart — by the passive's own name — and it has no splash reading
+  // it, so it is not one of these.
+  aiAppliedDots(actor) {
+    const out = new Set();
+    for (const def of resolvePassiveDefs(actor, this.ABILITIES)) {
+      const p = def?.params || {};
+      if (p.bleed_dmg_pct != null) out.add('bleed');
+      if (p.chill_dmg_pct != null) out.add('chill');
+      if (p.dot_dmg_pct  != null && (def.name || '').toLowerCase() !== 'poison') out.add('burn');
+    }
+    return [...out];
+  }
+
   // Does this unit apply Bleed with its basic attack?
   aiAppliesBleed(actor) {
-    return resolvePassiveDefs(actor, this.ABILITIES)
-      .some(def => (def?.params || {}).bleed_dmg_pct != null);
+    return this.aiAppliedDots(actor).includes('bleed');
   }
 
   // Living allies still holding an unspent Exsanguinate. Abilities only: a hero
@@ -2821,7 +2852,76 @@ class BattleEngine {
     // Already permanent on this one: the hand-off is done and a second cast
     // would land on a Bleed that can no longer be improved.
     if ((t._bleed_permanent ?? 0) > 0) return 0;
-    return cashers.some(c => this.aiBleedSurvivesTo(c, t)) ? AI_BLEED_HANDOFF : 0;
+    return cashers.some(c => this.aiDotSurvivesTo(c, t)) ? AI_BLEED_HANDOFF : 0;
+  }
+
+  // ── Spreading what the splash counts ──────────────────────────────────────
+  //
+  // Fellfire, Hungering Frost and Blood Bolt are one passive with three skins:
+  // "this unit's attacks also deal X% of their damage to every burning /
+  // chilled / bleeding enemy". The handler splashes to every enemy carrying the
+  // DoT EXCEPT the one being hit, so what the passive actually pays for is the
+  // DoT being SPREAD — and the AI focus-fires, which puts the DoT on the one
+  // body the splash cannot touch.
+  //
+  // Measured over the bot catalogue before this: a Choir pair carrying both
+  // `burn` and `fellfire` took 53 swings, 18 of them into an already burning
+  // target, and found another burning enemy exactly 0 times — 0 splashes. The
+  // one line that did pay, the Mithrail frost garrison, pays because it is the
+  // only one with a doctrine that spreads (`frost_spreader` in
+  // data/ai_profiles.js, hardcoded to three unit ids).
+  //
+  // So the spread is asked for here instead, off the passives rather than off a
+  // unit id, and only where something is actually waiting to read it. Two tests,
+  // both of which the frost doctrine makes implicitly:
+  //
+  //   a fresh target — a second coat grows nothing the splash counts, since it
+  //                    pays per bleeding BODY, not per point of Bleed
+  //   a live window  — the DoT has to still be there when the carrier swings,
+  //                    which is aiDotSurvivesTo, the same question the
+  //                    Exsanguinate hand-off asks
+  //
+  // A unit that is its own only applier cannot be helped from here: its DoT
+  // lands on the target its own splash excludes, and by its next swing that
+  // DoT has ticked away. That is a squad-building problem (see the Fellfire
+  // note in data/bot_templates.js), not a targeting one.
+
+  // Allies whose Fellfire-family passive reads `dot`. The actor itself is never
+  // one of them: applying a DoT to the unit it is hitting does nothing for its
+  // own splash this swing (excluded) or any later one (ticked away by then).
+  aiFellfireCarriers(actor, dot) {
+    return this.combatants.filter(c => {
+      if (!c.alive || c.side !== actor.side || c.id === actor.id) return false;
+      return resolvePassiveDefs(c, this.ABILITIES).some(def => {
+        const p = def?.params || {};
+        if (p.fellfire_pct == null && p.fellfire_pct_per_tag == null) return false;
+        return (p.fellfire_dot || 'burn') === dot;
+      });
+    });
+  }
+
+  // The DoTs this actor applies that somebody on its side is waiting to splash
+  // off, as [{ field, carriers }]. Built once per turn, not once per target.
+  aiFellfirePlans(actor) {
+    const out = [];
+    for (const dot of this.aiAppliedDots(actor)) {
+      const field = FELLFIRE_DOTS[dot]?.field;
+      if (!field) continue;
+      const carriers = this.aiFellfireCarriers(actor, dot);
+      if (carriers.length) out.push({ field, carriers });
+    }
+    return out;
+  }
+
+  // What laying this actor's DoT on `t` is worth to those carriers, in
+  // aiPickActionTarget's points.
+  aiFellfireSpread(actor, t, plans) {
+    let worth = 0;
+    for (const plan of plans) {
+      if ((t[plan.field] ?? 0) > 0) continue;
+      if (plan.carriers.some(c => this.aiDotSurvivesTo(c, t))) worth += AI_FELLFIRE_SPREAD;
+    }
+    return worth;
   }
 
   // Picks the best target for a basic action. Healers ALWAYS mend the ally with
@@ -2850,6 +2950,7 @@ class BattleEngine {
     const doctrine = aiDoctrineFor(actor);
     const plans    = this.aiStackPlans(actor);
     const cashers  = this.aiAppliesBleed(actor) ? this.aiBleedCashers(actor) : [];
+    const splashes = this.aiFellfirePlans(actor);
     let best = null, bestScore = -Infinity;
     for (const t of targets) {
       const dmg    = this.calcDamageValue(actor, t);
@@ -2867,6 +2968,11 @@ class BattleEngine {
       // cannot carry a Bleed to anybody.
       if (cashers.length && !lethal && !this.aiClaimState().doomed.has(t.id)) {
         score += this.aiBleedHandoff(actor, t, cashers);
+      }
+      // And the same for a DoT an ally is waiting to splash off. A dying target
+      // carries nothing anywhere, so both of these sit behind the one test.
+      if (splashes.length && !lethal && !this.aiClaimState().doomed.has(t.id)) {
+        score += this.aiFellfireSpread(actor, t, splashes);
       }
       // A frost line wants MORE chilled targets, not one dead one: every chilled
       // enemy is another Hungering Frost splash on every later hit. Claims are
