@@ -73,6 +73,13 @@ const DEFEND_BONUS = 25;
 const AI_MAX_DEFENDS_IN_A_ROW       = 2;
 const AI_MAX_DEFENDS_IN_A_ROW_LARGE = 1;
 
+// What aiming a Bleed where an ally can still make it permanent is worth, in
+// aiPickActionTarget's points. Under the kill weight (100000) so a killing blow
+// elsewhere still wins, and under aiStackHold's 20000 on purpose: stacks are
+// progress already paid for, a hand-off is only an opportunity, so a stacker
+// holding its mark outranks one. See aiBleedHandoff.
+const AI_BLEED_HANDOFF = 10000;
+
 // Drain off a full-field sweep. Lifesteal, Communion and Leech all pay per hit,
 // so an attacker that strikes the whole enemy field drew six drains from one
 // swing while a single-target unit drew one. A sweep this wide keeps the full
@@ -2758,6 +2765,65 @@ class BattleEngine {
     return hold;
   }
 
+  // ── Bleeding the one the Knight can still reach ───────────────────────────
+  //
+  // A Bleed lives from the hit that applies it until the start of the victim's
+  // NEXT turn, when it ticks once and clears. So an ally holding Exsanguinate —
+  // "the Bleed currently on the target becomes permanent" — can only ever spend
+  // it inside that window, and which enemy the applier picked decides whether
+  // the window is open when the Knight's turn comes or shut long before it.
+  //
+  // The blood line is built on exactly this hand-off (the Mages apply, the
+  // Knights cash) and the Knights are the slower half on purpose, so the
+  // applier is asked to aim where the Bleed will keep: at an enemy the ally
+  // still gets a turn ahead of.
+  //
+  // Scored, not enforced, and well under the kill weight (100000) — same rule
+  // as aiStackHold: a killing blow somewhere else still wins, and so does a
+  // much bigger hit. This only ever decides between targets the AI was already
+  // close to indifferent about.
+  // Will a Bleed applied to `t` right now still be on it when `ally` acts?
+  //   t has NOT acted yet  — its tick comes this round, so the ally has to be
+  //                          ahead of it in what is LEFT of the order.
+  //   t has already acted  — its tick is next round, so any ally still owed a
+  //                          turn this round is in time, and one that has also
+  //                          moved needs to be faster than t to beat it there.
+  // Ties lose: equal initiative is settled by nothing the AI can read (see
+  // getActingOrder), so a tie is not a window worth aiming for.
+  aiBleedSurvivesTo(ally, t) {
+    if (!t.acted_this_round) return !ally.acted_this_round && ally.initiative > t.initiative;
+    return !ally.acted_this_round || ally.initiative > t.initiative;
+  }
+
+  // Does this unit apply Bleed with its basic attack?
+  aiAppliesBleed(actor) {
+    return resolvePassiveDefs(actor, this.ABILITIES)
+      .some(def => (def?.params || {}).bleed_dmg_pct != null);
+  }
+
+  // Living allies still holding an unspent Exsanguinate. Abilities only: a hero
+  // spell that does the same thing has to be paid for out of the power strip and
+  // may not be affordable on the turn it would matter.
+  aiBleedCashers(actor) {
+    return this.combatants.filter(c => {
+      if (!c.alive || c.side !== actor.side || c.id === actor.id) return false;
+      if (c.used_active || c._actives_locked) return false;
+      const key = c.unit_data?.ability || c.unit_data?.active_ability;
+      const def = key ? this.ABILITIES?.[key] : null;
+      return (def?.params || {}).make_bleed_permanent === true;
+    });
+  }
+
+  // What aiming `actor`'s Bleed at `t` is worth to the allies waiting to make it
+  // permanent, in aiPickActionTarget's points.
+  aiBleedHandoff(actor, t, cashers) {
+    if (!cashers.length) return 0;
+    // Already permanent on this one: the hand-off is done and a second cast
+    // would land on a Bleed that can no longer be improved.
+    if ((t._bleed_permanent ?? 0) > 0) return 0;
+    return cashers.some(c => this.aiBleedSurvivesTo(c, t)) ? AI_BLEED_HANDOFF : 0;
+  }
+
   // Picks the best target for a basic action. Healers ALWAYS mend the ally with
   // the lowest current HP (preferring wounded ones, so a full-HP unit is never
   // chosen while someone is hurt); attackers prefer a target they can kill this
@@ -2783,6 +2849,7 @@ class BattleEngine {
     }
     const doctrine = aiDoctrineFor(actor);
     const plans    = this.aiStackPlans(actor);
+    const cashers  = this.aiAppliesBleed(actor) ? this.aiBleedCashers(actor) : [];
     let best = null, bestScore = -Infinity;
     for (const t of targets) {
       const dmg    = this.calcDamageValue(actor, t);
@@ -2795,6 +2862,11 @@ class BattleEngine {
       // below makes about doomed targets.
       if (plans.length && !lethal && !this.aiClaimState().doomed.has(t.id)) {
         score += this.aiStackHold(actor, t, plans);
+      }
+      // Same proviso as the stack hold above: a target that is dying anyway
+      // cannot carry a Bleed to anybody.
+      if (cashers.length && !lethal && !this.aiClaimState().doomed.has(t.id)) {
+        score += this.aiBleedHandoff(actor, t, cashers);
       }
       // A frost line wants MORE chilled targets, not one dead one: every chilled
       // enemy is another Hungering Frost splash on every later hit. Claims are
