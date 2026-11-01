@@ -357,6 +357,25 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   let rewardRequestInFlight = false;
   let fxInitialized = false;
 
+  // ── Whose turn has already been taken, as the PLAYER has seen it ──────────
+  // NOT read off state.combatants while a batch is playing. Every batch arrives
+  // as the state AFTER its last entry, so acted_this_round is already true for
+  // every AI unit that is about to act — seeding the queue from those flags
+  // made the strip jump to the end-of-batch order on its very first frame, and
+  // the player then watched three enemies swing who were no longer in the queue
+  // at all. That is the whole "the actions and the queue live separately"
+  // complaint: the order on screen was the future, not the present.
+  //
+  // So the set is kept here, across batches. playbackSequence owns it while it
+  // plays and advances it one unit at a time in step with the animations;
+  // everywhere else `state` is the truth and the set is reseeded from it.
+  const actedSoFar = new Set();
+  function syncActedFromState() {
+    actedSoFar.clear();
+    for (const c of (state?.combatants || [])) if (c.acted_this_round) actedSoFar.add(c.id);
+  }
+  syncActedFromState();
+
   // Items for the equipped-gear inspector. Served from the shared bootstrap
   // cache — the battle screen no longer fetches its own copy.
   let items = [];
@@ -551,7 +570,15 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // run must not be swallowed into the first.
   function closesFxGroup(e, entry) {
     if (e.type === 'round') return true;
-    if (e.type === 'action' || e.type === 'ability' || e.type === 'spell' || e.type === 'cast') {
+    // 'defend' and 'skip' are turns too, and leaving them off this list is how a
+    // group reached ACROSS one: a unit that defended did not end the previous
+    // actor's burst, so the status lines its own turn produced were swallowed
+    // into that burst and animated with it (sameInstantPassive asks for the same
+    // passive, not the same unit). 'pool' is deliberately still absent — a pool
+    // grant is a consequence of the entry above it and is meant to JOIN the
+    // group; see the poolRider note at the scan below.
+    if (e.type === 'action' || e.type === 'ability' || e.type === 'spell' || e.type === 'cast' ||
+        e.type === 'defend' || e.type === 'skip') {
       if (e.type === entry.type) return !sameFxGroup(e, entry);
       return e.actorName !== entry.actorName || e.actorCell !== entry.actorCell;
     }
@@ -785,6 +812,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   const ENEMY_TURN_PREVIEW_MS = 350;
   // The beat between player-controlled turns in a playback batch.
   const TURN_GAP_MS = 450;
+  // The breath AFTER a turn, before the next unit lights up. The finished unit
+  // keeps its ring and its result on screen for it, so a turn visibly ENDS
+  // before the next one starts. Without it the ring moved in the same frame an
+  // animation finished, and a column of AI units read as one burst rather than
+  // as a queue being walked.
+  const TURN_SETTLE_MS = 150;
   // Litany pacing. Spoken-only lines hold
   // playback for LITANY_VERSE_MS; performed verses hold for the same time,
   // including their animation. The lethal verse holds for nothing because the
@@ -814,7 +847,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // Who has already gone, so the queue can advance in step with the animation
     // instead of sitting on last turn's order until playback ends. Seeded from
     // the board, then reset by each 'round' entry.
-    const acted = new Set(state.combatants.filter(c => c.acted_this_round).map(c => c.id));
+    // Shared with render() rather than rebuilt from state.acted_this_round,
+    // which describes the end of this batch and not its start. See actedSoFar.
+    const acted = actedSoFar;
     // `state` is the end state, so anything killed during THIS playback already
     // reads as dead. Those units are still standing as far as the animation is
     // concerned, so they belong in the queue until their death actually plays.
@@ -856,6 +891,15 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     };
 
     for (let entryIdx = 0; entryIdx < newEntries.length; entryIdx++) {
+      // The screen can be GONE: conceding navigates away, and main.js removes
+      // the battle host on the way out — but a playback already in flight is
+      // awaiting its own timers and knows nothing about it. It then kept
+      // animating into a detached board and, worse, kept firing ability sounds,
+      // which is why a fight the player had walked out of could still be heard
+      // from the castle. See teardownBattle(), which stops the stream that fed
+      // this; the break is the second line of defence for a batch already in
+      // the air.
+      if (battleResolved || !root.isConnected) break;
       const entry = newEntries[entryIdx];
       // Track position in the log
       if (entry.id != null) lastLogId = entry.id;
@@ -865,6 +909,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       // action follows immediately and the new order would otherwise never be
       // on screen long enough to read.
       if (entry.type === 'round') {
+        // The ring comes off the unit that closed the old round BEFORE the slate
+        // is wiped. Leaving activeActorId set across the boundary meant the new
+        // round's first hand-over added last round's actor to the set it had
+        // just cleared — so one unit was missing from the queue for a whole
+        // round, having done nothing yet, and the strip disagreed with the order
+        // the engine was actually using.
+        setActiveActor(null);
         acted.clear();
         queueNow();
         // The round breath IS this round's first beat, so neither the gap below
@@ -877,6 +928,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         const id = idFor(entry);
         const turnKey = turnKeyOf(entry);
         if (turnKey !== lastTurnKey) {
+          // Strictly one at a time: the unit that just went holds the board for
+          // a breath, and only then does it leave the queue and the next one
+          // step up. The lead-in has its own, longer hold.
+          if (activeActorId && !pendingLeadIn) await new Promise(r => setTimeout(r, TURN_SETTLE_MS));
           if (activeActorId) acted.add(activeActorId);
           lastTurnKey = turnKey;
           setActiveActor(id);
@@ -1106,6 +1161,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       setActiveActor(null);
       queueNow();
     }
+    // The screen has caught up with `state`, so the server's own flags are the
+    // truth again. Reconciling here keeps a turn that left no log line — or an
+    // entry type isTurnEntry does not count — from desyncing the strip for the
+    // rest of the round.
+    syncActedFromState();
     console.log('[battle] playbackSequence END');
   }
 
@@ -2760,6 +2820,15 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         btn.disabled = false;
         return;
       }
+      // Down BEFORE the navigate. main.js removes the host on the way out, but
+      // nothing inside it stops on its own: the realtime controller went on
+      // polling /battle/tip and /battle/state from the castle, every one of
+      // those reads nudged the server into resolving the abandoned bot's next
+      // turn (see GET /battle/state), and the entries it handed back were
+      // played into a board that was no longer on screen — a conceded fight
+      // that could still be heard.
+      teardownBattle();
+      destroyBattleFx();
       // Straight out: the result screen belongs to the player who stayed.
       navigate('embark', { player });
     });
@@ -2895,8 +2964,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       getValidTargetIds(selectingTarget, pendingAction === 'ability').forEach(id => validTargetKeys.add(id));
     }
 
+    // Outside playback the server's flags are the truth. While a batch plays,
+    // playbackSequence owns actedSoFar and walks it forward one unit at a time,
+    // so the strip must not be rebuilt from the end-of-batch state underneath
+    // it — `processing` is held for exactly that span by every playback caller.
+    if (!processing) syncActedFromState();
     const actingOrder = state.combatants
-      .filter(c => c.alive && !c.acted_this_round)
+      .filter(c => c.alive && !actedSoFar.has(c.id))
       .sort((a, b) => b.initiative - a.initiative);
 
     renderPowerStrips();
@@ -3231,14 +3305,21 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     ui.screen._battleHandlersAttached = true;
   }
 
-  async function renderResult(winner) {
-    if (battleResolved) return;
+  // Everything this screen runs OUTSIDE its own markup: the realtime stream and
+  // its heartbeat poll, and the turn clock. Idempotent, and called by both ways
+  // out of a battle — the result screen and conceding.
+  function teardownBattle() {
     battleResolved = true;
     if (realtimeController) {
       realtimeController.stop();
       realtimeController = null;
     }
     if (turnTicker) { clearInterval(turnTicker); turnTicker = null; }
+  }
+
+  async function renderResult(winner) {
+    if (battleResolved) return;
+    teardownBattle();
     updateTurnTimer();
     const concedeBtn = root.querySelector('#battle-concede');
     if (concedeBtn) concedeBtn.hidden = true;

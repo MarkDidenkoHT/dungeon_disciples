@@ -4790,7 +4790,12 @@ router.get('/battle/state', requireAuth, async (req, res) => {
     // Two things can leave the battle parked on a turn nobody will take: a clock
     // that ran out, and a unit that has no action. Both are resolved by whoever
     // reads next, and only written back if something actually moved.
-    if (isClockedRecord(record)) {
+    // `battle_active === false` is a battle somebody has already closed — the
+    // rewards are claimed, or it was abandoned. A read must report it, never
+    // advance it: this block resolves expired turns and answers for the bot, so
+    // without the guard a client still polling a finished battle kept driving
+    // it forward one round per request.
+    if (isClockedRecord(record) && record.battle_active !== false) {
       const expired = applyExpiredTurns(record, engine);
       // A bot answers the defended turn straight away; a person answers in theirs.
       if (expired && isBotRecord(record)) answerTurns(record, engine);
@@ -6828,11 +6833,19 @@ router.post('/battle/end', requireAuth, async (req, res) => {
       return res.json({ success: true, abandoned, conceded_to: winner });
     }
 
-    // Walking out of a tourney battle against a BOT is the same concession as
-    // walking out of a duel: the battle was counted when it started, so it is
-    // scored now (a forfeit, worth nothing) rather than left on the board with
-    // no result against it. A duel returns above; this is the one-owner case.
-    if (abandoned && record.battle_data?.tourney_id) {
+    // Walking out of a battle against a BOT is the same concession as walking
+    // out of a duel: it is scored now (a forfeit, worth nothing) rather than
+    // left on the board with no result against it. A duel returns above; this
+    // is the one-owner case.
+    //
+    // isBotRecord used to be absent from this condition, so a quick match left
+    // early was only closed — battle_active false, but `done` still false and
+    // `turn_deadline` still stamped. The bot's turn then stayed permanently
+    // expired, and GET /battle/state resolves an expired turn on read: every
+    // poll by the client that had already walked out moved the fight on another
+    // round. The battle went on being fought, and announced itself, from the
+    // castle screen. withTourneyResult is a no-op without a tourney_id.
+    if (abandoned && (isBotRecord(record) || record.battle_data?.tourney_id)) {
       const battle_data = await withTourneyResult(record, {
         ...record.battle_data,
         done: true, winner: 'enemy', abandoned_by: String(chat_id), turn_deadline: null,
