@@ -1573,14 +1573,28 @@ function dispatchPassive(trigger, owner, def, ctx) {
 
       owner._parry_available = true;
     }
+    // Clear Shot is a STATE, not an event: the firing line is either open or it
+    // is not. It used to be revoked and re-granted on every single round start,
+    // and re-granting a buff that had not changed broke three things at once.
+    //
+    //   · registerEffect SUMS `amount` for a repeated key, so the badge on the
+    //     unit grew by the bonus every round — +2, +4, +6 initiative — and
+    //     rewrote its own sentence from the running total. The stat was right
+    //     and the number the player could read was not, which is why this looked
+    //     like initiative being added on every shot.
+    //   · `_granted_buffs` took another entry each round, so a unit that died
+    //     late handed back many times what it had been given (and came back from
+    //     a resurrect with its initiative floored at 0).
+    //   · a beacon's amplified share is applied inside recordGrantedBuff but was
+    //     never part of `_clear_shot_initiative_amt`, so the bare subtraction
+    //     left it behind and the next round's 10% compounded off the inflated
+    //     base. With a Beacon of Hope the stat itself climbed every round; with
+    //     a Beacon of Despair it bled away.
+    //
+    // So: act only when the state CHANGES. Granted once when the line clears,
+    // taken back once when an ally steps into it, and left alone in between.
     if (p.clear_shot_initiative_bonus_pct != null || p.clear_shot_dmg_bonus_pct != null) {
-      if (owner._clear_shot_active) {
-        owner.initiative = Math.max(0, owner.initiative - (owner._clear_shot_initiative_amt || 0));
-        owner._dmg_mult   = (owner._dmg_mult ?? 1) - (owner._clear_shot_dmg_amt || 0);
-        owner._clear_shot_active = false;
-        owner._clear_shot_initiative_amt = 0;
-        owner._clear_shot_dmg_amt = 0;
-      }
+      let clear = false;
       if (owner.alive) {
         const ownerCol = cellCol(owner.cellIndex);
         const ownerRow = cellRow(owner.cellIndex);
@@ -1592,21 +1606,40 @@ function dispatchPassive(trigger, owner, def, ctx) {
             cellCol(c.cellIndex) === frontCol && cellRow(c.cellIndex) === ownerRow &&
             !engine.resolveAllPassiveDefs(c).some(d => d.trigger === 'intercept')
           );
-          if (!covered) {
-            const initAmt = Math.round(owner.initiative * (p.clear_shot_initiative_bonus_pct ?? 0) / 100);
-            const dmgAmt  = (p.clear_shot_dmg_bonus_pct ?? 0) / 100;
-            owner.initiative += initAmt;
-            owner._dmg_mult    = (owner._dmg_mult ?? 1) + dmgAmt;
-            owner._clear_shot_active = true;
-            // Booked through the engine so the beacons scale it and it shows up
-            // as a buff like every other numeric grant. Recorded AFTER the base
-            // is applied, which is the contract recordGrantedBuff expects.
-            if (initAmt) engine.recordGrantedBuff(owner, 'initiative', [owner], initAmt, null, def);
-            owner._clear_shot_initiative_amt = initAmt;
-            owner._clear_shot_dmg_amt = dmgAmt;
-            engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, message: `${def.name} — clear line of sight, +${p.clear_shot_initiative_bonus_pct ?? 0}% initiative and damage`, value: p.clear_shot_dmg_bonus_pct ?? 0 });
-          }
+          clear = !covered;
         }
+      }
+      if (owner._clear_shot_active && !clear) {
+        // Through the ledger, so the beacons' share and the badge come off with
+        // the stat. `_clear_shot_initiative_amt` is the fallback for a battle
+        // saved before the grants carried a defId — its entries cannot be found
+        // by name, and leaving them would strand the bonus on the unit.
+        // The engine method is checked, not assumed: this module is shared with
+        // a second, lighter engine that books grants its own way, and the
+        // fallback is already here for the saved battles that need it.
+        const mine = (owner._granted_buffs || []).filter(b => b.defId === def.id);
+        if (mine.length && engine.revokeGrantedBuffsFrom) {
+          engine.revokeGrantedBuffsFrom(owner, b => b.defId === def.id);
+        } else {
+          owner.initiative = Math.max(0, owner.initiative - (owner._clear_shot_initiative_amt || 0));
+        }
+        owner._dmg_mult = (owner._dmg_mult ?? 1) - (owner._clear_shot_dmg_amt || 0);
+        owner._clear_shot_active = false;
+        owner._clear_shot_initiative_amt = 0;
+        owner._clear_shot_dmg_amt = 0;
+      } else if (!owner._clear_shot_active && clear) {
+        const initAmt = Math.round(owner.initiative * (p.clear_shot_initiative_bonus_pct ?? 0) / 100);
+        const dmgAmt  = (p.clear_shot_dmg_bonus_pct ?? 0) / 100;
+        owner.initiative += initAmt;
+        owner._dmg_mult    = (owner._dmg_mult ?? 1) + dmgAmt;
+        owner._clear_shot_active = true;
+        // Booked through the engine so the beacons scale it and it shows up
+        // as a buff like every other numeric grant. Recorded AFTER the base
+        // is applied, which is the contract recordGrantedBuff expects.
+        if (initAmt) engine.recordGrantedBuff(owner, 'initiative', [owner], initAmt, null, def);
+        owner._clear_shot_initiative_amt = initAmt;
+        owner._clear_shot_dmg_amt = dmgAmt;
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, message: `${def.name} — clear line of sight, +${p.clear_shot_initiative_bonus_pct ?? 0}% initiative and damage`, value: p.clear_shot_dmg_bonus_pct ?? 0 });
       }
     }
   }

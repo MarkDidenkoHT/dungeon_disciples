@@ -659,7 +659,12 @@ class BattleEngine {
     for (const t of targets) {
       const landed = appliedByTarget ? (appliedByTarget.get(t.id) ?? 0) : value;
       if (appliedByTarget && !landed) continue;   // nothing got through the cap
-      const rec = { type, targetIds: [t.id], value: landed, ...(displayField ? { displayField } : {}) };
+      // `defId` names the passive that made this grant, so a passive that
+      // re-evaluates can take back ITS OWN entry rather than all of them or
+      // none — see revokeGrantedBuffsFrom.
+      const rec = { type, targetIds: [t.id], value: landed,
+        ...(def?.id ? { defId: def.id } : {}),
+        ...(displayField ? { displayField } : {}) };
       source._granted_buffs.push(rec);
 
       // The beacon share is worked out BEFORE the icon is registered, so the
@@ -692,7 +697,8 @@ class BattleEngine {
           if (extra < 0) extra = Math.max(extra, -landed);
           if (extra) {
             landedExtra = this.applyStatBuff(t, type, extra);
-            if (landedExtra) source._granted_buffs.push({ type, targetIds: [t.id], value: landedExtra });
+            if (landedExtra) source._granted_buffs.push({ type, targetIds: [t.id], value: landedExtra,
+              ...(def?.id ? { defId: def.id } : {}) });
           }
         }
       }
@@ -802,7 +808,22 @@ class BattleEngine {
     }
   }
   revokeGrantedBuffs(dying) {
-    for (const buff of dying._granted_buffs) {
+    this.revokeGrantedBuffsFrom(dying, () => true);
+  }
+  // Undoes the grants from `source` that `match` accepts and drops them from its
+  // ledger; revokeGrantedBuffs is this with "everything", which is what death is.
+  //
+  // A passive whose bonus comes and GOES while its owner lives needs this. Clear
+  // Shot is the case: it is granted while the firing line is clear and taken back
+  // when an ally steps into it, and it hand-rolled that undo as a bare
+  // subtraction of the percentage it had asked for. That is not what landed — a
+  // Beacon of Hope amplifies a grant on its way through recordGrantedBuff — so
+  // every round left the beacon's share behind, and the next round's 10% was
+  // taken off the inflated figure. One ledger, one undo, every stat type.
+  revokeGrantedBuffsFrom(source, match) {
+    const kept = [];
+    for (const buff of (source._granted_buffs || [])) {
+      if (!match(buff)) { kept.push(buff); continue; }
       for (const targetId of buff.targetIds) {
         const target = this.combatants.find(c => c.id === targetId);
         if (!target) continue;
@@ -838,7 +859,7 @@ class BattleEngine {
         if (buff.effectKey) this.reduceStatGrantEffect(target, buff.effectKey, buff.effectAmount ?? 0);
       }
     }
-    dying._granted_buffs = [];
+    source._granted_buffs = kept;
   }
   recomputeTagScaledGrants(side, tags) {
     if (!tags?.length) return;
