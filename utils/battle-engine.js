@@ -65,6 +65,13 @@ const DECAY_CAP_PCT  = 20;
 // multiplier, so the player can see what it bought: the inspector already draws
 // armor and resistance deltas.
 const DEFEND_BONUS = 25;
+// How many turns in a row the AI may spend in guard before it has to fight.
+// Guard buys a healer ONE turn to reach a wounded unit; it is not a posture to
+// settle into — see aiShouldDefend. A large unit holds two cells and hits for
+// two units' worth, so every turn it spends guarding costs its side twice the
+// offense a tile's does: it gets one breath and then it swings.
+const AI_MAX_DEFENDS_IN_A_ROW       = 2;
+const AI_MAX_DEFENDS_IN_A_ROW_LARGE = 1;
 
 // Drain off a full-field sweep. Lifesteal, Communion and Leech all pay per hit,
 // so an attacker that strikes the whole enemy field drew six drains from one
@@ -1314,6 +1321,10 @@ class BattleEngine {
       if (!actor.alive) { actor.acted_this_round = true; return this.afterAction(actor); }
     }
     actor.defend_armor_bonus = 0;
+    // Anything but guarding breaks the streak aiShouldDefend counts, and it is
+    // set here beside the armour bonus it belongs with so no action path can
+    // forget it. doDefend puts both back on below.
+    if (actionType !== 'defend') actor._ai_defend_streak = 0;
     // A unit whose intrinsic action is 'sacrifice' always pays the HP cost, even
     // when the AI drives it (the AI loop calls this with 'attack'). Without this,
     // enemy sacrifice-healers healed allies for free.
@@ -2240,6 +2251,11 @@ class BattleEngine {
 
   doDefend(actor) {
     actor.defend_armor_bonus = DEFEND_BONUS;
+    // What aiShouldDefend needs to tell a guard that is working from one that is
+    // not: how many turns this unit has held it, and the HP it went in on. Both
+    // are cleared by any other action (see executeAction).
+    actor._ai_defend_streak = (actor._ai_defend_streak ?? 0) + 1;
+    actor._ai_hp_on_defend  = actor.battle_hp;
     actor.acted_this_round   = true;
     this.pushLog({ type: 'defend', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, value: DEFEND_BONUS, message: `defended (+${DEFEND_BONUS} armor and all resists this round)` });
     return this.afterAction(actor);
@@ -3067,13 +3083,49 @@ class BattleEngine {
   // A wounded tank should defend when a healer is alive to mend it and someone
   // else can carry the offense — exactly the "hold the line" case. Healers never
   // defend (they should be healing).
+  //
+  // Those four tests were the WHOLE decision, and every one of them stays true
+  // for as long as the unit is wounded — so a unit that fell under the line
+  // guarded, and guarded, and guarded, while the player widdled it down a turn
+  // at a time. It was worst on a large unit, which is the one that can least
+  // afford it: holding two cells, it hits for two units' worth, so each turn it
+  // spent waiting to be saved cost its side twice the offense a tile's would.
+  //
+  // Guard is a stopgap, so two more things have to hold:
+  //
+  //   1. It has to be WORKING. A unit that guarded last turn and is not on more
+  //      HP than it went into guard with was not mended — the healer cannot
+  //      reach it, cannot afford it, or is dealing with someone worse. Another
+  //      turn behind the shield is another turn of being worn down for nothing,
+  //      and the unit does more for its side by swinging.
+  //   2. It cannot be held indefinitely even when it IS working, because a
+  //      healer that only keeps pace with the incoming damage would otherwise
+  //      park the unit in guard for the rest of the fight.
   aiShouldDefend(actor) {
     if (this.aiIsHealer(actor)) return false;
     if (actor.battle_hp / actor.max_hp >= 0.4) return false; // only when threatened
     const allies = this.combatants.filter(c => c.side === actor.side && c.alive && c.id !== actor.id);
     const hasHealer = allies.some(a => this.aiIsHealer(a));
     const hasOtherDamage = allies.some(a => this.aiIsDamageDealer(a));
-    return hasHealer && hasOtherDamage;
+    if (!hasHealer || !hasOtherDamage) return false;
+    if (actor._ai_guard_failed) return false;
+    const streak = actor._ai_defend_streak ?? 0;
+    // A guard that went unanswered is one this unit does not try again. Without
+    // the flag the streak alone only made it guard on every OTHER turn — one
+    // turn behind the shield, one turn fighting, which still hands the player
+    // half the unit's offense for the rest of the fight. Having asked for a mend
+    // once and not been given it, it fights.
+    //
+    // Idempotent on purpose: the test and the write say the same thing, so
+    // asking twice in one turn cannot change the answer.
+    if (streak > 0 && actor.battle_hp <= (actor._ai_hp_on_defend ?? 0)) {
+      actor._ai_guard_failed = true;
+      return false;
+    }
+    const cap = (actor.size === 'row' || actor.size === 'column')
+      ? AI_MAX_DEFENDS_IN_A_ROW_LARGE
+      : AI_MAX_DEFENDS_IN_A_ROW;
+    return streak < cap;
   }
 
   // Any spell in the game by id. The log and every boss kit carry ids rather
@@ -3643,6 +3695,12 @@ class BattleEngine {
         armor:            c.armor,
         initiative:       c.initiative,
         defend_armor_bonus: c.defend_armor_bonus ?? 0,
+        // The engine is rebuilt from this on every request, so a field left out
+        // here is one the AI forgets between turns — and a forgotten guard
+        // streak is the endless guard this was written to stop.
+        _ai_defend_streak:  c._ai_defend_streak ?? 0,
+        _ai_hp_on_defend:   c._ai_hp_on_defend ?? 0,
+        _ai_guard_failed:   c._ai_guard_failed ?? false,
         martyrdom_pct:    c.martyrdom_pct ?? 0,
         _lifesteal:       c._lifesteal ?? 0,
         intercept_bonus_pct: c.intercept_bonus_pct ?? 0,
@@ -3793,6 +3851,9 @@ class BattleEngine {
       if (s.max_hp        != null) c.max_hp        = s.max_hp;
       if (s.armor         != null) c.armor         = Math.max(0, Math.min(MITIGATION_CAP_PCT, s.armor));
       c.defend_armor_bonus = s.defend_armor_bonus ?? 0;
+      c._ai_defend_streak  = s._ai_defend_streak ?? 0;
+      c._ai_hp_on_defend   = s._ai_hp_on_defend ?? 0;
+      c._ai_guard_failed   = s._ai_guard_failed ?? false;
       c.martyrdom_pct      = s.martyrdom_pct      ?? 0;
       c._lifesteal         = s._lifesteal          ?? 0;
       c.intercept_bonus_pct = s.intercept_bonus_pct ?? 0;

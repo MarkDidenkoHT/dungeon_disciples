@@ -2612,7 +2612,6 @@ export function renderCastle(root, params = {}) {
       <div class="unit-card-overlay unit-card-overlay--actions ${alive ? 'unit-card-overlay--heal' : ''}">
         ${favorHtml}
         ${resurrectHtml}
-        ${healHtml}
       </div>`;
   }
 

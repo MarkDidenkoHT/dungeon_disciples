@@ -39,7 +39,7 @@ const BOT_TEMPLATES = [
     bands: {
       band_500: [
         { unit: 'gs2111',     cell: 0,  item_id: 'dark_determination' },          
-        { unit: 'gs831',     cell: 3,  item_id: 'mothers_gift' },                 
+        { unit: 'gs8311',    cell: 3,  item_id: 'mothers_gift' },                 
         { unit: 'h_g_2_a41', cell: 4,  item_id: 'gift_of_eternity', hero: true,
           spells: [{ spell_id: 'g_spell_7', power: 3 }, { spell_id: 'g_spell_9', power: 5 }] },
         { unit: 'gs5211',    cell: 1,  item_id: 'shroud_of_the_fallen' },         
@@ -379,7 +379,7 @@ const BOT_TEMPLATES = [
         { unit: 'd3211',     cell: 0 },
         { unit: 'h_d_2_a41', cell: 3, hero: true,
           spells: [{ spell_id: 'd_spell_5', power: 3 }, { spell_id: 'd_spell_9', power: 5 }] },
-        { unit: 'd711',      cell: 2 },
+        { unit: 'd7111',     cell: 2 },
         { unit: 'd3111',     cell: 4 },
       ],
       band_300: [
