@@ -2505,8 +2505,8 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_round_start',
-    description: 'If this unit is in the back and has no living ally in front of it, gain +10% initiative and +20% damage.',
-    description_ru: "Если этот юнит стоит сзади и перед ним нет живого союзника, получает +10% инициативы и +20% урона.",
+    description: 'If this unit is in the back and has no living ally in front of it, gain +10% initiative and +20% damage. An ally with Protector does not block the line — it intercepts shots instead of standing in the way.',
+    description_ru: "Если этот юнит стоит сзади и перед ним нет живого союзника, получает +10% инициативы и +20% урона. Союзник с «Защитником» впереди не перекрывает линию — он перехватывает выстрелы, а не загораживает её.",
     params: { clear_shot_initiative_bonus_pct: 10, clear_shot_dmg_bonus_pct: 20 },
   },
   'duelist 1': {
