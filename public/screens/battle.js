@@ -292,7 +292,16 @@ const BT = {
   logEmpower:    { en: (a, t, v) => `${a} empowers ${t}: <span class="log-val-shield">+${v}</span> action power on the next action`,
                    ru: (a, t, v) => `${a} усиливает ${t}: <span class="log-val-shield">+${v}</span> к силе следующего действия` },
   logResisted:   { en: (p, r) => ` <span class="log-resisted">(${p} power, ${r} resisted)</span>`,
-                   ru: (p, r) => ` <span class="log-resisted">(${p} силы, ${r} поглощено)</span>` },
+                   ru: (p, r) => ` <span class="log-resisted">(${p} силы, ${r} сопротивление)</span>` },
+  // Armour/resistance/wards, and then everything that stood between the
+  // mitigated blow and the body — a Recuperate, a ward pool, a martyrdom
+  // redirect. Split because they are different things and the player can only
+  // check the first against a unit's sheet: one lump sum under the word
+  // "resisted" was unverifiable by design. With both printed, power = resisted
+  // + absorbed + the damage dealt, and the line closes.
+  logResistedAbsorbed:
+                 { en: (p, r, a) => ` <span class="log-resisted">(${p} power, ${r} resisted, ${a} absorbed)</span>`,
+                   ru: (p, r, a) => ` <span class="log-resisted">(${p} силы, ${r} сопротивление, ${a} поглощено)</span>` },
   // Was ALSO called logPower, silently overwriting the entry above it — so the
   // "gathers N power" line called this one-argument version with the actor as
   // its only argument and rendered as "(Paladin (R2C2) power)" every time a
@@ -1931,7 +1940,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         ? BTf('logHeal')(actor(), target(), entry.value)
         : BTf('logHit')(actor(), target(), entry.value);
       const detail = (!entry.heal && entry.rawDmg != null)
-        ? (entry.resisted > 0 ? BTf('logResisted')(entry.rawDmg, entry.resisted) : BTf('logRawPower')(entry.rawDmg))
+        ? (entry.absorbed > 0
+            ? BTf('logResistedAbsorbed')(entry.rawDmg, entry.resisted ?? 0, entry.absorbed)
+            : entry.resisted > 0
+              ? BTf('logResisted')(entry.rawDmg, entry.resisted)
+              : BTf('logRawPower')(entry.rawDmg))
         : '';
       return `<div class="log-entry">${line}${detail}${entry.killed ? ' 💀' : ''}</div>`;
     }

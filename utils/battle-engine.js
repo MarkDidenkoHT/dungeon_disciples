@@ -1491,6 +1491,15 @@ class BattleEngine {
         actor.acted_this_round = true;
         return this.afterAction(actor);
       }
+      // `resisted` is what ARMOUR, RESISTANCE and WARDS took, and nothing else:
+      // rawDmg - dmg, the two numbers calcDamage returns. It used to be
+      // rawDmg - remaining, which is every reduction between the swing and the
+      // body — a Recuperate, a shield, a martyrdom redirect — all reported under
+      // one word. A life hit of 51 on 40% life resistance landed for 21 and read
+      // "(51 power, 30 resisted)", so the only figure the player could check it
+      // against was the one number it could never be. Each of the others logs
+      // its own line and is summarised here as `absorbed`, so the hit line now
+      // accounts for the whole swing.
       if (dmg > 0) {
         let remaining = this.applyMartyrdomRedirect(actor, target, dmg);
         if (remaining > 0) {
@@ -1504,7 +1513,7 @@ class BattleEngine {
             this.creditDeed(actor, remaining);
             const dead = target.battle_hp <= 0;
             if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
-            this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - remaining, killed: !target.alive });
+            this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - dmg, absorbed: dmg - remaining, killed: !target.alive });
             this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
             this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });
             this.fireTrigger('on_take_damage', { actor, target, dmg: remaining, dying: null });
@@ -1592,7 +1601,7 @@ class BattleEngine {
       this.creditDeed(actor, remaining);
       const dead = target.battle_hp <= 0;
       if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
-      this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - remaining, killed: !target.alive });
+      this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - dmg, absorbed: dmg - remaining, killed: !target.alive });
       this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
       this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });
       this.fireTrigger('on_take_damage', { actor, target, dmg: remaining, dying: null });
