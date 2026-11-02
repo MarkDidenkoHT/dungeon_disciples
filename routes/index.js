@@ -6404,6 +6404,18 @@ router.post('/pvp/challenge', requireAuth, async (req, res) => {
     const squad = await loadSquad(chat_id, formation.playerUnitIds);
     if (squad.error) return res.status(400).json({ error: squad.error, code: 'invalid_squad' });
 
+    // One live link per inviter. A second challenge used to leave the first one
+    // pending with the formation it was minted from, and the client only polls
+    // the newest token — so a friend accepting the OLD link built a duel the
+    // inviter was never told about and lost on the turn clock.
+    await supabase(
+      `/pvp_challenges?inviter_chat_id=eq.${encodeURIComponent(String(chat_id))}&status=eq.pending`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'expired', updated_at: new Date().toISOString() }),
+      }
+    );
+
     const token = crypto.randomBytes(32).toString('base64url');
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     await supabase('/pvp_challenges', {
@@ -6495,7 +6507,12 @@ router.post('/pvp/challenge/accept', requireAuth, async (req, res) => {
       getActiveBattle(chat_id),
       loadSquad(chat_id, formation.playerUnitIds),
     ]);
-    if (inviterBattle || inviteeBattle) {
+    // `pairing` is the window getActiveBattle cannot see: a quick match that has
+    // taken the player out of the queue and is still being written. Accepting
+    // into it would hand them the two simultaneous battles that leaving the
+    // queue below is there to prevent, so this link waits for the next try.
+    if (pairing.has(String(challenge.inviter_chat_id)) || pairing.has(String(chat_id))
+        || inviterBattle || inviteeBattle) {
       return res.status(409).json({ error: 'A player is already in another battle', code: 'battle_in_progress' });
     }
     if (squad.error) return res.status(400).json({ error: squad.error, code: 'invalid_squad' });
@@ -6521,6 +6538,23 @@ router.post('/pvp/challenge/accept', requireAuth, async (req, res) => {
       return res.status(409).json({ error: 'This challenge was accepted or expired already', code: 'challenge_unavailable' });
     }
 
+    // A queue entry is not a battle, so the getActiveBattle guard above lets a
+    // player who is BOTH waiting for a quick match and holding a live challenge
+    // through. Leaving them in `waiting` means the bot deadline hands them a
+    // second battle_state row half a minute into this duel — and nothing on the
+    // bot path rechecks for an open battle, while getActiveBattle only ever
+    // returns the newest row. The duel would still exist, with its owner's
+    // client in the bot fight and this invitee losing on the turn clock.
+    // Claiming the link is the moment both of them stop being candidates.
+    pvpQueue.leave(challenge.inviter_chat_id);
+    pvpQueue.leave(chat_id);
+    forgetMatch(challenge.inviter_chat_id);
+    forgetMatch(chat_id);
+    // Not awaited, like every other write to this table: the map is what
+    // matchmaking reads, and the row is only the durable record of it.
+    clearQueueRows([String(challenge.inviter_chat_id), String(chat_id)])
+      .catch(err => console.error('Failed to clear queue rows for a challenge:', err.message));
+
     try {
       await createPvpBattle(
         { chat_id: String(challenge.inviter_chat_id), formation: challenge.inviter_formation, mode: 'pvp_invite' },
@@ -6532,6 +6566,8 @@ router.post('/pvp/challenge/accept', requireAuth, async (req, res) => {
       ]);
       noteMatch(challenge.inviter_chat_id, battle_id, inviteeCard);
       noteMatch(chat_id, battle_id, inviterCard);
+      // Settled: nothing polls this link as pending again.
+      pvpChallengePresence.delete(challenge.token_hash);
       battleBus.publish(pvpRoom(String(challenge.inviter_chat_id)), {
         status: 'matched', mode: 'pvp_invite', opponent: inviteeCard, battle_id,
       }, { event: 'pvp' });

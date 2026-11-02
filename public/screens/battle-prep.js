@@ -79,6 +79,10 @@ const BP_TEXT = {
   challengeCopied: { en: 'Challenge link copied. Keep this screen open or return when your opponent joins.',
                      ru: 'Ссылка скопирована. Оставьте экран открытым или вернитесь, когда соперник присоединится.' },
   challengeFailed: { en: 'Could not create or join this challenge.', ru: 'Не удалось создать вызов или присоединиться к нему.' },
+  challengeRecopied: { en: 'Challenge link copied again. It is the same link — your opponent can still use the first one.',
+                       ru: 'Ссылка скопирована снова. Это та же ссылка — соперник может использовать и первую.' },
+  queueBlockedByChallenge: { en: 'Your challenge link is waiting for an opponent. Leave this screen to queue instead.',
+                             ru: 'Ваша ссылка ждёт соперника. Выйдите с экрана, чтобы встать в очередь.' },
   inviterOffline: { en: 'The inviter is offline. Ask them to open the challenge screen, then try again.',
                     ru: 'Пригласивший игрок не в сети. Попросите его открыть экран вызова и попробуйте снова.' },
   searching:    { en: 'Searching for an opponent', ru: 'Ищем соперника' },
@@ -1598,10 +1602,15 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
 
   function checkReady() {
     const heroPlaced   = heroId !== null && placedUnitIds().has(heroId);
+    // A live challenge takes the queue off the table: the two together are how a
+    // player ended up in a duel AND a bot match at once (see the challenge
+    // button below). The link is the fight they have already offered.
+    const ready = heroPlaced && !challengeLive;
     const btn = root.querySelector('#ready-btn');
     if (btn) {
-      btn.disabled = !heroPlaced;
-      btn.classList.toggle('battle-prep-enter-btn--ready', heroPlaced);
+      btn.disabled = !ready;
+      btn.classList.toggle('battle-prep-enter-btn--ready', ready);
+      btn.title = challengeLive ? BP_TEXT.queueBlockedByChallenge[L] : '';
     }
 
     if (heroPlaced) {
@@ -2296,18 +2305,60 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
 
   let challengePoll = null;
   let challengeToken = null;
+  let challengeUrl = null;
+  let challengeLive = false;
   let challengeJoining = false;
 
+  function stopChallengePoll() {
+    if (challengePoll) { clearInterval(challengePoll); challengePoll = null; }
+  }
+
+  // The link itself, however the browser will let us hand it over. A phone
+  // without clipboard permission still has to end up with something copyable,
+  // which is what the hidden field and the prompt are for.
+  async function copyChallengeLink(url) {
+    try {
+      await navigator.clipboard.writeText(url);
+      return;
+    } catch { /* fall through */ }
+    try {
+      const field = document.createElement('textarea');
+      field.value = url;
+      field.setAttribute('readonly', '');
+      field.style.position = 'fixed';
+      field.style.opacity = '0';
+      document.body.appendChild(field);
+      field.select();
+      const copied = document.execCommand('copy');
+      field.remove();
+      if (copied) return;
+    } catch { /* fall through */ }
+    window.prompt(BP_TEXT.createChallenge[L], url);
+  }
+
   async function pollCreatedChallenge() {
-    if (!challengeToken || challengeJoining || !document.querySelector('.screen-battle-prep')) return;
+    // THIS screen's host, not just any prep screen. The old guard asked the
+    // document for `.screen-battle-prep`, and a prep screen opened LATER
+    // answered for it: the interval was never cleared on an in-app navigation,
+    // so a poll belonging to a screen the player had left went on refreshing
+    // their inviter presence, and a friend could start a duel while they were
+    // arranging an entirely different fight.
+    if (!root.isConnected) { stopChallengePoll(); return; }
+    if (!challengeToken || challengeJoining) return;
     try {
       const status = await api(`/pvp/challenge?chat_id=${encodeURIComponent(player.chat_id)}&token=${encodeURIComponent(challengeToken)}`);
       if (status.status === 'accepted' && status.battle_id) {
         challengeJoining = true;
-        clearInterval(challengePoll);
+        stopChallengePoll();
         enterDuel({ battle_id: status.battle_id, opponent: status.opponent });
       } else if (status.status !== 'pending') {
-        clearInterval(challengePoll);
+        // Expired, or superseded by a newer link: the queue is the player's
+        // again.
+        stopChallengePoll();
+        challengeToken = null;
+        challengeUrl = null;
+        challengeLive = false;
+        checkReady();
       }
     } catch (err) {
       console.error('Challenge status check failed:', err);
@@ -2315,9 +2366,21 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
   }
 
   root.querySelector('#pvp-challenge-link')?.addEventListener('click', async () => {
-    const { playerUnitIds, placement } = currentFormation();
     if (!placedUnitIds().has(heroId)) return;
     const button = root.querySelector('#pvp-challenge-link');
+
+    // A link already minted is handed over again rather than replaced. Creating
+    // a second challenge expires the first one server-side, so a friend who
+    // already has the old link would find it dead — and the one screen state
+    // that made the player click twice was a clipboard write that silently
+    // failed. Re-copying costs nothing and keeps the link they are holding good.
+    if (challengeLive && challengeUrl) {
+      await copyChallengeLink(challengeUrl);
+      await askBeforeBattle(BP_TEXT.challengeRecopied[L], { confirmOnly: true });
+      return;
+    }
+
+    const { playerUnitIds, placement } = currentFormation();
     button.disabled = true;
     try {
       saveFormation();
@@ -2325,34 +2388,26 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
         chat_id: player.chat_id,
         formation: { playerUnitIds, placement },
       });
-      challengeToken = result.token;
-      await pollCreatedChallenge();
-      challengePoll = setInterval(pollCreatedChallenge, 2000);
       const inviteUrl = result.link;
       if (!inviteUrl) throw new Error('Telegram challenge link is unavailable');
-      try {
-        await navigator.clipboard.writeText(inviteUrl);
-      } catch {
-        try {
-          const field = document.createElement('textarea');
-          field.value = inviteUrl;
-          field.setAttribute('readonly', '');
-          field.style.position = 'fixed';
-          field.style.opacity = '0';
-          document.body.appendChild(field);
-          field.select();
-          const copied = document.execCommand('copy');
-          field.remove();
-          if (!copied) window.prompt(BP_TEXT.createChallenge[L], inviteUrl);
-        } catch {
-          window.prompt(BP_TEXT.createChallenge[L], inviteUrl);
-        }
-      }
+      challengeToken = result.token;
+      challengeUrl = inviteUrl;
+      challengeLive = true;
+      // Takes the queue button down: the formation on screen is now promised to
+      // whoever opens this link.
+      checkReady();
+      await pollCreatedChallenge();
+      stopChallengePoll();
+      challengePoll = setInterval(pollCreatedChallenge, 2000);
+      await copyChallengeLink(inviteUrl);
       await askBeforeBattle(BP_TEXT.challengeCopied[L], { confirmOnly: true });
     } catch (err) {
       console.error('Failed to create PvP challenge:', err);
       const message = err.code === 'battle_in_progress' ? err.message : BP_TEXT.challengeFailed[L];
       await askBeforeBattle(message, { confirmOnly: true });
+    } finally {
+      // Always clickable again: with a live challenge the click re-copies the
+      // link, and without one the player has to be able to try again at all.
       button.disabled = false;
     }
   });
@@ -2381,7 +2436,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
     }
   }
 
-  window.addEventListener('pagehide', () => clearInterval(challengePoll), { once: true });
+  window.addEventListener('pagehide', stopChallengePoll, { once: true });
 
   root.querySelector('#ready-btn').addEventListener('click', async () => {
     if (!placedUnitIds().has(heroId)) return;
