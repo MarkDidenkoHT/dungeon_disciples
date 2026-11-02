@@ -1198,14 +1198,10 @@ export function renderCastle(root, params = {}) {
     const pct     = Math.max(0, Math.min(100, Math.round((cur / max) * 100)));
     const damaged = cur < max;
     const state   = pct <= 33 ? 'critical' : (damaged ? 'damaged' : 'ok');
-    // The unit's tier is its level — the same number the unit card shows as Lv.
-    const level = resolveUnitDef(u)?.t ?? '';
     // Both bars share one absolutely-positioned strip; stacking them separately
-    // would have each fight the same bottom inset. The level sits beside that
-    // stack rather than above it, so the whole readout is one short row.
+    // would have each fight the same bottom inset.
     return `
       <div class="castle-node-bars">
-        ${level !== '' ? `<span class="castle-node-level" title="${CASTLE_TEXT.level[castleLang]} ${level}">${level}</span>` : ''}
         <div class="castle-node-bar-stack">
           <div class="portrait-hp-bar" title="${cur}/${max}">
             <div class="portrait-hp-fill portrait-hp-fill--${state}" style="width:${pct}%"></div>

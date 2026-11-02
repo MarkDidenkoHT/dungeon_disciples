@@ -1860,7 +1860,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .modal-header {
   display: flex;
   align-items: center;
-  gap: 10px;
   padding: 8px;
   flex-shrink: 0;
 }
@@ -3461,11 +3460,12 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .castle-node-bar-stack {
-  flex: 0 0 70%;
+  flex: 0 0 85%;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  margin: auto;
 }
 
 .castle-node-bars .portrait-hp-bar {
@@ -3563,7 +3563,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .unit-core-stats--side {
   flex-direction: column;
   flex-shrink: 0;
-  width: 64px;
+  width: 15vw;
   justify-content: space-between;
   align-self: stretch;
 }
@@ -3581,7 +3581,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .unit-resists-grid--side {
   flex-direction: column;
   flex-shrink: 0;
-  width: 48px;
+  width: 15vw;
   justify-content: space-between;
   align-self: stretch;
 }
@@ -3672,7 +3672,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   right: 0;
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: center;
   gap: 8px;
   padding: 6px 8px 14px;
   background: linear-gradient(to top, transparent, rgba(0,0,0,0.65) 55%);
