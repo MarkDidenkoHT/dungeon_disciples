@@ -318,15 +318,6 @@ export function renderCastle(root, params = {}) {
   root.innerHTML = `
     <div class="screen screen-castle">
       <main class="castle-main">
-        <!-- Between the resource strip and the grounds, outside the layer
-             viewport, so sliding layers do not carry it along. Inert for now:
-             no handler and no active state until the sets are wired up. -->
-        <div class="castle-set-row" id="castle-set-row">
-          ${[1, 2, 3].map(n => `
-            <button class="castle-set-btn" type="button" data-set="${n}">
-              ${CASTLE_TEXT.set[lang0]} ${n}
-            </button>`).join('')}
-        </div>
         <div class="castle-grounds">
           <button class="castle-layer-arrow castle-layer-arrow--prev" id="layer-prev"
                   type="button" aria-label="Previous"><span>‹</span></button>
@@ -339,9 +330,21 @@ export function renderCastle(root, params = {}) {
               </div>
 
               <div class="castle-layer" data-layer="1">
-                <div class="castle-grid-wrap">
-                  <div class="outer-ring" id="outer-ring"></div>
-                  <div class="center-slot" id="center-slot"></div>
+                <!-- The row belongs to THIS layer, stacked above the grid: it
+                     is about the units, so it rides with them rather than
+                     hanging over the calling page and the upgrade columns.
+                     Inert for now — no handler, no active state. -->
+                <div class="castle-layer-stack">
+                  <div class="castle-set-row" id="castle-set-row">
+                    ${[1, 2, 3].map(n => `
+                      <button class="castle-set-btn" type="button" data-set="${n}">
+                        ${CASTLE_TEXT.set[lang0]} ${n}
+                      </button>`).join('')}
+                  </div>
+                  <div class="castle-grid-wrap">
+                    <div class="outer-ring" id="outer-ring"></div>
+                    <div class="center-slot" id="center-slot"></div>
+                  </div>
                 </div>
               </div>
 
