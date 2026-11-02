@@ -6060,6 +6060,36 @@ async function recordTourneyResult(tourney_id, chat_id, { won, unitsLost, forfei
   return { points, won };
 }
 
+// The three gates a tourney fight passes, wherever it is built from: the window
+// has to be open, the player has to have battles left, and the squad has to obey
+// today's rules. Returns a refusal body to send, or null to let them through.
+//
+// It lives here rather than inline in the queue gate because a tourney fight can
+// now also start from a challenge link, and that one is checked TWICE — once for
+// the player who mints it and again, for both squads, when it is accepted. Three
+// gates written out in three places is three places for them to drift apart.
+async function tourneyRefusal(tourney, chat_id, squad) {
+  if (!tourney) return { error: 'No tourney is running', code: 'tourney_closed' };
+
+  const entry = await ensureTourneyEntry(tourney.id, chat_id);
+  if ((entry?.battles || 0) >= TOURNEY_BATTLES) {
+    return { error: 'No battles left today', code: 'tourney_spent' };
+  }
+
+  const broken = checkTourneyRules(squad.units, tourney.rules, { itemsByRosterId: squad.itemsByRosterId });
+  if (broken.length) {
+    // `rules` so the client can name them in its own language; `problems` is the
+    // English prose, for the log and for anything without the names.
+    return {
+      error:    broken[0].text,
+      code:     'tourney_rules',
+      rules:    broken.map(b => b.rule),
+      problems: broken.map(b => b.text),
+    };
+  }
+  return null;
+}
+
 function unitsLostFor(battle_data, side) {
   return (battle_data?.units || [])
     .filter(u => u.side === side && (u.alive === false || Number(u.battle_hp) <= 0))
@@ -6392,10 +6422,19 @@ function validPvpFormation(formation) {
     && !Array.isArray(formation.placement);
 }
 
+// A challenge is minted in one of two modes. 'pvp_quick' is the unranked duel;
+// TOURNEY_MODE is a crown tourney battle, which costs both players one of their
+// five and scores on the board — so it carries the tourney it was minted for and
+// is re-gated when it is accepted.
+const CHALLENGE_MODES = ['pvp_quick', TOURNEY_MODE];
+
 router.post('/pvp/challenge', requireAuth, async (req, res) => {
-  const { chat_id, formation } = req.body;
+  const { chat_id, formation, mode = 'pvp_quick' } = req.body;
   if (!chat_id || !validPvpFormation(formation)) {
     return res.status(400).json({ error: 'chat_id and a valid formation are required', code: 'invalid_formation' });
+  }
+  if (!CHALLENGE_MODES.includes(mode)) {
+    return res.status(400).json({ error: 'Unknown challenge mode', code: 'invalid_mode' });
   }
   try {
     if (await getActiveBattle(chat_id)) {
@@ -6403,6 +6442,14 @@ router.post('/pvp/challenge', requireAuth, async (req, res) => {
     }
     const squad = await loadSquad(chat_id, formation.playerUnitIds);
     if (squad.error) return res.status(400).json({ error: squad.error, code: 'invalid_squad' });
+
+    // Refused at the gate rather than at acceptance: minting a link the player
+    // could never fight behind would send a friend to a dead end.
+    const tourney = mode === TOURNEY_MODE ? await openTourney() : null;
+    if (mode === TOURNEY_MODE) {
+      const refusal = await tourneyRefusal(tourney, chat_id, squad);
+      if (refusal) return res.status(400).json(refusal);
+    }
 
     // One live link per inviter. A second challenge used to leave the first one
     // pending with the formation it was minted from, and the client only polls
@@ -6417,7 +6464,16 @@ router.post('/pvp/challenge', requireAuth, async (req, res) => {
     );
 
     const token = crypto.randomBytes(32).toString('base64url');
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    // A day for a quick-match link, and the end of the evening for a tourney
+    // one: past that the gates it would be re-checked against are shut, so a
+    // live-looking link could only ever answer `tourney_closed`.
+    // Compared as instants, not as strings: Postgres hands back `+00:00` where
+    // toISOString writes `Z`, and the two do not sort against each other.
+    const dayOutMs = Date.now() + 24 * 60 * 60 * 1000;
+    const endsAtMs = tourney?.ends_at ? Date.parse(tourney.ends_at) : NaN;
+    const expiresAt = endsAtMs && endsAtMs < dayOutMs
+      ? new Date(endsAtMs).toISOString()
+      : new Date(dayOutMs).toISOString();
     await supabase('/pvp_challenges', {
       method: 'POST',
       body: JSON.stringify({
@@ -6427,6 +6483,8 @@ router.post('/pvp/challenge', requireAuth, async (req, res) => {
           playerUnitIds: formation.playerUnitIds,
           placement: formation.placement,
         },
+        mode,
+        tourney_id: tourney?.id ?? null,
         status: 'pending',
         expires_at: expiresAt,
       }),
@@ -6434,6 +6492,7 @@ router.post('/pvp/challenge', requireAuth, async (req, res) => {
     const botUsername = await getBotUsername();
     res.json({
       token,
+      mode,
       link: inviteLinkFor(botUsername, `pvp_${token}`),
       expires_at: expiresAt,
     });
@@ -6469,9 +6528,50 @@ router.get('/pvp/challenge', requireAuth, async (req, res) => {
     const opponentId = String(chat_id) === String(challenge.inviter_chat_id)
       ? challenge.invitee_chat_id : challenge.inviter_chat_id;
     const opponent = opponentId ? await pvpOpponentCard(opponentId) : null;
-    res.json({ status: challenge.status, battle_id: challenge.battle_id, opponent });
+    res.json({
+      status: challenge.status, battle_id: challenge.battle_id, opponent,
+      mode: challenge.mode || 'pvp_quick',
+    });
   } catch (err) {
     serverError(res, err, 'read PvP challenge');
+  }
+});
+
+// GET /pvp/challenge/peek — what the link is, before anyone commits to it.
+//
+// The route above answers only the two players, and while a challenge is pending
+// the invitee is not one of them yet: there was nothing they could ask, so they
+// arranged a whole squad and found out the link was dead — or that it was a
+// TOURNEY fight under rules they had not been shown — only when they tapped
+// accept. Holding the token is the authorization here, which is the same thing
+// accept trusts, and the answer carries no chat_id and no formation: what kind
+// of fight this is, whether it is still open, and tonight's rules if it is one.
+router.get('/pvp/challenge/peek', requireAuth, async (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.status(400).json({ error: 'token required' });
+  try {
+    const rows = await supabase(`/pvp_challenges?token_hash=eq.${pvpChallengeHash(token)}&limit=1`);
+    const challenge = rows[0];
+    if (!challenge) return res.status(404).json({ error: 'Challenge not found', code: 'challenge_not_found' });
+
+    const mode = challenge.mode || 'pvp_quick';
+    const live = challenge.status === 'pending' && Date.parse(challenge.expires_at) > Date.now();
+    const tourney = live && mode === TOURNEY_MODE ? await openTourney() : null;
+    // A tourney link is only live inside its own evening: a row left pending
+    // past the window, or into the NEXT tourney, is spent.
+    const open = live && (mode !== TOURNEY_MODE
+      || (tourney && String(tourney.id) === String(challenge.tourney_id)));
+
+    res.json({
+      status: live ? challenge.status : 'expired',
+      open,
+      mode,
+      rules: tourney?.rules || [],
+      ends_at: tourney?.ends_at || null,
+      inviter: await pvpOpponentCard(challenge.inviter_chat_id),
+    });
+  } catch (err) {
+    serverError(res, err, 'peek PvP challenge');
   }
 });
 
@@ -6521,6 +6621,32 @@ router.post('/pvp/challenge/accept', requireAuth, async (req, res) => {
       return res.status(409).json({ error: 'The inviter squad is no longer valid', code: 'inviter_squad_invalid' });
     }
 
+    // A tourney link is checked again here, for BOTH squads, because minting it
+    // only ever proved the inviter could fight at the moment they minted it. The
+    // window can have closed since, either of them can have spent their five, and
+    // the invitee's squad has not been looked at until now. The evening has to be
+    // the same one too: a row that survived into the next tourney would otherwise
+    // score a battle on a board it was never entered for.
+    const challengeMode = challenge.mode || 'pvp_quick';
+    let tourney = null;
+    if (challengeMode === TOURNEY_MODE) {
+      tourney = await openTourney();
+      if (!tourney || String(tourney.id) !== String(challenge.tourney_id)) {
+        return res.status(409).json({ error: 'Tonight’s tourney is over', code: 'tourney_closed' });
+      }
+      const mine = await tourneyRefusal(tourney, chat_id, squad);
+      if (mine) return res.status(409).json(mine);
+      // The inviter's refusal is reported as the inviter's: the invitee can do
+      // nothing about a squad and a battle count that are not theirs.
+      const theirs = await tourneyRefusal(tourney, challenge.inviter_chat_id, inviterSquad);
+      if (theirs) {
+        return res.status(409).json({
+          error: `The inviter cannot fight this tourney battle: ${theirs.error}`,
+          code:  'inviter_tourney_unavailable',
+        });
+      }
+    }
+
     // The guarded update claims this link once across all server instances. The
     // reserved battle id also makes retries by the winning invitee recoverable.
     const battle_id = `pvp_${crypto.randomUUID()}`;
@@ -6556,10 +6682,15 @@ router.post('/pvp/challenge/accept', requireAuth, async (req, res) => {
       .catch(err => console.error('Failed to clear queue rows for a challenge:', err.message));
 
     try {
+      // `mode` is what the battle IS — a quick duel or a tourney battle — not how
+      // it was arranged, because it is what decides the payout and the board.
+      // createPvpBattle counts the battle for both sides off tourney_id, and
+      // withTourneyResult scores it when it finishes.
       await createPvpBattle(
-        { chat_id: String(challenge.inviter_chat_id), formation: challenge.inviter_formation, mode: 'pvp_invite' },
-        { chat_id: String(chat_id), formation, mode: 'pvp_invite' },
-        { battle_id, mode: 'pvp_invite' },
+        { chat_id: String(challenge.inviter_chat_id), formation: challenge.inviter_formation,
+          mode: challengeMode, tourney_id: tourney?.id ?? null },
+        { chat_id: String(chat_id), formation, mode: challengeMode, tourney_id: tourney?.id ?? null },
+        { battle_id, mode: challengeMode },
       );
       const [inviterCard, inviteeCard] = await Promise.all([
         pvpOpponentCard(challenge.inviter_chat_id), pvpOpponentCard(chat_id),
@@ -6628,24 +6759,8 @@ router.post('/pvp/enqueue', requireAuth, async (req, res) => {
     // today's rules. All three are re-checked here because the client's copy of
     // them is only there to explain itself.
     if (mode === TOURNEY_MODE) {
-      if (!tourney) return res.status(400).json({ error: 'No tourney is running', code: 'tourney_closed' });
-
-      const entry = await ensureTourneyEntry(tourney.id, chat_id);
-      if ((entry?.battles || 0) >= TOURNEY_BATTLES) {
-        return res.status(400).json({ error: 'No battles left today', code: 'tourney_spent' });
-      }
-
-      const broken = checkTourneyRules(squad.units, tourney.rules, { itemsByRosterId: squad.itemsByRosterId });
-      if (broken.length) {
-        // `rules` so the client can name them in its own language; `problems`
-        // is the English prose, for the log and for anything without the names.
-        return res.status(400).json({
-          error:    broken[0].text,
-          code:     'tourney_rules',
-          rules:    broken.map(b => b.rule),
-          problems: broken.map(b => b.text),
-        });
-      }
+      const refusal = await tourneyRefusal(tourney, chat_id, squad);
+      if (refusal) return res.status(400).json(refusal);
     }
 
     pvpQueue.sweep();

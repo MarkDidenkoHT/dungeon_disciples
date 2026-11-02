@@ -12,7 +12,7 @@ import { UNIT_ABILITIES }  from '../../data/unit_abilities.js';
 import { derivePrefPosition, isPositionSatisfied, pickPositionBark } from '../../data/position_barks.js';
 import { initBattleFx, reattachBattleFx } from '../battle-fx.js';
 import { createQueueController } from '../queue-client.js';
-import { ruleName } from '../../data/tourney.js';
+import { ruleName, TOURNEY_MODE } from '../../data/tourney.js';
 import { syncFormationSynergies } from '../formation-synergy-view.js';
 import { resolveSynergies } from '../../data/formation_synergies.js';
 import { matchAvailableLitany } from '../../data/litanies.js';
@@ -81,6 +81,30 @@ const BP_TEXT = {
   challengeFailed: { en: 'Could not create or join this challenge.', ru: 'Не удалось создать вызов или присоединиться к нему.' },
   challengeRecopied: { en: 'Challenge link copied again. It is the same link — your opponent can still use the first one.',
                        ru: 'Ссылка скопирована снова. Это та же ссылка — соперник может использовать и первую.' },
+  challengeCopiedTourney: {
+    en: 'Tourney challenge link copied. It costs you both one of tonight’s five battles and scores on the board. Keep this screen open until your opponent joins.',
+    ru: 'Ссылка на турнирный бой скопирована. Он стоит каждому из вас одного из пяти боёв вечера и идёт в зачёт. Не закрывайте экран, пока соперник не присоединится.',
+  },
+  challengeTourneyEnds: {
+    en: 'The link dies with tonight’s tourney.',
+    ru: 'Ссылка действует до конца сегодняшнего турнира.',
+  },
+  inviteTourney: {
+    en: rules => `A crown tourney battle. Tonight’s rules: ${rules}. It costs you one of your five.`,
+    ru: rules => `Турнирный бой за корону. Правила вечера: ${rules}. Он стоит одного из ваших пяти боёв.`,
+  },
+  inviteTourneyNoRules: {
+    en: 'A crown tourney battle. It costs you one of your five and scores on the board.',
+    ru: 'Турнирный бой за корону. Он стоит одного из ваших пяти боёв и идёт в зачёт.',
+  },
+  inviteDead: {
+    en: 'This challenge link is no longer good. Ask your opponent for a new one.',
+    ru: 'Эта ссылка больше не действует. Попросите соперника прислать новую.',
+  },
+  inviterTourneyGone: {
+    en: 'The inviter can no longer fight this tourney battle.',
+    ru: 'Пригласивший игрок больше не может провести этот турнирный бой.',
+  },
   queueBlockedByChallenge: { en: 'Your challenge link is waiting for an opponent. Leave this screen to queue instead.',
                              ru: 'Ваша ссылка ждёт соперника. Выйдите с экрана, чтобы встать в очередь.' },
   inviterOffline: { en: 'The inviter is offline. Ask them to open the challenge screen, then try again.',
@@ -239,6 +263,10 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
   // the player queues. Every region-only step below is gated on this.
   const isPvp = String(mode || '').startsWith('pvp');
   const isPvpInvite = mode === 'pvp_invite';
+  // A crown tourney battle, arranged from the arena's tourney card. The screen
+  // is the quick match's in every way but the stakes: the evening's rules, one
+  // of five battles, and a place on the board.
+  const isTourney = mode === TOURNEY_MODE;
   // The faction Colossus, from its embark page: the enemy is this week's boss at
   // the pool's current HP, and followers that already fought it today sit out.
   const isColossus = mode === 'colossus';
@@ -278,7 +306,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
                onerror="this.replaceWith(document.createTextNode('⚔'))">
         </button>
 
-        ${mode === 'pvp_quick' ? `<button id="pvp-challenge-link" class="battle-prep-enter-btn battle-prep-enter-btn--pvp battle-prep-enter-btn--ready pvp-challenge-link-btn" type="button" aria-label="${BP_TEXT.createChallenge[L]}" title="${BP_TEXT.createChallenge[L]}"><img src="${assetUrl('/assets/icons/ui/to_battle_quick.png')}" alt="${BP_TEXT.createChallenge[L]}" onerror="this.replaceWith(document.createTextNode('⚡'))"></button>` : ''}
+        ${mode === 'pvp_quick' || mode === TOURNEY_MODE ? `<button id="pvp-challenge-link" class="battle-prep-enter-btn battle-prep-enter-btn--pvp battle-prep-enter-btn--ready pvp-challenge-link-btn" type="button" aria-label="${BP_TEXT.createChallenge[L]}" title="${BP_TEXT.createChallenge[L]}"><img src="${assetUrl('/assets/icons/ui/to_battle_quick.png')}" alt="${BP_TEXT.createChallenge[L]}" onerror="this.replaceWith(document.createTextNode('⚡'))"></button>` : ''}
 
         ${isPvp || isColossus ? '' : `
         <button id="quick-battle-btn" class="battle-prep-enter-btn battle-prep-enter-btn--quick"
@@ -2278,18 +2306,22 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
         navigate('embark', { player, activeCheck });
         return;
       }
-      // A refusal the player can act on is told in their own words. The broken
-      // rules come back as ids so they can be named in the player's language
-      // rather than in the server's English.
-      const named = (err.rules || []).map(id => ruleName(id, L)).filter(Boolean).join(' · ');
-      const reason =
-        err.code === 'tourney_rules' && named ? BP_TEXT.tourneyRules[L](named)
-        : err.code === 'tourney_spent'        ? BP_TEXT.tourneySpent[L]
-        : err.code === 'tourney_closed'       ? BP_TEXT.tourneyClosed[L]
-        : err.code === 'invalid_squad'        ? (err.message || BP_TEXT.queueFailed[L])
-        : BP_TEXT.queueFailed[L];
-      await askBeforeBattle(reason, { confirmOnly: true });
+      await askBeforeBattle(refusalText(err, BP_TEXT.queueFailed[L]), { confirmOnly: true });
     }
+  }
+
+  // A refusal the player can act on, in their own words. The tourney gates
+  // answer the queue, a minted challenge and an accepted one with the same three
+  // codes, so all three read them the same way — and the broken rules come back
+  // as ids, to be named in the player's language rather than the server's.
+  function refusalText(err, fallback) {
+    const named = (err.rules || []).map(id => ruleName(id, L)).filter(Boolean).join(' · ');
+    return err.code === 'tourney_rules' && named ? BP_TEXT.tourneyRules[L](named)
+      : err.code === 'tourney_rules'             ? (err.message || fallback)
+      : err.code === 'tourney_spent'             ? BP_TEXT.tourneySpent[L]
+      : err.code === 'tourney_closed'            ? BP_TEXT.tourneyClosed[L]
+      : err.code === 'invalid_squad'              ? (err.message || fallback)
+      : fallback;
   }
 
   function currentFormation() {
@@ -2387,6 +2419,10 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
       const result = await api('/pvp/challenge', {
         chat_id: player.chat_id,
         formation: { playerUnitIds, placement },
+        // The mode this screen was opened in is the mode of the fight being
+        // offered: a tourney link builds a tourney battle, under the evening's
+        // rules, off both players' five.
+        mode: isTourney ? TOURNEY_MODE : 'pvp_quick',
       });
       const inviteUrl = result.link;
       if (!inviteUrl) throw new Error('Telegram challenge link is unavailable');
@@ -2400,10 +2436,14 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
       stopChallengePoll();
       challengePoll = setInterval(pollCreatedChallenge, 2000);
       await copyChallengeLink(inviteUrl);
-      await askBeforeBattle(BP_TEXT.challengeCopied[L], { confirmOnly: true });
+      await askBeforeBattle(
+        isTourney ? BP_TEXT.challengeCopiedTourney[L] : BP_TEXT.challengeCopied[L],
+        { confirmOnly: true });
     } catch (err) {
       console.error('Failed to create PvP challenge:', err);
-      const message = err.code === 'battle_in_progress' ? err.message : BP_TEXT.challengeFailed[L];
+      const message = err.code === 'battle_in_progress'
+        ? err.message
+        : refusalText(err, BP_TEXT.challengeFailed[L]);
       await askBeforeBattle(message, { confirmOnly: true });
     } finally {
       // Always clickable again: with a live challenge the click re-copies the
@@ -2427,12 +2467,39 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
       await enterDuel(match);
     } catch (err) {
       console.error('Failed to accept PvP challenge:', err);
-      const message = err.code === 'invalid_squad' ? err.message
-        : err.code === 'inviter_offline' ? BP_TEXT.inviterOffline[L]
-        : BP_TEXT.challengeFailed[L];
+      const message =
+          err.code === 'inviter_offline'             ? BP_TEXT.inviterOffline[L]
+        : err.code === 'inviter_tourney_unavailable' ? BP_TEXT.inviterTourneyGone[L]
+        : err.code === 'challenge_unavailable'
+          || err.code === 'challenge_not_found'      ? BP_TEXT.inviteDead[L]
+        : refusalText(err, BP_TEXT.challengeFailed[L]);
       await askBeforeBattle(message, { confirmOnly: true });
       button.disabled = false;
       button.classList.add('battle-prep-enter-btn--ready');
+    }
+  }
+
+  // What the link the player followed actually is, before they arrange anything.
+  // A dead one used to be discovered only after a whole formation had been
+  // built, and a TOURNEY challenge never announced itself at all: the rules it
+  // would be refused against live on the arena card, a screen this player
+  // arrived here without ever seeing.
+  async function announceInvite() {
+    if (!inviteToken) return;
+    try {
+      const peek = await api(`/pvp/challenge/peek?token=${encodeURIComponent(inviteToken)}`);
+      if (!peek.open) {
+        await askBeforeBattle(BP_TEXT.inviteDead[L], { confirmOnly: true });
+        return;
+      }
+      if (peek.mode !== TOURNEY_MODE) return;
+      const named = (peek.rules || []).map(r => ruleName(r, L)).filter(Boolean).join(' · ');
+      await askBeforeBattle(
+        named ? BP_TEXT.inviteTourney[L](named) : BP_TEXT.inviteTourneyNoRules[L],
+        { confirmOnly: true });
+    } catch (err) {
+      // Not a refusal: the link may still be good, and accept will say so.
+      console.error('Failed to read the challenge link:', err);
     }
   }
 
@@ -2634,6 +2701,9 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
       updateLoyaltyHint();
       updateLitanyPreview();
       checkReady();
+      // Last, and not awaited: it opens a modal, and the screen behind it has to
+      // be finished and readable before the player is told what they walked into.
+      if (isPvpInvite) announceInvite();
     } catch (err) {
       console.error('Failed to initialise battle prep:', err);
     }
