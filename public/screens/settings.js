@@ -25,6 +25,7 @@ const UI_TEXT = {
   // The welcome screen promises this can be changed later, so it has to be here.
   analytics:     { en: 'Usage Analytics', ru: 'Аналитика использования' },
   rememberFormation: { en: 'Remember Formation', ru: 'Запоминать построение' },
+  castleItems:   { en: 'Items on Castle Portraits', ru: 'Предметы на портретах замка' },
   on:            { en: 'On', ru: 'Вкл' },
   off:           { en: 'Off', ru: 'Выкл' },
   language:      { en: 'Language', ru: 'Язык' },
@@ -98,6 +99,9 @@ export function renderSettings(root, params = {}) {
   // Default OFF: it silently pre-fills the grid, and a player who has not asked
   // for that should see the board they left it in.
   const rememberFormation    = player?.settings?.remember_formation === true;
+  // Default OFF: the castle nodes are small and the art is the point. A player
+  // who wants to read their loadout off the grid asks for it.
+  const showCastleItems      = player?.settings?.show_castle_items === true;
   const languageLabel        = { en: 'English', ru: 'Русский' }[L] || L;
 
   // Seeded from Telegram at first login and editable from here. Shown as a
@@ -158,6 +162,12 @@ export function renderSettings(root, params = {}) {
             <span class="settings-label">${UI_TEXT.rememberFormation[L]}</span>
             <button class="settings-toggle ${rememberFormation ? 'settings-toggle--on' : ''}" id="toggle-formation">
               ${rememberFormation ? UI_TEXT.on[L] : UI_TEXT.off[L]}
+            </button>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">${UI_TEXT.castleItems[L]}</span>
+            <button class="settings-toggle ${showCastleItems ? 'settings-toggle--on' : ''}" id="toggle-castle-items">
+              ${showCastleItems ? UI_TEXT.on[L] : UI_TEXT.off[L]}
             </button>
           </div>
           <div class="settings-row">
@@ -440,6 +450,27 @@ export function renderSettings(root, params = {}) {
     }
   });
 
+  // Read by the castle screen on render, so it takes effect the next time that
+  // screen is drawn rather than needing a reload.
+  const castleItemsBtn = root.querySelector('#toggle-castle-items');
+  castleItemsBtn.addEventListener('click', async () => {
+    const next = player.settings?.show_castle_items !== true;
+    castleItemsBtn.textContent = next ? UI_TEXT.on[L] : UI_TEXT.off[L];
+    castleItemsBtn.classList.toggle('settings-toggle--on', next);
+    try {
+      const updated = await api('/player/settings', {
+        player_id: player.id,
+        chat_id:   player.chat_id,
+        settings:  { show_castle_items: next },
+      });
+      player.settings = updated.settings;
+    } catch (err) {
+      castleItemsBtn.textContent = !next ? UI_TEXT.on[L] : UI_TEXT.off[L];
+      castleItemsBtn.classList.toggle('settings-toggle--on', !next);
+      alert(err.message || UI_TEXT.saveFailed[L]);
+    }
+  });
+
   const musicBtn = root.querySelector('#toggle-music');
   musicBtn.addEventListener('click', async () => {
     const next = player.settings?.music_enabled === false;
@@ -560,6 +591,7 @@ export function renderSettings(root, params = {}) {
       ['#toggle-analytics',     player?.analytics_consent            === true ],
       ['#toggle-barks',         player?.settings?.barks_enabled      !== false],
       ['#toggle-formation',     player?.settings?.remember_formation === true ],
+      ['#toggle-castle-items',  player?.settings?.show_castle_items  === true ],
     ];
     for (const [sel, on] of rows) {
       const btn = root.querySelector(sel);

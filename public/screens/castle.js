@@ -1174,6 +1174,24 @@ export function renderCastle(root, params = {}) {
     };
   }
 
+  // Off by default (see settings.js): the equipped item's icon in the portrait's
+  // top-left corner. A plain div rather than renderItemSlotIcon's button — the
+  // node itself is the click target, and a nested button would swallow taps.
+  function nodeItemIcon(slot) {
+    if (player?.settings?.show_castle_items !== true) return '';
+    const u = rosterUnitForSlot(slot);
+    if (!u || errandAwayIds.has(String(u.id))) return '';
+    const item = equippedItemFor(u.id);
+    if (!item) return '';
+    const stats  = item.item_stats || {};
+    const iconId = stats.icon || stats.key || 'item';
+    const label  = escapeHtml(itemName(item, player) || item.item_name || 'Item');
+    return `
+      <div class="castle-node-item castle-node-item--rarity-${itemRarity(item)}" title="${label}">
+        <img src="${assetUrl(`/assets/icons/items/${iconId}.png`)}" alt="${label}" onerror="this.style.display='none'">
+      </div>`;
+  }
+
   function nodeHpBar(slot) {
     const u = rosterUnitForSlot(slot);
     if (!u) return '';
@@ -1399,6 +1417,7 @@ export function renderCastle(root, params = {}) {
     centerSlot.innerHTML = `
       <div class="castle-node castle-node--throne castle-node--clickable ${throneBg ? 'castle-node--portrait' : ''}" data-slot="slot_0"${throneBg}>
         ${throneBg ? '' : '<div class="castle-node-icon">♛</div>'}
+        ${nodeItemIcon('slot_0')}
         ${nodeHpBar('slot_0')}
       </div>`;
 
@@ -1438,6 +1457,7 @@ export function renderCastle(root, params = {}) {
       return `
         <div class="${classes}" data-slot="${slot}"${bg}${title}>
           ${bg && !lockedBy && !reserved && !previewDef ? '' : `<div class="castle-node-icon">${glyph}</div>`}
+          ${nodeItemIcon(slot)}
           ${nodeHpBar(slot)}
         </div>`;
     };
