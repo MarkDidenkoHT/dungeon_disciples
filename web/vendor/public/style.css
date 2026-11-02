@@ -3470,13 +3470,20 @@ button.cost-bar-item:active { transform: scale(0.9); }
    carry the same prefix for the same reason.
 
    Inset to the frame, since the art sits inside it (--node-frame-inset), and
-   z-index 3: over the frame overlay at 2, under the bar strip at 4. */
+   z-index 3: over the frame overlay at 2, under the bar strip at 4.
+
+   Sized as a PERCENTAGE of the node, not in vw/vh: the node's own height comes
+   from --tg-viewport-stable-height, which Telegram reports as the COMPACT
+   height on an inline-button launch (see main.js, tg.expand) — so a badge
+   measured off the viewport keeps its full size while the node shrinks under
+   it. A percentage resolves against the node itself and cannot drift from it.
+   aspect-ratio keeps it square without a second number to keep in step. */
 .castle-node .castle-node-item {
   position: absolute;
   top: calc(7.1% + 2px);
   left: calc(7.1% + 2px);
-  width: 20px;
-  height: 20px;
+  width: 33%;
+  aspect-ratio: 1;
   z-index: 3;
   pointer-events: none;
   border-radius: 4px;
