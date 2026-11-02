@@ -188,6 +188,9 @@ const CASTLE_TEXT = {
   equip:       { en: 'Equip',                                 ru: 'Надеть' },
   unequip:     { en: 'Unequip',                               ru: 'Снять' },
   itemsTitle:  { en: 'Item',                                  ru: 'Предмет' },
+  // Formation presets. No logic behind them yet — the row is here to settle
+  // where it sits before the sets themselves are wired up.
+  set:         { en: 'Set',                                   ru: 'Набор' },
   noItems:     { en: 'No items available.',                   ru: 'Нет доступных предметов.' },
   wrongFaction:{ en: 'Wrong faction',                         ru: 'Другая фракция' },
   // The hero's active slot. A hero has no unit ability — it acts by casting —
@@ -315,6 +318,15 @@ export function renderCastle(root, params = {}) {
   root.innerHTML = `
     <div class="screen screen-castle">
       <main class="castle-main">
+        <!-- Between the resource strip and the grounds, outside the layer
+             viewport, so sliding layers do not carry it along. Inert for now:
+             no handler and no active state until the sets are wired up. -->
+        <div class="castle-set-row" id="castle-set-row">
+          ${[1, 2, 3].map(n => `
+            <button class="castle-set-btn" type="button" data-set="${n}">
+              ${CASTLE_TEXT.set[lang0]} ${n}
+            </button>`).join('')}
+        </div>
         <div class="castle-grounds">
           <button class="castle-layer-arrow castle-layer-arrow--prev" id="layer-prev"
                   type="button" aria-label="Previous"><span>‹</span></button>

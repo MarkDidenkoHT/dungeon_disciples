@@ -6922,6 +6922,57 @@ button.cost-bar-item:active { transform: scale(0.9); }
   overflow: hidden;
 }
 
+/* Formation presets, between the resource strip and the grounds.
+
+   Width is the grid's own — three columns of --castle-node-h *
+   --castle-node-ratio — so the row lines up with the portraits under it at
+   every phone size instead of needing breakpoints. Capped at the width the
+   grid actually GETS, though: the two layer arrows take clamp(18px, 5%, 28px)
+   each out of the grounds (.screen-castle .castle-layer-arrow, which overrides
+   the 5vw further up), and .castle-grid-wrap's max-width:100% clamps the grid
+   to what is left. Without the cap the row overhung the portraits on both
+   sides. The 5% resolves against .castle-main, the same width the arrows
+   measure theirs against, so the two agree. */
+.castle-set-row {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 4px;
+  width: min(
+    calc(var(--castle-node-h) * var(--castle-node-ratio) * 3),
+    calc(100% - 2 * clamp(18px, 5%, 28px))
+  );
+}
+
+.castle-set-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.castle-set-btn:active {
+  background: #1a2235;
+  color: var(--accent);
+}
+
+.castle-set-btn--active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 .castle-grounds {
   display: flex;
   flex-direction: row;
