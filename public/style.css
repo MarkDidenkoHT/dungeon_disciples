@@ -3459,13 +3459,22 @@ button.cost-bar-item:active { transform: scale(0.9); }
   font-variant-numeric: tabular-nums;
 }
 
-/* The equipped item, top-left, behind the "Items on Castle Portraits" setting.
-   Rides above the art but below the bar strip's z-index, and takes no pointer
-   events so the whole node stays one tap target. */
-.castle-node-item {
+/* The equipped item, top-left corner of the art, behind the "Items on Castle
+   Portraits" setting. Takes no pointer events so the whole node stays one tap
+   target.
+
+   Written as a DESCENDANT of .castle-node, not bare: `.castle-node--portrait
+   > *` further down sets every direct child to position:relative/z-index:1,
+   which outranks a lone class and dropped this badge back into the flow, where
+   the node's centred flex parked it under the bars. The two bar rules above
+   carry the same prefix for the same reason.
+
+   Inset to the frame, since the art sits inside it (--node-frame-inset), and
+   z-index 3: over the frame overlay at 2, under the bar strip at 4. */
+.castle-node .castle-node-item {
   position: absolute;
-  top: 3px;
-  left: 3px;
+  top: calc(7.1% + 2px);
+  left: calc(7.1% + 2px);
   width: 20px;
   height: 20px;
   z-index: 3;
@@ -3477,18 +3486,20 @@ button.cost-bar-item:active { transform: scale(0.9); }
   box-shadow: 0 0 0 1px rgba(0,0,0,0.9);
 }
 
-.castle-node-item img {
+.castle-node .castle-node-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.castle-node-item--rarity-common    { border-color: var(--rarity-common); }
-.castle-node-item--rarity-rare      { border-color: var(--rarity-rare); }
-.castle-node-item--rarity-epic      { border-color: var(--rarity-epic); }
-.castle-node-item--rarity-mythic    { border-color: var(--rarity-mythic); }
-.castle-node-item--rarity-shattered { border-color: var(--rarity-shattered); }
+/* Same prefix as the rule above, or its `border` shorthand would win on
+   specificity and every badge would wear the neutral border. */
+.castle-node .castle-node-item--rarity-common    { border-color: var(--rarity-common); }
+.castle-node .castle-node-item--rarity-rare      { border-color: var(--rarity-rare); }
+.castle-node .castle-node-item--rarity-epic      { border-color: var(--rarity-epic); }
+.castle-node .castle-node-item--rarity-mythic    { border-color: var(--rarity-mythic); }
+.castle-node .castle-node-item--rarity-shattered { border-color: var(--rarity-shattered); }
 
 .castle-node-bar-stack {
   flex: 0 0 85%;
