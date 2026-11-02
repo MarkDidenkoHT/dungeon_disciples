@@ -36,8 +36,26 @@ button, .nav-btn, .res-bar-btn, .portrait-card, .castle-node, img {
 
   --castle-node-ratio: 0.785;
 
+  /* The preset row's height, named once: the node formula below has to
+     subtract it, so the two cannot be allowed to drift apart. */
+  --castle-set-row-h: 26px;
+
+  /* Four rows of this plus the chrome must fit the viewport, or the castle
+     scrolls. It used to be a flat 19dvh * 4 = 76% of the screen, with the
+     remaining 24% left to cover a 70px resource bar, a 10dvh (min 52px) nav
+     and — once it arrived — the preset row. That overflowed by ~19px at 568px
+     tall and ~5px at 667px. Subtracting the chrome instead keeps the grid
+     exactly as big as what is left, so it lands on one screen at every height,
+     and the width branch still wins on tall phones. The 6px is slack for the
+     safe-area padding on #shell, which these lengths cannot see. */
   --castle-node-h: min(
-    calc(var(--tg-viewport-stable-height, 100dvh) * 0.19),
+    calc((
+      var(--tg-viewport-stable-height, 100dvh)
+      - 70px
+      - max(calc(var(--tg-viewport-stable-height, 100dvh) * 0.1), 52px)
+      - var(--castle-set-row-h) - 4px
+      - 6px
+    ) / 4),
     calc(min(344px, 100vw - 16px) / 3 / var(--castle-node-ratio))
   );
 
@@ -47,6 +65,24 @@ button, .nav-btn, .res-bar-btn, .portrait-card, .castle-node, img {
   --rarity-mythic: #f59e0b;
   --rarity-shattered: #e0393e;
   --rarity-border: 2px;
+}
+
+/* No scrollbars anywhere in the app. A dozen scrollers set scrollbar-width
+   individually and new ones kept arriving without it; one rule covers them all
+   and the WebKit pseudo-element handles the Telegram WebView, which does not
+   support scrollbar-width. Scrolling itself is untouched — only the gutter the
+   bar reserves, which was stealing layout width. */
+*,
+*::before,
+*::after {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 html, body {
@@ -6945,7 +6981,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
    .castle-grid-wrap's own max-width:100% measures against the same box. Both
    therefore land on the same number without naming the arrows. */
 .castle-set-row {
-  flex: 0 0 auto;
+  flex: 0 0 var(--castle-set-row-h);
+  height: var(--castle-set-row-h);
   display: flex;
   gap: 4px;
   width: min(calc(var(--castle-node-h) * var(--castle-node-ratio) * 3), 100%);
@@ -6954,7 +6991,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .castle-set-btn {
   flex: 1;
   min-width: 0;
-  padding: 6px 0;
+  height: 100%;
+  padding: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 5px;
