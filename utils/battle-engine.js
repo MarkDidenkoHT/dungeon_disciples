@@ -190,6 +190,7 @@ class BattleEngine {
       enemy: state?.litaniesUnlockedBySide?.enemy ?? true,
     };
     this.activeLitanies = { ...(state?.activeLitanies || {}) };
+    this.litanyBonusMultipliers = {};
     this._applyLitanyBonusesOnSetup = true;
     if (state) {
       this.combatants = state.combatants;
@@ -4684,14 +4685,16 @@ class BattleEngine {
       this.activeLitanies[side] = match.def.id;
       const allies = this.combatants.filter(c => c.side === side && c.alive);
       const bonus = match.def.bonus || {};
+      const multiplier = this.litanyBonusMultipliers?.[side] ?? 1;
+      const bonusAmount = amount => (Number(amount) || 0) * multiplier;
 
-      if (bonus.hp_flat > 0) {
+      if (bonusAmount(bonus.hp_flat) > 0) {
+        const amount = bonusAmount(bonus.hp_flat);
         for (const c of allies) {
-          c.max_hp += bonus.hp_flat;
-          c.battle_hp = Math.min(c.max_hp, c.battle_hp + bonus.hp_flat);
-          c._base_max_hp = (c._base_max_hp ?? c.max_hp - bonus.hp_flat) + bonus.hp_flat;
+          c.max_hp += amount;
+          c.battle_hp = Math.min(c.max_hp, c.battle_hp + amount);
+          c._base_max_hp = (c._base_max_hp ?? c.max_hp - amount) + amount;
         }
-        const amount = bonus.hp_flat;
         const litanyName = match.def.name;
         const affected = allies.length;
         this.pushLog({
@@ -4702,18 +4705,22 @@ class BattleEngine {
           message_ru: `${litanyName} — все союзники (${affected}) получают ${amount} к максимальному здоровью.`,
         });
       }
-      if (bonus.armor_flat > 0) for (const c of allies) addArmor(c, bonus.armor_flat);
-      if (bonus.power_flat > 0) {
+      const armor = bonusAmount(bonus.armor_flat);
+      if (armor > 0) for (const c of allies) addArmor(c, armor);
+      const power = bonusAmount(bonus.power_flat);
+      if (power > 0) {
         for (const c of allies) {
-          c.unit_data.action_power = (Number(c.unit_data.action_power ?? c.unit_data.action?.value) || 0) + bonus.power_flat;
+          c.unit_data.action_power = (Number(c.unit_data.action_power ?? c.unit_data.action?.value) || 0) + power;
         }
       }
       for (const [school, amount] of Object.entries(bonus.resist_flat || {})) {
-        if (amount > 0) for (const c of allies) addResist(c, school, amount);
+        const scaledAmount = bonusAmount(amount);
+        if (scaledAmount > 0) for (const c of allies) addResist(c, school, scaledAmount);
       }
-      if (bonus.shield_flat > 0) {
+      const shield = bonusAmount(bonus.shield_flat);
+      if (shield > 0) {
         for (const c of allies) {
-          this.grantShield(c, bonus.shield_flat,
+          this.grantShield(c, shield,
             { name: match.def.name, dispellable: false }, match.lead, { atStart: true });
         }
       }

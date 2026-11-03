@@ -430,6 +430,21 @@ function dispatchPassive(trigger, owner, def, ctx) {
     });
   };
   if (trigger === 'on_battle_start') {
+    if (p.litany_bonus_multiplier != null && owner.alive) {
+      const currentMultiplier = engine.litanyBonusMultipliers[owner.side] ?? 1;
+      const multiplier = Math.max(currentMultiplier, p.litany_bonus_multiplier);
+      if (multiplier !== currentMultiplier) {
+        engine.litanyBonusMultipliers[owner.side] = multiplier;
+        engine.pushLog({
+          type: 'passive', passive: def.name,
+          actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
+          targetName: 'all allies',
+          message: `${def.name} — litany bonuses are doubled for all allies`,
+          message_ru: `${def.name} — бонусы литании удвоены для всех союзников`,
+        });
+      }
+    }
+
     // ── Vows ────────────────────────────────────────────────────────────────
     //
     // Declared before anything else in this block so a Vow is already standing

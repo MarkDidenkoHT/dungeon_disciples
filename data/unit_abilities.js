@@ -181,6 +181,18 @@ const UNIT_ABILITIES = {
     dispellable: false,
     params: { kill_damage_bonus_pct: 25 },
   },
+  'sanctified_words 1': {
+    id: 'sanctified_words 1',
+    name: 'Sanctified Words',
+    name_ru: "Освящённые слова",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'Doubles litany bonuses for all allies on this side.',
+    description_ru: "Удваивает бонус литании для всех союзников на этой стороне.",
+    effect_name: 'sanctified_words',
+    params: { litany_bonus_multiplier: 2 },
+  },
   'beacon_of_hope 1': {
     id: 'beacon_of_hope 1',
     name: 'Beacon of Hope',
