@@ -1,6 +1,6 @@
 import { api, navigate, itemsCache, bootstrapCache } from '../api.js';
 import { UNIT_ABILITIES } from '../../data/unit_abilities.js';
-import { resolveAbility, abilityName, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, getSheetBody, handleUnitInspect, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem, withEquippedItem, unitName, cellFootprint, spellName, unitCallingId, callingTintStyle } from '../utils.js';
+import { resolveAbility, abilityName, resolveUnitDef, CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, openSubSheet, getSheetBody, handleUnitInspect, buildUnitCard, renderItemSlotIcon, buildItemModalParts, itemFromDefKey, combatantItem, withEquippedItem, unitName, cellFootprint, spellName, getActionLabel as unitActionLabel, unitCallingId, callingTintStyle } from '../utils.js';
 import { initBattleFx, reattachBattleFx, destroyBattleFx, EFFECTS } from '../battle-fx.js';
 import { FORMATION_SYNERGIES } from '../../data/formation_synergies.js';
 import { callingTint } from '../../data/callings.js';
@@ -1259,18 +1259,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   function getActionLabel(unit) {
     const actionKey = unit?.unit_data?.action;
     const key = typeof actionKey === 'string' ? actionKey : actionKey?.id;
-    if (key === 'sacrifice') return BTx('actSacrifice');
-    if (key === 'holy_shock') return BTx('actHolyShock');
-    if (key === 'artificer_shock') return BTx('actArtificerShock');
-    if (key === 'choir_shock') return BTx('actChoirShock');
-    if (key === 'shield')    return BTx('actShield');
-    if (key === 'decay')     return BTx('actDecay');
-    if (key === 'empower')   return BTx('actEmpower');
     const actionType = typeof actionKey === 'object' ? actionKey?.action_type : null;
     if (actionType === 'none') return BTx('actPassive');
     if (unit?.buffs?._mothers_kiss || unit?._mothers_kiss) return BTx('actMothersKiss');
-    const tt = unit?.unit_data?.target_type || unit?.unit_data?.action?.target_type;
-    return tt === 'ally' ? BTx('actHeal') : BTx('actAttack');
+    const targetType = unit?.unit_data?.target_type || actionKey?.target_type;
+    return unitActionLabel(key || (targetType === 'ally' ? 'heal' : 'attack'));
   }
 
   function getPassiveName(unit) {

@@ -150,6 +150,20 @@ export const ACTION_INFO = {
       ru: 'Восстанавливает HP одному союзному Демону или наносит урон врагу на величину Силы.',
     },
   },
+  'song_of_ash': {
+    name: { en: 'Song of Ash', ru: 'Песнь пепла' },
+    desc: {
+      en: 'Mends one allied Demon for the unit\'s Power.',
+      ru: 'Исцеляет одного союзного Демона на величину Силы бойца.',
+    },
+  },
+  'empower': {
+    name: { en: 'Empower', ru: 'Усиление' },
+    desc: {
+      en: 'Adds the unit\'s Power to an ally\'s next action.',
+      ru: 'Добавляет Силу бойца к силе следующего действия союзника.',
+    },
+  },
   'pale_embrace': {
     name: { en: 'Pale Embrace', ru: 'Бледные объятия' },
     desc: {
@@ -385,21 +399,8 @@ export function escapeHtml(value) {
 export function getActionLabel(actionKey) {
   if (!actionKey) return '—';
   const k = typeof actionKey === 'string' ? actionKey : (actionKey.id || '');
-  const map = {
-    attack:       'Attack',
-    heal:         'Heal',
-    repair:       'Repair',
-    artificer_shock: 'Artificer’s Arc',
-    choir_shock:    'Ashen Refrain',
-    empower:      'Empower',
-    'mend flesh': 'Mend Flesh',
-    sacrifice:    'Sacrifice',
-    holy_shock:   'Holy Shock',   // heals an ally OR strikes an enemy — see getValidTargets
-    pale_embrace: 'Pale Embrace',
-    shield:       'Shield',       // grants an ally a damage-absorbing pool
-    decay:        'Decay',        // saddles an enemy with a healing-absorbing one
-  };
-  return map[k.toLowerCase()] || cap(k);
+  const info = lookupActionInfo(k);
+  return info ? uiText(info.name.en, info.name.ru) : cap(k);
 }
 
 // The rank an ability key carries: 'aegis 2' -> 2, 'aegis' -> 1. Ranks are the
@@ -594,19 +595,20 @@ export function renderUnitCoreStatsColumn(unit, opts = {}) {
   // under the card as facts about nothing.
   const actionDelta = renderUnitStatDiffs(unit, compareUnit);
 
+  const levelLabel = uiText('Lv', 'Ур.');
   const lvCell = canLevelUp && rosterId
-    ? `<button class="core-stat core-stat--levelup levelup-btn--ready" data-roster-id="${rosterId}"><span class="core-stat-label">Lv</span><span class="core-stat-val">${tier}</span></button>`
-    : `<div class="core-stat"><span class="core-stat-label">Lv</span><span class="core-stat-val">${tier}</span></div>`;
+    ? `<button class="core-stat core-stat--levelup levelup-btn--ready" data-stat-key="level" data-roster-id="${rosterId}"><span class="core-stat-label">${levelLabel}</span><span class="core-stat-val">${tier}</span></button>`
+    : `<div class="core-stat" data-stat-key="level"><span class="core-stat-label">${levelLabel}</span><span class="core-stat-val">${tier}</span></div>`;
 
   return `
     <div class="unit-core-stats unit-core-stats--side">
       ${lvCell}
-      <div class="core-stat"><span class="core-stat-label">HP</span><span class="core-stat-val">${unit.hp ?? '—'}</span>${delta('hp')}</div>
-      <div class="core-stat"><span class="core-stat-label">Init</span><span class="core-stat-val">${unit.initiative ?? '—'}</span>${delta('initiative')}</div>
-      <div class="core-stat"><span class="core-stat-label">Power</span><span class="core-stat-val">${power}</span>${delta('action_power')}</div>
-      <div class="core-stat" data-action-key="${unit.action ?? ''}" data-targets="${unit.targets ?? 1}" data-range="${unit.range ?? 1}" data-target-type="${unit.target_type ?? ''}"><span class="core-stat-label">Action</span><span class="core-stat-val core-stat-val--action">${actionLabel}</span>${actionDelta}</div>
-      <div class="core-stat"><span class="core-stat-label">XP</span><span class="core-stat-val">${unit.xp ?? '—'}</span></div>
-      <div class="core-stat"><span class="core-stat-label">Balance</span><span class="core-stat-val">${unitPower}</span></div>
+      <div class="core-stat" data-stat-key="hp"><span class="core-stat-label">HP</span><span class="core-stat-val">${unit.hp ?? '—'}</span>${delta('hp')}</div>
+      <div class="core-stat" data-stat-key="initiative"><span class="core-stat-label">${uiText('Init', 'Иниц.')}</span><span class="core-stat-val">${unit.initiative ?? '—'}</span>${delta('initiative')}</div>
+      <div class="core-stat" data-stat-key="power"><span class="core-stat-label">${uiText('Power', 'Сила')}</span><span class="core-stat-val">${power}</span>${delta('action_power')}</div>
+      <div class="core-stat" data-stat-key="action" data-action-key="${unit.action ?? ''}" data-targets="${unit.targets ?? 1}" data-range="${unit.range ?? 1}" data-target-type="${unit.target_type ?? ''}"><span class="core-stat-label">${uiText('Action', 'Действие')}</span><span class="core-stat-val core-stat-val--action">${actionLabel}</span>${actionDelta}</div>
+      <div class="core-stat" data-stat-key="xp"><span class="core-stat-label">${uiText('XP', 'Опыт')}</span><span class="core-stat-val">${unit.xp ?? '—'}</span></div>
+      <div class="core-stat" data-stat-key="balance"><span class="core-stat-label">${uiText('Balance', 'Баланс')}</span><span class="core-stat-val">${unitPower}</span></div>
     </div>`;
 }
 
@@ -753,12 +755,12 @@ export function renderUnitAbilitiesRow(unit, opts = {}) {
 }
 
 const STAT_DIFF_MAP = [
-  { label: 'HP',      key: 'hp'           },
-  { label: 'Armor',   key: 'armor'        },
-  { label: 'Init',    key: 'initiative'   },
-  { label: 'Power',   key: 'action_power' },
-  { label: 'Targets', key: 'targets'      },
-  { label: 'Range',   key: 'range'        },
+  { label: { en: 'HP',      ru: 'HP' },       key: 'hp'           },
+  { label: { en: 'Armor',   ru: 'Броня' },    key: 'armor'        },
+  { label: { en: 'Init',    ru: 'Иниц.' },    key: 'initiative'   },
+  { label: { en: 'Power',   ru: 'Сила' },     key: 'action_power' },
+  { label: { en: 'Targets', ru: 'Цели' },     key: 'targets'      },
+  { label: { en: 'Range',   ru: 'Дальность' }, key: 'range'       },
 ];
 
 // Which diffs get pinned to a stat cell, and which cell renders them. Anything
@@ -778,7 +780,7 @@ export function unitStatDiffs(unit, compareUnit) {
     const a = Number(unit[s.key] ?? 0), b = Number(compareUnit[s.key] ?? 0);
     if (!Number.isFinite(a) || !Number.isFinite(b)) continue;
     const diff = a - b;
-    if (diff !== 0) out[s.key] = { label: s.label, diff };
+    if (diff !== 0) out[s.key] = { label: uiText(s.label.en, s.label.ru), diff };
   }
   return out;
 }
@@ -982,18 +984,22 @@ export function handleUnitInspect(e, open) {
   const armorCell = e.target.closest('[data-armor]');
   if (armorCell) {
     const val = parseInt(armorCell.dataset.armor ?? '0', 10);
-    open('Armor', renderModalContent(`Armor: ${val}
-Reduces physical damage taken. Each point of armor reduces damage by 1%.`));
+    open(uiText('Armor', 'Броня'), renderModalContent(uiText(
+      `Armor: ${val}
+Reduces physical damage taken. Each point of armor reduces damage by 1%.`,
+      `Броня: ${val}
+Снижает получаемый физический урон. Каждая единица брони уменьшает урон на 1%.`,
+    )));
     return true;
   }
 
   const coreStat = e.target.closest('.core-stat');
   if (coreStat) {
-    const label = coreStat.querySelector('.core-stat-label')?.textContent?.trim() || '';
+    const statKey = coreStat.dataset.statKey || '';
     const val   = coreStat.querySelector('.core-stat-val')?.textContent?.trim() || '—';
 
     // Action gets its own entry: what the action is and what it actually does.
-    if (label === 'Action') {
+    if (statKey === 'action') {
       const info = lookupActionInfo(coreStat.dataset.actionKey, val);
       const title = info ? uiText(info.name.en, info.name.ru) : val;
       const desc  = info
@@ -1010,23 +1016,52 @@ Reduces physical damage taken. Each point of armor reduces damage by 1%.`));
       open(title, renderModalContent(lines.join('\n')));
       return true;
     }
-    const texts = {
-      HP:      `HP: ${val}
+    const statDetails = {
+      hp: {
+        title: uiText('HP', 'HP'),
+        body: uiText(`HP: ${val}
 Current hit points. Unit is defeated when HP reaches 0.`,
-      Init:    `Initiative: ${val}
+          `HP: ${val}
+Текущие очки здоровья. Боец выбывает из боя, когда HP достигает 0.`),
+      },
+      initiative: {
+        title: uiText('Initiative', 'Инициатива'),
+        body: uiText(`Initiative: ${val}
 Determines turn order in combat. Higher acts first.`,
-      Power:   `Power: ${val}
+          `Инициатива: ${val}
+Определяет порядок ходов в бою: боец с большей инициативой ходит раньше.`),
+      },
+      power: {
+        title: uiText('Power', 'Сила'),
+        body: uiText(`Power: ${val}
 Base damage or healing output of the unit's action.`,
-      Action:  `Action: ${val}
-The type of action this unit performs each turn.`,
-      XP:      `Experience: ${val}
+          `Сила: ${val}
+Базовая величина урона или лечения от действия бойца.`),
+      },
+      xp: {
+        title: uiText('Experience', 'Опыт'),
+        body: uiText(`Experience: ${val}
 Accumulated XP toward next level.`,
-      Lv:      `Level: ${val}
+          `Опыт: ${val}
+Накопленный опыт до следующего уровня.`),
+      },
+      level: {
+        title: uiText('Level', 'Уровень'),
+        body: uiText(`Level: ${val}
 The unit's tier. Higher tiers have stronger stats and abilities.`,
-      Balance: `Balance: ${val}
+          `Уровень: ${val}
+Ранг бойца. На более высоких рангах выше характеристики и сильнее умения.`),
+      },
+      balance: {
+        title: uiText('Balance', 'Баланс'),
+        body: uiText(`Balance: ${val}
 Overall power rating, combining stats, resistances and abilities.`,
+          `Баланс: ${val}
+Общая оценка силы бойца с учётом характеристик, сопротивлений и умений.`),
+      },
     };
-    open(label, renderModalContent(texts[label] ?? `${label}: ${val}`));
+    const details = statDetails[statKey];
+    open(details?.title || statKey, renderModalContent(details?.body || `${statKey}: ${val}`));
     return true;
   }
 
@@ -1036,13 +1071,19 @@ Overall power rating, combining stats, resistances and abilities.`,
     const label  = resistCell.getAttribute('title') || '';
     const numVal = parseInt(resistCell.querySelector('.resist-val')?.textContent ?? '0', 10);
     const text = numVal === 0
-      ? `${label} Resistance: 0
-No modifier to ${label.toLowerCase()} damage taken.`
+      ? uiText(`${label} Resistance: 0
+No modifier to ${label.toLowerCase()} damage taken.`,
+        `Сопротивление урону типа «${label}»: 0
+Не изменяет получаемый урон этого типа.`)
       : numVal > 0
-        ? `${label} Resistance: +${numVal}
-Reduces ${label.toLowerCase()} damage taken.`
-        : `${label} Resistance: ${numVal}
-Increases ${label.toLowerCase()} damage taken.`;
+        ? uiText(`${label} Resistance: +${numVal}
+Reduces ${label.toLowerCase()} damage taken.`,
+          `Сопротивление урону типа «${label}»: +${numVal}
+Снижает получаемый урон этого типа.`)
+        : uiText(`${label} Resistance: ${numVal}
+Increases ${label.toLowerCase()} damage taken.`,
+          `Сопротивление урону типа «${label}»: ${numVal}
+Увеличивает получаемый урон этого типа.`);
     open(label, renderModalContent(text));
     return true;
   }
@@ -1219,14 +1260,8 @@ export function buildItemModalParts(item, player) {
   };
 }
 
-// ACTION_INFO is keyed inconsistently -- 'holy shock' with a space, but
-// 'pale_embrace' with an underscore -- while the old lookup always searched the
-// space form built from the DISPLAY label. 'pale_embrace' and 'song_of_ash'
-// therefore never matched and silently fell back to the generic description.
-//
-// Normalising both sides fixes those two and makes the table's key style stop
-// mattering. Prefer the action ID from the cell over the display label: the
-// label is translated and re-cased for reading, the id is the actual key.
+// Action keys use underscores or spaces inconsistently. Normalize both sides
+// and prefer the stable action ID over the translated display label.
 const _ACTION_INFO_NORM = Object.fromEntries(
   Object.entries(ACTION_INFO).map(([k, v]) => [k.replace(/_/g, ' ').trim().toLowerCase(), v])
 );
