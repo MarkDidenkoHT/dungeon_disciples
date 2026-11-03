@@ -3073,11 +3073,55 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .settings-main {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 18px;
   padding: 18px 16px;
   overflow-y: auto;
+}
+
+.settings-faq {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 16px;
+  overflow-y: auto;
+}
+
+.settings-faq-title {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.settings-faq-intro {
+  margin: -6px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.settings-faq-entry {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(17, 19, 24, 0.72);
+}
+
+.settings-faq-entry h2 {
+  margin: 0 0 6px;
+  color: var(--text);
+  font-size: 0.88rem;
+}
+
+.settings-faq-entry p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
 }
 
 .settings-section-title {
@@ -4364,14 +4408,11 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .action-btn-glyph { font-size: 1.5rem; line-height: 1; color: var(--accent); }
 
 .log-entry        { font-size: 0.68rem; color: #000; line-height: 1.4; }
-.log-entry--round { color: var(--accent); text-align: center; font-size: 0.62rem; }
+.log-entry--round { text-align: center; font-size: 0.62rem; }
 .log-entry--skip  { color: #444; }
 .log-entry--bark  { color: #970000; font-style: italic; }
 .log-entry--litany { color: #e0bb62; font-style: italic; font-weight: 600; }
 .log-entry--notice { color: var(--accent); text-align: center; font-style: italic; font-size: 0.7rem; }
-/* A boss changing phase is the loudest thing in the log: the fight it belongs to
-   is not the fight the player started. A telegraph is the second loudest — it is
-   the one line the player has to read, because it names what lands next round. */
 .log-entry--phase {
   color: #f0d070; text-align: center; font-weight: 700; font-size: 0.74rem;
   letter-spacing: 0.02em; padding: 4px 0; margin: 3px 0;
@@ -4384,7 +4425,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .log-entry--error { color: #c84a3a; font-style: italic; }
 .log-actor  { color: #000; }
 .log-target { color: #3a4ac8; }
-.log-resisted { color: var(--muted); font-size: 0.7em; }
+.log-resisted { color: var(--muted);}
 .log-val    { color: #c84a3a; font-weight: bold; }
 
 .action-panel {

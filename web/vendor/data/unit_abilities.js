@@ -181,6 +181,18 @@ const UNIT_ABILITIES = {
     dispellable: false,
     params: { kill_damage_bonus_pct: 25 },
   },
+  'sanctified_words 1': {
+    id: 'sanctified_words 1',
+    name: 'Sanctified Words',
+    name_ru: "Освящённые слова",
+    rank: 1,
+    type: 'passive',
+    trigger: 'on_battle_start',
+    description: 'Doubles litany bonuses for all allies on this side.',
+    description_ru: "Удваивает бонус литании для всех союзников на этой стороне.",
+    effect_name: 'sanctified_words',
+    params: { litany_bonus_multiplier: 2 },
+  },
   'beacon_of_hope 1': {
     id: 'beacon_of_hope 1',
     name: 'Beacon of Hope',
@@ -2334,13 +2346,6 @@ const UNIT_ABILITIES = {
     description_ru: "Один раз за бой этот юнит возвращается к жизни в начале следующего хода с 15% HP за каждый тег Зомби среди союзников (включая себя).",
     params: { reanimate: true, reanimate_hp_pct_per_zombie: 15 },
   },
-  // `inspiration_all_allies` is what makes this an army-wide aura rather than a
-  // placement puzzle. Column adjacency asked the player to stand the Engineer
-  // between the two units it was meant to armour, which on a 2x3 board reaches
-  // two allies at best and nothing at all from a corner — the buff was decided
-  // by where the captain happened to fit, not by the squad. The VALUE still
-  // multiplies by the Engineer count, so the aura is paid for by committing to
-  // the tag.
   'inspiration_armor 1': {
     id: 'inspiration_armor 1',
     name: 'Inspiration',
@@ -2352,13 +2357,6 @@ const UNIT_ABILITIES = {
     description_ru: "Все союзники получают по 2 брони за каждого союзного инженера.",
     params: { inspiration_stat: 'armor', inspiration_value_per_tag: 2, tag_required: 'Engineer', inspiration_all_allies: true },
   },
-  // Nine units — six Artificers, the Mechanic line's top three — have asked for
-  // this rank since before it existed, so their Inspiration has been inert.
-  //
-  // 2 -> 3 per tagged ally, which is what inspiration_initiative does across the
-  // same two ranks. The flat-value variants (inspiration_damage 3 -> 5) are a
-  // different curve because they do not multiply by a tag count, so this follows
-  // the per-tag sibling rather than them.
   'inspiration_armor 2': {
     id: 'inspiration_armor 2',
     name: 'Inspiration',
@@ -2377,10 +2375,6 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
-    // FLAT, and deliberately small. Initiative is turn order, not a stat that
-    // scales gracefully: 3 per Caster across a whole army is every ally acting
-    // first forever, which is not a buff but a different game. 1 and 2 are a
-    // nudge in the queue, which is what an aura on six units should be.
     description: 'All allies gain 1 initiative.',
     description_ru: "Все союзники получают 1 инициативы.",
     params: { inspiration_stat: 'initiative', inspiration_value: 1, inspiration_all_allies: true },
