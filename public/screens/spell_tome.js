@@ -226,17 +226,33 @@ const TOME_TEXT = {
   litanyStarting: { en: 'Available from the start', ru: 'Доступна с начала игры' },
   litanyFormation: { en: 'Formation',   ru: 'Построение' },
   litanyReward:    { en: 'Reward',      ru: 'Награда' },
-  // The formation is a PLACE on the board, not a list, so the card draws the
+  // The formation is a PLACE on the board, not a list, so every card draws the
   // player's half of the battle grid and keys each marked cell to the band that
   // fills it. "Front column, top to bottom" made the reader rebuild that picture
   // from a sentence every time.
+  //
+  // HOW TO READ THE BOARD IS THE SAME FOR EVERY LITANY, so it is said ONCE in
+  // the page header rather than repeated on every card - a card that repeats the
+  // rules pushes its own formation down the screen, and the reader skips the
+  // sentence by the second one anyway. Each card's own requirements are in its
+  // band rows, which is where a litany actually differs from its neighbours.
   litanyGridNote:  {
-    en: 'Your hero fills the lead cell. Put units with the listed callings in the other marked cells:',
-    ru: 'Герой занимает главную клетку. Поставьте бойцов с указанными призваниями в остальные отмеченные клетки:',
+    en: 'On every card below, your hero fills the lead cell; place units carrying the callings each band row names in the other marked cells.',
+    ru: 'На каждой карточке ниже герой занимает главную клетку, а в остальные отмеченные клетки ставьте бойцов с призваниями, указанными в строках справа.',
   },
-  litanyStartingGridNote: {
-    en: 'Your hero fills the lead cell. Place one unit with each calling shown, one in front and one in back:',
-    ru: 'Герой занимает главную клетку. Поставьте бойцов с разными призваниями в переднюю и заднюю клетки:',
+  // An 'any' cell is named by the faction's PAIR rather than one calling, and
+  // the cell's group decides how that pair reads. Cells that must carry
+  // different callings are "Vigil + Crusade" - take one of each. Cells that must
+  // carry the SAME one are "Vigil or Crusade", and the qualifier is not
+  // decoration: without it the two formations are drawn identically and the
+  // reader cannot tell One Voice from The First Chorus.
+  litanyCallingPairDistinct: {
+    en: names => names.join(' + '),
+    ru: names => names.join(' + '),
+  },
+  litanyCallingPairSame: {
+    en: names => `${names.join(' or ')} — the same one in each`,
+    ru: names => `${names.join(' или ')} — одно и то же в каждой`,
   },
   litanyColBack:   { en: 'Back',  ru: 'Тыл' },
   litanyColFront:  { en: 'Front', ru: 'Фронт' },
@@ -851,7 +867,12 @@ export function renderSpellTome(root, { player }) {
         if (cell.role === 'chorus') {
           if (cell.calling === 'any') {
             const names = factionCallings.map(calling => lang === 'ru' ? calling.name_ru : calling.name);
-            const requirement = names.join(' + ');
+            // 'distinct' is the only mode that asks the group's cells to differ;
+            // every other grouped cell has to match the first one filled (see
+            // matchLitanyFormation in data/litanies.js).
+            const requirement = cell.calling_group && cell.calling_group_mode !== 'distinct'
+              ? TOME_TEXT.litanyCallingPairSame[lang](names)
+              : TOME_TEXT.litanyCallingPairDistinct[lang](names);
             return `
             <div class="litany-grid-req litany-grid-req--chorus"
                  title="${escapeHtml(roleLabel)} — ${escapeHtml(requirement)}">
@@ -941,7 +962,6 @@ export function renderSpellTome(root, { player }) {
 
           <section class="litany-section">
             <h4 class="litany-section-title">${escapeHtml(t('litanyFormation'))}</h4>
-            <p class="litany-section-note">${escapeHtml(t(def.availableFromStart ? 'litanyStartingGridNote' : 'litanyGridNote'))}</p>
             ${gridHtml}
           </section>
 
@@ -960,6 +980,7 @@ export function renderSpellTome(root, { player }) {
         <header class="litany-page-head">
           <h2 class="litany-page-title">${escapeHtml(t('litaniesTitle'))}</h2>
           <p class="litany-page-blurb">${escapeHtml(t('litaniesBlurb'))}</p>
+          <p class="litany-page-note">${escapeHtml(t('litanyGridNote'))}</p>
           ${showLock ? `
             <p class="litany-page-lock">
               <span class="litany-lock">${escapeHtml(t('litanyLocked'))}</span>

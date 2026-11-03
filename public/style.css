@@ -11181,6 +11181,17 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   margin: 0;
 }
 
+/* How to read a formation board, said once for the whole page instead of on
+   every card. It sits under the blurb and is set a shade quieter, because it is
+   instructions for the diagrams rather than part of what a litany is. */
+.litany-page-note {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  margin: 6px 0 0;
+  opacity: 0.9;
+}
+
 .litany-page-lock {
   display: flex;
   flex-direction: column;
@@ -11310,12 +11321,6 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   margin: 0 0 4px;
-}
-
-.litany-section-note {
-  color: var(--muted);
-  font-size: 0.72rem;
-  margin: 0 0 6px;
 }
 
 /* Keep the board and its requirements inside one shared frame. */
