@@ -534,7 +534,7 @@ const UNITS = {
       resistances: { air: 0, fire: 35, life: 0, death: 15, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 10, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash', action_sfx: 'last_verse',
-      xp: 1850, passive: ['undying 1', 'shield 2'], ability: 'purge 1',
+      xp: 1850, passive: ['inspiration_initiative 1', 'shield 2'], ability: 'purge 1',
     },
     ashen_warden: {
       id: 'd2111', f: 'd', t: 4,
@@ -547,7 +547,7 @@ const UNITS = {
       resistances: { air: 0, fire: 35, life: 0, death: 15, cold: 0, nature: 5 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash', action_sfx: 'last_verse',
-      xp: 3350, passive: ['undying 1', 'shield 2', 'resist_aura_death 1'], ability: 'purge 1',
+      xp: 3350, passive: ['inspiration_initiative 1', 'shield 2', 'resist_aura_death 1'], ability: 'purge 1',
     },
     pyre_choir: {
       id: 'd2112', f: 'd', t: 4,
@@ -560,7 +560,7 @@ const UNITS = {
       resistances: { air: 0, fire: 40, life: 0, death: 10, cold: 0, nature: 10 },
       action: 'song_of_ash', target_type: 'ally', targets: 6, range: 3,
       damage_source: null, action_power: 8, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash', action_sfx: 'last_verse',
-      xp: 3150, passive: ['undying 1', 'shield 2', 'resist_aura_nature 1' ], ability: 'purge 1',
+      xp: 3150, passive: ['inspiration_initiative 1', 'shield 2', 'resist_aura_nature 1' ], ability: 'purge 1',
     },
     clay_gargoyle: {
       id: 'd3', f: 'd', t: 1,
@@ -2559,7 +2559,7 @@ const UNITS = {
       resistances: { air: 0, fire: 0, life: 0, death: 40, cold: 10, nature: 0 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'death', action_power: 24, action_icon: 'mace.jpg', action_animation: 'mace_swing', action_sfx: 'mace_swing',
-      passive: ['horde 1', 'infect 2', 'undying 1'], ability: null,
+      passive: ['horde 1', 'infect 2', 'reanimate 1'], ability: null,
       building_slot: 'slot_0', xp: 3095
     },
     grail_warden_path_b_t4_alt: {
@@ -2817,7 +2817,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 0, death: 40, cold: 0, nature: 15 },
       action: 'mend flesh', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 16, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh', action_sfx: 'stitch',
-      xp: 1560, passive: ['resist_aura_nature 1', 'regenerate 1', 'undying 1'], ability: 'blight 2',
+      xp: 1560, passive: ['resist_aura_nature 1', 'regenerate 1', 'reanimate 1'], ability: 'blight 2',
     },
     blightwalker2: {
       id: 'gs1311', f: 'g', t: 4,
@@ -2830,7 +2830,7 @@ const UNITS = {
       resistances: { air: 10, fire: 0, life: 0, death: 40, cold: 0, nature: 15 },
       action: 'mend flesh', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 20, action_icon: 'mend_flesh.jpg', action_animation: 'mend_flesh', action_sfx: 'stitch',
-      xp: 1560, passive: ['resist_aura_nature 2', 'regenerate 1', 'undying 1'], ability: 'blight 2',
+      xp: 1560, passive: ['resist_aura_nature 2', 'regenerate 1', 'reanimate 1'], ability: 'blight 2',
     },
     adept: {
       id: 'gs3', f: 'g', t: 1,
@@ -4192,7 +4192,7 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'death', action_power: 20, action_animation: 'sword_swing', action_sfx: 'mace_swing',
-        xp: 1920, passive: ['iron_will 1', 'undying 1', 'stoicism 1'], ability: null,
+        xp: 1920, passive: ['iron_will 1', 'reanimate 1', 'stoicism 1'], ability: null,
       },
       malgrath_the_undying_2: {
         id: 'dm_e41', f: 'dm', t: 3,
@@ -4205,7 +4205,7 @@ const UNITS = {
         resistances: { air: 0, fire: 0, life: 0, death: 50, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'death', action_power: 25, action_animation: 'sword_swing', action_sfx: 'mace_swing',
-        xp: 2705, passive: ['iron_will 2', 'undying 1', 'stoicism 1'], ability: null,
+        xp: 2705, passive: ['iron_will 2', 'reanimate 1', 'stoicism 1'], ability: null,
       },
 
       malgrath_the_undying_3: {
@@ -4219,7 +4219,7 @@ const UNITS = {
         resistances: { air: 10, fire: 10, life: 0, death: 50, cold: 10, nature: 10 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 1,
         damage_source: 'death', action_power: 32, action_animation: 'sword_swing', action_sfx: 'mace_swing',
-        xp: 2915, passive: ['iron_will 2', 'undying 2', 'stoicism 1'], ability: null,
+        xp: 2915, passive: ['iron_will 2', 'reanimate 2', 'stoicism 1'], ability: null,
       },
     },
     colossus: {

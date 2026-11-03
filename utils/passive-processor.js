@@ -1384,25 +1384,6 @@ function dispatchPassive(trigger, owner, def, ctx) {
     }
   }
   if (trigger === 'on_death' && owner === dying) {
-    if (p.survive_uses != null && !owner._flags[def.id + '_used']) {
-      owner._flags[def.id + '_used'] = true;
-      // A Vow of the Grave eats the return, but the USE is still spent — the
-      // flag is set above and stays set. Surviving a killing blow is a return
-      // from death like any other, so it queues for the same charges as a
-      // resurrect and a reanimate rather than slipping past them.
-      if (engine.consumeVow?.('grave')) {
-        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, heal: false, message: `${def.name} fails — a Vow of the Grave holds ${owner.unit_name} down` });
-        return;
-      }
-      owner.alive = true;
-      owner.battle_hp = p.survive_heal_pct != null
-        ? 1 + Math.floor(owner.max_hp * p.survive_heal_pct / 100)
-        : 1;
-      // Named on the entry, not on the def: the Vow of the Grave branch above
-      // logs under the same passive name, and a failed return must not draw the
-      // rescue picture.
-      engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, value: owner.battle_hp, effect_name: 'undying' });
-    }
     if (p.reanimate === true && !owner._flags[def.id + '_used']) {
       owner._flags[def.id + '_used'] = true;
       if (engine.consumeVow?.('grave')) {

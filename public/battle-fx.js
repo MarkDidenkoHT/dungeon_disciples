@@ -5777,71 +5777,6 @@ const burn   = statusRider(BURN_PAL,   'rise');
 const poison = statusRider(POISON_PAL, 'drip');
 const chill  = statusRider(CHILL_PAL,  'shard');
 
-// ── undying ───────────────────────────────────────────────────────────────────
-// The unit was dead for an instant. The light gathers UNDER it and lifts, so the
-// whole beat is a catch — nothing bursts outward, nothing falls. Stamped on the
-// SUCCESS log entry only (see passive-processor.js): a Vow of the Grave can eat
-// the return, and that failure must not draw a rescue.
-export async function undying(cellEl) {
-  if (!app || !window.PIXI || !cellEl) return;
-  const sel = cellSelectorFor(cellEl);
-  if (!sel) return;
-  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
-  const rand    = (a, b) => a + Math.random() * (b - a);
-
-  const PALE = 0xfff6dc;
-  const GOLD = 0xffd27a;
-  const SOUL = 0xbfe9ff;
-
-  const motes = Array.from({ length: 9 }, () => ({
-    x: rand(-0.35, 0.35), d: rand(0, 0.35), size: rand(1.8, 3.6),
-  }));
-
-  const { layer, glow, solid } = riderLayer(5);
-  solid.blendMode = PIXI.BLEND_MODES.ADD;
-
-  await animate(900, t => {
-    const b = boundsForSelector(sel);
-    if (!b) { layer.visible = false; return; }
-    layer.visible = true;
-    glow.clear(); solid.clear();
-
-    const cx = b.x + b.width / 2, cy = b.y + b.height / 2;
-    const r  = Math.min(b.width, b.height);
-    const base = cy + r * 0.42;
-
-    const gather = clamp01(t / 0.3);
-    const lift   = clamp01((t - 0.25) / 0.4);
-    const out    = 1 - clamp01((t - 0.7) / 0.3);
-
-    softGlow(glow, cx, base, r * 0.45 * gather, SOUL, 0.5 * gather * out);
-
-    for (let i = 0; i < 2; i++) {
-      const p = clamp01((lift - i * 0.18) / 0.82);
-      if (p <= 0 || p >= 1) continue;
-      solid.lineStyle(Math.max(1, r * 0.035 * (1 - p)), i ? GOLD : PALE, (1 - p) * 0.9 * out);
-      solid.drawEllipse(cx, base - p * r, r * (0.42 - 0.1 * p), r * (0.13 - 0.03 * p));
-      solid.lineStyle(0);
-    }
-
-    const halo = clamp01((t - 0.45) / 0.3);
-    if (halo > 0) {
-      softGlow(glow, cx, cy - r * 0.05, r * (0.22 + 0.12 * halo), PALE, 0.8 * halo * out);
-      solid.lineStyle(Math.max(1, r * 0.022), GOLD, 0.7 * halo * out);
-      solid.drawEllipse(cx, cy - r * 0.3, r * 0.26 * halo, r * 0.08 * halo);
-      solid.lineStyle(0);
-    }
-
-    for (const m of motes) {
-      const p = clamp01((t - 0.3 - m.d) / 0.5);
-      if (p <= 0 || p >= 1) continue;
-      softGlow(glow, cx + m.x * r, base - p * r * 1.1, m.size * (1 - p * 0.4), SOUL, (1 - p) * 0.9 * out);
-    }
-  });
-
-  layer.destroy({ children: true });
-}
-
 // ── sanctuary ─────────────────────────────────────────────────────────────────
 // Three wards already harden ON a unit (aegis, shield_ward,
 // blessing_of_protection), so this one SHELTERS it instead: a dome closes over
@@ -7576,7 +7511,6 @@ export const EFFECTS = {
   burn,
   poison,
   chill,
-  undying,
   sanctuary,
   infernal_mandate,
   blood_craze,

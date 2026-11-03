@@ -2435,7 +2435,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // counted allies die.
     { key: 'ward',        icon: 'iron_will.jpg',        en: 'Warded',          ru: 'Оберег',         n: c => num(c, '_ward_reduction'),     unit: 'pct' },
     { key: 'defend',      icon: 'fortify.jpg',          en: 'Defending',       ru: 'В защите',       n: c => num(c, 'defend_armor_bonus'),  unit: 'armor' },
-    { key: 'invulnerable',icon: 'undying.jpg',          en: 'Invulnerable',    ru: 'Неуязвим',       n: c => (st(c, '_invulnerable') ? 1 : 0) },
+    { key: 'invulnerable',icon: 'unbreakable.jpg',       en: 'Invulnerable',    ru: 'Неуязвим',       n: c => (st(c, '_invulnerable') ? 1 : 0) },
     { key: 'untargetable',icon: 'unity.jpg',            en: 'Cannot be targeted', ru: 'Нельзя выбрать целью', n: c => (st(c, '_untargetable') ? 1 : 0) },
     // Granted by an Inspiration ally standing directly above or below in the
     // same column (see data/formation_synergies.js). The number is the
