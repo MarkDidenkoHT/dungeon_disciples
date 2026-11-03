@@ -29,6 +29,7 @@ const COPIES = [
   ['data/units.js',          'data/units.js'],
   ['data/unit_abilities.js', 'data/unit_abilities.js'],
   ['data/items.js',          'data/items.js'],
+  ['data/callings.js',       'data/callings.js'],
   ['data/engravings.js',     'data/engravings.js'],
   ['data/embark.js',         'data/embark.js'],
   ['data/colossus.js',       'data/colossus.js'],
