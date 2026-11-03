@@ -88,7 +88,9 @@ const BUILDING_MAX_LEVELS = {
   supply_depot:     3,
   garrison_annex:   3,
   proving_grounds:  3,
-  training_grounds: 2,
+  // Levels 2 and 3 each open an equipment set (ITEM_SET_BUILDING below): the
+  // reason to raise this past level 1 is the loadouts, not the XP trickle.
+  training_grounds: 3,
   // The longest ladder in the castle, and deliberately so: one point of HP a
   // level is not worth hurrying, and five levels of an all-crystal bill is what
   // the endgame has to spend on.
@@ -145,6 +147,30 @@ function litaniesUnlocked(buildingsData) {
   return buildingLevel(buildingsData, LITANY_BUILDING) >= LITANY_BUILDING_LEVEL;
 }
 
+// Equipment loadouts — three whole-roster gear sets, switched from the row above
+// the castle grid. This is the Training Grounds' ladder: a built yard carries
+// Set 1, and each level after that opens one more. One set per level is also why
+// the yard has a third level at all.
+//
+// Set 1 is never locked, because it is what every player is already wearing: a
+// yard that has not been built yet still answers 1 here, so the row shows one
+// live button and two promises rather than nothing.
+const ITEM_SET_BUILDING = 'training_grounds';
+const ITEM_SET_COUNT = 3;
+
+// How many sets the player can switch between. Always at least 1.
+function itemSetsUnlocked(buildingsData) {
+  const level = buildingLevel(buildingsData, ITEM_SET_BUILDING);
+  return Math.max(1, Math.min(ITEM_SET_COUNT, level));
+}
+
+// The yard level a given set needs, for the message on a locked button. Set 1
+// needs nothing; set N needs level N.
+function itemSetLevel(set) {
+  const n = Number(set) || 1;
+  return n <= 1 ? 0 : n;
+}
+
 // Callings are the TEMPLE's ladder, and nothing to do with the litanies above.
 // The two systems read the same field (`roster.calling`, data/callings.js) and
 // that is the whole of their overlap: the Proving Grounds teaches a squad to
@@ -190,7 +216,7 @@ const BUILDING_EFFECTS = {
   // tier of spell research (see SPELL_TIERS in data/spells.js). The fallback
   // below keeps it at 20% rather than dropping it to zero.
   mage_guild:       { 1: { spell_cost_reduction_pct: 10 }, 2: { spell_cost_reduction_pct: 20 } },
-  training_grounds: { 1: { embark_xp_pct: 3 },  2: { embark_xp_pct: 5 } },
+  training_grounds: { 1: { embark_xp_pct: 3 },  2: { embark_xp_pct: 5 },  3: { embark_xp_pct: 7 } },
   // One HP a level. Small on purpose: it is on every unit, for ever, and it is
   // the only building effect a player cannot choose to leave at home, so +5 at
   // the top of the ladder has to be a nudge rather than a tier.
@@ -533,10 +559,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 500, Crystals_Life: 160 }, 3: { gold: 900, Crystals_Life: 290 } } },
       { id: 'training_grounds', label: 'Training Grounds', label_ru: 'Тренировочный двор', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         art: 'training_grounds',
-        desc: 'Every embark pays more XP: +3%, then +5%.',
-        desc_ru: 'Каждый поход приносит больше опыта: +3%, затем +5%.',
+        desc: 'Holds your gear loadouts: one more equipment set per level, to three. Every embark also pays more XP: +3%, +5%, then +7%.',
+        desc_ru: 'Хранит наборы снаряжения: по одному за уровень, до трёх. Каждый поход также приносит больше опыта: +3%, +5%, затем +7%.',
         cost: { gold: 150, Crystals_Life: 50 },
-        upgrade_costs: { 2: { gold: 350, Crystals_Life: 120 } } },
+        upgrade_costs: { 2: { gold: 350, Crystals_Life: 120 }, 3: { gold: 800, Crystals_Life: 260 } } },
       { id: 'temple', label: 'Temple of the Lion', label_ru: 'Храм Льва', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         art: 'temple',
         desc: 'Every unit you field gains +1 max HP per level, to +5. Paid for in gold and in all six crystals.',
@@ -717,10 +743,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 500, Crystals_Fire: 160 }, 3: { gold: 900, Crystals_Fire: 290 } } },
       { id: 'training_grounds', label: 'Training Grounds', label_ru: 'Тренировочный двор', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         art: 'training_grounds',
-        desc: 'Every embark pays more XP: +3%, then +5%.',
-        desc_ru: 'Каждый поход приносит больше опыта: +3%, затем +5%.',
+        desc: 'Holds your gear loadouts: one more equipment set per level, to three. Every embark also pays more XP: +3%, +5%, then +7%.',
+        desc_ru: 'Хранит наборы снаряжения: по одному за уровень, до трёх. Каждый поход также приносит больше опыта: +3%, +5%, затем +7%.',
         cost: { gold: 150, Crystals_Fire: 50 },
-        upgrade_costs: { 2: { gold: 350, Crystals_Fire: 120 } } },
+        upgrade_costs: { 2: { gold: 350, Crystals_Fire: 120 }, 3: { gold: 800, Crystals_Fire: 260 } } },
       { id: 'temple', label: 'Temple of Embers', label_ru: 'Храм Угольев', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         art: 'temple',
         desc: 'Every unit you field gains +1 max HP per level, to +5. Paid for in gold and in all six crystals.',
@@ -916,10 +942,10 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 500, Crystals_Death: 160 }, 3: { gold: 900, Crystals_Death: 290 } } },
       { id: 'training_grounds', label: 'Training Grounds', label_ru: 'Тренировочный двор', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         art: 'training_grounds',
-        desc: 'Every embark pays more XP: +3%, then +5%.',
-        desc_ru: 'Каждый поход приносит больше опыта: +3%, затем +5%.',
+        desc: 'Holds your gear loadouts: one more equipment set per level, to three. Every embark also pays more XP: +3%, +5%, then +7%.',
+        desc_ru: 'Хранит наборы снаряжения: по одному за уровень, до трёх. Каждый поход также приносит больше опыта: +3%, +5%, затем +7%.',
         cost: { gold: 150, Crystals_Death: 50 },
-        upgrade_costs: { 2: { gold: 350, Crystals_Death: 120 } } },
+        upgrade_costs: { 2: { gold: 350, Crystals_Death: 120 }, 3: { gold: 800, Crystals_Death: 260 } } },
       { id: 'temple', label: 'Temple of Sorrow', label_ru: 'Храм Скорби', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         art: 'temple',
         desc: 'Every unit you field gains +1 max HP per level, to +5. Paid for in gold and in all six crystals.',
@@ -1969,6 +1995,10 @@ module.exports = {
   litaniesUnlocked,
   LITANY_BUILDING,
   LITANY_BUILDING_LEVEL,
+  ITEM_SET_BUILDING,
+  ITEM_SET_COUNT,
+  itemSetsUnlocked,
+  itemSetLevel,
   CALLING_BUILDING,
   CALLING_BUILDING_LEVEL,
   CALLING_TIERS,

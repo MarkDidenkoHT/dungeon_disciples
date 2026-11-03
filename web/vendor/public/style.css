@@ -7019,6 +7019,20 @@ button.cost-bar-item:active { transform: scale(0.9); }
   border-color: var(--accent);
 }
 
+/* A set the Training Grounds has not opened yet. Dimmed rather than disabled:
+   it still takes the tap, and the tap is what says which level opens it — a
+   disabled button has no tooltip to offer on a phone. */
+.castle-set-btn--locked {
+  opacity: 0.45;
+}
+
+/* The switch re-equips the whole roster, so the row goes inert until the call
+   comes back rather than letting a second tap race the first. */
+.castle-set-row--busy {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
 .castle-grounds {
   display: flex;
   flex-direction: row;

@@ -100,10 +100,19 @@ const SLOT_FIXED_BUILDING = {
 // already maxed and its next level becomes unreachable in the UI.
 const BUILDING_MAX_LEVELS = {
   blacksmith: 2, infirmary: 3, crystal_mine: 2, mage_guild: 2, messenger_post: 4,
-  mercenary_hall: 3, garrison_annex: 3, proving_grounds: 3, training_grounds: 2,
+  mercenary_hall: 3, garrison_annex: 3, proving_grounds: 3, training_grounds: 3,
   supply_depot: 3, temple: 5,
 };
 const buildingMaxLevel = id => BUILDING_MAX_LEVELS[id] ?? 1;
+
+// Mirrors ITEM_SET_BUILDING / ITEM_SET_COUNT in data/buildings.js: three gear
+// loadouts for the whole roster, and the yard whose level opens them — set N
+// needs level N, so set 1 is free and the other two are what the yard's second
+// and third levels buy. The server gates the switch (POST /items/set); this
+// copy only decides which buttons the row OFFERS.
+const ITEM_SET_BUILDING = 'training_grounds';
+const ITEM_SET_COUNT    = 3;
+const ITEM_SET_NUMBERS  = [1, 2, 3];
 
 // Mirrors buildingCostForLevel in data/buildings.js: `cost` is the first level's
 // price, `upgrade_costs` overrides it per level after that.
@@ -188,9 +197,25 @@ const CASTLE_TEXT = {
   equip:       { en: 'Equip',                                 ru: 'Надеть' },
   unequip:     { en: 'Unequip',                               ru: 'Снять' },
   itemsTitle:  { en: 'Item',                                  ru: 'Предмет' },
-  // Formation presets. No logic behind them yet — the row is here to settle
-  // where it sits before the sets themselves are wired up.
+  // Equipment loadouts. One row for the whole roster: tapping a set re-equips
+  // every unit from that set at once, which is what makes swapping gear for a
+  // tourney's rules one action instead of twelve. Sets 2 and 3 are the Training
+  // Grounds' second and third levels.
   set:         { en: 'Set',                                   ru: 'Набор' },
+  setLocked:   { en: (n, l) => `Set ${n} opens at Training Grounds level ${n}. Yours is level ${l}.`,
+                 ru: (n, l) => `Набор ${n} открывается на ${n} уровне Тренировочного двора. У вас — ${l}.` },
+  // A set is a snapshot, and a unit it named can have been respecced or
+  // branched since. The server drops a pairing its own equip rules now refuse
+  // (POST /items/set) rather than worn, and this says so — an item quietly
+  // missing from a slot is the one outcome a loadout must not have.
+  setDropped:  { en: n => n === 1
+                   ? '1 item no longer fits the unit it was saved on and was left off.'
+                   : `${n} items no longer fit the units they were saved on and were left off.`,
+                 ru: n => n === 1
+                   ? '1 предмет больше не подходит своему бойцу и не надет.'
+                   : `${n} предметов больше не подходят своим бойцам и не надеты.` },
+  setNoYard:   { en: n => `Set ${n} opens at Training Grounds level ${n}. You have not built it yet.`,
+                 ru: n => `Набор ${n} открывается на ${n} уровне Тренировочного двора. Вы его ещё не построили.` },
   noItems:     { en: 'No items available.',                   ru: 'Нет доступных предметов.' },
   wrongFaction:{ en: 'Wrong faction',                         ru: 'Другая фракция' },
   // The hero's active slot. A hero has no unit ability — it acts by casting —
@@ -333,10 +358,10 @@ export function renderCastle(root, params = {}) {
                 <!-- The row belongs to THIS layer, stacked above the grid: it
                      is about the units, so it rides with them rather than
                      hanging over the calling page and the upgrade columns.
-                     Inert for now — no handler, no active state. -->
+                     The active / locked state is painted by renderItemSets. -->
                 <div class="castle-layer-stack">
                   <div class="castle-set-row" id="castle-set-row">
-                    ${[1, 2, 3].map(n => `
+                    ${ITEM_SET_NUMBERS.map(n => `
                       <button class="castle-set-btn" type="button" data-set="${n}">
                         ${CASTLE_TEXT.set[lang0]} ${n}
                       </button>`).join('')}
@@ -445,6 +470,14 @@ export function renderCastle(root, params = {}) {
   // they vanish from battle prep and would otherwise just be missing.
   let errandAwayIds = new Set();
 
+  // Which gear loadout the whole roster is wearing, and how many the Training
+  // Grounds has opened. Both come from /bootstrap — the items it sends already
+  // hold the live set, so these only decide what the row looks like.
+  let itemSetActive  = 1;
+  let itemSetsOpen   = 1;
+  // One switch at a time: the row re-equips the whole roster, so a second tap
+  // mid-flight would race the first.
+  let itemSetBusy    = false;
   let favorRemaining = 0;
   let favorSeconds   = 15;
 
@@ -488,11 +521,14 @@ export function renderCastle(root, params = {}) {
     itemsCache         = boot.items || [];
     favorRemaining     = boot.favor?.remaining ?? 0;
     favorSeconds       = boot.favor?.seconds ?? favorSeconds;
+    itemSetActive      = boot.item_sets?.active ?? itemSetActive;
+    itemSetsOpen       = boot.item_sets?.unlocked ?? itemSetsOpen;
 
     renderBuildings();
     // After the first render, so the arrows have nodes to reveal. Idempotent —
     // renderBuildings re-runs on every refresh, this does not.
     attachLayerControls();
+    attachItemSetControls();
 
     // The build-cost strip is built here rather than when the first slot sheet
     // opens, so opening one reveals a row that is already mounted. It carries no
@@ -541,6 +577,8 @@ export function renderCastle(root, params = {}) {
     itemsCache       = boot.items || [];
     favorRemaining   = boot.favor?.remaining ?? favorRemaining;
     favorSeconds     = boot.favor?.seconds ?? favorSeconds;
+    itemSetActive    = boot.item_sets?.active ?? itemSetActive;
+    itemSetsOpen     = boot.item_sets?.unlocked ?? itemSetsOpen;
     renderBuildings();
     refreshResourceBar(player).catch(() => {});
   }
@@ -1332,6 +1370,94 @@ export function renderCastle(root, params = {}) {
     applyLayer();
   }
 
+  // ── Equipment loadouts ────────────────────────────────────────────────────
+  // The row above the grid. A set is the WHOLE roster's gear, not one unit's:
+  // tapping Set 2 re-equips every unit from that set in one call, which is the
+  // point of it — a tourney's rules can bar half a loadout, and swapping twelve
+  // units by hand before every one of them is the chore this removes.
+  //
+  // The live set's assignments ARE `items.equipped_by`, so nothing else on this
+  // screen needs to know about sets: after a switch the items list is simply a
+  // different list, and renderBuildings draws it the way it always did.
+
+  // The yard's level, which is what opens sets 2 and 3.
+  function itemSetYardLevel() {
+    return buildingLevelIn(structuresRecord?.buildings_data, ITEM_SET_BUILDING);
+  }
+
+  // BOUND ONCE, for the same reason the layer arrows are: load() runs again on
+  // every visit, and a second set of listeners would fire the switch twice.
+  function attachItemSetControls() {
+    const row = root.querySelector('#castle-set-row');
+    if (!row || row.dataset.setBound) return;
+    row.dataset.setBound = '1';
+    row.addEventListener('click', e => {
+      const btn = e.target.closest('.castle-set-btn');
+      if (!btn) return;
+      switchItemSet(Number(btn.dataset.set));
+    });
+  }
+
+  // Re-run from renderBuildings, so the row follows a yard upgrade without a
+  // path of its own.
+  function renderItemSets() {
+    const row = root.querySelector('#castle-set-row');
+    if (!row) return;
+    const level = itemSetYardLevel();
+    row.querySelectorAll('.castle-set-btn').forEach(btn => {
+      const n      = Number(btn.dataset.set);
+      // The live set is never drawn locked, even if the yard has since been
+      // demolished below it: the units ARE wearing it, and a row that denied
+      // that would be lying about the gear on screen.
+      const locked = n > itemSetsOpen && n !== itemSetActive;
+      btn.classList.toggle('castle-set-btn--active', n === itemSetActive);
+      btn.classList.toggle('castle-set-btn--locked', locked);
+      btn.title = locked
+        ? (level > 0 ? CASTLE_TEXT.setLocked[castleLang](n, level)
+                     : CASTLE_TEXT.setNoYard[castleLang](n))
+        : '';
+    });
+    row.classList.toggle('castle-set-row--busy', itemSetBusy);
+  }
+
+  // A locked set EXPLAINS itself rather than doing nothing: a disabled button
+  // has no tooltip to offer on a phone, so the tap is what teaches where the
+  // sets come from.
+  async function switchItemSet(set) {
+    if (!Number.isInteger(set) || set < 1 || set > ITEM_SET_COUNT) return;
+    if (itemSetBusy || set === itemSetActive) return;
+    if (set > itemSetsOpen) {
+      const level = itemSetYardLevel();
+      alert(level > 0 ? CASTLE_TEXT.setLocked[castleLang](set, level)
+                      : CASTLE_TEXT.setNoYard[castleLang](set));
+      return;
+    }
+    itemSetBusy = true;
+    renderItemSets();
+    try {
+      const res = await api('/items/set', { chat_id: player.chat_id, set });
+      itemSetActive = res.item_set ?? set;
+      itemSetsOpen  = res.item_sets_unlocked ?? itemSetsOpen;
+      // The response carries the whole items list as it stands AFTER the
+      // switch, so the cache is patched rather than re-read: a /bootstrap here
+      // can answer from a replica that has not caught up and would redraw the
+      // roster in the gear it was wearing a moment ago.
+      itemsCache = res.items || [];
+      bootstrapCache.patch(cur => ({
+        items:     itemsCache,
+        item_sets: { ...(cur.item_sets || {}), active: itemSetActive, unlocked: itemSetsOpen },
+      }));
+      if (res.dropped > 0) alert(CASTLE_TEXT.setDropped[castleLang](res.dropped));
+    } catch (err) {
+      alert(err?.message || String(err));
+    } finally {
+      itemSetBusy = false;
+      // Whatever happened, the row and the cards are drawn from the state that
+      // is now true rather than from the tap.
+      renderBuildings();
+    }
+  }
+
   // ── Bulk restore, in the resource strip ───────────────────────────────────
   // Re-evaluated on every render, so the buttons follow the roster: raise the
   // fallen and the pair collapses to a single Heal all; heal everyone and the
@@ -1398,6 +1524,7 @@ export function renderCastle(root, params = {}) {
     // markup, so bail rather than throw on a detached / replaced root.
     if (!root.isConnected || !structuresRecord) return;
     renderRestoreControls();
+    renderItemSets();
     const centerSlot = root.querySelector('#center-slot');
     const outerRing  = root.querySelector('#outer-ring');
     if (!centerSlot || !outerRing) return;

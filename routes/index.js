@@ -10,7 +10,7 @@ const { REGIONS, getEncounter, getLevelRewards, getFirstClearTokens, TOME_XP, QU
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { getRespecOptions, getCrossBranchRespecOptions, FACTION_CRYSTAL } = require('../data/buildings');
-const { craftingUnlocked, engravingUnlocked, litaniesUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, DEFAULT_BUILDINGS, MERCENARY_BUILDINGS, SUPPLY_ITEM_TYPE, SUPPLY_ITEMS, SUPPLY_TICK_MINUTES, EMBARK_SUPPLY_COST, maxSupplies, supplyItemName, getUnitHpBonus, callingChangeUnlocked, callingTiersOpen, CALLING_BUILDING, CALLING_BUILDING_LEVEL, CALLING_TIERS } = require('../data/buildings');
+const { craftingUnlocked, engravingUnlocked, litaniesUnlocked, BUILDING_POOLS, SLOT_CATEGORIES, SLOT_LAYERS, SLOT_UNLOCKS, SLOT_FIXED_BUILDING, slotLockedBy, UNIT_UPGRADE_PATHS, HERO_MAX_LEVEL, THRONE_MAX_LEVEL, buildingLevel, THRONE_UPGRADE_COSTS, buildingMaxLevel, buildingCostForLevel, maxUnitTier, getSpellCostReductionPct, getEmbarkBuildingBonuses, getBuildingDef, upgradeReaches, resolveUpgradeBranch, upgradeBranchCandidates, emptyStructures, DEFAULT_BUILDINGS, MERCENARY_BUILDINGS, SUPPLY_ITEM_TYPE, SUPPLY_ITEMS, SUPPLY_TICK_MINUTES, EMBARK_SUPPLY_COST, maxSupplies, supplyItemName, getUnitHpBonus, callingChangeUnlocked, callingTiersOpen, CALLING_BUILDING, CALLING_BUILDING_LEVEL, CALLING_TIERS, ITEM_SET_BUILDING, ITEM_SET_COUNT, itemSetsUnlocked, itemSetLevel } = require('../data/buildings');
 const { BattleEngine } = require('../utils/battle-engine');
 const ERR = require('../data/errands');
 const {
@@ -443,10 +443,66 @@ async function getItemsByRosterIds(rosterIds) {
   return map;
 }
 
+// ── Equipment loadouts (sql/014_item_loadout_sets.sql) ──────────────────────
+// `items.equipped_by` is the LIVE assignment and nothing else here changed:
+// every reader of a worn item — the battle army, army power, the PvP view, the
+// castle card — still derives from that one column. Beside it sit three
+// `equipped_set_N` columns, one per set, and `players.item_set` names which one
+// is live. Equipping writes the live column AND the live set's column together,
+// so the two can never drift; switching sets copies a set's column back over
+// `equipped_by` (POST /items/set, apply_item_set).
+//
+// Only the LIVE set is ever edited. The other two are frozen snapshots, which is
+// what keeps "one item on one unit" true in every set without a per-set check.
+const ITEM_SET_MIN = 1;
+
+function itemSetColumn(set) {
+  return `equipped_set_${clampItemSet(set)}`;
+}
+
+// Reported to the client as-is rather than clamped against what the Training
+// Grounds currently opens: a yard demolished back to level 1 leaves the roster
+// still WEARING set 3, and saying "Set 1" then would draw a row that disagrees
+// with the gear on the units. The row marks the live set live whatever its
+// number, and tapping Set 1 is the way back.
+function clampItemSet(set) {
+  const n = Number(set);
+  if (!Number.isFinite(n)) return ITEM_SET_MIN;
+  return Math.min(ITEM_SET_COUNT, Math.max(ITEM_SET_MIN, Math.trunc(n)));
+}
+
 // Unequipping only clears the link. Item stats are never baked into the roster
 // row — they are derived from the worn item wherever the unit is used.
-async function unequipItemFromRosterUnit(item, rosterId) {
-  await supabase(`/items?id=eq.${item.id}`, { method: 'PATCH', body: JSON.stringify({ equipped_by: null }) });
+//
+// The live set's column goes with it: the player is editing that set, and a
+// cleared slot that stayed recorded there would come back the next time the set
+// was switched away and back again.
+async function unequipItemFromRosterUnit(item, rosterId, activeSet = ITEM_SET_MIN) {
+  const body = { equipped_by: null, [itemSetColumn(activeSet)]: null };
+  await supabase(`/items?id=eq.${item.id}`, { method: 'PATCH', body: JSON.stringify(body) });
+}
+
+// A unit is GONE — demolished out of its slot. Every set has to let go of it,
+// not just the live one, or switching sets later would hand its gear back to a
+// roster id that no longer exists, which reads downstream as an item worn by
+// nobody. Keyed on the item rather than the unit so the caller's own list of
+// what that unit had is what gets cleared.
+async function detachItemFromDeletedRosterUnit(itemId) {
+  await supabase(`/items?id=eq.${itemId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      equipped_by: null, equipped_set_1: null, equipped_set_2: null, equipped_set_3: null,
+    }),
+  });
+}
+
+// Every set that names this unit, not only the live one. Used when a unit is
+// about to be deleted.
+async function itemsHeldByRosterUnit(rosterId) {
+  const id = encodeURIComponent(rosterId);
+  const or = ['equipped_by', 'equipped_set_1', 'equipped_set_2', 'equipped_set_3']
+    .map(col => `${col}.eq.${id}`).join(',');
+  return fetchItems(`/items?or=(${or})&select=id`);
 }
 
 async function getPlayerByChatId(chat_id) {
@@ -455,7 +511,7 @@ async function getPlayerByChatId(chat_id) {
   // `adds_daily_view` are what /bootstrap needs to report the remaining daily
   // favors — the day rollover is computed from the player's local date. The same
   // timezone decides when `daily_tasks` rolls over.
-  const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,faction,progress,timezone,adds_daily_view,daily_tasks,quests&limit=1`);
+  const rows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,faction,progress,timezone,adds_daily_view,daily_tasks,quests,item_set&limit=1`);
   return rows[0] || null;
 }
 
@@ -1844,6 +1900,15 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       // Embark progress rides along so the roster's craft catalog can gate
       // blueprints (data/items.js `requires`) without a second round-trip.
       progress: player?.progress || {},
+      // Which gear loadout is live and how many the Training Grounds has
+      // opened. The castle's Set row draws straight off this: the items above
+      // already hold the live set, so the row needs only the label state.
+      item_sets: {
+        active:   clampItemSet(player?.item_set),
+        unlocked: itemSetsUnlocked(structRows[0]?.buildings_data),
+        count:    ITEM_SET_COUNT,
+        building: ITEM_SET_BUILDING,
+      },
       buildings: {
         // The battle-prep preview uses this same server-side gate for advanced
         // litanies. The opening formation bonus is always available.
@@ -4475,10 +4540,12 @@ router.post('/structures/clear', requireAuth, async (req, res) => {
     const doomed = rosterRows.filter(r => r.unit_data?.building_slot === slot && r.is_hero !== true);
 
     // Strip gear first: an item whose owner is deleted would otherwise stay
-    // flagged as equipped by a roster id that no longer exists.
+    // flagged as equipped by a roster id that no longer exists. Every loadout
+    // set is cleared, not just the live one — a set that still named this unit
+    // would hand its gear back to a ghost the next time it was switched to.
     for (const entry of doomed) {
-      const items = await fetchItems(`/items?equipped_by=eq.${encodeURIComponent(entry.id)}&select=id`);
-      for (const item of items) await unequipItemFromRosterUnit(item, entry.id);
+      const items = await itemsHeldByRosterUnit(entry.id);
+      for (const item of items) await detachItemFromDeletedRosterUnit(item.id);
       await supabase(`/roster?id=eq.${encodeURIComponent(entry.id)}`, { method: 'DELETE' });
     }
 
@@ -7677,21 +7744,28 @@ router.post('/items/equip', requireAuth, async (req, res) => {
       return res.status(400).json({ error: equipBlock.reason, code: equipBlock.code });
     }
 
+    // Which loadout the player is editing. Everything below touches the live
+    // column and this set's column together; the other two sets are untouched.
+    const activeSet = clampItemSet(player.item_set);
+
     // If this item is currently equipped by a different unit, unequip it there first.
     if (item.equipped_by && String(item.equipped_by) !== String(roster_id)) {
-      await unequipItemFromRosterUnit(item, item.equipped_by);
+      await unequipItemFromRosterUnit(item, item.equipped_by, activeSet);
     }
 
     // Each character can only equip one item at a time - unequip whatever this unit already has on.
     const currentlyEquipped = await fetchItems(`/items?equipped_by=eq.${encodeURIComponent(roster_id)}&select=id,item_stats`);
     for (const old of currentlyEquipped) {
       if (String(old.id) === String(item_id)) continue;
-      await unequipItemFromRosterUnit(old, roster_id);
+      await unequipItemFromRosterUnit(old, roster_id, activeSet);
     }
 
     // Equipping only records the link. The roster row keeps the unit's BASE
     // stats; every consumer derives base + item via applyItemModifiers.
-    await supabase(`/items?id=eq.${item_id}`, { method: 'PATCH', body: JSON.stringify({ equipped_by: roster_id }) });
+    await supabase(`/items?id=eq.${item_id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ equipped_by: roster_id, [itemSetColumn(activeSet)]: roster_id }),
+    });
 
     const [updatedRoster, readItems] = await Promise.all([
       supabase(`/roster?id=eq.${roster_id}&select=id,chat_id,unit_data,is_hero,engraving,calling,devotion`),
@@ -7729,7 +7803,7 @@ router.post('/items/unequip', requireAuth, async (req, res) => {
     const item = itemRows[0];
     if (!item.equipped_by) return res.status(400).json({ error: 'Item is not equipped' });
 
-    await unequipItemFromRosterUnit(item, item.equipped_by);
+    await unequipItemFromRosterUnit(item, item.equipped_by, clampItemSet(player.item_set));
 
     const [updatedRoster, readItems] = await Promise.all([
       supabase(`/roster?id=eq.${item.equipped_by}&select=id,chat_id,unit_data,is_hero,engraving,calling,devotion`),
@@ -7744,6 +7818,96 @@ router.post('/items/unequip', requireAuth, async (req, res) => {
     );
 
     res.json({ success: true, roster: updatedRoster[0], items });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// Switches the whole roster to another loadout. One call for the whole party —
+// a set is global, not per unit, which is the point of it: the player taps Set 2
+// before a tourney with its own rules and every unit is wearing that set's gear.
+//
+// The copy itself is one statement in the database (apply_item_set), so there is
+// no window in which half the roster has switched. The level gate is checked
+// here because the Training Grounds is what opens sets 2 and 3.
+router.post('/items/set', requireAuth, async (req, res) => {
+  const { chat_id, set } = req.body;
+  if (!chat_id || set == null) return res.status(400).json({ error: 'chat_id and set required' });
+  const wanted = Number(set);
+  if (!Number.isInteger(wanted) || wanted < 1 || wanted > ITEM_SET_COUNT) {
+    return res.status(400).json({ error: `set must be between 1 and ${ITEM_SET_COUNT}` });
+  }
+  try {
+    const player = await getPlayerByChatId(chat_id);
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const structRows = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+    const unlocked   = itemSetsUnlocked(structRows[0]?.buildings_data);
+    if (wanted > unlocked) {
+      return res.status(400).json({
+        error: `This set opens at Training Grounds level ${itemSetLevel(wanted)}`,
+        code:  'item_set_locked',
+        needs_level: itemSetLevel(wanted),
+        building:    ITEM_SET_BUILDING,
+      });
+    }
+
+    await rpc('apply_item_set', { p_player_id: String(player.id), p_set: wanted });
+
+    // Read back AFTER the switch, and reconcile the same way /items/equip does:
+    // this SELECT can answer from a replica that has not caught up, which would
+    // hand the client the old set and leave the castle drawing stats nobody is
+    // wearing. The set columns are what the switch copied from, so they are the
+    // answer regardless of what `equipped_by` comes back as.
+    const setColumn = itemSetColumn(wanted);
+    const [rosterRows, readItems] = await Promise.all([
+      supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&select=id,unit_data`),
+      fetchItems(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by,equipped_set_1,equipped_set_2,equipped_set_3`),
+    ]);
+
+    // A set is a snapshot, and the roster it was taken of can have moved on:
+    // the unit may have been respecced into a sibling or levelled into a branch
+    // with other tags since. Switching copies assignments wholesale, which is
+    // the one way into this game's equipment rules without passing them — so
+    // the pairings are re-checked here against the SAME rules /items/equip
+    // enforces, and a pairing that is no longer legal is dropped from the set
+    // rather than worn.
+    const rosterById = new Map((rosterRows || []).map(r => [String(r.id), r]));
+    const dropped = new Set();
+    for (const row of Array.isArray(readItems) ? readItems : []) {
+      const holder = row[setColumn];
+      if (holder == null) continue;
+      const entry = rosterById.get(String(holder));
+      const stats = row.item_stats || {};
+      const unitDef  = entry ? getUnitByDataId(entry.unit_data?.unit_id) : null;
+      const unitTags = (unitDef?.tags || []).filter(Boolean);
+      const illegal = !entry
+        || (stats.faction && stats.faction !== player.faction)
+        || missingRequiredTags(stats.tag_required, unitTags).length > 0
+        || Boolean(getEquipBlock(stats, unitDef, UNIT_ABILITIES));
+      if (illegal) dropped.add(String(row.id));
+    }
+    for (const id of dropped) {
+      await supabase(`/items?id=eq.${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ equipped_by: null, [setColumn]: null }),
+      });
+    }
+
+    const items = (Array.isArray(readItems) ? readItems : []).map(r => {
+      const { equipped_set_1, equipped_set_2, equipped_set_3, ...rest } = r;
+      return { ...rest, equipped_by: dropped.has(String(r.id)) ? null : (r[setColumn] ?? null) };
+    });
+
+    res.json({
+      success: true,
+      item_set: wanted,
+      item_sets_unlocked: unlocked,
+      // What the set could not put back on, so the client can say so rather
+      // than leaving the player to notice an empty slot.
+      dropped: dropped.size,
+      items,
+    });
   } catch (err) {
     serverError(res, err);
   }

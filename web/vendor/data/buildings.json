@@ -1621,8 +1621,8 @@
           "tier": 1,
           "upgrades": [],
           "art": "training_grounds",
-          "desc": "Every embark pays more XP: +3%, then +5%.",
-          "desc_ru": "Каждый поход приносит больше опыта: +3%, затем +5%.",
+          "desc": "Holds your gear loadouts: one more equipment set per level, to three. Every embark also pays more XP: +3%, +5%, then +7%.",
+          "desc_ru": "Хранит наборы снаряжения: по одному за уровень, до трёх. Каждый поход также приносит больше опыта: +3%, +5%, затем +7%.",
           "cost": {
             "gold": 150,
             "Crystals_Life": 50
@@ -1631,6 +1631,10 @@
             "2": {
               "gold": 350,
               "Crystals_Life": 120
+            },
+            "3": {
+              "gold": 800,
+              "Crystals_Life": 260
             }
           }
         },
@@ -3069,8 +3073,8 @@
           "tier": 1,
           "upgrades": [],
           "art": "training_grounds",
-          "desc": "Every embark pays more XP: +3%, then +5%.",
-          "desc_ru": "Каждый поход приносит больше опыта: +3%, затем +5%.",
+          "desc": "Holds your gear loadouts: one more equipment set per level, to three. Every embark also pays more XP: +3%, +5%, then +7%.",
+          "desc_ru": "Хранит наборы снаряжения: по одному за уровень, до трёх. Каждый поход также приносит больше опыта: +3%, +5%, затем +7%.",
           "cost": {
             "gold": 150,
             "Crystals_Fire": 50
@@ -3079,6 +3083,10 @@
             "2": {
               "gold": 350,
               "Crystals_Fire": 120
+            },
+            "3": {
+              "gold": 800,
+              "Crystals_Fire": 260
             }
           }
         },
@@ -4734,8 +4742,8 @@
           "tier": 1,
           "upgrades": [],
           "art": "training_grounds",
-          "desc": "Every embark pays more XP: +3%, then +5%.",
-          "desc_ru": "Каждый поход приносит больше опыта: +3%, затем +5%.",
+          "desc": "Holds your gear loadouts: one more equipment set per level, to three. Every embark also pays more XP: +3%, +5%, then +7%.",
+          "desc_ru": "Хранит наборы снаряжения: по одному за уровень, до трёх. Каждый поход также приносит больше опыта: +3%, +5%, затем +7%.",
           "cost": {
             "gold": 150,
             "Crystals_Death": 50
@@ -4744,6 +4752,10 @@
             "2": {
               "gold": 350,
               "Crystals_Death": 120
+            },
+            "3": {
+              "gold": 800,
+              "Crystals_Death": 260
             }
           }
         },
@@ -4911,7 +4923,7 @@
     "supply_depot": 3,
     "garrison_annex": 3,
     "proving_grounds": 3,
-    "training_grounds": 2,
+    "training_grounds": 3,
     "temple": 5
   },
   "UNIT_UPGRADE_PATHS": {
