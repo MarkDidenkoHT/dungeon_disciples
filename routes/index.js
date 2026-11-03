@@ -199,25 +199,25 @@ async function fetchItems(path) {
 //   one small dwelling  40 gold + 20 crystals
 //   throne level 2     150 gold   <- gates the hero's first level-up
 // 200 gold covered the dwellings and left the player 50 short of the throne,
-// stuck farming 15-gold level-1 runs before their hero could advance. 300 covers
+// stuck farming 15-gold level-1 runs before their hero could advance. 350 covers
 // the whole opening with a little slack.
 // The faction's own crystal is topped up to STARTING_FACTION_CRYSTAL when the
 // faction is picked (this table is written before that choice exists).
 // 60 covered the worst case exactly: a large and a small dwelling whose units
 // BOTH use the faction's own element, so the faction and element halves of the
 // cost merge (30 + 30). Exactly-enough left no room to make a single different
-// choice, so it is 80 — the same worst case plus slack. 25 of every other
+// choice, so it is 105 — the same worst case plus slack. 75 of every other
 // crystal covers the same worst case for an element that is not the faction's
-// (15 + 10).
-const STARTING_FACTION_CRYSTAL = 80;
+// (15 + 10) with room to spare.
+const STARTING_FACTION_CRYSTAL = 105;
 const STARTING_RESOURCES = [
-  { item_type: 'resource', item: 'Gold',            amount: 300 },
-  { item_type: 'resource', item: 'Crystals_Life',   amount: 50  },
-  { item_type: 'resource', item: 'Crystals_Fire',   amount: 50  },
-  { item_type: 'resource', item: 'Crystals_Death',  amount: 50  },
-  { item_type: 'resource', item: 'Crystals_Nature', amount: 50  },
-  { item_type: 'resource', item: 'Crystals_Frost',  amount: 50  },
-  { item_type: 'resource', item: 'Crystals_Air',    amount: 50  },
+  { item_type: 'resource', item: 'Gold',            amount: 350 },
+  { item_type: 'resource', item: 'Crystals_Life',   amount: 75  },
+  { item_type: 'resource', item: 'Crystals_Fire',   amount: 75  },
+  { item_type: 'resource', item: 'Crystals_Death',  amount: 75  },
+  { item_type: 'resource', item: 'Crystals_Nature', amount: 75  },
+  { item_type: 'resource', item: 'Crystals_Frost',  amount: 75  },
+  { item_type: 'resource', item: 'Crystals_Air',    amount: 75  },
   // One Crossroad Sigil to start with. A player who picks the wrong branch on
   // their very first fork should not have to clear a whole region before they
   // are allowed to change their mind — the first mistake is the one made with

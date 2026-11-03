@@ -32,11 +32,11 @@ const TUTORIAL_STEPS = {
   hero_intro: {
     en: {
       title: 'Welcome, Ruler',
-      text: 'The throne at the centre is yours, and the figure on it is your hero — the one unit that fights in every battle and can never be lost. Tap the throne to look them over.',
+      text: 'This is your hero - the one unit that fights in every battle and can never be lost. Tap to look them over.',
     },
     ru: {
       title: 'Добро пожаловать, Правитель',
-      text: 'Трон в центре — ваш, а на нём ваш герой: единственный боец, который участвует в каждом бою и которого нельзя потерять. Коснитесь трона, чтобы рассмотреть его.',
+      text: 'Это ваш герой — единственный боец, который участвует в каждом бою и которого нельзя потерять. Коснитесь, чтобы рассмотреть его.',
     },
   },
   // THE FIRST BUILD, IN THREE BEATS. This used to be one step: a ring on an
@@ -85,12 +85,12 @@ const TUTORIAL_STEPS = {
   // not. Every one of these now plays out on a castle slot.
   roster_intro: {
     en: {
-      title: 'Your Troops',
-      text: 'Every building houses one unit. Tap this one to inspect its unit — check its stats and abilities, upgrade it, and equip it with items.',
+      title: 'Equip the item',
+      text: 'Tap this one to inspect unit and equip the item we just crafted.',
     },
     ru: {
-      title: 'Ваши войска',
-      text: 'В каждом здании живёт один боец. Коснитесь этого здания, чтобы осмотреть его бойца: характеристики и способности, улучшение и снаряжение.',
+      title: 'Снарядите предмет',
+      text: 'Коснитесь этого здания, чтобы осмотреть бойца и снарядить его предметом, который мы только что выковали.',
     },
   },
   roster_equip_slot: {
