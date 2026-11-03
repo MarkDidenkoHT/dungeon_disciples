@@ -3,7 +3,7 @@ import { setMusicEnabled } from '../music.js';
 import { setSfxEnabled } from '../sfx.js';
 import { CONSENT_VERSION, applyAnalyticsConsent } from '../analytics.js';
 import { saveLanguageCache } from './loading.js';
-import { CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, getSheetBody } from '../utils.js';
+import { CRYSTAL_ICONS, GOLD_ICON, openSheet, closeSheet, getSheetBody, playPageTurnSound } from '../utils.js';
 import { assetUrl } from '../asset_base.js';
 
 // A name goes straight into a value="" attribute, and it is player-supplied.
@@ -18,6 +18,23 @@ export function lang(player) {
 
 const UI_TEXT = {
   header:        { en: 'Settings', ru: 'Настройки' },
+  faq:           { en: 'How the game works', ru: 'Как устроена игра' },
+  faqAria:       { en: 'How the game works', ru: 'Как устроена игра' },
+  faqIntro:      { en: 'A quick guide to the main systems and how they fit together.', ru: 'Краткий обзор основных систем и их взаимосвязи.' },
+  faqCastleQ:    { en: 'What is the castle for?', ru: 'Для чего нужен замок?' },
+  faqCastleA:    { en: 'Your castle is the hub for your faction. Build and improve its structures to develop your account and open access to more activities and services.', ru: 'Замок — центр вашей фракции. Стройте и улучшайте здания, чтобы развивать аккаунт и открывать новые занятия и возможности.' },
+  faqUnitsQ:     { en: 'How do I build a strong army?', ru: 'Как собрать сильный отряд?' },
+  faqUnitsA:     { en: 'Grow your roster and arrange units in a formation before a fight. Their roles, stats, abilities and positions work together, so a balanced team can be stronger than a group of powerful units without a plan.', ru: 'Развивайте отряд и расставляйте бойцов перед боем. Роли, характеристики, способности и позиции работают вместе, поэтому сбалансированный состав может быть сильнее отряда мощных бойцов без плана.' },
+  faqBattleQ:    { en: 'How do battles work?', ru: 'Как проходят бои?' },
+  faqBattleA:    { en: 'Choose an activity and prepare your formation before entering battle. Units use their stats and abilities during the fight; your preparation and available spells help shape the outcome.', ru: 'Выберите режим и подготовьте построение перед боем. Во время сражения бойцы используют характеристики и способности; на исход влияют ваша подготовка и доступные заклинания.' },
+  faqProgressQ:  { en: 'How does progression work?', ru: 'Как работает развитие?' },
+  faqProgressA:  { en: 'Battles and other activities help your roster and faction progress. Spend the resources you earn on the systems that matter to your plan: buildings, units, equipment and other upgrades.', ru: 'Бои и другие занятия помогают развивать отряд и фракцию. Тратьте полученные ресурсы на важные для вашего плана системы: здания, бойцов, снаряжение и другие улучшения.' },
+  faqItemsQ:     { en: 'What do items and engravings do?', ru: 'Для чего нужны предметы и гравировки?' },
+  faqItemsA:     { en: 'Items improve a unit through its equipment slot. The Blacksmith lets you craft and work with equipment, while engravings provide another way to customize a unit.', ru: 'Предметы усиливают бойца через слот снаряжения. В кузнице можно создавать и обрабатывать снаряжение, а гравировки дают ещё один способ настроить бойца.' },
+  faqSpellsQ:    { en: 'How do spells fit in?', ru: 'Как использовать заклинания?' },
+  faqSpellsA:    { en: 'The Spell Tome is where you research and review spells. In battle, spells give you an extra tactical tool; what you can use depends on your progression and the power available in that fight.', ru: 'В фолианте можно изучать и просматривать заклинания. В бою они дают дополнительный тактический инструмент; доступные варианты зависят от вашего развития и силы в сражении.' },
+  faqOtherQ:     { en: 'What are errands and daily tasks?', ru: 'Что такое поручения и ежедневные задания?' },
+  faqOtherA:     { en: 'Errands and daily tasks are optional activities that reward you for taking part in different parts of the game. Check their screens for current objectives, timers and rewards.', ru: 'Поручения и ежедневные задания — дополнительные занятия с наградами за участие в разных системах игры. Актуальные цели, таймеры и награды указаны на соответствующих экранах.' },
   sfx:           { en: 'Sound Effects', ru: 'Звуковые эффекты' },
   music:         { en: 'Music', ru: 'Музыка' },
   notifications: { en: 'Notifications', ru: 'Уведомления' },
@@ -111,7 +128,13 @@ export function renderSettings(root, params = {}) {
 
   root.innerHTML = `
     <div class="screen screen-settings">
-      <main class="settings-main">
+      <div class="tome-layers settings-layers">
+        <button class="tome-layer-arrow tome-layer-arrow--prev" id="settings-layer-prev"
+                type="button" aria-label="${UI_TEXT.header[L]}" disabled><span>&lsaquo;</span></button>
+        <div class="tome-layer-viewport">
+          <div class="tome-layer-track" id="settings-layer-track">
+            <section class="tome-layer" data-layer="1" aria-label="${UI_TEXT.header[L]}">
+              <main class="settings-main">
         <!-- Borrows the promo box's layout: an input, a button beside it and a
              fixed-height message line. Same shape, so no styles of its own. -->
         <div class="promo-box">
@@ -208,9 +231,64 @@ export function renderSettings(root, params = {}) {
           <button class="settings-reset-btn" id="reset-progress-btn">${UI_TEXT.resetBtn[L]}</button>
           <span class="settings-reset-note">${UI_TEXT.resetNote[L]}</span>
         </div>
-      </main>
+              </main>
+            </section>
+            <section class="tome-layer" data-layer="2" aria-label="${UI_TEXT.faq[L]}">
+              <main class="settings-faq">
+                <h1 class="settings-faq-title">${UI_TEXT.faq[L]}</h1>
+                <p class="settings-faq-intro">${UI_TEXT.faqIntro[L]}</p>
+                ${[
+                  ['faqCastleQ', 'faqCastleA'],
+                  ['faqUnitsQ', 'faqUnitsA'],
+                  ['faqBattleQ', 'faqBattleA'],
+                  ['faqProgressQ', 'faqProgressA'],
+                  ['faqItemsQ', 'faqItemsA'],
+                  ['faqSpellsQ', 'faqSpellsA'],
+                  ['faqOtherQ', 'faqOtherA'],
+                ].map(([question, answer]) => `
+                  <article class="settings-faq-entry">
+                    <h2>${UI_TEXT[question][L]}</h2>
+                    <p>${UI_TEXT[answer][L]}</p>
+                  </article>
+                `).join('')}
+              </main>
+            </section>
+          </div>
+        </div>
+        <button class="tome-layer-arrow tome-layer-arrow--next" id="settings-layer-next"
+                type="button" aria-label="${UI_TEXT.faqAria[L]}"><span>&rsaquo;</span></button>
+      </div>
     </div>
   `;
+
+  let settingsLayer = 1;
+  function applySettingsLayer() {
+    const track = root.querySelector('#settings-layer-track');
+    track.style.transform = `translateX(-${(settingsLayer - 1) * 100}%)`;
+    root.querySelectorAll('.settings-layers .tome-layer').forEach(el => {
+      const current = Number(el.dataset.layer) === settingsLayer;
+      el.classList.toggle('tome-layer--active', current);
+      el.setAttribute('aria-hidden', String(!current));
+    });
+    const prev = root.querySelector('#settings-layer-prev');
+    const next = root.querySelector('#settings-layer-next');
+    prev.disabled = settingsLayer === 1;
+    next.disabled = settingsLayer === 2;
+    prev.classList.toggle('tome-layer-arrow--live', settingsLayer > 1);
+    next.classList.toggle('tome-layer-arrow--live', settingsLayer < 2);
+    prev.setAttribute('aria-label', UI_TEXT.header[L]);
+    next.setAttribute('aria-label', UI_TEXT.faqAria[L]);
+  }
+  function setSettingsLayer(layer) {
+    const next = Math.max(1, Math.min(2, layer));
+    if (next === settingsLayer) return;
+    settingsLayer = next;
+    playPageTurnSound();
+    applySettingsLayer();
+  }
+  root.querySelector('#settings-layer-prev').addEventListener('click', () => setSettingsLayer(settingsLayer - 1));
+  root.querySelector('#settings-layer-next').addEventListener('click', () => setSettingsLayer(settingsLayer + 1));
+  applySettingsLayer();
 
   // ── Invite ────────────────────────────────────────────────────────────────
   // The link is built on the server (it needs the bot's @name), so the field
