@@ -6,8 +6,9 @@
 //
 // Every entry defines a formation, availability, and a small bonus for the
 // matching side. A lead is a hero line; chorus cells are filled by assigned
-// callings. The opening litany is the exception: any hero can lead it, with one
-// caller in the front column and one in the back, carrying different callings.
+// callings. The opening litanies are the exception: any hero can lead them, with
+// one caller in the front column and one in the back - carrying two different
+// callings for The First Chorus, and the same calling twice for One Voice.
 //
 // ── The formation ─────────────────────────────────────────────────────────────
 //
@@ -112,6 +113,25 @@ const LITANIES = [
     message_ru: 'Все союзники получают 3 к максимальному здоровью.',
   },
 
+  // The second opening litany asks the opposite of the first: its two callers
+  // stand in the mirrored squares and carry the SAME calling, so a roster that
+  // came up all one way has a rite of its own to stand in.
+  {
+    id: 'one_voice',
+    name: 'One Voice',
+    name_ru: 'Один голос',
+    availableFromStart: true,
+    lead: { ids: [...HERO_IDS.empire, ...HERO_IDS.grail, ...HERO_IDS.choir] },
+    formation: { cells: [
+      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'any', calling_group: 'pair' },
+      { key: 'B', row: 1, col: 'either', size: 'tile', role: 'lead' },
+      { key: 'C', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'any', calling_group: 'pair' },
+    ] },
+    bonus: { shield_flat: 3 },
+    message: 'All allies begin with 3 shield.',
+    message_ru: 'Все союзники начинают бой со щитом 3.',
+  },
+
   // ── Empire ─────────────────────────────────────────────────────────────────
   {
     id:    'profane_chorus',
@@ -148,6 +168,40 @@ const LITANIES = [
     bonus: { shield_flat: 5 },
     message: 'All allies begin with 5 shield.',
     message_ru: 'Все союзники начинают бой со щитом 5.',
+  },
+
+  // ── Grail of Sorrow: the full chorus ──────────────────────────────────────
+  //
+  // Four calling anchors rather than two, which is why it stands before the
+  // two-anchor Grail rites in this list: a layout that answers both should be
+  // paid for the harder one.
+  {
+    id:    'sealed_chalice',
+    name:  'The Sealed Chalice',
+    name_ru: 'Запечатанная чаша',
+    // Back column left, front right - the board as the Litanies page draws it:
+    //   A C
+    //   . B
+    //   D E
+    //
+    // Every Grail hero line can lead from either middle-row cell; the four
+    // corners carry both callings, Denial behind and Acceptance in front.
+    lead: { ids: HERO_IDS.grail },
+    formation: { cells: [
+      // Denial behind, where the warding stands.
+      { key: 'A', row: 0, col: 'back', size: 'tile', role: 'chorus', calling: 'denial' },
+      // Acceptance in front, where the price is paid.
+      { key: 'C', row: 0, col: 'front', size: 'tile', role: 'chorus', calling: 'acceptance' },
+      // Lead.
+      { key: 'B', row: 1, col: 'either', size: 'tile', role: 'lead' },
+      // Second Denial anchor.
+      { key: 'D', row: 2, col: 'back', size: 'tile', role: 'chorus', calling: 'denial' },
+      // Second Acceptance anchor.
+      { key: 'E', row: 2, col: 'front', size: 'tile', role: 'chorus', calling: 'acceptance' },
+    ] },
+    bonus: { resist_flat: { life: 8 } },
+    message: 'All allies gain 8 life resistance.',
+    message_ru: 'Все союзники получают 8 сопротивления жизни.',
   },
 
   // ── Grail of Sorrow: the Grail Warden's litanies ──────────────────────────────────
