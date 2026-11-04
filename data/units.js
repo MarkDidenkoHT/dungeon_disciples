@@ -19,8 +19,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     black_castellan_path_a_t2: {
-      flavor_en: "Few witnesses agree on how Black Castellan first entered the story; the border folk recognize its silhouette before the horns sound.\nEach advance costs the enemy more than the map can show; its second oath was sealed with a deed, not a signature.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Чёрный Кастелян»; пограничники узнают его силуэт прежде, чем звучат рога.\nКаждый его шаг отнимает у врага больше, чем покажет карта; вторая клятва была скреплена поступком, а не подписью.",
+      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_d_1_a2',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -35,8 +35,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     black_castellan_path_a_t3: {
-      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; no two scouts agree on where it first appeared.\nIt measures courage by the ground held after impact; it has learned to make discipline look effortless.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nДля него мужество измеряется землёй, удержанной после удара; оно научилось придавать дисциплине вид лёгкости.",
+      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_d_1_a3',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -51,8 +51,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     black_castellan_path_a_t4: {
-      flavor_en: "Few witnesses agree on how Black Castellan first entered the story; the wilderness keeps its own record of this name.\nIt answers every challenge with the blunt certainty of iron; its final insignia was earned in a battle chronicles still debate.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Чёрный Кастелян»; у дикой земли есть своя летопись этого имени.\nНа любой вызов оно отвечает прямотой железа; последний знак отличия был заслужен в битве, о которой спорят летописи.",
+      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_d_1_a41',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -67,8 +67,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     black_castellan_path_a_t4_alt: {
-      flavor_en: "The name Black Castellan appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nIt answers every challenge with the blunt certainty of iron; it turned from expected honors and chose a harder burden.",
-      flavor_ru: "Имя «Чёрный Кастелян» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nНа любой вызов оно отвечает прямотой железа; оно отвернулось от ожидаемых почестей и выбрало более тяжкое бремя.",
+      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_d_1_a42',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -83,8 +83,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     black_castellan_path_b_t2: {
-      flavor_en: "The name Black Castellan appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nIt measures courage by the ground held after impact; it learned that one exposed weakness can undo a proud defense.",
-      flavor_ru: "Имя «Чёрный Кастелян» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nДля него мужество измеряется землёй, удержанной после удара; оно поняло: одна найденная брешь способна сокрушить гордую оборону.",
+      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_d_1_b2',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -99,8 +99,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     black_castellan_path_b_t3: {
-      flavor_en: "The chronicle gives Black Castellan a place earned far from any throne; the wilderness keeps its own record of this name.\nIt answers every challenge with the blunt certainty of iron; its later victories came from precision rather than spectacle.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Чёрный Кастелян»; у дикой земли есть своя летопись этого имени.\nНа любой вызов оно отвечает прямотой железа; поздние победы достались ему благодаря точности, а не показной силе.",
+      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_d_1_b3',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -115,8 +115,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     black_castellan_path_b_t4: {
-      flavor_en: "The name Black Castellan appears beside an unlikely turning point; the border folk recognize its silhouette before the horns sound.\nEach advance costs the enemy more than the map can show; its exactness has become so feared that armor offers little comfort.",
-      flavor_ru: "Имя «Чёрный Кастелян» появляется в летописи рядом с неожиданным поворотом событий; пограничники узнают его силуэт прежде, чем звучат рога.\nКаждый его шаг отнимает у врага больше, чем покажет карта; его точность стала такой грозной, что одна броня уже не успокаивает врагов.",
+      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_d_1_b41',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -131,8 +131,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     black_castellan_path_b_t4_alt: {
-      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; the wilderness keeps its own record of this name.\nEach advance costs the enemy more than the map can show; a different final oath gave its legend an unexpected shape.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; у дикой земли есть своя летопись этого имени.\nКаждый его шаг отнимает у врага больше, чем покажет карта; иная последняя клятва придала его легенде неожиданный облик.",
+      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_d_1_b42',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -163,8 +163,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     choir_regent_path_a_t2: {
-      flavor_en: "The chronicle gives Choir Regent a place earned far from any throne; the border folk recognize its silhouette before the horns sound.\nA quiet gesture can alter the temper of a whole battle; a new discipline taught it to turn boldness into practiced art.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Регент Хора»; пограничники узнают его силуэт прежде, чем звучат рога.\nТихий жест способен изменить ход целой битвы; новая школа научила его превращать отвагу в отточенное мастерство.",
+      flavor_en: "The name Choir Regent appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
+      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
       id: 'h_d_2_a2',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -179,8 +179,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     choir_regent_path_a_t3: {
-      flavor_en: "The name Choir Regent appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nIts craft begins where ordinary sight gives up; veterans leave the dangerous decisions in its keeping.",
-      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nЕго искусство начинается там, где обычный взгляд бессилен; теперь ветераны доверяют ему самые опасные решения.",
+      flavor_en: "The name Choir Regent appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
+      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
       id: 'h_d_2_a3',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -195,8 +195,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     choir_regent_path_a_t4: {
-      flavor_en: "The chronicle gives Choir Regent a place earned far from any throne; the wilderness keeps its own record of this name.\nIt reads omens in the space between breaths; at its height, it makes old enemies reconsider their courage.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Регент Хора»; у дикой земли есть своя летопись этого имени.\nОно читает знамения в промежутках между вдохами; на вершине призвания оно заставляет старых врагов усомниться в отваге.",
+      flavor_en: "The name Choir Regent appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
+      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
       id: 'h_d_2_a41',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -211,8 +211,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     choir_regent_path_a_t4_alt: {
-      flavor_en: "Few witnesses agree on how Choir Regent first entered the story; no two scouts agree on where it first appeared.\nIt reads omens in the space between breaths; a different final oath gave its legend an unexpected shape.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Регент Хора»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nОно читает знамения в промежутках между вдохами; иная последняя клятва придала его легенде неожиданный облик.",
+      flavor_en: "The name Choir Regent appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
+      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
       id: 'h_d_2_a42',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -227,8 +227,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     choir_regent_path_b_t2: {
-      flavor_en: "Few witnesses agree on how Choir Regent first entered the story; no two scouts agree on where it first appeared.\nIts craft begins where ordinary sight gives up; the second oath sent it down a narrower, harder road.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Регент Хора»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nЕго искусство начинается там, где обычный взгляд бессилен; вторая клятва повела его по более узкой и трудной дороге.",
+      flavor_en: "The name Choir Regent appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
+      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
       id: 'h_d_2_b2',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -243,8 +243,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     choir_regent_path_b_t3: {
-      flavor_en: "Even the oldest map leaves a blank where Choir Regent should be; the wilderness keeps its own record of this name.\nIt reads omens in the space between breaths; it finds the flaw in a perfect formation and names its price.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Регент Хора»; у дикой земли есть своя летопись этого имени.\nОно читает знамения в промежутках между вдохами; оно находит изъян в безупречном строю и знает его цену.",
+      flavor_en: "The name Choir Regent appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
+      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
       id: 'h_d_2_b3',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -259,8 +259,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     choir_regent_path_b_t4: {
-      flavor_en: "Few witnesses agree on how Choir Regent first entered the story; the border folk recognize its silhouette before the horns sound.\nA quiet gesture can alter the temper of a whole battle; its final lesson: the smallest weakness can decide a war.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Регент Хора»; пограничники узнают его силуэт прежде, чем звучат рога.\nТихий жест способен изменить ход целой битвы; последний урок его пути: даже малая слабость решает исход войны.",
+      flavor_en: "The name Choir Regent appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
+      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
       id: 'h_d_2_b41',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -275,8 +275,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     choir_regent_path_b_t4_alt: {
-      flavor_en: "The name Choir Regent appears beside an unlikely turning point; the wilderness keeps its own record of this name.\nA quiet gesture can alter the temper of a whole battle; it turned from expected honors and chose a harder burden.",
-      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени.\nТихий жест способен изменить ход целой битвы; оно отвернулось от ожидаемых почестей и выбрало более тяжкое бремя.",
+      flavor_en: "The name Choir Regent appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
+      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
       id: 'h_d_2_b42',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -307,8 +307,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     infernal_ascendant_path_a_t2: {
-      flavor_en: "Even the oldest map leaves a blank where Infernal Ascendant should be; the wilderness keeps its own record of this name.\nIts craft begins where ordinary sight gives up; its second oath was sealed with a deed, not a signature.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Инфернальный Вознесённый»; у дикой земли есть своя летопись этого имени.\nЕго искусство начинается там, где обычный взгляд бессилен; вторая клятва была скреплена поступком, а не подписью.",
+      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_d_3_a2',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -323,8 +323,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     infernal_ascendant_path_a_t3: {
-      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; the border folk recognize its silhouette before the horns sound.\nIt reads omens in the space between breaths; it has learned to make discipline look effortless.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nОно читает знамения в промежутках между вдохами; оно научилось придавать дисциплине вид лёгкости.",
+      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_d_3_a3',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -339,8 +339,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     infernal_ascendant_path_a_t4: {
-      flavor_en: "Even the oldest map leaves a blank where Infernal Ascendant should be; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its final insignia was earned in a battle chronicles still debate.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Инфернальный Вознесённый»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; последний знак отличия был заслужен в битве, о которой спорят летописи.",
+      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_d_3_a41',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -355,8 +355,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     infernal_ascendant_path_a_t4_alt: {
-      flavor_en: "The chronicle gives Infernal Ascendant a place earned far from any throne; the border folk recognize its silhouette before the horns sound.\nA quiet gesture can alter the temper of a whole battle; it turned from expected honors and chose a harder burden.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nТихий жест способен изменить ход целой битвы; оно отвернулось от ожидаемых почестей и выбрало более тяжкое бремя.",
+      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_d_3_a42',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -371,8 +371,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     infernal_ascendant_path_b_t2: {
-      flavor_en: "The chronicle gives Infernal Ascendant a place earned far from any throne; the border folk recognize its silhouette before the horns sound.\nIt reads omens in the space between breaths; it learned that one exposed weakness can undo a proud defense.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nОно читает знамения в промежутках между вдохами; оно поняло: одна найденная брешь способна сокрушить гордую оборону.",
+      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_d_3_b2',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -387,8 +387,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     infernal_ascendant_path_b_t3: {
-      flavor_en: "The name Infernal Ascendant appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its later victories came from precision rather than spectacle.",
-      flavor_ru: "Имя «Инфернальный Вознесённый» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; поздние победы достались ему благодаря точности, а не показной силе.",
+      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_d_3_b3',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -403,8 +403,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     infernal_ascendant_path_b_t4: {
-      flavor_en: "The chronicle gives Infernal Ascendant a place earned far from any throne; the wilderness keeps its own record of this name.\nIts craft begins where ordinary sight gives up; its exactness has become so feared that armor offers little comfort.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Инфернальный Вознесённый»; у дикой земли есть своя летопись этого имени.\nЕго искусство начинается там, где обычный взгляд бессилен; его точность стала такой грозной, что одна броня уже не успокаивает врагов.",
+      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_d_3_b41',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -419,8 +419,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     infernal_ascendant_path_b_t4_alt: {
-      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; no two scouts agree on where it first appeared.\nIts craft begins where ordinary sight gives up; a different final oath gave its legend an unexpected shape.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nЕго искусство начинается там, где обычный взгляд бессилен; иная последняя клятва придала его легенде неожиданный облик.",
+      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_d_3_b42',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -1249,8 +1249,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     paladin_path_a_t2: {
-      flavor_en: "Even the oldest map leaves a blank where Paladin should be; the wilderness keeps its own record of this name.\nIt answers every challenge with the blunt certainty of iron; its second oath was sealed with a deed, not a signature.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Паладин»; у дикой земли есть своя летопись этого имени.\nНа любой вызов оно отвечает прямотой железа; вторая клятва была скреплена поступком, а не подписью.",
+      flavor_en: "Few witnesses agree on how Paladin first entered the story; the border folk recognize its silhouette before the horns sound.\nIt answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Паладин»; пограничники узнают его силуэт прежде, чем звучат рога.\nНа любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_e_11',
       name: 'Paladin',
       name_ru: 'Паладин',
@@ -1265,8 +1265,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     paladin_path_a_t3: {
-      flavor_en: "Few witnesses agree on how Paladin first entered the story; the border folk recognize its silhouette before the horns sound.\nEach advance costs the enemy more than the map can show; it has learned to make discipline look effortless.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Паладин»; пограничники узнают его силуэт прежде, чем звучат рога.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно научилось придавать дисциплине вид лёгкости.",
+      flavor_en: "Few witnesses agree on how Paladin first entered the story; the border folk recognize its silhouette before the horns sound.\nIt answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Паладин»; пограничники узнают его силуэт прежде, чем звучат рога.\nНа любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_e_111',
       name: 'Paladin',
       name_ru: 'Паладин',
@@ -1281,8 +1281,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     paladin_path_a_t4: {
-      flavor_en: "Even the oldest map leaves a blank where Paladin should be; no two scouts agree on where it first appeared.\nIt measures courage by the ground held after impact; its final insignia was earned in a battle chronicles still debate.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Паладин»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nДля него мужество измеряется землёй, удержанной после удара; последний знак отличия был заслужен в битве, о которой спорят летописи.",
+      flavor_en: "Few witnesses agree on how Paladin first entered the story; the border folk recognize its silhouette before the horns sound.\nIt answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Паладин»; пограничники узнают его силуэт прежде, чем звучат рога.\nНа любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_e_1111',
       name: 'Paladin',
       name_ru: 'Паладин',
@@ -1297,8 +1297,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     paladin_path_a_t4_alt: {
-      flavor_en: "The chronicle gives Paladin a place earned far from any throne; the border folk recognize its silhouette before the horns sound.\nIt measures courage by the ground held after impact; it turned from expected honors and chose a harder burden.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Паладин»; пограничники узнают его силуэт прежде, чем звучат рога.\nДля него мужество измеряется землёй, удержанной после удара; оно отвернулось от ожидаемых почестей и выбрало более тяжкое бремя.",
+      flavor_en: "Few witnesses agree on how Paladin first entered the story; the border folk recognize its silhouette before the horns sound.\nIt answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Паладин»; пограничники узнают его силуэт прежде, чем звучат рога.\nНа любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_e_1112',
       name: 'Paladin',
       name_ru: 'Паладин',
@@ -1313,8 +1313,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     paladin_path_b_t2: {
-      flavor_en: "The chronicle gives Paladin a place earned far from any throne; the border folk recognize its silhouette before the horns sound.\nEach advance costs the enemy more than the map can show; it learned that one exposed weakness can undo a proud defense.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Паладин»; пограничники узнают его силуэт прежде, чем звучат рога.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно поняло: одна найденная брешь способна сокрушить гордую оборону.",
+      flavor_en: "Few witnesses agree on how Paladin first entered the story; the border folk recognize its silhouette before the horns sound.\nIt answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Паладин»; пограничники узнают его силуэт прежде, чем звучат рога.\nНа любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_e_12',
       name: 'Paladin',
       name_ru: 'Паладин',
@@ -1329,8 +1329,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     paladin_path_b_t3: {
-      flavor_en: "The name Paladin appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nIt measures courage by the ground held after impact; its later victories came from precision rather than spectacle.",
-      flavor_ru: "Имя «Паладин» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nДля него мужество измеряется землёй, удержанной после удара; поздние победы достались ему благодаря точности, а не показной силе.",
+      flavor_en: "Few witnesses agree on how Paladin first entered the story; the border folk recognize its silhouette before the horns sound.\nIt answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Паладин»; пограничники узнают его силуэт прежде, чем звучат рога.\nНа любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_e_121',
       name: 'Paladin',
       name_ru: 'Паладин',
@@ -1345,8 +1345,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     paladin_path_b_t4: {
-      flavor_en: "The chronicle gives Paladin a place earned far from any throne; the wilderness keeps its own record of this name.\nIt answers every challenge with the blunt certainty of iron; its exactness has become so feared that armor offers little comfort.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Паладин»; у дикой земли есть своя летопись этого имени.\nНа любой вызов оно отвечает прямотой железа; его точность стала такой грозной, что одна броня уже не успокаивает врагов.",
+      flavor_en: "Few witnesses agree on how Paladin first entered the story; the border folk recognize its silhouette before the horns sound.\nIt answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Паладин»; пограничники узнают его силуэт прежде, чем звучат рога.\nНа любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_e_1211',
       name: 'Paladin',
       name_ru: 'Паладин',
@@ -1361,8 +1361,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     paladin_path_b_t4_alt: {
-      flavor_en: "Few witnesses agree on how Paladin first entered the story; no two scouts agree on where it first appeared.\nIt answers every challenge with the blunt certainty of iron; a different final oath gave its legend an unexpected shape.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Паладин»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nНа любой вызов оно отвечает прямотой железа; иная последняя клятва придала его легенде неожиданный облик.",
+      flavor_en: "Few witnesses agree on how Paladin first entered the story; the border folk recognize its silhouette before the horns sound.\nIt answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Паладин»; пограничники узнают его силуэт прежде, чем звучат рога.\nНа любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_e_1212',
       name: 'Paladin',
       name_ru: 'Паладин',
@@ -1393,8 +1393,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     inquisitor_path_a_t2: {
-      flavor_en: "The name Inquisitor appears beside an unlikely turning point; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; a new discipline taught it to turn boldness into practiced art.",
-      flavor_ru: "Имя «Инквизитор» появляется в летописи рядом с неожиданным поворотом событий; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; новая школа научила его превращать отвагу в отточенное мастерство.",
+      flavor_en: "The chronicle gives Inquisitor a place earned far from any throne; no two scouts agree on where it first appeared.\nIts craft begins where ordinary sight gives up; its beginnings were small, but the vow it made was not.",
+      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Инквизитор»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nЕго искусство начинается там, где обычный взгляд бессилен; начало было скромным, но клятва — великой.",
       id: 'h_e_2_a2',
       name: 'Inquisitor',
       name_ru: 'Инквизитор',
@@ -1409,8 +1409,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     inquisitor_path_a_t3: {
-      flavor_en: "The chronicle gives Inquisitor a place earned far from any throne; no two scouts agree on where it first appeared.\nIt reads omens in the space between breaths; veterans leave the dangerous decisions in its keeping.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Инквизитор»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nОно читает знамения в промежутках между вдохами; теперь ветераны доверяют ему самые опасные решения.",
+      flavor_en: "The chronicle gives Inquisitor a place earned far from any throne; no two scouts agree on where it first appeared.\nIts craft begins where ordinary sight gives up; its beginnings were small, but the vow it made was not.",
+      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Инквизитор»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nЕго искусство начинается там, где обычный взгляд бессилен; начало было скромным, но клятва — великой.",
       id: 'h_e_2_a3',
       name: 'Inquisitor',
       name_ru: 'Инквизитор',
@@ -1425,8 +1425,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     inquisitor_path_a_t4: {
-      flavor_en: "The name Inquisitor appears beside an unlikely turning point; the wilderness keeps its own record of this name.\nA quiet gesture can alter the temper of a whole battle; at its height, it makes old enemies reconsider their courage.",
-      flavor_ru: "Имя «Инквизитор» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени.\nТихий жест способен изменить ход целой битвы; на вершине призвания оно заставляет старых врагов усомниться в отваге.",
+      flavor_en: "The chronicle gives Inquisitor a place earned far from any throne; no two scouts agree on where it first appeared.\nIts craft begins where ordinary sight gives up; its beginnings were small, but the vow it made was not.",
+      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Инквизитор»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nЕго искусство начинается там, где обычный взгляд бессилен; начало было скромным, но клятва — великой.",
       id: 'h_e_2_a41',
       name: 'Inquisitor',
       name_ru: 'Инквизитор',
@@ -1441,8 +1441,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     inquisitor_path_a_t4_alt: {
-      flavor_en: "Even the oldest map leaves a blank where Inquisitor should be; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; a different final oath gave its legend an unexpected shape.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Инквизитор»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; иная последняя клятва придала его легенде неожиданный облик.",
+      flavor_en: "The chronicle gives Inquisitor a place earned far from any throne; no two scouts agree on where it first appeared.\nIts craft begins where ordinary sight gives up; its beginnings were small, but the vow it made was not.",
+      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Инквизитор»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nЕго искусство начинается там, где обычный взгляд бессилен; начало было скромным, но клятва — великой.",
       id: 'h_e_2_a42',
       name: 'Inquisitor',
       name_ru: 'Инквизитор',
@@ -1457,8 +1457,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     inquisitor_path_b_t2: {
-      flavor_en: "Even the oldest map leaves a blank where Inquisitor should be; no two scouts agree on where it first appeared.\nIt reads omens in the space between breaths; the second oath sent it down a narrower, harder road.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Инквизитор»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nОно читает знамения в промежутках между вдохами; вторая клятва повела его по более узкой и трудной дороге.",
+      flavor_en: "The chronicle gives Inquisitor a place earned far from any throne; no two scouts agree on where it first appeared.\nIts craft begins where ordinary sight gives up; its beginnings were small, but the vow it made was not.",
+      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Инквизитор»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nЕго искусство начинается там, где обычный взгляд бессилен; начало было скромным, но клятва — великой.",
       id: 'h_e_2_b2',
       name: 'Inquisitor',
       name_ru: 'Инквизитор',
@@ -1473,8 +1473,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     inquisitor_path_b_t3: {
-      flavor_en: "Few witnesses agree on how Inquisitor first entered the story; the wilderness keeps its own record of this name.\nA quiet gesture can alter the temper of a whole battle; it finds the flaw in a perfect formation and names its price.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инквизитор»; у дикой земли есть своя летопись этого имени.\nТихий жест способен изменить ход целой битвы; оно находит изъян в безупречном строю и знает его цену.",
+      flavor_en: "The chronicle gives Inquisitor a place earned far from any throne; no two scouts agree on where it first appeared.\nIts craft begins where ordinary sight gives up; its beginnings were small, but the vow it made was not.",
+      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Инквизитор»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nЕго искусство начинается там, где обычный взгляд бессилен; начало было скромным, но клятва — великой.",
       id: 'h_e_2_b3',
       name: 'Inquisitor',
       name_ru: 'Инквизитор',
@@ -1489,8 +1489,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     inquisitor_path_b_t4: {
-      flavor_en: "Even the oldest map leaves a blank where Inquisitor should be; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; its final lesson: the smallest weakness can decide a war.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Инквизитор»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; последний урок его пути: даже малая слабость решает исход войны.",
+      flavor_en: "The chronicle gives Inquisitor a place earned far from any throne; no two scouts agree on where it first appeared.\nIts craft begins where ordinary sight gives up; its beginnings were small, but the vow it made was not.",
+      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Инквизитор»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nЕго искусство начинается там, где обычный взгляд бессилен; начало было скромным, но клятва — великой.",
       id: 'h_e_2_b41',
       name: 'Inquisitor',
       name_ru: 'Инквизитор',
@@ -1505,8 +1505,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     inquisitor_path_b_t4_alt: {
-      flavor_en: "The chronicle gives Inquisitor a place earned far from any throne; the wilderness keeps its own record of this name.\nIts craft begins where ordinary sight gives up; it turned from expected honors and chose a harder burden.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Инквизитор»; у дикой земли есть своя летопись этого имени.\nЕго искусство начинается там, где обычный взгляд бессилен; оно отвернулось от ожидаемых почестей и выбрало более тяжкое бремя.",
+      flavor_en: "The chronicle gives Inquisitor a place earned far from any throne; no two scouts agree on where it first appeared.\nIts craft begins where ordinary sight gives up; its beginnings were small, but the vow it made was not.",
+      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Инквизитор»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nЕго искусство начинается там, где обычный взгляд бессилен; начало было скромным, но клятва — великой.",
       id: 'h_e_2_b42',
       name: 'Inquisitor',
       name_ru: 'Инквизитор',
@@ -1537,8 +1537,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     artificer_path_a_t2: {
-      flavor_en: "Few witnesses agree on how Artificer first entered the story; no two scouts agree on where it first appeared.\nIts tools bear the scars of repairs made under fire; its second oath was sealed with a deed, not a signature.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Артефактор»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nНа его инструментах остались следы ремонта под обстрелом; вторая клятва была скреплена поступком, а не подписью.",
+      flavor_en: "Even the oldest map leaves a blank where Artificer should be; the wilderness keeps its own record of this name.\nIts tools bear the scars of repairs made under fire; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Артефактор»; у дикой земли есть своя летопись этого имени.\nНа его инструментах остались следы ремонта под обстрелом; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_e_3_a2',
       name: 'Artificer',
       name_ru: 'Артефактор',
@@ -1553,8 +1553,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     artificer_path_a_t3: {
-      flavor_en: "Even the oldest map leaves a blank where Artificer should be; the wilderness keeps its own record of this name.\nIt trusts a sound joint more than a grand promise; it has learned to make discipline look effortless.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Артефактор»; у дикой земли есть своя летопись этого имени.\nХорошему креплению оно доверяет больше, чем громкому обещанию; оно научилось придавать дисциплине вид лёгкости.",
+      flavor_en: "Even the oldest map leaves a blank where Artificer should be; the wilderness keeps its own record of this name.\nIts tools bear the scars of repairs made under fire; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Артефактор»; у дикой земли есть своя летопись этого имени.\nНа его инструментах остались следы ремонта под обстрелом; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_e_3_a3',
       name: 'Artificer',
       name_ru: 'Артефактор',
@@ -1569,8 +1569,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     artificer_path_a_t4: {
-      flavor_en: "Few witnesses agree on how Artificer first entered the story; the border folk recognize its silhouette before the horns sound.\nEvery broken mechanism is a question worth answering; its final insignia was earned in a battle chronicles still debate.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Артефактор»; пограничники узнают его силуэт прежде, чем звучат рога.\nКаждый сломанный механизм для него — вопрос, на который стоит ответить; последний знак отличия был заслужен в битве, о которой спорят летописи.",
+      flavor_en: "Even the oldest map leaves a blank where Artificer should be; the wilderness keeps its own record of this name.\nIts tools bear the scars of repairs made under fire; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Артефактор»; у дикой земли есть своя летопись этого имени.\nНа его инструментах остались следы ремонта под обстрелом; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_e_3_a41',
       name: 'Artificer',
       name_ru: 'Артефактор',
@@ -1585,8 +1585,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     artificer_path_a_t4_alt: {
-      flavor_en: "The name Artificer appears beside an unlikely turning point; the wilderness keeps its own record of this name.\nEvery broken mechanism is a question worth answering; it turned from expected honors and chose a harder burden.",
-      flavor_ru: "Имя «Артефактор» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени.\nКаждый сломанный механизм для него — вопрос, на который стоит ответить; оно отвернулось от ожидаемых почестей и выбрало более тяжкое бремя.",
+      flavor_en: "Even the oldest map leaves a blank where Artificer should be; the wilderness keeps its own record of this name.\nIts tools bear the scars of repairs made under fire; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Артефактор»; у дикой земли есть своя летопись этого имени.\nНа его инструментах остались следы ремонта под обстрелом; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_e_3_a42',
       name: 'Artificer',
       name_ru: 'Артефактор',
@@ -1601,8 +1601,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     artificer_path_b_t2: {
-      flavor_en: "The name Artificer appears beside an unlikely turning point; the wilderness keeps its own record of this name.\nIt trusts a sound joint more than a grand promise; it learned that one exposed weakness can undo a proud defense.",
-      flavor_ru: "Имя «Артефактор» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени.\nХорошему креплению оно доверяет больше, чем громкому обещанию; оно поняло: одна найденная брешь способна сокрушить гордую оборону.",
+      flavor_en: "Even the oldest map leaves a blank where Artificer should be; the wilderness keeps its own record of this name.\nIts tools bear the scars of repairs made under fire; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Артефактор»; у дикой земли есть своя летопись этого имени.\nНа его инструментах остались следы ремонта под обстрелом; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_e_3_b2',
       name: 'Artificer',
       name_ru: 'Артефактор',
@@ -1617,8 +1617,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     artificer_path_b_t3: {
-      flavor_en: "The chronicle gives Artificer a place earned far from any throne; the border folk recognize its silhouette before the horns sound.\nEvery broken mechanism is a question worth answering; its later victories came from precision rather than spectacle.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Артефактор»; пограничники узнают его силуэт прежде, чем звучат рога.\nКаждый сломанный механизм для него — вопрос, на который стоит ответить; поздние победы достались ему благодаря точности, а не показной силе.",
+      flavor_en: "Even the oldest map leaves a blank where Artificer should be; the wilderness keeps its own record of this name.\nIts tools bear the scars of repairs made under fire; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Артефактор»; у дикой земли есть своя летопись этого имени.\nНа его инструментах остались следы ремонта под обстрелом; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_e_3_b3',
       name: 'Artificer',
       name_ru: 'Артефактор',
@@ -1633,8 +1633,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     artificer_path_b_t4: {
-      flavor_en: "The name Artificer appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nIts tools bear the scars of repairs made under fire; its exactness has become so feared that armor offers little comfort.",
-      flavor_ru: "Имя «Артефактор» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nНа его инструментах остались следы ремонта под обстрелом; его точность стала такой грозной, что одна броня уже не успокаивает врагов.",
+      flavor_en: "Even the oldest map leaves a blank where Artificer should be; the wilderness keeps its own record of this name.\nIts tools bear the scars of repairs made under fire; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Артефактор»; у дикой земли есть своя летопись этого имени.\nНа его инструментах остались следы ремонта под обстрелом; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_e_3_b41',
       name: 'Artificer',
       name_ru: 'Артефактор',
@@ -1649,8 +1649,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     artificer_path_b_t4_alt: {
-      flavor_en: "Even the oldest map leaves a blank where Artificer should be; the border folk recognize its silhouette before the horns sound.\nIts tools bear the scars of repairs made under fire; a different final oath gave its legend an unexpected shape.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Артефактор»; пограничники узнают его силуэт прежде, чем звучат рога.\nНа его инструментах остались следы ремонта под обстрелом; иная последняя клятва придала его легенде неожиданный облик.",
+      flavor_en: "Even the oldest map leaves a blank where Artificer should be; the wilderness keeps its own record of this name.\nIts tools bear the scars of repairs made under fire; it still carries the keepsake from its first day in service.",
+      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Артефактор»; у дикой земли есть своя летопись этого имени.\nНа его инструментах остались следы ремонта под обстрелом; оно до сих пор хранит знак своего первого дня службы.",
       id: 'h_e_3_b42',
       name: 'Artificer',
       name_ru: 'Артефактор',
@@ -2689,8 +2689,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     mourning_prophet_path_a_t2: {
-      flavor_en: "The Prophet carries its warning into the press of battle, where each wound becomes a stolen breath.\nThe living still possess what the dead remember.",
-      flavor_ru: "Пророк несёт своё предупреждение в самую гущу боя, превращая каждую рану в украденный вздох.\nУ живых всё ещё есть то, что помнят мёртвые.",
+      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail.\nBlood quiets that loss for one battle, but cannot reverse it.",
+      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век.\nКровь заглушает утрату на одну битву, но не повернёт время вспять.",
       id: 'h_g_1_a2',
       name: 'Mourning Prophet',
       name_ru: 'Скорбящий Пророк',
@@ -2705,8 +2705,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     mourning_prophet_path_a_t3: {
-      flavor_en: "A century of grief has honed the Prophet’s sword arm without silencing its visions.\nIt fights as though one recovered heartbeat could correct the mistake.",
-      flavor_ru: "Век скорби отточил руку Пророка, но не заглушил видений.\nОн сражается так, словно один возвращённый удар сердца исправит давнюю ошибку.",
+      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail.\nBlood quiets that loss for one battle, but cannot reverse it.",
+      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век.\nКровь заглушает утрату на одну битву, но не повернёт время вспять.",
       id: 'h_g_1_a3',
       name: 'Mourning Prophet',
       name_ru: 'Скорбящий Пророк',
@@ -2721,8 +2721,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     mourning_prophet_path_a_t4: {
-      flavor_en: "The Prophet’s blade opens the enemy’s guard as surely as its visions reveal the future.\nIt knows what was lost and refuses to let the living forget.",
-      flavor_ru: "Клинок Пророка вскрывает защиту врага так же верно, как видения раскрывают будущее.\nОн знает, что утрачено, и не даст живым забыть об этом.",
+      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail.\nBlood quiets that loss for one battle, but cannot reverse it.",
+      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век.\nКровь заглушает утрату на одну битву, но не повернёт время вспять.",
       id: 'h_g_1_a41',
       name: 'Mourning Prophet',
       name_ru: 'Скорбящий Пророк',
@@ -2737,8 +2737,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     mourning_prophet_path_a_t4_alt: {
-      flavor_en: "The Prophet has outlasted every doubt cast upon its warnings.\nIt stands unbroken, though the life it envies remains just beyond reach.",
-      flavor_ru: "Пророк пережил все сомнения в своих предсказаниях.\nОн не сломлен, хотя жизнь, которой он завидует, остаётся недосягаемой.",
+      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail.\nBlood quiets that loss for one battle, but cannot reverse it.",
+      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век.\nКровь заглушает утрату на одну битву, но не повернёт время вспять.",
       id: 'h_g_1_a42',
       name: 'Mourning Prophet',
       name_ru: 'Скорбящий Пророк',
@@ -2753,8 +2753,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     mourning_prophet_path_b_t2: {
-      flavor_en: "The Prophet gathers the scattered dead around a single purpose.\nTheir borrowed strength cannot restore the lost century, but it can hold the line.",
-      flavor_ru: "Пророк собирает рассеянных мертвецов вокруг единой цели.\nЗаимствованная сила не вернёт потерянный век, но поможет удержать строй.",
+      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail.\nBlood quiets that loss for one battle, but cannot reverse it.",
+      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век.\nКровь заглушает утрату на одну битву, но не повернёт время вспять.",
       id: 'h_g_1_b2',
       name: 'Mourning Prophet',
       name_ru: 'Скорбящий Пророк',
@@ -2769,8 +2769,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     mourning_prophet_path_b_t3: {
-      flavor_en: "The Prophet speaks to the dead as if they still listened from their old homes.\nFor a moment, the fallen move with one remembered will.",
-      flavor_ru: "Пророк обращается к мёртвым так, будто те ещё слышат его из родных домов.\nНа миг павшие движутся, повинуясь общей памяти.",
+      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail.\nBlood quiets that loss for one battle, but cannot reverse it.",
+      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век.\nКровь заглушает утрату на одну битву, но не повернёт время вспять.",
       id: 'h_g_1_b3',
       name: 'Mourning Prophet',
       name_ru: 'Скорбящий Пророк',
@@ -2785,8 +2785,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     mourning_prophet_path_b_t4: {
-      flavor_en: "The Prophet reads weakness in a living pulse and turns it into strength for the host.\nThis communion answers loss; it can never cure it.",
-      flavor_ru: "Пророк чувствует слабость живого пульса и обращает её в силу войска.\nЭто единение отвечает на утрату, но не может её исцелить.",
+      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail.\nBlood quiets that loss for one battle, but cannot reverse it.",
+      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век.\nКровь заглушает утрату на одну битву, но не повернёт время вспять.",
       id: 'h_g_1_b41',
       name: 'Mourning Prophet',
       name_ru: 'Скорбящий Пророк',
@@ -2801,8 +2801,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     mourning_prophet_path_b_t4_alt: {
-      flavor_en: "When its companions falter, the Prophet draws resolve from their shared grief.\nNo life is promised back, only strength to continue.",
-      flavor_ru: "Когда спутники слабеют, Пророк черпает стойкость в общей скорби.\nВозвращения к жизни никто не обещает — лишь силы идти дальше.",
+      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail.\nBlood quiets that loss for one battle, but cannot reverse it.",
+      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век.\nКровь заглушает утрату на одну битву, но не повернёт время вспять.",
       id: 'h_g_1_b42',
       name: 'Mourning Prophet',
       name_ru: 'Скорбящий Пророк',
@@ -2833,8 +2833,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     grail_warden_path_a_t2: {
-      flavor_en: "It gathers the newly risen beneath its shield, sparing them the first chaos of battle.\nAcceptance has made the Warden a shelter for its own kind.",
-      flavor_ru: "Страж собирает новообращённых мертвецов под своим щитом, оберегая их от первого хаоса битвы.\nСмирение сделало его защитой для подобных себе.",
+      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind.\nNow it guards the dead who have nowhere else to rest.",
+      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием.\nТеперь он защищает мёртвых, которым негде обрести покой.",
       id: 'h_g_2_a2',
       name: 'Grail Warden',
       name_ru: 'Страж Грааля',
@@ -2849,8 +2849,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     grail_warden_path_a_t3: {
-      flavor_en: "Its ranks thicken wherever the dead are left behind.\nThe Warden does not call this a second life; it calls it a duty that remains.",
-      flavor_ru: "Его ряды крепнут там, где оставляют павших.\nСтраж не называет это второй жизнью — лишь долгом, который ещё не исполнен.",
+      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind.\nNow it guards the dead who have nowhere else to rest.",
+      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием.\nТеперь он защищает мёртвых, которым негде обрести покой.",
       id: 'h_g_2_a3',
       name: 'Grail Warden',
       name_ru: 'Страж Грааля',
@@ -2865,8 +2865,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     grail_warden_path_a_t4: {
-      flavor_en: "The Warden’s aura carries the slow certainty of the grave through enemy ranks.\nIt protects its company by making decay impossible to ignore.",
-      flavor_ru: "Аура Стража несёт сквозь вражеские ряды неотвратимость могилы.\nОн защищает своих, заставляя врага ощутить дыхание тления.",
+      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind.\nNow it guards the dead who have nowhere else to rest.",
+      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием.\nТеперь он защищает мёртвых, которым негде обрести покой.",
       id: 'h_g_2_a41',
       name: 'Grail Warden',
       name_ru: 'Страж Грааля',
@@ -2881,8 +2881,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     grail_warden_path_a_t4_alt: {
-      flavor_en: "Centuries of imagined service ended in a single spell; the Warden chose to keep serving.\nIts patience steadies every corpse gathered behind it.",
-      flavor_ru: "Век службы, которого ждали, обернулся одним заклятием; Страж решил продолжить служить.\nЕго терпение укрепляет всех мертвецов за его спиной.",
+      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind.\nNow it guards the dead who have nowhere else to rest.",
+      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием.\nТеперь он защищает мёртвых, которым негде обрести покой.",
       id: 'h_g_2_a42',
       name: 'Grail Warden',
       name_ru: 'Страж Грааля',
@@ -2897,8 +2897,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     grail_warden_path_b_t2: {
-      flavor_en: "The Warden marks each foe with the same patient rot that overtook its homeland.\nIt no longer mistakes survival for a way back to life.",
-      flavor_ru: "Страж отмечает врагов тем же неумолимым тлением, что поглотило его родину.\nОн больше не принимает существование за путь к жизни.",
+      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind.\nNow it guards the dead who have nowhere else to rest.",
+      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием.\nТеперь он защищает мёртвых, которым негде обрести покой.",
       id: 'h_g_2_b2',
       name: 'Grail Warden',
       name_ru: 'Страж Грааля',
@@ -2913,8 +2913,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     grail_warden_path_b_t3: {
-      flavor_en: "Its weapon leaves a sickness that spreads through the press of combat.\nThe Warden accepts the burden of carrying its people’s ruin outward.",
-      flavor_ru: "Его оружие оставляет хворь, расходящуюся по тесному строю врага.\nСтраж принимает на себя бремя нести гибель своего народа дальше.",
+      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind.\nNow it guards the dead who have nowhere else to rest.",
+      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием.\nТеперь он защищает мёртвых, которым негде обрести покой.",
       id: 'h_g_2_b3',
       name: 'Grail Warden',
       name_ru: 'Страж Грааля',
@@ -2929,8 +2929,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     grail_warden_path_b_t4: {
-      flavor_en: "A fallen soldier rises again beneath the Warden’s watch.\nIt offers no promise of comfort, only another chance to stand beside the dead.",
-      flavor_ru: "Под присмотром Стража павший воин поднимается вновь.\nУтешения он не сулит — лишь ещё одну возможность встать рядом с мёртвыми.",
+      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind.\nNow it guards the dead who have nowhere else to rest.",
+      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием.\nТеперь он защищает мёртвых, которым негде обрести покой.",
       id: 'h_g_2_b41',
       name: 'Grail Warden',
       name_ru: 'Страж Грааля',
@@ -2945,8 +2945,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     grail_warden_path_b_t4_alt: {
-      flavor_en: "Infection and stubborn endurance have become the Warden’s answer to the living.\nIt holds its ground without asking what the body once was.",
-      flavor_ru: "Зараза и несгибаемая стойкость стали ответом Стража живым.\nОн удерживает рубеж, не спрашивая, каким когда-то было это тело.",
+      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind.\nNow it guards the dead who have nowhere else to rest.",
+      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием.\nТеперь он защищает мёртвых, которым негде обрести покой.",
       id: 'h_g_2_b42',
       name: 'Grail Warden',
       name_ru: 'Страж Грааля',
@@ -2977,8 +2977,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     mothers_voice_path_a_t2: {
-      flavor_en: "The Voice’s lament reaches the ranks before the enemy, urging the dead to move with sudden purpose.\nEven a bodiless voice can give courage.",
-      flavor_ru: "Плач Голоса достигает союзников раньше врага и заставляет мёртвых действовать решительно.\nДаже бесплотный голос способен придать храбрости.",
+      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged.\nAstaloth still hears it.",
+      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения.\nАсталот всё ещё слышит его.",
       id: 'h_g_3_a2',
       name: 'Mothers Voice',
       name_ru: 'Голос Матери',
@@ -2993,8 +2993,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     mothers_voice_path_a_t3: {
-      flavor_en: "The Voice no longer needs to shout; every corpse knows the cadence of its sorrow.\nThe living hear only a chill passing through the ranks.",
-      flavor_ru: "Голосу больше не нужно повышать тон: каждый мертвец знает ритм его скорби.\nЖивые слышат лишь холод, проходящий по рядам.",
+      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged.\nAstaloth still hears it.",
+      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения.\nАсталот всё ещё слышит его.",
       id: 'h_g_3_a3',
       name: 'Mothers Voice',
       name_ru: 'Голос Матери',
@@ -3009,8 +3009,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     mothers_voice_path_a_t4: {
-      flavor_en: "Its grief settles over the host like a winter veil, turning pain aside from those who remain.\nAstaloth’s mourning is gentle, never distant.",
-      flavor_ru: "Скорбь Голоса укрывает войско зимней вуалью и отводит беду от уцелевших.\nАсталот скорбит нежно, не отстраняясь от своих детей.",
+      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged.\nAstaloth still hears it.",
+      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения.\nАсталот всё ещё слышит его.",
       id: 'h_g_3_a41',
       name: 'Mothers Voice',
       name_ru: 'Голос Матери',
@@ -3025,8 +3025,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     mothers_voice_path_a_t4_alt: {
-      flavor_en: "The Voice lends the dead a measure of stillness against the storm.\nNothing in that quiet suggests their old lives have returned.",
-      flavor_ru: "Голос дарует мёртвым крупицу покоя посреди бури.\nВ этой тишине нет обещания, что прежняя жизнь вернётся.",
+      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged.\nAstaloth still hears it.",
+      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения.\nАсталот всё ещё слышит его.",
       id: 'h_g_3_a42',
       name: 'Mothers Voice',
       name_ru: 'Голос Матери',
@@ -3041,8 +3041,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     mothers_voice_path_b_t2: {
-      flavor_en: "A thin note passes through the battlefield and marks the living for the dead to find.\nThe Voice speaks softly; its grief needs no witness.",
-      flavor_ru: "Тонкий звук проходит над полем боя и указывает мертвецам на живых.\nГолос звучит тихо; его скорби не нужны свидетели.",
+      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged.\nAstaloth still hears it.",
+      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения.\nАсталот всё ещё слышит его.",
       id: 'h_g_3_b2',
       name: 'Mothers Voice',
       name_ru: 'Голос Матери',
@@ -3057,8 +3057,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     mothers_voice_path_b_t3: {
-      flavor_en: "The Voice draws the enemy’s strength toward its own slow silence.\nIt remembers the spell’s words clearly, and wishes it did not.",
-      flavor_ru: "Голос тянет силу врагов к собственной медленной тишине.\nОн ясно помнит слова заклятия — и хотел бы забыть их.",
+      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged.\nAstaloth still hears it.",
+      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения.\nАсталот всё ещё слышит его.",
       id: 'h_g_3_b3',
       name: 'Mothers Voice',
       name_ru: 'Голос Матери',
@@ -3073,8 +3073,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     mothers_voice_path_b_t4: {
-      flavor_en: "Its sorrow marks a chosen foe, and the dead close around that mark.\nThe Voice cannot bring back a body; it can keep a memory alive.",
-      flavor_ru: "Скорбь Голоса отмечает избранного врага, и мёртвые смыкаются вокруг знака.\nТело не вернуть, но память ещё можно сберечь.",
+      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged.\nAstaloth still hears it.",
+      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения.\nАсталот всё ещё слышит его.",
       id: 'h_g_3_b41',
       name: 'Mothers Voice',
       name_ru: 'Голос Матери',
@@ -3089,8 +3089,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     mothers_voice_path_b_t4_alt: {
-      flavor_en: "When threatened, the Voice thins into the cold air and returns beyond the strike.\nIt has learned to endure without pretending this is life.",
-      flavor_ru: "Перед ударом Голос растворяется в холодном воздухе и возникает за пределами клинка.\nОн научился существовать, не называя это жизнью.",
+      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged.\nAstaloth still hears it.",
+      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения.\nАсталот всё ещё слышит его.",
       id: 'h_g_3_b42',
       name: 'Mothers Voice',
       name_ru: 'Голос Матери',
