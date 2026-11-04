@@ -1415,13 +1415,26 @@ function dispatchPassive(trigger, owner, def, ctx) {
       engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: owner.unit_name, targetCell: owner.cellIndex, message: `${def.name} — ${owner.unit_name} will reanimate next turn with ${reviveHp} HP (${zombieCount} Zombie tag${zombieCount !== 1 ? 's' : ''})` });
     }
     if (p.death_aoe_damage != null || p.death_aoe_damage_per_tag != null) {
-      const deathDmg = p.death_aoe_damage_per_tag != null
+      // The blast BEFORE mitigation. Last Verse multiplies it by the Caster
+      // allies standing, which is why a full caster line made this the biggest
+      // single number on the board.
+      const raw = p.death_aoe_damage_per_tag != null
         ? p.death_aoe_damage_per_tag * tagCount(engine, owner.side, p.tag_required)
         : p.death_aoe_damage;
-      for (const e of engine.combatants.filter(c => c.side !== owner.side && c.alive && !c._untargetable)) {
-        hurt(e, deathDmg, engine, p.damage_type);
+      // `_invulnerable` is excluded alongside `_untargetable`: this was the one
+      // damage route that went straight past a Unity guardian, which the Verse
+      // of Cataclysm that sets it off already respects. A death blast is not
+      // more absolute than the suicide that caused it.
+      for (const e of engine.combatants.filter(c => c.side !== owner.side && c.alive && !c._untargetable && !c._invulnerable)) {
+        // Through typedAmount, like every other typed damage in this file. It
+        // used to pass `raw` to hurt() unmitigated, so a death blast ignored
+        // resistance entirely — the fire ward a player had built specifically
+        // against this family did nothing, and the number the victim took was
+        // the number on the ability card however well armoured it was.
+        const dmg = typedAmount(e, raw, p.damage_type);
+        hurt(e, dmg, engine, p.damage_type);
         if (e.battle_hp <= 0) e.alive = false;
-        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: e.unit_name, targetId: e.id, targetCell: e.cellIndex, value: deathDmg, heal: false });
+        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: e.unit_name, targetId: e.id, targetCell: e.cellIndex, value: dmg, heal: false });
       }
     }
   }
