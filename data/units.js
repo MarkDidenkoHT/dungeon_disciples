@@ -3,8 +3,8 @@ import { UNIT_ABILITIES } from './unit_abilities.js';
 const UNITS = {
   choir_of_the_cursed: {
     black_castellan: {
-      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest.\nIt drives the Choir forward as if every demon were expendable—because to it, every demon is.",
-      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание.\nОн гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
+      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest. It drives the Choir forward as if every demon were expendable—because to it, every demon is.",
+      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание. Он гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
       id: 'h_d_1',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -19,8 +19,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     black_castellan_path_a_t2: {
-      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest.\nIt drives the Choir forward as if every demon were expendable—because to it, every demon is.",
-      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание.\nОн гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
+      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest. It drives the Choir forward as if every demon were expendable—because to it, every demon is.",
+      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание. Он гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
       id: 'h_d_1_a2',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -35,8 +35,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     black_castellan_path_a_t3: {
-      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest.\nIt drives the Choir forward as if every demon were expendable—because to it, every demon is.",
-      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание.\nОн гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
+      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest. It drives the Choir forward as if every demon were expendable—because to it, every demon is.",
+      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание. Он гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
       id: 'h_d_1_a3',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -51,8 +51,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     black_castellan_path_a_t4: {
-      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest.\nIt drives the Choir forward as if every demon were expendable—because to it, every demon is.",
-      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание.\nОн гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
+      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest. It drives the Choir forward as if every demon were expendable—because to it, every demon is.",
+      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание. Он гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
       id: 'h_d_1_a41',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -67,8 +67,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     black_castellan_path_a_t4_alt: {
-      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest.\nIt drives the Choir forward as if every demon were expendable—because to it, every demon is.",
-      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание.\nОн гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
+      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest. It drives the Choir forward as if every demon were expendable—because to it, every demon is.",
+      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание. Он гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
       id: 'h_d_1_a42',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -83,8 +83,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     black_castellan_path_b_t2: {
-      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest.\nIt drives the Choir forward as if every demon were expendable—because to it, every demon is.",
-      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание.\nОн гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
+      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest. It drives the Choir forward as if every demon were expendable—because to it, every demon is.",
+      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание. Он гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
       id: 'h_d_1_b2',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -99,8 +99,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     black_castellan_path_b_t3: {
-      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest.\nIt drives the Choir forward as if every demon were expendable—because to it, every demon is.",
-      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание.\nОн гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
+      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest. It drives the Choir forward as if every demon were expendable—because to it, every demon is.",
+      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание. Он гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
       id: 'h_d_1_b3',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -115,8 +115,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     black_castellan_path_b_t4: {
-      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest.\nIt drives the Choir forward as if every demon were expendable—because to it, every demon is.",
-      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание.\nОн гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
+      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest. It drives the Choir forward as if every demon were expendable—because to it, every demon is.",
+      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание. Он гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
       id: 'h_d_1_b41',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -131,8 +131,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     black_castellan_path_b_t4_alt: {
-      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest.\nIt drives the Choir forward as if every demon were expendable—because to it, every demon is.",
-      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание.\nОн гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
+      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest. It drives the Choir forward as if every demon were expendable—because to it, every demon is.",
+      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание. Он гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
       id: 'h_d_1_b42',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -147,8 +147,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     choir_regent: {
-      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name.\nIt welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
-      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный.\nОн принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
+      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name. It welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
+      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный. Он принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
       id: 'h_d_2',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -163,8 +163,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     choir_regent_path_a_t2: {
-      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name.\nIt welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
-      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный.\nОн принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
+      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name. It welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
+      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный. Он принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
       id: 'h_d_2_a2',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -179,8 +179,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     choir_regent_path_a_t3: {
-      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name.\nIt welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
-      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный.\nОн принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
+      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name. It welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
+      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный. Он принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
       id: 'h_d_2_a3',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -195,8 +195,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     choir_regent_path_a_t4: {
-      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name.\nIt welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
-      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный.\nОн принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
+      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name. It welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
+      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный. Он принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
       id: 'h_d_2_a41',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -211,8 +211,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     choir_regent_path_a_t4_alt: {
-      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name.\nIt welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
-      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный.\nОн принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
+      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name. It welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
+      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный. Он принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
       id: 'h_d_2_a42',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -227,8 +227,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     choir_regent_path_b_t2: {
-      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name.\nIt welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
-      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный.\nОн принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
+      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name. It welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
+      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный. Он принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
       id: 'h_d_2_b2',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -243,8 +243,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     choir_regent_path_b_t3: {
-      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name.\nIt welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
-      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный.\nОн принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
+      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name. It welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
+      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный. Он принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
       id: 'h_d_2_b3',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -259,8 +259,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     choir_regent_path_b_t4: {
-      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name.\nIt welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
-      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный.\nОн принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
+      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name. It welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
+      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный. Он принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
       id: 'h_d_2_b41',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -275,8 +275,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     choir_regent_path_b_t4_alt: {
-      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name.\nIt welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
-      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный.\nОн принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
+      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name. It welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
+      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный. Он принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
       id: 'h_d_2_b42',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -291,8 +291,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     infernal_ascendant: {
-      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness.\nIts body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
-      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию.\nЕго тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
+      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness. Its body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
+      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию. Его тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
       id: 'h_d_3',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -307,8 +307,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     infernal_ascendant_path_a_t2: {
-      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness.\nIts body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
-      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию.\nЕго тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
+      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness. Its body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
+      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию. Его тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
       id: 'h_d_3_a2',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -323,8 +323,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     infernal_ascendant_path_a_t3: {
-      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness.\nIts body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
-      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию.\nЕго тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
+      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness. Its body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
+      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию. Его тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
       id: 'h_d_3_a3',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -339,8 +339,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     infernal_ascendant_path_a_t4: {
-      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness.\nIts body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
-      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию.\nЕго тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
+      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness. Its body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
+      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию. Его тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
       id: 'h_d_3_a41',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -355,8 +355,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     infernal_ascendant_path_a_t4_alt: {
-      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness.\nIts body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
-      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию.\nЕго тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
+      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness. Its body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
+      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию. Его тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
       id: 'h_d_3_a42',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -371,8 +371,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     infernal_ascendant_path_b_t2: {
-      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness.\nIts body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
-      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию.\nЕго тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
+      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness. Its body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
+      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию. Его тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
       id: 'h_d_3_b2',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -387,8 +387,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     infernal_ascendant_path_b_t3: {
-      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness.\nIts body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
-      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию.\nЕго тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
+      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness. Its body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
+      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию. Его тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
       id: 'h_d_3_b3',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -403,8 +403,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     infernal_ascendant_path_b_t4: {
-      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness.\nIts body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
-      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию.\nЕго тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
+      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness. Its body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
+      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию. Его тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
       id: 'h_d_3_b41',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -419,8 +419,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     infernal_ascendant_path_b_t4_alt: {
-      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness.\nIts body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
-      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию.\nЕго тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
+      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness. Its body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
+      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию. Его тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
       id: 'h_d_3_b42',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -435,8 +435,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     imp: {
-      flavor_en: "The first dissonant notes of Aggrail's song shook a little demon loose from the dark beneath the court.\nIt has learned one rule since: seize whatever is weak before the music moves on.",
-      flavor_ru: "Первые фальшивые ноты песни Агграила вытряхнули беса из тьмы под дворцом.\nС тех пор он усвоил лишь одно: хватай слабого, пока музыка не смолкла.",
+      flavor_en: "The first dissonant notes of Aggrail's song shook a little demon loose from the dark beneath the court. It has learned one rule since: seize whatever is weak before the music moves on.",
+      flavor_ru: "Первые фальшивые ноты песни Агграила вытряхнули беса из тьмы под дворцом. С тех пор он усвоил лишь одно: хватай слабого, пока музыка не смолкла.",
       id: 'd1', f: 'd', t: 1,
       name: 'Imp',
       name_ru: 'Бес',
@@ -450,8 +450,8 @@ const UNITS = {
       xp: 230, passive: ['rage 1', 'aggrails_blessing 1'], ability: 'pact 1',
     },
     tormentor: {
-      flavor_en: "The Tormentor makes a melody of every cry it tears from its victims.\nAggrail's song gave it strength, not restraint; it hurts because it delights in the sound.",
-      flavor_ru: "Мучитель складывает в мелодию каждый крик, вырванный у жертвы.\nПесня Агграила дала ему силу, но не сдержанность: он мучает, потому что наслаждается звуком.",
+      flavor_en: "The Tormentor makes a melody of every cry it tears from its victims. Aggrail's song gave it strength, not restraint; it hurts because it delights in the sound.",
+      flavor_ru: "Мучитель складывает в мелодию каждый крик, вырванный у жертвы. Песня Агграила дала ему силу, но не сдержанность: он мучает, потому что наслаждается звуком.",
       id: 'd11', f: 'd', t: 2,
       name: 'Tormentor',
       name_ru: 'Мучитель',
@@ -465,8 +465,8 @@ const UNITS = {
       xp: 1250, passive: ['rage 2', 'aggrails_blessing 1', 'choir 1'], ability: 'pact 1',
     },
     praetor: {
-      flavor_en: "The Praetor calls lesser demons into line only to spend them without a second thought.\nIt serves Aggrail for the strength to command—and would gladly devour any rival who stood higher.",
-      flavor_ru: "Претор сгоняет низших демонов в строй, лишь затем чтобы без колебаний бросить их на гибель.\nОн служит Агграилу ради власти повелевать и с радостью пожрал бы любого соперника выше себя.",
+      flavor_en: "The Praetor calls lesser demons into line only to spend them without a second thought. It serves Aggrail for the strength to command—and would gladly devour any rival who stood higher.",
+      flavor_ru: "Претор сгоняет низших демонов в строй, лишь затем чтобы без колебаний бросить их на гибель. Он служит Агграилу ради власти повелевать и с радостью пожрал бы любого соперника выше себя.",
       id: 'd111', f: 'd', t: 3,
       name: 'Praetor',
       name_ru: 'Претор',
@@ -480,8 +480,8 @@ const UNITS = {
       xp: 4055, passive: ['rage 2', 'aggrails_blessing 2', 'choir 1'], ability: 'pact 2',
     },
     conqueror: {
-      flavor_en: "The Conqueror does not want a kingdom; it wants every living thing in reach beneath its claws.\nEach victory only sharpens its hunger, and Aggrail's chorus answers with another verse of ruin.",
-      flavor_ru: "Завоевателю не нужно королевство: он хочет, чтобы всё живое вокруг оказалось под его когтями.\nКаждая победа лишь разжигает голод, а хор Агграила отвечает новым куплетом разрушения.",
+      flavor_en: "The Conqueror does not want a kingdom; it wants every living thing in reach beneath its claws. Each victory only sharpens its hunger, and Aggrail's chorus answers with another verse of ruin.",
+      flavor_ru: "Завоевателю не нужно королевство: он хочет, чтобы всё живое вокруг оказалось под его когтями. Каждая победа лишь разжигает голод, а хор Агграила отвечает новым куплетом разрушения.",
       id: 'd1111', f: 'd', t: 4,
       name: 'Conqueror',
       name_ru: 'Завоеватель',
@@ -495,8 +495,8 @@ const UNITS = {
       xp: 8200, passive: ['rage 2', 'aggrails_blessing 2', 'choir 2'], ability: 'pact 2',
     },
     decimator: {
-      flavor_en: "The Decimator's command is a shockwave: demons surge behind it, eager to claim their share of the slaughter.\nIt calls this loyalty; the fallen know they were only useful until the next blow.",
-      flavor_ru: "Приказ Дециматора — ударная волна: демоны бросаются следом, надеясь урвать свою долю бойни.\nОн называет это верностью; павшие знают, что были нужны лишь до следующего удара.",
+      flavor_en: "The Decimator's command is a shockwave: demons surge behind it, eager to claim their share of the slaughter. It calls this loyalty; the fallen know they were only useful until the next blow.",
+      flavor_ru: "Приказ Дециматора — ударная волна: демоны бросаются следом, надеясь урвать свою долю бойни. Он называет это верностью; павшие знают, что были нужны лишь до следующего удара.",
       id: 'd1112', f: 'd', t: 4,
       name: 'Decimator',
       name_ru: 'Дециматор',
@@ -510,8 +510,8 @@ const UNITS = {
       xp: 8200, passive: ['rage 2', 'aegis 2', 'warding 2'], ability: 'pact 2',
     },
     chorister: {
-      flavor_en: "Once a court singer, the Chorister now lends its voice to the note that first corrupted the palace.\nIts shrill refrain sets skin alight and turns fear into an instrument for the Choir.",
-      flavor_ru: "Когда-то Хорист пел при дворе, теперь его голос поддерживает ноту, осквернившую дворец.\nПронзительный припев жжёт кожу и превращает страх в орудие Хора.",
+      flavor_en: "Once a court singer, the Chorister now lends its voice to the note that first corrupted the palace. Its shrill refrain sets skin alight and turns fear into an instrument for the Choir.",
+      flavor_ru: "Когда-то Хорист пел при дворе, теперь его голос поддерживает ноту, осквернившую дворец. Пронзительный припев жжёт кожу и превращает страх в орудие Хора.",
       id: 'd12', f: 'd', t: 2,
       name: 'Chorister',
       name_ru: 'Хорист',
@@ -525,8 +525,8 @@ const UNITS = {
       xp: 1250, passive: ['rage 1', 'fear 1', 'burn 1'], ability: 'pact 1',
     },
     chanter: {
-      flavor_en: "The Chanter shapes Aggrail's discord into a command that crawls beneath the skin.\nThose who hear it falter as their own terror rises to meet the burning verse.",
-      flavor_ru: "Певчий превращает диссонанс Агграила в приказ, заползающий под кожу.\nУслышавшие его теряют решимость, когда их собственный ужас встречает пылающий напев.",
+      flavor_en: "The Chanter shapes Aggrail's discord into a command that crawls beneath the skin. Those who hear it falter as their own terror rises to meet the burning verse.",
+      flavor_ru: "Певчий превращает диссонанс Агграила в приказ, заползающий под кожу. Услышавшие его теряют решимость, когда их собственный ужас встречает пылающий напев.",
       id: 'd121', f: 'd', t: 3,
       name: 'Chanter',
       name_ru: 'Певчий',
@@ -540,8 +540,8 @@ const UNITS = {
       xp: 4055, passive: ['rage 2', 'fear 1', 'burn 2'], ability: 'pact 2',
     },
     archchanter: {
-      flavor_en: "The Archchanter leads the Choir's voices into a crescendo that makes even hardened demons tremble.\nIt calls the terror holy—not because it believes, but because fear keeps the lesser wills obedient.",
-      flavor_ru: "Архипевчий ведёт голоса Хора к крещендо, от которого содрогаются даже закалённые демоны.\nОн зовёт этот ужас священным не из веры: страх удерживает слабые души в повиновении.",
+      flavor_en: "The Archchanter leads the Choir's voices into a crescendo that makes even hardened demons tremble. It calls the terror holy—not because it believes, but because fear keeps the lesser wills obedient.",
+      flavor_ru: "Архипевчий ведёт голоса Хора к крещендо, от которого содрогаются даже закалённые демоны. Он зовёт этот ужас священным не из веры: страх удерживает слабые души в повиновении.",
       id: 'd1211', f: 'd', t: 4,
       name: 'Archchanter',
       name_ru: 'Архипевчий',
@@ -555,8 +555,8 @@ const UNITS = {
       xp: 7280, passive: ['rage 2', 'fear 2', 'burn 2'], ability: 'pact 2',
     },
     doomchanter: {
-      flavor_en: "The Doomchanter sings of a final silence, and its verse leaves rot where living breath once stirred.\nIt offers no release from the curse; it wants every last heartbeat to become part of the song.",
-      flavor_ru: "Певчий Гибели поёт о последней тишине, и его куплет оставляет гниль там, где теплилось дыхание.\nОн не сулит избавления от проклятия: каждый удар сердца должен стать частью песни.",
+      flavor_en: "The Doomchanter sings of a final silence, and its verse leaves rot where living breath once stirred. It offers no release from the curse; it wants every last heartbeat to become part of the song.",
+      flavor_ru: "Певчий Гибели поёт о последней тишине, и его куплет оставляет гниль там, где теплилось дыхание. Он не сулит избавления от проклятия: каждый удар сердца должен стать частью песни.",
       id: 'd1212', f: 'd', t: 4,
       name: 'Doomchanter',
       name_ru: 'Певчий Гибели',
@@ -570,8 +570,8 @@ const UNITS = {
       xp: 7280, passive: ['decay 3','fear 1', 'infect 2'], ability: 'rite_of_reclamation 2',
     },
     ash_acolyte: {
-      flavor_en: "The Ash Acolyte gathers the cinders left by Aggrail's fire and turns them into a ward for its own kind.\nIt purges weakness without pity; the Choir keeps only what can endure the next verse.",
-      flavor_ru: "Пепельный Послушник собирает угли огня Агграила и сплетает из них защиту для своих.\nОн выжигает слабость без жалости: Хор оставляет лишь тех, кто выдержит следующий куплет.",
+      flavor_en: "The Ash Acolyte gathers the cinders left by Aggrail's fire and turns them into a ward for its own kind. It purges weakness without pity; the Choir keeps only what can endure the next verse.",
+      flavor_ru: "Пепельный Послушник собирает угли огня Агграила и сплетает из них защиту для своих. Он выжигает слабость без жалости: Хор оставляет лишь тех, кто выдержит следующий куплет.",
       id: 'd2', f: 'd', t: 1,
       name: 'Ash Acolyte',
       name_ru: 'Пепельный Послушник',
@@ -585,8 +585,8 @@ const UNITS = {
       xp: 75, passive: ['unending_servitude 1', 'shield 1'], ability: 'purge 1',
     },
     emberkeeper: {
-      flavor_en: "The Emberkeeper tends a coal that will not die, feeding it verses stolen from the palace's last living choir.\nIts warmth shields the faithful; the keeper asks no one whether they wish to be saved.",
-      flavor_ru: "Хранитель Углей бережёт неугасимый уголёк, питая его стихами, украденными у последнего живого хора дворца.\nЕго жар укрывает верных, не спрашивая, желают ли они спасения.",
+      flavor_en: "The Emberkeeper tends a coal that will not die, feeding it verses stolen from the palace's last living choir. Its warmth shields the faithful; the keeper asks no one whether they wish to be saved.",
+      flavor_ru: "Хранитель Углей бережёт неугасимый уголёк, питая его стихами, украденными у последнего живого хора дворца. Его жар укрывает верных, не спрашивая, желают ли они спасения.",
       id: 'd21', f: 'd', t: 2,
       name: 'Emberkeeper',
       name_ru: 'Хранитель Углей',
@@ -600,8 +600,8 @@ const UNITS = {
       xp: 400, passive: ['unending_servitude 1', 'shield 2'], ability: 'purge 1',
     },
     pyre_warden: {
-      flavor_en: "The Pyre Warden tends the Choir's fire and sings courage into those who must approach it.\nThe song lends them speed, not hope; Aggrail has no use for hope.",
-      flavor_ru: "Смотритель Костра поддерживает огонь Хора и песней подгоняет тех, кому предстоит к нему приблизиться.\nНапев дарит им быстроту, но не надежду: Агграилу надежда ни к чему.",
+      flavor_en: "The Pyre Warden tends the Choir's fire and sings courage into those who must approach it. The song lends them speed, not hope; Aggrail has no use for hope.",
+      flavor_ru: "Смотритель Костра поддерживает огонь Хора и песней подгоняет тех, кому предстоит к нему приблизиться. Напев дарит им быстроту, но не надежду: Агграилу надежда ни к чему.",
       id: 'd211', f: 'd', t: 3,
       name: 'Pyre Warden',
       name_ru: 'Смотритель Костра',
@@ -615,8 +615,8 @@ const UNITS = {
       xp: 1850, passive: ['inspiration_initiative 1', 'shield 2'], ability: 'purge 1',
     },
     ashen_warden: {
-      flavor_en: "The Ashen Warden stands watch where the dead rise to answer Aggrail's call.\nIts ash-veiled hymn keeps their chill from the living; the Choir needs its servants intact until the work is done.",
-      flavor_ru: "Пепельный Страж караулит там, где мёртвые поднимаются на зов Агграила.\nОкутанный пеплом гимн заслоняет их ледяное дыхание от живых: Хору нужны слуги целыми, пока дело не завершено.",
+      flavor_en: "The Ashen Warden stands watch where the dead rise to answer Aggrail's call. Its ash-veiled hymn keeps their chill from the living; the Choir needs its servants intact until the work is done.",
+      flavor_ru: "Пепельный Страж караулит там, где мёртвые поднимаются на зов Агграила. Окутанный пеплом гимн заслоняет их ледяное дыхание от живых: Хору нужны слуги целыми, пока дело не завершено.",
       id: 'd2111', f: 'd', t: 4,
       name: 'Ashen Warden',
       name_ru: 'Пепельный Страж',
@@ -630,8 +630,8 @@ const UNITS = {
       xp: 3350, passive: ['inspiration_initiative 1', 'shield 2', 'resist_aura_death 1'], ability: 'purge 1',
     },
     pyre_choir: {
-      flavor_en: "The Pyre Choir sings over the roots and burrows of the transformed capital, where even nature has learned to burn.\nIts chorus hardens the faithful against the wild; nothing beyond the spiral is meant to survive.",
-      flavor_ru: "Хор Погребального Костра поёт над корнями и подземельями изменённой столицы, где даже природа научилась гореть.\nЕго голоса закаляют верных против дикого мира: за пределами спирали ничто не должно уцелеть.",
+      flavor_en: "The Pyre Choir sings over the roots and burrows of the transformed capital, where even nature has learned to burn. Its chorus hardens the faithful against the wild; nothing beyond the spiral is meant to survive.",
+      flavor_ru: "Хор Погребального Костра поёт над корнями и подземельями изменённой столицы, где даже природа научилась гореть. Его голоса закаляют верных против дикого мира: за пределами спирали ничто не должно уцелеть.",
       id: 'd2112', f: 'd', t: 4,
       name: 'Pyre Choir',
       name_ru: 'Хор Погребального Костра',
@@ -645,8 +645,8 @@ const UNITS = {
       xp: 3150, passive: ['inspiration_initiative 1', 'shield 2', 'resist_aura_nature 1' ], ability: 'purge 1',
     },
     clay_gargoyle: {
-      flavor_en: "The Clay Gargoyle was a court ornament before Aggrail's song taught stone to hunger.\nIt now leaves its pedestal to crush intruders, returning to stillness only when the court commands it.",
-      flavor_ru: "Прежде Глиняная Горгулья украшала дворец; песня Агграила научила камень голодать.\nТеперь она сходит с постамента, чтобы раздавить незваных гостей, и замирает лишь по приказу двора.",
+      flavor_en: "The Clay Gargoyle was a court ornament before Aggrail's song taught stone to hunger. It now leaves its pedestal to crush intruders, returning to stillness only when the court commands it.",
+      flavor_ru: "Прежде Глиняная Горгулья украшала дворец; песня Агграила научила камень голодать. Теперь она сходит с постамента, чтобы раздавить незваных гостей, и замирает лишь по приказу двора.",
       id: 'd3', f: 'd', t: 1,
       name: 'Clay Gargoyle',
       name_ru: 'Глиняная Горгулья',
@@ -660,8 +660,8 @@ const UNITS = {
       xp: 230, passive: ['unbreakable 1', 'aegis 1'], ability: 'stone_form 1',
     },
     stone_gargoyle: {
-      flavor_en: "The Stone Gargoyle's old carved wings once watched over feasts and coronations.\nNow they bear it down upon the Choir's enemies, and its unyielding body answers every blow with another.",
-      flavor_ru: "Прежде резные крылья Каменной Горгульи взирали на пиры и коронации.\nТеперь они несут её на врагов Хора, а несокрушимое тело отвечает на каждый удар новым.",
+      flavor_en: "The Stone Gargoyle's old carved wings once watched over feasts and coronations. Now they bear it down upon the Choir's enemies, and its unyielding body answers every blow with another.",
+      flavor_ru: "Прежде резные крылья Каменной Горгульи взирали на пиры и коронации. Теперь они несут её на врагов Хора, а несокрушимое тело отвечает на каждый удар новым.",
       id: 'd31', f: 'd', t: 2,
       name: 'Stone Gargoyle',
       name_ru: 'Каменная Горгулья',
@@ -675,8 +675,8 @@ const UNITS = {
       xp: 1250, passive: ['unbreakable 2', 'aegis 1', 'resist_aura_death 1'], ability: 'stone_form 1',
     },
     onyx_gargoyle: {
-      flavor_en: "The Onyx Gargoyle absorbs the firelight, leaving only its eyes to mark its descent from the blackened towers.\nA dead thing of stone, it bears the Choir's curse more faithfully than any courtier.",
-      flavor_ru: "Ониксовая Горгулья поглощает свет огня; лишь глаза выдают её спуск с почерневших башен.\nМёртвый камень несёт проклятие Хора вернее любого придворного.",
+      flavor_en: "The Onyx Gargoyle absorbs the firelight, leaving only its eyes to mark its descent from the blackened towers. A dead thing of stone, it bears the Choir's curse more faithfully than any courtier.",
+      flavor_ru: "Ониксовая Горгулья поглощает свет огня; лишь глаза выдают её спуск с почерневших башен. Мёртвый камень несёт проклятие Хора вернее любого придворного.",
       id: 'd311', f: 'd', t: 3,
       name: 'Onyx Gargoyle',
       name_ru: 'Ониксовая Горгулья',
@@ -690,8 +690,8 @@ const UNITS = {
       xp: 4055, passive: ['unbreakable 2', 'aegis 1', 'resist_aura_death 2'], ability: 'stone_form 2',
     },
     obsidian_gargoyle: {
-      flavor_en: "The Obsidian Gargoyle is the court's dark reflection, its jagged wings edged like broken glass.\nIt endures the blows meant for its masters, then turns that borrowed violence back upon the attackers.",
-      flavor_ru: "Обсидиановая Горгулья — тёмное отражение двора, чьи зазубренные крылья остры, как битое стекло.\nОна принимает удары, предназначенные хозяевам, а затем обрушивает эту чужую ярость на нападающих.",
+      flavor_en: "The Obsidian Gargoyle is the court's dark reflection, its jagged wings edged like broken glass. It endures the blows meant for its masters, then turns that borrowed violence back upon the attackers.",
+      flavor_ru: "Обсидиановая Горгулья — тёмное отражение двора, чьи зазубренные крылья остры, как битое стекло. Она принимает удары, предназначенные хозяевам, а затем обрушивает эту чужую ярость на нападающих.",
       id: 'd3111', f: 'd', t: 4,
       name: 'Obsidian Gargoyle',
       name_ru: 'Обсидиановая Горгулья',
@@ -705,8 +705,8 @@ const UNITS = {
       xp: 7280, passive: ['unbreakable 2', 'aegis 2', 'resist_aura_death 2'], ability: 'stone_form 2',
     },
     quartz_gargoyle: {
-      flavor_en: "The Quartz Gargoyle catches the infernal glow and scatters it across the spiral stairways of the sunken capital.\nEvery glittering shard is a warning: the palace's ornaments have joined the hunt.",
-      flavor_ru: "Кварцевая Горгулья ловит адское сияние и рассыпает его по винтовым лестницам опускающейся столицы.\nКаждая сверкающая грань — предупреждение: дворцовые украшения вышли на охоту.",
+      flavor_en: "The Quartz Gargoyle catches the infernal glow and scatters it across the spiral stairways of the sunken capital. Every glittering shard is a warning: the palace's ornaments have joined the hunt.",
+      flavor_ru: "Кварцевая Горгулья ловит адское сияние и рассыпает его по винтовым лестницам опускающейся столицы. Каждая сверкающая грань — предупреждение: дворцовые украшения вышли на охоту.",
       id: 'd32', f: 'd', t: 2,
       name: 'Quartz Gargoyle',
       name_ru: 'Кварцевая Горгулья',
@@ -720,8 +720,8 @@ const UNITS = {
       xp: 1250, passive: ['unbreakable 2', 'aegis 1', 'resist_aura_cold 1'], ability: 'stone_form 1',
     },
     azurite_gargoyle: {
-      flavor_en: "The Azurite Gargoyle's runes flare blue when an enemy nears, and the stone answers with a sudden, crushing weight.\nNo warning is needed; the transformed statue was built to make escape impossible.",
-      flavor_ru: "Руны Азуритовой Горгульи вспыхивают синим при приближении врага, и камень обрушивается на него тяжёлой хваткой.\nПредупреждения не нужны: изменённая статуя создана, чтобы не оставить пути к бегству.",
+      flavor_en: "The Azurite Gargoyle's runes flare blue when an enemy nears, and the stone answers with a sudden, crushing weight. No warning is needed; the transformed statue was built to make escape impossible.",
+      flavor_ru: "Руны Азуритовой Горгульи вспыхивают синим при приближении врага, и камень обрушивается на него тяжёлой хваткой. Предупреждения не нужны: изменённая статуя создана, чтобы не оставить пути к бегству.",
       id: 'd321', f: 'd', t: 3,
       name: 'Azurite Gargoyle',
       name_ru: 'Азуритовая Горгулья',
@@ -735,8 +735,8 @@ const UNITS = {
       xp: 4055, passive: ['unbreakable 2', 'aegis 2', 'resist_aura_cold 1'], ability: 'stone_form 2',
     },
     malachite_gargoyle: {
-      flavor_en: "The Malachite Gargoyle's green stone veins shine with the corruption that flooded the palace foundations.\nIt lashes out at anything that draws near, as if the capital itself had grown claws.",
-      flavor_ru: "Зелёные прожилки Малахитовой Горгульи светятся порчей, затопившей дворцовые подземелья.\nОна бросается на всякого, кто приблизится, словно сама столица отрастила когти.",
+      flavor_en: "The Malachite Gargoyle's green stone veins shine with the corruption that flooded the palace foundations. It lashes out at anything that draws near, as if the capital itself had grown claws.",
+      flavor_ru: "Зелёные прожилки Малахитовой Горгульи светятся порчей, затопившей дворцовые подземелья. Она бросается на всякого, кто приблизится, словно сама столица отрастила когти.",
       id: 'd3211', f: 'd', t: 4,
       name: 'Malachite Gargoyle',
       name_ru: 'Малахитовая Горгулья',
@@ -750,8 +750,8 @@ const UNITS = {
       xp: 7280, passive: ['unbreakable 2', 'aegis 2', 'resist_aura_cold 2'], ability: 'stone_form 2',
     },
     alabaster_gargoyle: {
-      flavor_en: "The Alabaster Gargoyle sings a pale note that steadies the Choir, though no breath moves behind its stone lips.\nThe court once prized it as decoration; now it preserves only those useful to Aggrail.",
-      flavor_ru: "Алебастровая Горгулья выводит бледную ноту, укрепляющую Хор, хотя за каменными губами нет дыхания.\nКогда-то двор ценил её как украшение; теперь она хранит лишь тех, кто полезен Агграилу.",
+      flavor_en: "The Alabaster Gargoyle sings a pale note that steadies the Choir, though no breath moves behind its stone lips. The court once prized it as decoration; now it preserves only those useful to Aggrail.",
+      flavor_ru: "Алебастровая Горгулья выводит бледную ноту, укрепляющую Хор, хотя за каменными губами нет дыхания. Когда-то двор ценил её как украшение; теперь она хранит лишь тех, кто полезен Агграилу.",
       id: 'd3212', f: 'd', t: 4,
       name: 'Alabaster Gargoyle',
       name_ru: 'Алебастровая Горгулья',
@@ -765,8 +765,8 @@ const UNITS = {
       xp: 7380, passive: ['unbreakable 2', 'aegis 2', 'resist_aura_life 2'], ability: 'stone_form 2',
     },
     basalt_gargoyle: {
-      flavor_en: "The Basalt Gargoyle breaks from its perch like a piece of the city wall coming loose.\nIts heavy limbs strike with the force of the falling capital, and the Choir calls the ruin a blessing.",
-      flavor_ru: "Базальтовая Горгулья срывается с карниза, словно от столицы откололась часть стены.\nЕё тяжёлые лапы бьют с силой рушащегося города, а Хор называет это разрушение благословением.",
+      flavor_en: "The Basalt Gargoyle breaks from its perch like a piece of the city wall coming loose. Its heavy limbs strike with the force of the falling capital, and the Choir calls the ruin a blessing.",
+      flavor_ru: "Базальтовая Горгулья срывается с карниза, словно от столицы откололась часть стены. Её тяжёлые лапы бьют с силой рушащегося города, а Хор называет это разрушение благословением.",
       id: 'd33', f: 'd', t: 2,
       name: 'Basalt Gargoyle',
       name_ru: 'Базальтовая Горгулья',
@@ -780,8 +780,8 @@ const UNITS = {
       xp: 1250, passive: ['unbreakable 2', 'aegis 1', 'chain 1'], ability: 'stone_form 1',
     },
     slagstone_gargoyle: {
-      flavor_en: "The Slagstone Gargoyle drags a wake of molten grit from the furnace halls beneath the court.\nAnyone caught in its path is chained to the burning city by stone and flame.",
-      flavor_ru: "Шлаковая Горгулья тянет за собой шлейф расплавленной крошки из дворцовых плавилен.\nПопавших на её пути камень и пламя приковывают к горящему городу.",
+      flavor_en: "The Slagstone Gargoyle drags a wake of molten grit from the furnace halls beneath the court. Anyone caught in its path is chained to the burning city by stone and flame.",
+      flavor_ru: "Шлаковая Горгулья тянет за собой шлейф расплавленной крошки из дворцовых плавилен. Попавших на её пути камень и пламя приковывают к горящему городу.",
       id: 'd331', f: 'd', t: 3,
       name: 'Slagstone Gargoyle',
       name_ru: 'Шлаковая Горгулья',
@@ -795,8 +795,8 @@ const UNITS = {
       xp: 4055, passive: ['unbreakable 2', 'aegis 2', 'chain 1'], ability: 'stone_form 2',
     },
     cinderstone_gargoyle: {
-      flavor_en: "The Cinderstone Gargoyle carries the furnace-heart of the descending city in its cracked chest.\nWhen it strikes, molten fire leaps from stone to stone until the whole passage answers with flame.",
-      flavor_ru: "В расколотой груди Магмовой Горгульи горит сердце печи опускающегося города.\nОт её удара расплавленный огонь скачет с камня на камень, пока весь проход не вспыхнет.",
+      flavor_en: "The Cinderstone Gargoyle carries the furnace-heart of the descending city in its cracked chest. When it strikes, molten fire leaps from stone to stone until the whole passage answers with flame.",
+      flavor_ru: "В расколотой груди Магмовой Горгульи горит сердце печи опускающегося города. От её удара расплавленный огонь скачет с камня на камень, пока весь проход не вспыхнет.",
       id: 'd3311', f: 'd', t: 4,
       name: 'Magma Gargoyle',
       name_ru: 'Магмовая Горгулья',
@@ -810,8 +810,8 @@ const UNITS = {
       xp: 7280, passive: ['unbreakable 2', 'aegis 2', 'chain 2'], ability: 'stone_form 2',
     },
     heretic: {
-      flavor_en: "The Heretic heard the court's new song and mistook corruption for deliverance.\nNow it fights with borrowed fury, desperate to prove that surrendering its old life was worth the price.",
-      flavor_ru: "Еретик услышал новую песнь двора и принял порчу за избавление.\nТеперь он сражается заимствованной яростью, желая доказать, что отказ от прежней жизни стоил этой цены.",
+      flavor_en: "The Heretic heard the court's new song and mistook corruption for deliverance. Now it fights with borrowed fury, desperate to prove that surrendering its old life was worth the price.",
+      flavor_ru: "Еретик услышал новую песнь двора и принял порчу за избавление. Теперь он сражается заимствованной яростью, желая доказать, что отказ от прежней жизни стоил этой цены.",
       id: 'd4', f: 'd', t: 1,
       name: 'Heretic',
       name_ru: 'Еретик',
@@ -825,8 +825,8 @@ const UNITS = {
       xp: 100, passive: 'chorus_of_war 1', ability: 'furious_strike 1',
     },
     posessed: {
-      flavor_en: "The Possessed still remembers a human name, but Aggrail's voice drowns it beneath a chorus of commands.\nEach wound loosens the demon's hold on restraint; each answer is another savage blow.",
-      flavor_ru: "Одержимый ещё помнит человеческое имя, но голос Агграила заглушает его хором приказов.\nС каждой раной демон всё меньше сдерживается, и каждый ответ становится новым яростным ударом.",
+      flavor_en: "The Possessed still remembers a human name, but Aggrail's voice drowns it beneath a chorus of commands. Each wound loosens the demon's hold on restraint; each answer is another savage blow.",
+      flavor_ru: "Одержимый ещё помнит человеческое имя, но голос Агграила заглушает его хором приказов. С каждой раной демон всё меньше сдерживается, и каждый ответ становится новым яростным ударом.",
       id: 'd41', f: 'd', t: 2,
       name: 'Posessed',
       name_ru: 'Одержимый',
@@ -840,8 +840,8 @@ const UNITS = {
       xp: 444, passive: ['chorus_of_war 1', 'rage 1'], ability: 'furious_strike 1',
     },
     vessel: {
-      flavor_en: "The Vessel has given its body to a demon in exchange for strength enough to break the enemy line.\nThe bargain leaves no self to reclaim; the thing inside has already begun to treat its flesh as its own.",
-      flavor_ru: "Сосуд отдал тело демону в обмен на силу, способную сокрушить вражеский строй.\nВернуть себя уже некому: обитатель тела давно считает эту плоть своей.",
+      flavor_en: "The Vessel has given its body to a demon in exchange for strength enough to break the enemy line. The bargain leaves no self to reclaim; the thing inside has already begun to treat its flesh as its own.",
+      flavor_ru: "Сосуд отдал тело демону в обмен на силу, способную сокрушить вражеский строй. Вернуть себя уже некому: обитатель тела давно считает эту плоть своей.",
       id: 'd411', f: 'd', t: 3,
       name: 'Vessel',
       name_ru: 'Сосуд',
@@ -855,8 +855,8 @@ const UNITS = {
       xp: 1560, passive: ['chorus_of_war 1', 'rage 1', 'execute 1'], ability: 'furious_strike 1',
     },
     broken_vessel: {
-      flavor_en: "The Broken Vessel is what remains when the mortal shell can no longer contain its guest.\nThe demon does not mourn its discarded host; it has gained a stronger shape and a clearer path to power.",
-      flavor_ru: "Сломленный Сосуд — то, что остаётся, когда смертная оболочка больше не в силах удержать гостя.\nДемон не скорбит об оставленном хозяине: он обрёл более крепкую форму и прямой путь к силе.",
+      flavor_en: "The Broken Vessel is what remains when the mortal shell can no longer contain its guest. The demon does not mourn its discarded host; it has gained a stronger shape and a clearer path to power.",
+      flavor_ru: "Сломленный Сосуд — то, что остаётся, когда смертная оболочка больше не в силах удержать гостя. Демон не скорбит об оставленном хозяине: он обрёл более крепкую форму и прямой путь к силе.",
       id: 'd4111', f: 'd', t: 4,
       name: 'Broken Vessel',
       name_ru: 'Сломленный Сосуд',
@@ -885,8 +885,8 @@ const UNITS = {
       xp: 1560, passive: ['regenerate 1', 'recuperate 1', 'volcanic_skin 1'], ability: null,
     },
     agony_engine: {
-      flavor_en: "The Agony Engine is a living furnace fed by pain, its shell pulsing with every wound it inflicts upon itself.\nThe Choir spends its suffering as freely as its victims; only the power drawn from it matters.",
-      flavor_ru: "Аватар Агонии — живое горнило, питаемое мукой; его оболочка пульсирует с каждой нанесённой себе раной.\nХор тратит его страдания так же безжалостно, как страдания жертв: важна лишь добытая сила.",
+      flavor_en: "The Agony Engine is a living furnace fed by pain, its shell pulsing with every wound it inflicts upon itself. The Choir spends its suffering as freely as its victims; only the power drawn from it matters.",
+      flavor_ru: "Аватар Агонии — живое горнило, питаемое мукой; его оболочка пульсирует с каждой нанесённой себе раной. Хор тратит его страдания так же безжалостно, как страдания жертв: важна лишь добытая сила.",
       id: 'd4121', f: 'd', t: 4,
       name: 'Agony Avatar',
       name_ru: 'Аватар Агонии',
@@ -900,8 +900,8 @@ const UNITS = {
       xp: 2535, passive: ['regenerate 1', 'recuperate 2', 'volcanic_skin 1'], ability: null,
     },
     peer: {
-      flavor_en: "The Peer still wears the posture of a courtier, though the infernal flame has hollowed out everything beneath the finery.\nIt calls itself superior to the common crowd and borrows Aggrail's fire to make the claim convincing.",
-      flavor_ru: "Пэр всё ещё держится как придворный, хотя адское пламя выжгло всё под его нарядами.\nОн считает себя выше простолюдинов и занимает огонь Агграила, чтобы это доказать.",
+      flavor_en: "The Peer still wears the posture of a courtier, though the infernal flame has hollowed out everything beneath the finery. It calls itself superior to the common crowd and borrows Aggrail's fire to make the claim convincing.",
+      flavor_ru: "Пэр всё ещё держится как придворный, хотя адское пламя выжгло всё под его нарядами. Он считает себя выше простолюдинов и занимает огонь Агграила, чтобы это доказать.",
       id: 'd6', f: 'd', t: 1,
       name: 'Peer',
       name_ru: 'Пэр',
@@ -915,8 +915,8 @@ const UNITS = {
       xp: 100, passive: ['magic_attunement 1', 'resist_aura_fire 1'], ability: 'infernal_mandate 1',
     },
     nether_baron: {
-      flavor_en: "The Nether Baron commands lesser spirits with a gesture once reserved for servants of the court.\nIts infernal mandate turns that old entitlement into flame—and every obedient soul confirms its imagined nobility.",
-      flavor_ru: "Барон Преисподней повелевает низшими духами жестом, прежде предназначенным дворцовым слугам.\nАдский приказ превращает былую спесь в пламя, а каждая покорная душа подтверждает его мнимое благородство.",
+      flavor_en: "The Nether Baron commands lesser spirits with a gesture once reserved for servants of the court. Its infernal mandate turns that old entitlement into flame—and every obedient soul confirms its imagined nobility.",
+      flavor_ru: "Барон Преисподней повелевает низшими духами жестом, прежде предназначенным дворцовым слугам. Адский приказ превращает былую спесь в пламя, а каждая покорная душа подтверждает его мнимое благородство.",
       id: 'd61', f: 'd', t: 2,
       name: 'Nether Baron',
       name_ru: 'Барон Преисподней',
@@ -930,8 +930,8 @@ const UNITS = {
       xp: 480, passive: ['magic_attunement 1', 'resist_aura_fire 1', 'sovereigns_levy 1'], ability: 'infernal_mandate 2',
     },
     nether_lord: {
-      flavor_en: "The Nether Lord has learned to shape the court's corruption into a command that bites through armour and pride alike.\nIt mistakes obedience for respect, and demands more of both with every victory.",
-      flavor_ru: "Владыка Преисподней научился превращать порчу двора в приказ, прожигающий и броню, и гордость.\nОн принимает повиновение за уважение и после каждой победы требует всё больше того и другого.",
+      flavor_en: "The Nether Lord has learned to shape the court's corruption into a command that bites through armour and pride alike. It mistakes obedience for respect, and demands more of both with every victory.",
+      flavor_ru: "Владыка Преисподней научился превращать порчу двора в приказ, прожигающий и броню, и гордость. Он принимает повиновение за уважение и после каждой победы требует всё больше того и другого.",
       id: 'd611', f: 'd', t: 3,
       name: 'Nether Lord',
       name_ru: 'Владыка Преисподней',
@@ -945,8 +945,8 @@ const UNITS = {
       xp: 1560, passive: ['magic_attunement 1', 'resist_aura_fire 2', 'sovereigns_levy 1'], ability: 'infernal_mandate 2',
     },
     nether_sovereign: {
-      flavor_en: "The Nether Sovereign rules from the upper reaches of a capital that now spirals down toward hell.\nIt sees the city's descent as a throne rising above the world, and will burn any who dispute its claim.",
-      flavor_ru: "Государь Преисподней правит с высот столицы, чья спираль уходит всё глубже к аду.\nОн считает падение города троном над всем миром и сожжёт каждого, кто оспорит его право.",
+      flavor_en: "The Nether Sovereign rules from the upper reaches of a capital that now spirals down toward hell. It sees the city's descent as a throne rising above the world, and will burn any who dispute its claim.",
+      flavor_ru: "Государь Преисподней правит с высот столицы, чья спираль уходит всё глубже к аду. Он считает падение города троном над всем миром и сожжёт каждого, кто оспорит его право.",
       id: 'd6111', f: 'd', t: 4,
       name: 'Nether Sovereign',
       name_ru: 'Государь Преисподней',
@@ -960,8 +960,8 @@ const UNITS = {
       xp: 1820, passive: ['magic_attunement 1', 'resist_aura_fire 3', 'sovereigns_levy 1'], ability: 'infernal_mandate 3',
     },
     veiled_peer: {
-      flavor_en: "The Veiled Peer hides a courtier's face behind a shroud of stolen death-magic.\nIt whispers of restoration to the desperate, then takes their life to feed the court's unending hunger.",
-      flavor_ru: "Пэр Завесы скрывает придворное лицо под покровом украденной магии смерти.\nОн шепчет отчаявшимся о возрождении, а затем забирает их жизнь, чтобы утолить ненасытный голод двора.",
+      flavor_en: "The Veiled Peer hides a courtier's face behind a shroud of stolen death-magic. It whispers of restoration to the desperate, then takes their life to feed the court's unending hunger.",
+      flavor_ru: "Пэр Завесы скрывает придворное лицо под покровом украденной магии смерти. Он шепчет отчаявшимся о возрождении, а затем забирает их жизнь, чтобы утолить ненасытный голод двора.",
       id: 'd62', f: 'd', t: 2,
       name: 'Veiled Peer',
       name_ru: 'Пэр Завесы',
@@ -975,8 +975,8 @@ const UNITS = {
       xp: 480, passive: ['magic_attunement 1', 'essence_of_power 1', 'resist_aura_death 1'], ability: 'rite_of_reclamation 1',
     },
     shrouded_peer: {
-      flavor_en: "The Shrouded Peer draws a deeper veil across its face as the stolen power gathers around it.\nIt calls the dead back only to bind them to the court; no servant is ever permitted to leave.",
-      flavor_ru: "Пэр Покрова всё глубже скрывает лицо, пока вокруг него сгущается украденная сила.\nОн возвращает мёртвых лишь для того, чтобы привязать их ко двору: ни одному слуге не позволено уйти.",
+      flavor_en: "The Shrouded Peer draws a deeper veil across its face as the stolen power gathers around it. It calls the dead back only to bind them to the court; no servant is ever permitted to leave.",
+      flavor_ru: "Пэр Покрова всё глубже скрывает лицо, пока вокруг него сгущается украденная сила. Он возвращает мёртвых лишь для того, чтобы привязать их ко двору: ни одному слуге не позволено уйти.",
       id: 'd621', f: 'd', t: 3,
       name: 'Shrouded Peer',
       name_ru: 'Пэр Покрова',
@@ -990,8 +990,8 @@ const UNITS = {
       xp: 1560, passive: ['magic_attunement 1', 'essence_of_power 1', 'resist_aura_death 2'], ability: 'rite_of_reclamation 1',
     },
     peer_of_the_pale_court: {
-      flavor_en: "The Peer of the Pale Court wears death like court regalia, each pallid layer marking another stolen life.\nIt raises the fallen for the Choir's use and calls this dominion over the grave a return to its former grandeur.",
-      flavor_ru: "Пэр Бледного Двора носит смерть как придворные регалии; каждый бледный слой отмечает очередную украденную жизнь.\nОн поднимает павших для нужд Хора и считает эту власть над могилой возвращением былого величия.",
+      flavor_en: "The Peer of the Pale Court wears death like court regalia, each pallid layer marking another stolen life. It raises the fallen for the Choir's use and calls this dominion over the grave a return to its former grandeur.",
+      flavor_ru: "Пэр Бледного Двора носит смерть как придворные регалии; каждый бледный слой отмечает очередную украденную жизнь. Он поднимает павших для нужд Хора и считает эту власть над могилой возвращением былого величия.",
       id: 'd6211', f: 'd', t: 4,
       name: 'Peer of the Pale Court',
       name_ru: 'Пэр Бледного Двора',
@@ -1005,8 +1005,8 @@ const UNITS = {
       xp: 3095, passive: ['magic_attunement 1', 'essence_of_power 1', 'resist_aura_death 3'], ability: 'rite_of_reclamation 2',
     },
     dread_herald: {
-      flavor_en: "The Dread Herald carries the court's verdict in a voice that drains courage before the first blow falls.\nIts masters call the terror justice; the Herald needs no other truth.",
-      flavor_ru: "Глашатай Ужаса несёт приговор двора голосом, отнимающим мужество ещё до первого удара.\nХозяева зовут страх правосудием; Глашатаю другой правды не нужно.",
+      flavor_en: "The Dread Herald carries the court's verdict in a voice that drains courage before the first blow falls. Its masters call the terror justice; the Herald needs no other truth.",
+      flavor_ru: "Глашатай Ужаса несёт приговор двора голосом, отнимающим мужество ещё до первого удара. Хозяева зовут страх правосудием; Глашатаю другой правды не нужно.",
       id: 'd6212', f: 'd', t: 4,
       name: 'Dread Herald',
       name_ru: 'Глашатай Ужаса',
@@ -1020,8 +1020,8 @@ const UNITS = {
       xp: 3095, passive: ['magic_attunement 1', 'beacon_of_despair 2', 'resist_aura_life 2'], ability: 'rite_of_reclamation 2',
     },
     flame_spawn: {
-      flavor_en: "The Flame Spawn is a scrap of Aggrail's fire given hunger and shape.\nIt hurls a verse of cataclysm without regard for what burns beside its target—including its own kind.",
-      flavor_ru: "Порождение Пламени — частица огня Агграила, наделённая голодом и обликом.\nОно обрушивает куплет катаклизма, не заботясь о том, что сгорит рядом с целью, даже если это его сородичи.",
+      flavor_en: "The Flame Spawn is a scrap of Aggrail's fire given hunger and shape. It hurls a verse of cataclysm without regard for what burns beside its target—including its own kind.",
+      flavor_ru: "Порождение Пламени — частица огня Агграила, наделённая голодом и обликом. Оно обрушивает куплет катаклизма, не заботясь о том, что сгорит рядом с целью, даже если это его сородичи.",
       id: 'd7', f: 'd', t: 1,
       name: 'Flame Spawn',
       name_ru: 'Порождение Пламени',
@@ -1035,8 +1035,8 @@ const UNITS = {
       xp: 110, passive: ['volcanic_skin 1', 'unending_servitude 1'], ability: 'verse_of_cataclysm 1',
     },
     blaze_spawn: {
-      flavor_en: "The Blaze Spawn's fire gutters, then flares brighter whenever it tastes fresh fear.\nIts final verse lingers as a burning curse, so even survivors carry the Choir's song away.",
-      flavor_ru: "Огонь Порождения Полымя меркнет, а затем вспыхивает ярче, почуяв новый страх.\nПоследний куплет остаётся горящим проклятием, и даже выжившие уносят с собой песню Хора.",
+      flavor_en: "The Blaze Spawn's fire gutters, then flares brighter whenever it tastes fresh fear. Its final verse lingers as a burning curse, so even survivors carry the Choir's song away.",
+      flavor_ru: "Огонь Порождения Полымя меркнет, а затем вспыхивает ярче, почуяв новый страх. Последний куплет остаётся горящим проклятием, и даже выжившие уносят с собой песню Хора.",
       id: 'd71', f: 'd', t: 2,
       name: 'Blaze Spawn',
       name_ru: 'Порождение Полымя',
@@ -1050,8 +1050,8 @@ const UNITS = {
       xp: 540, passive: ['volcanic_skin 1', 'last_verse 1', 'unending_servitude 1'], ability: 'verse_of_cataclysm 1',
     },
     inferno_spawn: {
-      flavor_en: "The Inferno Spawn burns with a deeper note, its body a furnace that cannot be reasoned with or extinguished.\nWhen it falls, its last verse breaks outward in a wave of fire.",
-      flavor_ru: "Порождение Инферно горит низкой нотой; его тело — горнило, с которым нельзя договориться и которое не погасить.\nПадая, оно выпускает последний куплет волной огня.",
+      flavor_en: "The Inferno Spawn burns with a deeper note, its body a furnace that cannot be reasoned with or extinguished. When it falls, its last verse breaks outward in a wave of fire.",
+      flavor_ru: "Порождение Инферно горит низкой нотой; его тело — горнило, с которым нельзя договориться и которое не погасить. Падая, оно выпускает последний куплет волной огня.",
       id: 'd711', f: 'd', t: 3,
       name: 'Inferno Spawn',
       name_ru: 'Порождение Инферно',
@@ -1065,8 +1065,8 @@ const UNITS = {
       xp: 1860, passive: ['volcanic_skin 2', 'last_verse 1', 'unending_servitude 1'], ability: 'verse_of_cataclysm 2',
     },
     inferno_scion: {
-      flavor_en: "The Inferno Scion is no mere spark but the offspring of a fire that has swallowed whole halls.\nIt carries that hunger into battle, and its death leaves a final, blazing command.",
-      flavor_ru: "Отпрыск Инферно — не искра, а дитя пламени, поглотившего целые залы.\nОн несёт этот голод в бой, а его гибель оборачивается последним огненным приказом.",
+      flavor_en: "The Inferno Scion is no mere spark but the offspring of a fire that has swallowed whole halls. It carries that hunger into battle, and its death leaves a final, blazing command.",
+      flavor_ru: "Отпрыск Инферно — не искра, а дитя пламени, поглотившего целые залы. Он несёт этот голод в бой, а его гибель оборачивается последним огненным приказом.",
       id: 'd7111', f: 'd', t: 4,
       name: 'Inferno Scion',
       name_ru: 'Отпрыск Инферно',
@@ -1080,8 +1080,8 @@ const UNITS = {
       xp: 1860, passive: ['volcanic_skin 2', 'last_verse 2', 'unending_servitude 1'], ability: 'verse_of_cataclysm 2',
     },
     ember_spawn: {
-      flavor_en: "The Ember Spawn hums beneath the larger demons' roar, adding its small voice to the Choir's growing chorus.\nWhere it passes, cinders cling to armour and kindle at the next command.",
-      flavor_ru: "Порождение Углей гудит под рёвом старших демонов, вплетая тонкий голос в нарастающий хор.\nТам, где оно проходит, угли липнут к броне и вспыхивают по следующему приказу.",
+      flavor_en: "The Ember Spawn hums beneath the larger demons' roar, adding its small voice to the Choir's growing chorus. Where it passes, cinders cling to armour and kindle at the next command.",
+      flavor_ru: "Порождение Углей гудит под рёвом старших демонов, вплетая тонкий голос в нарастающий хор. Там, где оно проходит, угли липнут к броне и вспыхивают по следующему приказу.",
       id: 'd72', f: 'd', t: 2,
       name: 'Ember Spawn',
       name_ru: 'Порождение Углей',
@@ -1095,8 +1095,8 @@ const UNITS = {
       xp: 540, passive: ['choir 1', 'burn 1', 'unending_servitude 1'], ability: 'ember_shroud 1',
     },
     cinder_spawn: {
-      flavor_en: "The Cinder Spawn's call is answered by a quickening blaze that races across the enemy ranks.\nIt sings not for its kin but for the instant when every nearby flame becomes its own.",
-      flavor_ru: "На зов Порождения Жара откликается пламя, стремительно пробегающее по вражеским рядам.\nОно поёт не ради сородичей, а ради мгновения, когда каждый огонь вокруг станет его собственным.",
+      flavor_en: "The Cinder Spawn's call is answered by a quickening blaze that races across the enemy ranks. It sings not for its kin but for the instant when every nearby flame becomes its own.",
+      flavor_ru: "На зов Порождения Жара откликается пламя, стремительно пробегающее по вражеским рядам. Оно поёт не ради сородичей, а ради мгновения, когда каждый огонь вокруг станет его собственным.",
       id: 'd721', f: 'd', t: 3,
       name: 'Cinder Spawn',
       name_ru: 'Порождение Жара',
@@ -1110,8 +1110,8 @@ const UNITS = {
       xp: 1860, passive: ['choir 1', 'burn 2', 'unending_servitude 1'], ability: 'ember_shroud 2',
     },
     pyroclast_spawn: {
-      flavor_en: "The Pyroclast Spawn's chorus swells until its burning voice shakes ash from the ruined towers.\nIt does not distinguish friend from foe; the Choir's victory is all that gives the destruction meaning.",
-      flavor_ru: "Хор Порождения Пирокласта крепнет, пока его пылающий голос не стряхивает пепел с разрушенных башен.\nОно не различает своих и чужих: лишь победа Хора придаёт разрушению смысл.",
+      flavor_en: "The Pyroclast Spawn's chorus swells until its burning voice shakes ash from the ruined towers. It does not distinguish friend from foe; the Choir's victory is all that gives the destruction meaning.",
+      flavor_ru: "Хор Порождения Пирокласта крепнет, пока его пылающий голос не стряхивает пепел с разрушенных башен. Оно не различает своих и чужих: лишь победа Хора придаёт разрушению смысл.",
       id: 'd7211', f: 'd', t: 4,
       name: 'Pyroclast Spawn',
       name_ru: 'Порождение Пирокласта',
@@ -1125,8 +1125,8 @@ const UNITS = {
       xp: 1860, passive: ['choir 2', 'burn 2', 'unending_servitude 1'], ability: 'ember_shroud 2',
     },
     cultist: {
-      flavor_en: "The Cultist was among the courtiers who mistook the strangers' unknown song for a promise of greatness.\nIt still wears its old finery, now scorched by the power it begged Aggrail to grant.",
-      flavor_ru: "Культист был среди придворных, принявших незнакомую песнь чужеземцев за обещание величия.\nОн всё ещё носит прежние наряды, опалённые силой, которой вымолил у Агграила.",
+      flavor_en: "The Cultist was among the courtiers who mistook the strangers' unknown song for a promise of greatness. It still wears its old finery, now scorched by the power it begged Aggrail to grant.",
+      flavor_ru: "Культист был среди придворных, принявших незнакомую песнь чужеземцев за обещание величия. Он всё ещё носит прежние наряды, опалённые силой, которой вымолил у Агграила.",
       id: 'd5', f: 'd', t: 1,
       name: 'Cultist',
       name_ru: 'Культист',
@@ -1140,8 +1140,8 @@ const UNITS = {
       xp: 75, passive: 'burn 1', ability: 'mark_of_ash 1',
     },  
     choir_servant: {
-      flavor_en: "The Choir Servant repeats the strangers' first chant until its words kindle fellfire in the air.\nIt calls itself chosen, though the demons keep it only because its voice is useful.",
-      flavor_ru: "Слуга Хора повторяет первый напев чужеземцев, пока слова не разжигают скверный огонь в воздухе.\nОн считает себя избранным, хотя демоны терпят его лишь за полезный голос.",
+      flavor_en: "The Choir Servant repeats the strangers' first chant until its words kindle fellfire in the air. It calls itself chosen, though the demons keep it only because its voice is useful.",
+      flavor_ru: "Слуга Хора повторяет первый напев чужеземцев, пока слова не разжигают скверный огонь в воздухе. Он считает себя избранным, хотя демоны терпят его лишь за полезный голос.",
       id: 'd51', f: 'd', t: 2,
       name: 'Choir Servant',
       name_ru: 'Слуга Хора',
@@ -1155,8 +1155,8 @@ const UNITS = {
       xp: 400, passive: ['burn 1', 'fellfire 1'], ability: 'mark_of_ash 1',
     },
     choir_ascendant: {
-      flavor_en: "The Choir Ascendant has begun to outgrow its human shape, its voice splitting into several hungry notes.\nIt calls each new mutation a divine reward and each burning strike proof of its worth.",
-      flavor_ru: "Вознесённый Хора начинает перерастать человеческий облик, а его голос распадается на несколько голодных нот.\nОн считает каждую мутацию наградой свыше, а каждый пылающий удар — доказательством своей ценности.",
+      flavor_en: "The Choir Ascendant has begun to outgrow its human shape, its voice splitting into several hungry notes. It calls each new mutation a divine reward and each burning strike proof of its worth.",
+      flavor_ru: "Вознесённый Хора начинает перерастать человеческий облик, а его голос распадается на несколько голодных нот. Он считает каждую мутацию наградой свыше, а каждый пылающий удар — доказательством своей ценности.",
       id: 'd511', f: 'd', t: 3,
       name: 'Choir Ascendant',
       name_ru: 'Вознесённый Хора',
@@ -1170,8 +1170,8 @@ const UNITS = {
       xp: 1350, passive: ['burn 2', 'fellfire 1'], ability: 'mark_of_ash 1',
     },
     choir_exalted: {
-      flavor_en: "The Choir Exalted has surrendered the last of its human outline to the song, but kept its appetite for power.\nIt scorches the battlefield with fellfire, certain that Aggrail's attention is the same as love.",
-      flavor_ru: "Превознесённый Хора отдал песне последние черты человеческого облика, но сохранил жажду силы.\nОн испепеляет поле боя скверным огнём, принимая внимание Агграила за любовь.",
+      flavor_en: "The Choir Exalted has surrendered the last of its human outline to the song, but kept its appetite for power. It scorches the battlefield with fellfire, certain that Aggrail's attention is the same as love.",
+      flavor_ru: "Превознесённый Хора отдал песне последние черты человеческого облика, но сохранил жажду силы. Он испепеляет поле боя скверным огнём, принимая внимание Агграила за любовь.",
       id: 'd5111', f: 'd', t: 4,
       name: 'Choir Exalted',
       name_ru: 'Превознесённый Хора',
@@ -1185,8 +1185,8 @@ const UNITS = {
       xp: 3380, passive: ['burn 2', 'fellfire 2'], ability: 'mark_of_ash 1',
     },
     ash_cantor: {
-      flavor_en: "The Ash Cantor sings the dead back to their feet, not from mercy but to keep the Choir's ranks full.\nIts ember-hymn gives the fallen another moment to serve before the silence claims them again.",
-      flavor_ru: "Пепельный Кантор поднимает мёртвых не из милосердия, а чтобы ряды Хора не редели.\nЕго угольный гимн дарует павшим ещё миг службы, прежде чем тишина заберёт их вновь.",
+      flavor_en: "The Ash Cantor sings the dead back to their feet, not from mercy but to keep the Choir's ranks full. Its ember-hymn gives the fallen another moment to serve before the silence claims them again.",
+      flavor_ru: "Пепельный Кантор поднимает мёртвых не из милосердия, а чтобы ряды Хора не редели. Его угольный гимн дарует павшим ещё миг службы, прежде чем тишина заберёт их вновь.",
       id: 'd52', f: 'd', t: 2,
       name: 'Ash Cantor',
       name_ru: 'Пепельный Кантор',
@@ -1200,8 +1200,8 @@ const UNITS = {
       xp: 400, passive: ['renew 1', 'resist_aura_fire 1'], ability: 'rite_of_reclamation 1',
     },
     ash_precentor: {
-      flavor_en: "The Ash Precentor conducts the funeral hymn of a court that refuses to admit it is dead.\nIts voice rouses the Choir's servants and shields them from rival powers; only Aggrail may claim what remains.",
-      flavor_ru: "Пепельный Регент ведёт погребальный гимн двора, отказывающегося признать собственную смерть.\nЕго голос поднимает слуг Хора и укрывает их от чужой силы: оставшееся принадлежит лишь Агграилу.",
+      flavor_en: "The Ash Precentor conducts the funeral hymn of a court that refuses to admit it is dead. Its voice rouses the Choir's servants and shields them from rival powers; only Aggrail may claim what remains.",
+      flavor_ru: "Пепельный Регент ведёт погребальный гимн двора, отказывающегося признать собственную смерть. Его голос поднимает слуг Хора и укрывает их от чужой силы: оставшееся принадлежит лишь Агграилу.",
       id: 'd521', f: 'd', t: 3,
       name: 'Ash Precentor',
       name_ru: 'Пепельный Регент',
@@ -1215,8 +1215,8 @@ const UNITS = {
       xp: 1350, passive: ['renew 1', 'resist_aura_fire 2'], ability: 'rite_of_reclamation 2',
     },
     ash_liturgist: {
-      flavor_en: "The Ash Liturgist cuts discord from the Choir's hymn with a gesture and seals the wound with fire.\nIt calls this purity, though every note serves the same cruel master.",
-      flavor_ru: "Пепельный Литургист жестом высекает разлад из гимна Хора и запечатывает рану огнём.\nОн называет это очищением, хотя каждая нота служит одному и тому же жестокому владыке.",
+      flavor_en: "The Ash Liturgist cuts discord from the Choir's hymn with a gesture and seals the wound with fire. It calls this purity, though every note serves the same cruel master.",
+      flavor_ru: "Пепельный Литургист жестом высекает разлад из гимна Хора и запечатывает рану огнём. Он называет это очищением, хотя каждая нота служит одному и тому же жестокому владыке.",
       id: 'd5211', f: 'd', t: 4,
       name: 'Ash Liturgist',
       name_ru: 'Пепельный Литургист',
@@ -1233,8 +1233,8 @@ const UNITS = {
 
   empire: {
     paladin: {
-      flavor_en: "The Paladin carries Mithrail’s law into the breach; mercy for the unclean would cost human lives.\nIts shield vows the line will not break.",
-      flavor_ru: "Паладин несёт закон Митраила на передний край: милосердие к нечисти стоило бы человеческих жизней.\nЕго щит обещает, что строй не дрогнет.",
+      flavor_en: "The Paladin carries Mithrail’s law into the breach; mercy for the unclean would cost human lives. Its shield vows the line will not break.",
+      flavor_ru: "Паладин несёт закон Митраила на передний край: милосердие к нечисти стоило бы человеческих жизней. Его щит обещает, что строй не дрогнет.",
       id: 'h_e_1',
       name: 'Paladin',
       name_ru: 'Паладин',
@@ -1249,8 +1249,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     paladin_path_a_t2: {
-      flavor_en: "The Paladin carries Mithrail’s law into the breach; mercy for the unclean would cost human lives.\nIts shield vows the line will not break.",
-      flavor_ru: "Паладин несёт закон Митраила на передний край: милосердие к нечисти стоило бы человеческих жизней.\nЕго щит обещает, что строй не дрогнет.",
+      flavor_en: "The Paladin carries Mithrail’s law into the breach; mercy for the unclean would cost human lives. Its shield vows the line will not break.",
+      flavor_ru: "Паладин несёт закон Митраила на передний край: милосердие к нечисти стоило бы человеческих жизней. Его щит обещает, что строй не дрогнет.",
       id: 'h_e_11',
       name: 'Paladin',
       name_ru: 'Паладин',
@@ -1265,8 +1265,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     paladin_path_a_t3: {
-      flavor_en: "The Paladin carries Mithrail’s law into the breach; mercy for the unclean would cost human lives.\nIts shield vows the line will not break.",
-      flavor_ru: "Паладин несёт закон Митраила на передний край: милосердие к нечисти стоило бы человеческих жизней.\nЕго щит обещает, что строй не дрогнет.",
+      flavor_en: "The Paladin carries Mithrail’s law into the breach; mercy for the unclean would cost human lives. Its shield vows the line will not break.",
+      flavor_ru: "Паладин несёт закон Митраила на передний край: милосердие к нечисти стоило бы человеческих жизней. Его щит обещает, что строй не дрогнет.",
       id: 'h_e_111',
       name: 'Paladin',
       name_ru: 'Паладин',
@@ -1281,8 +1281,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     paladin_path_a_t4: {
-      flavor_en: "The Paladin carries Mithrail’s law into the breach; mercy for the unclean would cost human lives.\nIts shield vows the line will not break.",
-      flavor_ru: "Паладин несёт закон Митраила на передний край: милосердие к нечисти стоило бы человеческих жизней.\nЕго щит обещает, что строй не дрогнет.",
+      flavor_en: "The Paladin carries Mithrail’s law into the breach; mercy for the unclean would cost human lives. Its shield vows the line will not break.",
+      flavor_ru: "Паладин несёт закон Митраила на передний край: милосердие к нечисти стоило бы человеческих жизней. Его щит обещает, что строй не дрогнет.",
       id: 'h_e_1111',
       name: 'Paladin',
       name_ru: 'Паладин',
@@ -1297,8 +1297,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     paladin_path_a_t4_alt: {
-      flavor_en: "The Paladin carries Mithrail’s law into the breach; mercy for the unclean would cost human lives.\nIts shield vows the line will not break.",
-      flavor_ru: "Паладин несёт закон Митраила на передний край: милосердие к нечисти стоило бы человеческих жизней.\nЕго щит обещает, что строй не дрогнет.",
+      flavor_en: "The Paladin carries Mithrail’s law into the breach; mercy for the unclean would cost human lives. Its shield vows the line will not break.",
+      flavor_ru: "Паладин несёт закон Митраила на передний край: милосердие к нечисти стоило бы человеческих жизней. Его щит обещает, что строй не дрогнет.",
       id: 'h_e_1112',
       name: 'Paladin',
       name_ru: 'Паладин',
@@ -1313,8 +1313,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     paladin_path_b_t2: {
-      flavor_en: "The Paladin carries Mithrail’s law into the breach; mercy for the unclean would cost human lives.\nIts shield vows the line will not break.",
-      flavor_ru: "Паладин несёт закон Митраила на передний край: милосердие к нечисти стоило бы человеческих жизней.\nЕго щит обещает, что строй не дрогнет.",
+      flavor_en: "The Paladin carries Mithrail’s law into the breach; mercy for the unclean would cost human lives. Its shield vows the line will not break.",
+      flavor_ru: "Паладин несёт закон Митраила на передний край: милосердие к нечисти стоило бы человеческих жизней. Его щит обещает, что строй не дрогнет.",
       id: 'h_e_12',
       name: 'Paladin',
       name_ru: 'Паладин',
@@ -1329,8 +1329,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     paladin_path_b_t3: {
-      flavor_en: "The Paladin carries Mithrail’s law into the breach; mercy for the unclean would cost human lives.\nIts shield vows the line will not break.",
-      flavor_ru: "Паладин несёт закон Митраила на передний край: милосердие к нечисти стоило бы человеческих жизней.\nЕго щит обещает, что строй не дрогнет.",
+      flavor_en: "The Paladin carries Mithrail’s law into the breach; mercy for the unclean would cost human lives. Its shield vows the line will not break.",
+      flavor_ru: "Паладин несёт закон Митраила на передний край: милосердие к нечисти стоило бы человеческих жизней. Его щит обещает, что строй не дрогнет.",
       id: 'h_e_121',
       name: 'Paladin',
       name_ru: 'Паладин',
@@ -1345,8 +1345,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     paladin_path_b_t4: {
-      flavor_en: "The Paladin carries Mithrail’s law into the breach; mercy for the unclean would cost human lives.\nIts shield vows the line will not break.",
-      flavor_ru: "Паладин несёт закон Митраила на передний край: милосердие к нечисти стоило бы человеческих жизней.\nЕго щит обещает, что строй не дрогнет.",
+      flavor_en: "The Paladin carries Mithrail’s law into the breach; mercy for the unclean would cost human lives. Its shield vows the line will not break.",
+      flavor_ru: "Паладин несёт закон Митраила на передний край: милосердие к нечисти стоило бы человеческих жизней. Его щит обещает, что строй не дрогнет.",
       id: 'h_e_1211',
       name: 'Paladin',
       name_ru: 'Паладин',
@@ -1361,8 +1361,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     paladin_path_b_t4_alt: {
-      flavor_en: "The Paladin carries Mithrail’s law into the breach; mercy for the unclean would cost human lives.\nIts shield vows the line will not break.",
-      flavor_ru: "Паладин несёт закон Митраила на передний край: милосердие к нечисти стоило бы человеческих жизней.\nЕго щит обещает, что строй не дрогнет.",
+      flavor_en: "The Paladin carries Mithrail’s law into the breach; mercy for the unclean would cost human lives. Its shield vows the line will not break.",
+      flavor_ru: "Паладин несёт закон Митраила на передний край: милосердие к нечисти стоило бы человеческих жизней. Его щит обещает, что строй не дрогнет.",
       id: 'h_e_1212',
       name: 'Paladin',
       name_ru: 'Паладин',
@@ -1377,8 +1377,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     inquisitor: {
-      flavor_en: "The Inquisitor searches relics and foreign prayers for corruption.\nIts verdict is swift; hesitation has buried too many.",
-      flavor_ru: "Инквизитор ищет скверну в реликвиях и чужих молитвах.\nЕго приговор скор: промедление уже похоронило слишком многих.",
+      flavor_en: "The Inquisitor searches relics and foreign prayers for corruption. Its verdict is swift; hesitation has buried too many.",
+      flavor_ru: "Инквизитор ищет скверну в реликвиях и чужих молитвах. Его приговор скор: промедление уже похоронило слишком многих.",
       id: 'h_e_2',
       name: 'Inquisitor',
       name_ru: 'Инквизитор',
@@ -1393,8 +1393,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     inquisitor_path_a_t2: {
-      flavor_en: "The Inquisitor searches relics and foreign prayers for corruption.\nIts verdict is swift; hesitation has buried too many.",
-      flavor_ru: "Инквизитор ищет скверну в реликвиях и чужих молитвах.\nЕго приговор скор: промедление уже похоронило слишком многих.",
+      flavor_en: "The Inquisitor searches relics and foreign prayers for corruption. Its verdict is swift; hesitation has buried too many.",
+      flavor_ru: "Инквизитор ищет скверну в реликвиях и чужих молитвах. Его приговор скор: промедление уже похоронило слишком многих.",
       id: 'h_e_2_a2',
       name: 'Inquisitor',
       name_ru: 'Инквизитор',
@@ -1409,8 +1409,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     inquisitor_path_a_t3: {
-      flavor_en: "The Inquisitor searches relics and foreign prayers for corruption.\nIts verdict is swift; hesitation has buried too many.",
-      flavor_ru: "Инквизитор ищет скверну в реликвиях и чужих молитвах.\nЕго приговор скор: промедление уже похоронило слишком многих.",
+      flavor_en: "The Inquisitor searches relics and foreign prayers for corruption. Its verdict is swift; hesitation has buried too many.",
+      flavor_ru: "Инквизитор ищет скверну в реликвиях и чужих молитвах. Его приговор скор: промедление уже похоронило слишком многих.",
       id: 'h_e_2_a3',
       name: 'Inquisitor',
       name_ru: 'Инквизитор',
@@ -1425,8 +1425,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     inquisitor_path_a_t4: {
-      flavor_en: "The Inquisitor searches relics and foreign prayers for corruption.\nIts verdict is swift; hesitation has buried too many.",
-      flavor_ru: "Инквизитор ищет скверну в реликвиях и чужих молитвах.\nЕго приговор скор: промедление уже похоронило слишком многих.",
+      flavor_en: "The Inquisitor searches relics and foreign prayers for corruption. Its verdict is swift; hesitation has buried too many.",
+      flavor_ru: "Инквизитор ищет скверну в реликвиях и чужих молитвах. Его приговор скор: промедление уже похоронило слишком многих.",
       id: 'h_e_2_a41',
       name: 'Inquisitor',
       name_ru: 'Инквизитор',
@@ -1441,8 +1441,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     inquisitor_path_a_t4_alt: {
-      flavor_en: "The Inquisitor searches relics and foreign prayers for corruption.\nIts verdict is swift; hesitation has buried too many.",
-      flavor_ru: "Инквизитор ищет скверну в реликвиях и чужих молитвах.\nЕго приговор скор: промедление уже похоронило слишком многих.",
+      flavor_en: "The Inquisitor searches relics and foreign prayers for corruption. Its verdict is swift; hesitation has buried too many.",
+      flavor_ru: "Инквизитор ищет скверну в реликвиях и чужих молитвах. Его приговор скор: промедление уже похоронило слишком многих.",
       id: 'h_e_2_a42',
       name: 'Inquisitor',
       name_ru: 'Инквизитор',
@@ -1457,8 +1457,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     inquisitor_path_b_t2: {
-      flavor_en: "The Inquisitor searches relics and foreign prayers for corruption.\nIts verdict is swift; hesitation has buried too many.",
-      flavor_ru: "Инквизитор ищет скверну в реликвиях и чужих молитвах.\nЕго приговор скор: промедление уже похоронило слишком многих.",
+      flavor_en: "The Inquisitor searches relics and foreign prayers for corruption. Its verdict is swift; hesitation has buried too many.",
+      flavor_ru: "Инквизитор ищет скверну в реликвиях и чужих молитвах. Его приговор скор: промедление уже похоронило слишком многих.",
       id: 'h_e_2_b2',
       name: 'Inquisitor',
       name_ru: 'Инквизитор',
@@ -1473,8 +1473,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     inquisitor_path_b_t3: {
-      flavor_en: "The Inquisitor searches relics and foreign prayers for corruption.\nIts verdict is swift; hesitation has buried too many.",
-      flavor_ru: "Инквизитор ищет скверну в реликвиях и чужих молитвах.\nЕго приговор скор: промедление уже похоронило слишком многих.",
+      flavor_en: "The Inquisitor searches relics and foreign prayers for corruption. Its verdict is swift; hesitation has buried too many.",
+      flavor_ru: "Инквизитор ищет скверну в реликвиях и чужих молитвах. Его приговор скор: промедление уже похоронило слишком многих.",
       id: 'h_e_2_b3',
       name: 'Inquisitor',
       name_ru: 'Инквизитор',
@@ -1489,8 +1489,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     inquisitor_path_b_t4: {
-      flavor_en: "The Inquisitor searches relics and foreign prayers for corruption.\nIts verdict is swift; hesitation has buried too many.",
-      flavor_ru: "Инквизитор ищет скверну в реликвиях и чужих молитвах.\nЕго приговор скор: промедление уже похоронило слишком многих.",
+      flavor_en: "The Inquisitor searches relics and foreign prayers for corruption. Its verdict is swift; hesitation has buried too many.",
+      flavor_ru: "Инквизитор ищет скверну в реликвиях и чужих молитвах. Его приговор скор: промедление уже похоронило слишком многих.",
       id: 'h_e_2_b41',
       name: 'Inquisitor',
       name_ru: 'Инквизитор',
@@ -1505,8 +1505,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     inquisitor_path_b_t4_alt: {
-      flavor_en: "The Inquisitor searches relics and foreign prayers for corruption.\nIts verdict is swift; hesitation has buried too many.",
-      flavor_ru: "Инквизитор ищет скверну в реликвиях и чужих молитвах.\nЕго приговор скор: промедление уже похоронило слишком многих.",
+      flavor_en: "The Inquisitor searches relics and foreign prayers for corruption. Its verdict is swift; hesitation has buried too many.",
+      flavor_ru: "Инквизитор ищет скверну в реликвиях и чужих молитвах. Его приговор скор: промедление уже похоронило слишком многих.",
       id: 'h_e_2_b42',
       name: 'Inquisitor',
       name_ru: 'Инквизитор',
@@ -1521,8 +1521,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     artificer: {
-      flavor_en: "The Artificer wears a harness of its own making, turning one soldier into a wall of steel.\nIt repairs the line from within.",
-      flavor_ru: "Артефактор носит созданную им броню, превращающую одного воина в стальную стену.\nОн чинит строй, не покидая его.",
+      flavor_en: "The Artificer wears a harness of its own making, turning one soldier into a wall of steel. It repairs the line from within.",
+      flavor_ru: "Артефактор носит созданную им броню, превращающую одного воина в стальную стену. Он чинит строй, не покидая его.",
       id: 'h_e_3',
       name: 'Artificer',
       name_ru: 'Артефактор',
@@ -1537,8 +1537,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     artificer_path_a_t2: {
-      flavor_en: "The Artificer wears a harness of its own making, turning one soldier into a wall of steel.\nIt repairs the line from within.",
-      flavor_ru: "Артефактор носит созданную им броню, превращающую одного воина в стальную стену.\nОн чинит строй, не покидая его.",
+      flavor_en: "The Artificer wears a harness of its own making, turning one soldier into a wall of steel. It repairs the line from within.",
+      flavor_ru: "Артефактор носит созданную им броню, превращающую одного воина в стальную стену. Он чинит строй, не покидая его.",
       id: 'h_e_3_a2',
       name: 'Artificer',
       name_ru: 'Артефактор',
@@ -1553,8 +1553,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     artificer_path_a_t3: {
-      flavor_en: "The Artificer wears a harness of its own making, turning one soldier into a wall of steel.\nIt repairs the line from within.",
-      flavor_ru: "Артефактор носит созданную им броню, превращающую одного воина в стальную стену.\nОн чинит строй, не покидая его.",
+      flavor_en: "The Artificer wears a harness of its own making, turning one soldier into a wall of steel. It repairs the line from within.",
+      flavor_ru: "Артефактор носит созданную им броню, превращающую одного воина в стальную стену. Он чинит строй, не покидая его.",
       id: 'h_e_3_a3',
       name: 'Artificer',
       name_ru: 'Артефактор',
@@ -1569,8 +1569,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     artificer_path_a_t4: {
-      flavor_en: "The Artificer wears a harness of its own making, turning one soldier into a wall of steel.\nIt repairs the line from within.",
-      flavor_ru: "Артефактор носит созданную им броню, превращающую одного воина в стальную стену.\nОн чинит строй, не покидая его.",
+      flavor_en: "The Artificer wears a harness of its own making, turning one soldier into a wall of steel. It repairs the line from within.",
+      flavor_ru: "Артефактор носит созданную им броню, превращающую одного воина в стальную стену. Он чинит строй, не покидая его.",
       id: 'h_e_3_a41',
       name: 'Artificer',
       name_ru: 'Артефактор',
@@ -1585,8 +1585,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     artificer_path_a_t4_alt: {
-      flavor_en: "The Artificer wears a harness of its own making, turning one soldier into a wall of steel.\nIt repairs the line from within.",
-      flavor_ru: "Артефактор носит созданную им броню, превращающую одного воина в стальную стену.\nОн чинит строй, не покидая его.",
+      flavor_en: "The Artificer wears a harness of its own making, turning one soldier into a wall of steel. It repairs the line from within.",
+      flavor_ru: "Артефактор носит созданную им броню, превращающую одного воина в стальную стену. Он чинит строй, не покидая его.",
       id: 'h_e_3_a42',
       name: 'Artificer',
       name_ru: 'Артефактор',
@@ -1601,8 +1601,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     artificer_path_b_t2: {
-      flavor_en: "The Artificer wears a harness of its own making, turning one soldier into a wall of steel.\nIt repairs the line from within.",
-      flavor_ru: "Артефактор носит созданную им броню, превращающую одного воина в стальную стену.\nОн чинит строй, не покидая его.",
+      flavor_en: "The Artificer wears a harness of its own making, turning one soldier into a wall of steel. It repairs the line from within.",
+      flavor_ru: "Артефактор носит созданную им броню, превращающую одного воина в стальную стену. Он чинит строй, не покидая его.",
       id: 'h_e_3_b2',
       name: 'Artificer',
       name_ru: 'Артефактор',
@@ -1617,8 +1617,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     artificer_path_b_t3: {
-      flavor_en: "The Artificer wears a harness of its own making, turning one soldier into a wall of steel.\nIt repairs the line from within.",
-      flavor_ru: "Артефактор носит созданную им броню, превращающую одного воина в стальную стену.\nОн чинит строй, не покидая его.",
+      flavor_en: "The Artificer wears a harness of its own making, turning one soldier into a wall of steel. It repairs the line from within.",
+      flavor_ru: "Артефактор носит созданную им броню, превращающую одного воина в стальную стену. Он чинит строй, не покидая его.",
       id: 'h_e_3_b3',
       name: 'Artificer',
       name_ru: 'Артефактор',
@@ -1633,8 +1633,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     artificer_path_b_t4: {
-      flavor_en: "The Artificer wears a harness of its own making, turning one soldier into a wall of steel.\nIt repairs the line from within.",
-      flavor_ru: "Артефактор носит созданную им броню, превращающую одного воина в стальную стену.\nОн чинит строй, не покидая его.",
+      flavor_en: "The Artificer wears a harness of its own making, turning one soldier into a wall of steel. It repairs the line from within.",
+      flavor_ru: "Артефактор носит созданную им броню, превращающую одного воина в стальную стену. Он чинит строй, не покидая его.",
       id: 'h_e_3_b41',
       name: 'Artificer',
       name_ru: 'Артефактор',
@@ -1649,8 +1649,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     artificer_path_b_t4_alt: {
-      flavor_en: "The Artificer wears a harness of its own making, turning one soldier into a wall of steel.\nIt repairs the line from within.",
-      flavor_ru: "Артефактор носит созданную им броню, превращающую одного воина в стальную стену.\nОн чинит строй, не покидая его.",
+      flavor_en: "The Artificer wears a harness of its own making, turning one soldier into a wall of steel. It repairs the line from within.",
+      flavor_ru: "Артефактор носит созданную им броню, превращающую одного воина в стальную стену. Он чинит строй, не покидая его.",
       id: 'h_e_3_b42',
       name: 'Artificer',
       name_ru: 'Артефактор',
@@ -1665,8 +1665,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     conscript: {
-      flavor_en: "The Conscript learns the first lesson beneath a shield.\nSurvive beside your comrade, and the next rank survives too.",
-      flavor_ru: "Под щитом Рекрут усваивает первый урок.\nПрикрой товарища — и следующий ряд тоже устоит.",
+      flavor_en: "The Conscript learns the first lesson beneath a shield. Survive beside your comrade, and the next rank survives too.",
+      flavor_ru: "Под щитом Рекрут усваивает первый урок. Прикрой товарища — и следующий ряд тоже устоит.",
       id: 'e1', f: 'e', t: 1,
       name: 'Conscript',
       name_ru: 'Рекрут',
@@ -1680,8 +1680,8 @@ const UNITS = {
       xp: 100, passive: 'impale 1', ability: 'shield_bash 1',
     },
     infantry: {
-      flavor_en: "Years of drill make the Infantry the steady centre of every advance.\nIts neighbours move because they know it will hold.",
-      flavor_ru: "Годы муштры делают пехотинца опорой наступления.\nСоседи идут вперёд, зная: он удержит рубеж.",
+      flavor_en: "Years of drill make the Infantry the steady centre of every advance. Its neighbours move because they know it will hold.",
+      flavor_ru: "Годы муштры делают пехотинца опорой наступления. Соседи идут вперёд, зная: он удержит рубеж.",
       id: 'e11', f: 'e', t: 2,
       name: 'Infantry',
       name_ru: 'Пехотинец',
@@ -1695,8 +1695,8 @@ const UNITS = {
       xp: 480, passive: ['impale 1', 'iron_will 1'], ability: 'shield_bash 1',
     },
     crossbowman: {
-      flavor_en: "The Crossbowman waits for the signal, then fires through the gap the shield wall has opened.\nEvery bolt serves the line.",
-      flavor_ru: "Арбалетчик ждёт сигнала и бьёт по проходу, открытому щитовой стеной.\nКаждый болт служит строю.",
+      flavor_en: "The Crossbowman waits for the signal, then fires through the gap the shield wall has opened. Every bolt serves the line.",
+      flavor_ru: "Арбалетчик ждёт сигнала и бьёт по проходу, открытому щитовой стеной. Каждый болт служит строю.",
       id: 'e111', f: 'e', t: 3,
       name: 'Crossbowman',
       name_ru: 'Арбалетчик',
@@ -1710,8 +1710,8 @@ const UNITS = {
       xp: 1560, passive: ['impale 2', 'iron_will 1'], ability: 'volley 2',
     },
     emperial_sniper: {
-      flavor_en: "The Imperial Sniper watches the enemy command until one clean shot can end its orders.\nNo bolt is wasted on lesser prey.",
-      flavor_ru: "Имперский снайпер выслеживает вражеского командира, пока точный выстрел не оборвёт его приказы.\nНа мелкую добычу болты не тратят.",
+      flavor_en: "The Imperial Sniper watches the enemy command until one clean shot can end its orders. No bolt is wasted on lesser prey.",
+      flavor_ru: "Имперский снайпер выслеживает вражеского командира, пока точный выстрел не оборвёт его приказы. На мелкую добычу болты не тратят.",
       id: 'e1111', f: 'e', t: 4,
       name: 'Emperial Sniper',
       name_ru: 'Имперский Снайпер',
@@ -1725,8 +1725,8 @@ const UNITS = {
       xp: 2960, passive: ['impale 2', 'iron_will 1', 'execute 1'], ability: 'volley 2',
     },
     heavy_infantry: {
-      flavor_en: "The Heavy Infantry takes ground lighter troops cannot keep.\nBehind its armor, the company can finally advance.",
-      flavor_ru: "Тяжёлый пехотинец удерживает землю, не поддающуюся лёгким отрядам.\nЗа его бронёй отряд может наступать.",
+      flavor_en: "The Heavy Infantry takes ground lighter troops cannot keep. Behind its armor, the company can finally advance.",
+      flavor_ru: "Тяжёлый пехотинец удерживает землю, не поддающуюся лёгким отрядам. За его бронёй отряд может наступать.",
       id: 'e112', f: 'e', t: 3,
       name: 'Heavy Infantry',
       name_ru: 'Тяжёлый Пехотинец',
@@ -1740,8 +1740,8 @@ const UNITS = {
       xp: 1560, passive: ['impale 1', 'iron_will 1', 'protector 1'], ability: 'shield_bash 2', 
     },
     vindicator: {
-      flavor_en: "The Vindicator brings judgment to any foe bold enough to contest the line.\nIts comrades ensure none escape the sentence.",
-      flavor_ru: "Поборник несёт суд врагам, осмелившимся оспорить рубеж.\nТоварищи не дадут осуждённым уйти.",
+      flavor_en: "The Vindicator brings judgment to any foe bold enough to contest the line. Its comrades ensure none escape the sentence.",
+      flavor_ru: "Поборник несёт суд врагам, осмелившимся оспорить рубеж. Товарищи не дадут осуждённым уйти.",
       id: 'e1121', f: 'e', t: 4,
       name: 'Vindicator',
       name_ru: 'Поборник',
@@ -1755,8 +1755,8 @@ const UNITS = {
       xp: 3600, passive: ['impale 1', 'iron_will 1', 'protector 2'], ability: 'shield_bash 2', 
     },
     blade_guard: {
-      flavor_en: "The Blade Guard turns an ally’s opening into an enemy’s last mistake.\nThe shield advances; the blade collects the debt.",
-      flavor_ru: "Страж Клинка замечает слабину врага и превращает её в роковую ошибку.\nЩит наступает, клинок взыскивает долг.",
+      flavor_en: "The Blade Guard turns an ally’s opening into an enemy’s last mistake. The shield advances; the blade collects the debt.",
+      flavor_ru: "Страж Клинка замечает слабину врага и превращает её в роковую ошибку. Щит наступает, клинок взыскивает долг.",
       id: 'e113', f: 'e', t: 3,
       name: 'Blade Guard',
       name_ru: 'Страж Клинка',
@@ -1770,8 +1770,8 @@ const UNITS = {
       xp: 1560, passive: ['execute 1', 'iron_will 1', 'duelist 1'], ability: 'lions_roar 2',
     },
     blade_master: {
-      flavor_en: "The Blade Master has honed the company’s brutal drill into one decisive stroke.\nThe unclean get no chance to rally.",
-      flavor_ru: "Мастер Клинка отточил суровую выучку отряда до одного решающего удара.\nНечисти не дадут перегруппироваться.",
+      flavor_en: "The Blade Master has honed the company’s brutal drill into one decisive stroke. The unclean get no chance to rally.",
+      flavor_ru: "Мастер Клинка отточил суровую выучку отряда до одного решающего удара. Нечисти не дадут перегруппироваться.",
       id: 'e1131', f: 'e', t: 4,
       name: 'Blade Master',
       name_ru: 'Мастер Клинка',
@@ -1785,8 +1785,8 @@ const UNITS = {
       xp: 3640, passive: ['execute 2', 'iron_will 1', 'duelist 1'], ability: 'lions_roar 2',
     },
     horseman: {
-      flavor_en: "The Horseman carries the Empire’s reach beyond the marching line.\nIts charge breaks enemy order before infantry arrives.",
-      flavor_ru: "Всадник несёт силу Империи за пределы пешего строя.\nЕго натиск ломает порядок врага до подхода пехоты.",
+      flavor_en: "The Horseman carries the Empire’s reach beyond the marching line. Its charge breaks enemy order before infantry arrives.",
+      flavor_ru: "Всадник несёт силу Империи за пределы пешего строя. Его натиск ломает порядок врага до подхода пехоты.",
       id: 'e12', f: 'e', t: 2,
       name: 'Horseman',
       name_ru: 'Всадник',
@@ -1800,8 +1800,8 @@ const UNITS = {
       xp: 1250, passive: ['impale 2', 'iron_will 1', 'pierce 1'], ability: null,
     },
     cavalry: {
-      flavor_en: "The Cavalry strike as one body through foes fixed by the infantry.\nTheir return is the signal to press forward.",
-      flavor_ru: "Кавалерия бьёт единым строем по врагам, скованным пехотой.\nЕё возвращение — сигнал наступать.",
+      flavor_en: "The Cavalry strike as one body through foes fixed by the infantry. Their return is the signal to press forward.",
+      flavor_ru: "Кавалерия бьёт единым строем по врагам, скованным пехотой. Её возвращение — сигнал наступать.",
       id: 'e121', f: 'e', t: 3,
       name: 'Cavalry',
       name_ru: 'Кавалерист',
@@ -1815,8 +1815,8 @@ const UNITS = {
       xp: 4055, passive: ['impale 2', 'iron_will 1', 'pierce 2'], ability: null,
     },
     retributor: {
-      flavor_en: "The Retributor rides where resistance is strongest, leaving no time for a second defence.\nMithrail favours those who endure.",
-      flavor_ru: "Воздаятель мчится туда, где сопротивление сильнее всего, не давая врагу выстроить защиту.\nМитраил благоволит стойким.",
+      flavor_en: "The Retributor rides where resistance is strongest, leaving no time for a second defence. Mithrail favours those who endure.",
+      flavor_ru: "Воздаятель мчится туда, где сопротивление сильнее всего, не давая врагу выстроить защиту. Митраил благоволит стойким.",
       id: 'e1211', f: 'e', t: 4,
       name: 'Retributor',
       name_ru: 'Воздаятель',
@@ -1830,8 +1830,8 @@ const UNITS = {
       xp: 3120, passive: ['impale 2', 'iron_will 2', 'pierce 2'], ability: null,
     },
     standart_bearer: {
-      flavor_en: "The standard gathers scattered soldiers into one company again.\nBeneath it, every shield knows whom it must protect.",
-      flavor_ru: "Знамя вновь собирает рассеянных солдат в единый отряд.\nПод ним каждый щит знает, кого прикрывать.",
+      flavor_en: "The standard gathers scattered soldiers into one company again. Beneath it, every shield knows whom it must protect.",
+      flavor_ru: "Знамя вновь собирает рассеянных солдат в единый отряд. Под ним каждый щит знает, кого прикрывать.",
       id: 'e13', f: 'e', t: 2,
       name: 'Standart Bearer',
       name_ru: 'Знаменосец',
@@ -1845,8 +1845,8 @@ const UNITS = {
       xp: 480, passive: ['beacon_of_hope 1', 'sanctified_words 1'], ability: 'lions_roar 1',
     },
     banneret: {
-      flavor_en: "The Banneret carries the Empire’s blessing through fire.\nThe line rallies around its colours and advances together.",
-      flavor_ru: "Баннерет несёт благословение Империи сквозь огонь.\nСтрой сплачивается вокруг знамени и наступает вместе.",
+      flavor_en: "The Banneret carries the Empire’s blessing through fire. The line rallies around its colours and advances together.",
+      flavor_ru: "Баннерет несёт благословение Империи сквозь огонь. Строй сплачивается вокруг знамени и наступает вместе.",
       id: 'e131', f: 'e', t: 3,
       name: 'Banneret',
       name_ru: 'Баннерет',
@@ -1860,8 +1860,8 @@ const UNITS = {
       xp: 1560, passive: ['beacon_of_hope 2', 'sanctified_words 1'], ability: 'lions_roar 2',
     },
     gonfalonier: {
-      flavor_en: "The Gonfalonier’s sacred colours make a rallying point no terror can erase.\nWounded soldiers return to the advance beneath them.",
-      flavor_ru: "Священные цвета Гонфалоньера становятся опорой, которую не затмить ужасом.\nРаненые вновь идут вперёд под этим знаменем.",
+      flavor_en: "The Gonfalonier’s sacred colours make a rallying point no terror can erase. Wounded soldiers return to the advance beneath them.",
+      flavor_ru: "Священные цвета Гонфалоньера становятся опорой, которую не затмить ужасом. Раненые вновь идут вперёд под этим знаменем.",
       id: 'e1311', f: 'e', t: 4,
       name: 'Gonfalonier',
       name_ru: 'Гонфалоньер',
@@ -1875,8 +1875,8 @@ const UNITS = {
       xp: 2600, passive: ['beacon_of_hope 2', 'sanctified_words 1', 'dispel 1'], ability: 'lions_roar 2',
     },
     sentinel: {
-      flavor_en: "A dead soldier’s oath holds the Sentinel in iron.\nIt chose to return to the ranks and guard its living comrades.",
-      flavor_ru: "Клятва павшего воина удерживает Стража в железе.\nОн сам вернулся в строй, чтобы защищать живых товарищей.",
+      flavor_en: "A dead soldier’s oath holds the Sentinel in iron. It chose to return to the ranks and guard its living comrades.",
+      flavor_ru: "Клятва павшего воина удерживает Стража в железе. Он сам вернулся в строй, чтобы защищать живых товарищей.",
       id: 'e3', f: 'e', t: 1,
       name: 'Sentinel',
       name_ru: 'Страж',
@@ -1890,8 +1890,8 @@ const UNITS = {
       xp: 230, passive: 'unbreakable 2', ability: 'lions_roar 1',
     },
     iron_automaton: {
-      flavor_en: "The Iron Automaton is a veteran granted a second body, heavy as the duty it chose again.\nIts shield buys the living time.",
-      flavor_ru: "Железный Автоматон — ветеран во втором теле, тяжёлом, как вновь принятый долг.\nЕго щит даёт живым время.",
+      flavor_en: "The Iron Automaton is a veteran granted a second body, heavy as the duty it chose again. Its shield buys the living time.",
+      flavor_ru: "Железный Автоматон — ветеран во втором теле, тяжёлом, как вновь принятый долг. Его щит даёт живым время.",
       id: 'e31', f: 'e', t: 2,
       name: 'Iron Automaton',
       name_ru: 'Железный Автоматон',
@@ -1905,8 +1905,8 @@ const UNITS = {
       xp: 1250, passive: ['unbreakable 2', 'aegis 1'], ability: 'lions_roar 1',
     },
     golden_lion: {
-      flavor_en: "The Golden Automaton bears Mithrail’s likeness, but a soldier’s spirit stands within.\nIts presence steels every nearby heart.",
-      flavor_ru: "Золотой Автоматон несёт облик Митраила, но внутри живёт дух воина.\nЕго присутствие укрепляет сердца.",
+      flavor_en: "The Golden Automaton bears Mithrail’s likeness, but a soldier’s spirit stands within. Its presence steels every nearby heart.",
+      flavor_ru: "Золотой Автоматон несёт облик Митраила, но внутри живёт дух воина. Его присутствие укрепляет сердца.",
       id: 'e311', f: 'e', t: 3,
       name: 'Golden Automaton',
       name_ru: 'Золотой Автоматон',
@@ -1920,8 +1920,8 @@ const UNITS = {
       xp: 4055, passive: ['unbreakable 2', 'aegis 2', 'clear_mind 1'], ability: 'lions_roar 2',
     },
     golden_lion_prime: {
-      flavor_en: "The Golden Lion is a fallen champion returned in the Empire’s holy image.\nIt advances without fear, and the ranks follow.",
-      flavor_ru: "Золотой Лев — павший чемпион, возвращённый в священном облике Империи.\nОн наступает без страха, и строй следует за ним.",
+      flavor_en: "The Golden Lion is a fallen champion returned in the Empire’s holy image. It advances without fear, and the ranks follow.",
+      flavor_ru: "Золотой Лев — павший чемпион, возвращённый в священном облике Империи. Он наступает без страха, и строй следует за ним.",
       id: 'e3111', f: 'e', t: 4,
       name: 'Golden Lion',
       name_ru: 'Золотой Лев',
@@ -1935,8 +1935,8 @@ const UNITS = {
       xp: 3380, passive: ['unbreakable 3', 'aegis 2', 'clear_mind 1'], ability: 'lions_roar 2',
     },
     siege_engine: {
-      flavor_en: "The Siege Engine turns an engineer’s calculations into a breach wide enough for the army.\nIts shot makes walls answer Mithrail.",
-      flavor_ru: "Осадная Машина превращает расчёты инженера в проход сквозь укрепления.\nЕё выстрел заставляет стены ответить Митраилу.",
+      flavor_en: "The Siege Engine turns an engineer’s calculations into a breach wide enough for the army. Its shot makes walls answer Mithrail.",
+      flavor_ru: "Осадная Машина превращает расчёты инженера в проход сквозь укрепления. Её выстрел заставляет стены ответить Митраилу.",
       id: 'e32', f: 'e', t: 2,
       name: 'Siege Engine',
       name_ru: 'Осадная Машина',
@@ -1950,8 +1950,8 @@ const UNITS = {
       xp: 1250, passive: ['unbreakable 2', 'shatter 1', 'slow 1'], ability: null,  
     },
     siege_dreadnought: {
-      flavor_en: "The Siege Dreadnought carries a veteran spirit in a body built to break fortifications.\nIt advances under fire until the wall falls.",
-      flavor_ru: "Осадный Дредноут несёт дух ветерана в теле, созданном рушить укрепления.\nОн идёт под огнём, пока стена не падёт.",
+      flavor_en: "The Siege Dreadnought carries a veteran spirit in a body built to break fortifications. It advances under fire until the wall falls.",
+      flavor_ru: "Осадный Дредноут несёт дух ветерана в теле, созданном рушить укрепления. Он идёт под огнём, пока стена не падёт.",
       id: 'e321', f: 'e', t: 3,
       name: 'Siege Dreadnought',
       name_ru: 'Осадный Дредноут',
@@ -1965,8 +1965,8 @@ const UNITS = {
       xp: 4055, passive: ['unbreakable 2', 'shatter 2', 'slow 1'], ability: null,  
     },
     siege_leviathan: {
-      flavor_en: "The Siege Leviathan is a fortress given legs and a soldier’s will.\nIts thunder opens the road for the Empire’s ranks.",
-      flavor_ru: "Осадный Левиафан — крепость на ногах, ведомая волей солдата.\nЕго гром открывает дорогу войскам Империи.",
+      flavor_en: "The Siege Leviathan is a fortress given legs and a soldier’s will. Its thunder opens the road for the Empire’s ranks.",
+      flavor_ru: "Осадный Левиафан — крепость на ногах, ведомая волей солдата. Его гром открывает дорогу войскам Империи.",
       id: 'e3211', f: 'e', t: 4,
       name: 'Siege Leviathan',
       name_ru: 'Осадный Левиафан',
@@ -1980,8 +1980,8 @@ const UNITS = {
       xp: 3380, passive: ['unbreakable 2', 'shatter 2', 'slow 2'], ability: null,  
     },
     smith: {
-      flavor_en: "The Smith keeps the company’s weapons true and armor ready for another march.\nA sound edge is a promise to the soldier beside you.",
-      flavor_ru: "Кузнец правит оружие отряда и готовит броню к новому походу.\nВерный клинок — обещание товарищу рядом.",
+      flavor_en: "The Smith keeps the company’s weapons true and armor ready for another march. A sound edge is a promise to the soldier beside you.",
+      flavor_ru: "Кузнец правит оружие отряда и готовит броню к новому походу. Верный клинок — обещание товарищу рядом.",
       id: 'e6', f: 'e', t: 1,
       name: 'Smith',
       name_ru: 'Кузнец',
@@ -1995,8 +1995,8 @@ const UNITS = {
       xp: 100, passive: ['inspiration_armor 1', 'scavenger 1'], ability: 'reforge 1',
     },
     mechanic: {
-      flavor_en: "The Mechanic mends a shattered harness while arrows still strike the workshop.\nThe machine returns to the line before smoke clears.",
-      flavor_ru: "Механик чинит разбитую броню, пока стрелы бьют по мастерской.\nМашина возвращается в строй прежде, чем рассеется дым.",
+      flavor_en: "The Mechanic mends a shattered harness while arrows still strike the workshop. The machine returns to the line before smoke clears.",
+      flavor_ru: "Механик чинит разбитую броню, пока стрелы бьют по мастерской. Машина возвращается в строй прежде, чем рассеется дым.",
       id: 'e61', f: 'e', t: 2,
       name: 'Mechanic',
       name_ru: 'Механик',
@@ -2010,8 +2010,8 @@ const UNITS = {
       xp: 480, passive: ['inspiration_armor 2', 'scavenger 1'], ability: 'reforge 1',
     },
     master_mechanic: {
-      flavor_en: "The Master Mechanic knows every joint in the Empire’s war gear.\nIts repairs keep a whole formation fighting as one.",
-      flavor_ru: "Мастер-Механик знает каждый шарнир боевого снаряжения Империи.\nЕго ремонт позволяет всему строю сражаться единым целым.",
+      flavor_en: "The Master Mechanic knows every joint in the Empire’s war gear. Its repairs keep a whole formation fighting as one.",
+      flavor_ru: "Мастер-Механик знает каждый шарнир боевого снаряжения Империи. Его ремонт позволяет всему строю сражаться единым целым.",
       id: 'e611', f: 'e', t: 3,
       name: 'Master Mechanic',
       name_ru: 'Мастер Механик',
@@ -2025,8 +2025,8 @@ const UNITS = {
       xp: 1560, passive: ['inspiration_armor 2', 'scavenger 1', 'shield 1'], ability: 'reforge 2',
     },
     grand_machinist: {
-      flavor_en: "The Grand Machinist enters battle inside a walking forge of their own design.\nEvery repair is made under fire; the line cannot wait.",
-      flavor_ru: "Великий Машинист вступает в бой внутри шагающей кузницы своей работы.\nРемонт идёт под огнём: строй ждать не может.",
+      flavor_en: "The Grand Machinist enters battle inside a walking forge of their own design. Every repair is made under fire; the line cannot wait.",
+      flavor_ru: "Великий Машинист вступает в бой внутри шагающей кузницы своей работы. Ремонт идёт под огнём: строй ждать не может.",
       id: 'e6111', f: 'e', t: 4,
       name: 'Grand Machinist',
       name_ru: 'Великий Машинист',
@@ -2040,8 +2040,8 @@ const UNITS = {
       xp: 1690, passive: ['inspiration_armor 2', 'scavenger 1', 'shield 2'], ability: 'reforge 2',
     },
     armsmaster: {
-      flavor_en: "The Armsmaster tests Imperial weapons against the enemy, then corrects whatever failed.\nIts craft serves the next soldier in line.",
-      flavor_ru: "Мастер Оружия испытывает арсенал Империи на враге и исправляет всё, что не выдержало.\nЕго мастерство служит строю.",
+      flavor_en: "The Armsmaster tests Imperial weapons against the enemy, then corrects whatever failed. Its craft serves the next soldier in line.",
+      flavor_ru: "Мастер Оружия испытывает арсенал Империи на враге и исправляет всё, что не выдержало. Его мастерство служит строю.",
       id: 'e6112', f: 'e', t: 4,
       name: 'Armsmaster',
       name_ru: 'Оружейный Мастер',
@@ -2055,8 +2055,8 @@ const UNITS = {
       xp: 1690, passive: ['unbreakable 2', 'find_weakness 2'], ability: 'purge 1',
     },
     rifleman: {
-      flavor_en: "The Rifleman fires by the drill’s count, not anger.\nA measured volley breaks the foe and leaves the company ready for orders.",
-      flavor_ru: "Стрелок ведёт огонь по команде.\nРовный залп ломает врага и оставляет отряд готовым к приказу.",
+      flavor_en: "The Rifleman fires by the drill’s count, not anger. A measured volley breaks the foe and leaves the company ready for orders.",
+      flavor_ru: "Стрелок ведёт огонь по команде. Ровный залп ломает врага и оставляет отряд готовым к приказу.",
       id: 'e62', f: 'e', t: 2,
       name: 'Rifleman',
       name_ru: 'Стрелок',
@@ -2070,8 +2070,8 @@ const UNITS = {
       xp: 480, passive: ['clear_shot 1', 'sanctified_ordnance 1'], ability: 'headshot 1',
     },
     devastator: {
-      flavor_en: "The Devastator lays down a punishing volley so comrades can cross open ground.\nEvery round buys the Empire another step.",
-      flavor_ru: "Разрушитель обрушивает залп, чтобы товарищи пересекли открытое поле.\nКаждый патрон покупает Империи ещё один шаг.",
+      flavor_en: "The Devastator lays down a punishing volley so comrades can cross open ground. Every round buys the Empire another step.",
+      flavor_ru: "Разрушитель обрушивает залп, чтобы товарищи пересекли открытое поле. Каждый патрон покупает Империи ещё один шаг.",
       id: 'e621', f: 'e', t: 3,
       name: 'Devastator',
       name_ru: 'Разрушитель',
@@ -2085,8 +2085,8 @@ const UNITS = {
       xp: 1560, passive: ['clear_shot 1', 'sanctified_ordnance 2'], ability: 'headshot 2',
     },
     annihilator: {
-      flavor_en: "The Annihilator concentrates fire on the weakest part of the enemy line.\nA fracture becomes a breach; the breach becomes conquest.",
-      flavor_ru: "Аннигилятор сосредотачивает огонь на слабом месте вражеского строя.\nСлабость становится разрывом в защите, а разрыв — победой.",
+      flavor_en: "The Annihilator concentrates fire on the weakest part of the enemy line. A fracture becomes a breach; the breach becomes conquest.",
+      flavor_ru: "Аннигилятор сосредотачивает огонь на слабом месте вражеского строя. Слабость становится разрывом в защите, а разрыв — победой.",
       id: 'e6211', f: 'e', t: 4,
       name: 'Annihilator',
       name_ru: 'Аннигилятор',
@@ -2100,8 +2100,8 @@ const UNITS = {
       xp: 2705, passive: ['clear_shot 1', 'sanctified_ordnance 2', 'find_weakness 1'], ability: 'headshot 2',
     },
     flamethrower: {
-      flavor_en: "The Flamethrower carries cleansing fire into trenches where the unclean hide.\nIts company protects the advance.",
-      flavor_ru: "Огнемётчик несёт очищающее пламя в окопы, где укрывается нечисть.\nРота прикрывает его наступление.",
+      flavor_en: "The Flamethrower carries cleansing fire into trenches where the unclean hide. Its company protects the advance.",
+      flavor_ru: "Огнемётчик несёт очищающее пламя в окопы, где укрывается нечисть. Рота прикрывает его наступление.",
       id: 'e622', f: 'e', t: 3,
       name: 'Flamethrower',
       name_ru: 'Огнемётчик',
@@ -2115,8 +2115,8 @@ const UNITS = {
       xp: 1560, passive: ['burn 2', 'dissipate 1', 'scavenger 1'], ability: null,
     },
     inferno_gunner: {
-      flavor_en: "The Incinerator leaves no shelter for alien or corrupted.\nIts roaring stream clears the path for the soldiers behind.",
-      flavor_ru: "Испепелитель не оставляет укрытия чужакам и заражённым скверной.\nРёв огня расчищает путь идущим следом.",
+      flavor_en: "The Incinerator leaves no shelter for alien or corrupted. Its roaring stream clears the path for the soldiers behind.",
+      flavor_ru: "Испепелитель не оставляет укрытия чужакам и заражённым скверной. Рёв огня расчищает путь идущим следом.",
       id: 'e6221', f: 'e', t: 4,
       name: 'Incinerator',
       name_ru: 'Испепелитель',
@@ -2130,8 +2130,8 @@ const UNITS = {
       xp: 2600, passive: ['burn 3', 'dissipate 1', 'scavenger 1'], ability: null,
     },
     blessed_soul: {
-      flavor_en: "A fallen soldier returned as light when the oath outlasted the body.\nIt lends the company strength to stand together.",
-      flavor_ru: "Павший воин вернулся светом, когда клятва пережила тело.\nОн дарует отряду силы стоять плечом к плечу.",
+      flavor_en: "A fallen soldier returned as light when the oath outlasted the body. It lends the company strength to stand together.",
+      flavor_ru: "Павший воин вернулся светом, когда клятва пережила тело. Он дарует отряду силы стоять плечом к плечу.",
       id: 'e7', f: 'e', t: 1,
       name: 'Blessed Soul',
       name_ru: 'Благословенная Душа',
@@ -2145,8 +2145,8 @@ const UNITS = {
       xp: 75, passive: 'unity 1', ability: null,
     },
     mithrails_light: {
-      flavor_en: "Mithrail’s Light gathers the spirits who died defending Aurex.\nTheir radiance strengthens the living ranks they once stood beside.",
-      flavor_ru: "Свет Митраила собрал духов павших защитников Аурекса.\nИх сияние укрепляет живой строй, рядом с которым они сражались.",
+      flavor_en: "Mithrail’s Light gathers the spirits who died defending Aurex. Their radiance strengthens the living ranks they once stood beside.",
+      flavor_ru: "Свет Митраила собрал духов павших защитников Аурекса. Их сияние укрепляет живой строй, рядом с которым они сражались.",
       id: 'e71', f: 'e', t: 2,
       name: 'Mithrails Light',
       name_ru: 'Свет Митраила',
@@ -2160,8 +2160,8 @@ const UNITS = {
       xp: 400, passive: ['unity 1', 'light_of_dawn 1'], ability: null,
     },
     mithrails_will: {
-      flavor_en: "The Will of Mithrail is the resolve of soldiers who kept their post in death.\nIt passes from spirit to spirit, unbroken.",
-      flavor_ru: "Воля Митраила — стойкость воинов, не оставивших поста даже после смерти.\nОна переходит от духа к духу.",
+      flavor_en: "The Will of Mithrail is the resolve of soldiers who kept their post in death. It passes from spirit to spirit, unbroken.",
+      flavor_ru: "Воля Митраила — стойкость воинов, не оставивших поста даже после смерти. Она переходит от духа к духу.",
       id: 'e711', f: 'e', t: 3,
       name: 'Mithrails Will',
       name_ru: 'Воля Митраила',
@@ -2175,8 +2175,8 @@ const UNITS = {
       xp: 1850, passive: ['unity 1', 'light_of_dawn 2'], ability: null,
     },
     mithrails_verdict: {
-      flavor_en: "Mithrail’s Verdict falls on those who threaten the Empire’s living and dead.\nThe hallowed host answers as one.",
-      flavor_ru: "Приговор Митраила обрушивается на всех, кто угрожает Империи — живым и мёртвым.\nСвященное воинство отвечает единым ударом.",
+      flavor_en: "Mithrail’s Verdict falls on those who threaten the Empire’s living and dead. The hallowed host answers as one.",
+      flavor_ru: "Приговор Митраила обрушивается на всех, кто угрожает Империи — живым и мёртвым. Священное воинство отвечает единым ударом.",
       id: 'e7111', f: 'e', t: 4,
       name: 'Mithrails Verdict',
       name_ru: 'Приговор Митраила',
@@ -2190,8 +2190,8 @@ const UNITS = {
       xp: 2850, passive: ['unity 1', 'light_of_dawn 2', 'inner_fire 1'], ability: null,
     },
     sister_novice: {
-      flavor_en: "The Sister Novice turns prayer into courage when a comrade falters.\nFaith is another weapon in the line.",
-      flavor_ru: "Послушница превращает молитву в отвагу, когда дрогнул товарищ.\nВера — ещё одно оружие в строю.",
+      flavor_en: "The Sister Novice turns prayer into courage when a comrade falters. Faith is another weapon in the line.",
+      flavor_ru: "Послушница превращает молитву в отвагу, когда дрогнул товарищ. Вера — ещё одно оружие в строю.",
       id: 'e8', f: 'e', t: 1,
       name: 'Sister Novice',
       name_ru: 'Сестра-послушница',
@@ -2205,8 +2205,8 @@ const UNITS = {
       xp: 75, passive: ['inspiration_damage 1'], ability: 'prayer_of_healing 1',
     },
     sister_initiate: {
-      flavor_en: "The Sister Initiate carries the rite of battle from soldier to soldier.\nHer prayers make the company’s anger disciplined.",
-      flavor_ru: "Посвящённая передаёт обряд битвы от солдата к солдату.\nЕё молитвы превращают ярость отряда в дисциплину.",
+      flavor_en: "The Sister Initiate carries the rite of battle from soldier to soldier. Her prayers make the company’s anger disciplined.",
+      flavor_ru: "Посвящённая передаёт обряд битвы от солдата к солдату. Её молитвы превращают ярость отряда в дисциплину.",
       id: 'e81', f: 'e', t: 2,
       name: 'Sister Initiate',
       name_ru: 'Сестра-посвящённая',
@@ -2220,8 +2220,8 @@ const UNITS = {
       xp: 400, passive: ['inspiration_damage 1', 'rite_of_battle 1'], ability: 'prayer_of_healing 1',
     },
     battle_sister: {
-      flavor_en: "The Battle Sister proves devotion beside the wounded, not apart from them.\nHer presence keeps the company fighting.",
-      flavor_ru: "Боевая Сестра доказывает преданность рядом с ранеными.\nЕё присутствие удерживает отряд в бою.",
+      flavor_en: "The Battle Sister proves devotion beside the wounded, not apart from them. Her presence keeps the company fighting.",
+      flavor_ru: "Боевая Сестра доказывает преданность рядом с ранеными. Её присутствие удерживает отряд в бою.",
       id: 'e811', f: 'e', t: 3,
       name: 'Battle Sister',
       name_ru: 'Сестра Битвы',
@@ -2235,8 +2235,8 @@ const UNITS = {
       xp: 1560, passive: ['inspiration_damage 1', 'rite_of_battle 1', 'pure_blood 1'], ability: 'prayer_of_healing 1',
     },
     sister_superior: {
-      flavor_en: "The Sister Superior leads where orders must be heard over steel and flame.\nHer faith binds the fighters together.",
-      flavor_ru: "Старшая Сестра ведёт бой там, где приказ должен перекрыть звон стали и рёв огня.\nЕё вера сплачивает воинов.",
+      flavor_en: "The Sister Superior leads where orders must be heard over steel and flame. Her faith binds the fighters together.",
+      flavor_ru: "Старшая Сестра ведёт бой там, где приказ должен перекрыть звон стали и рёв огня. Её вера сплачивает воинов.",
       id: 'e8111', f: 'e', t: 4,
       name: 'Sister Superior',
       name_ru: 'Старшая Сестра',
@@ -2250,8 +2250,8 @@ const UNITS = {
       xp: 3640, passive: ['inspiration_damage 1', 'rite_of_battle 2', 'pure_blood 1'], ability: 'prayer_of_healing 2',
     },
     sister_guardian: {
-      flavor_en: "The Sister Guardian stands between the faithful and the blow meant to break them.\nHer ward turns doubt into resolve.",
-      flavor_ru: "Сестра-Хранительница встаёт между верными и ударом, призванным сломить их.\nЕё защита обращает сомнение в решимость.",
+      flavor_en: "The Sister Guardian stands between the faithful and the blow meant to break them. Her ward turns doubt into resolve.",
+      flavor_ru: "Сестра-Хранительница встаёт между верными и ударом, призванным сломить их. Её защита обращает сомнение в решимость.",
       id: 'e82', f: 'e', t: 2,
       name: 'Sister Guardian',
       name_ru: 'Сестра-хранительница',
@@ -2265,8 +2265,8 @@ const UNITS = {
       xp: 400, passive: ['inner_fire 1', 'stoicism 1'], ability: 'redemption 1',
     },
     battle_guardian: {
-      flavor_en: "The Battle Guardian carries her ward into the thickest fighting, where prayer must hold against steel.\nShe yields no ground.",
-      flavor_ru: "Боевая Хранительница несёт защиту в самое пекло, где молитве противостоит сталь.\nОна не уступает ни пяди.",
+      flavor_en: "The Battle Guardian carries her ward into the thickest fighting, where prayer must hold against steel. She yields no ground.",
+      flavor_ru: "Боевая Хранительница несёт защиту в самое пекло, где молитве противостоит сталь. Она не уступает ни пяди.",
       id: 'e821', f: 'e', t: 3,
       name: 'Battle Guardian',
       name_ru: 'Боевая Хранительница',
@@ -2280,8 +2280,8 @@ const UNITS = {
       xp: 1560, passive: ['inner_fire 1', 'stoicism 1', 'dispel 1'], ability: 'redemption 2',
     },
     sister_protector: {
-      flavor_en: "The Sister Protector keeps the company whole through wounds and fear.\nMithrail’s strength is shared, never hoarded.",
-      flavor_ru: "Сестра-Защитница сохраняет отряд перед лицом ран и страха.\nСила Митраила принадлежит всем, а не одному.",
+      flavor_en: "The Sister Protector keeps the company whole through wounds and fear. Mithrail’s strength is shared, never hoarded.",
+      flavor_ru: "Сестра-Защитница сохраняет отряд перед лицом ран и страха. Сила Митраила принадлежит всем, а не одному.",
       id: 'e8211', f: 'e', t: 4,
       name: 'Sister Protector',
       name_ru: 'Сестра-защитница',
@@ -2295,8 +2295,8 @@ const UNITS = {
       xp: 3640, passive: ['inner_fire 1', 'stoicism 1', 'dispel 2'], ability: 'redemption 2',
     },
     acolyte: {
-      flavor_en: "The Acolyte reaches the wounded before the next assault.\nHis field rites return soldiers to the line, not safety.",
-      flavor_ru: "Послушник добирается до раненых прежде следующего натиска.\nЕго обряды возвращают солдат в строй, а не в тыл.",
+      flavor_en: "The Acolyte reaches the wounded before the next assault. His field rites return soldiers to the line, not safety.",
+      flavor_ru: "Послушник добирается до раненых прежде следующего натиска. Его обряды возвращают солдат в строй, а не в тыл.",
       id: 'e2', f: 'e', t: 1,
       name: 'Acolyte',
       name_ru: 'Послушник',
@@ -2310,8 +2310,8 @@ const UNITS = {
       xp: 75, passive: ['renew 1', 'field_medic 1'], ability: 'prayer_of_healing 1',
     },
     templar: {
-      flavor_en: "The Templar meets the unclean with shield raised and Mithrail’s name on the tongue.\nThere is no parley while Aurex burns.",
-      flavor_ru: "Тамплиер встречает нечисть с поднятым щитом и именем Митраила на устах.\nПока горит Аурекс, переговоров не будет.",
+      flavor_en: "The Templar meets the unclean with shield raised and Mithrail’s name on the tongue. There is no parley while Aurex burns.",
+      flavor_ru: "Тамплиер встречает нечисть с поднятым щитом и именем Митраила на устах. Пока горит Аурекс, переговоров не будет.",
       id: 'e21', f: 'e', t: 2,
       name: 'Templar',
       name_ru: 'Тамплиер',
@@ -2325,8 +2325,8 @@ const UNITS = {
       xp: 480, passive: ['aegis 1', 'iron_will 1'], ability: 'sanctuary 1',
     },
     mithrails_champion: {
-      flavor_en: "Mithrail’s Champion carries the Golden Lion’s judgment into enemy ranks.\nHoly shock breaks resistance for the company’s advance.",
-      flavor_ru: "Чемпион Митраила несёт приговор Золотого Льва во вражеские ряды.\nСвященный разряд открывает путь наступающему отряду.",
+      flavor_en: "Mithrail’s Champion carries the Golden Lion’s judgment into enemy ranks. Holy shock breaks resistance for the company’s advance.",
+      flavor_ru: "Чемпион Митраила несёт приговор Золотого Льва во вражеские ряды. Священный разряд открывает путь наступающему отряду.",
       id: 'e211', f: 'e', t: 3,
       name: 'Mithrails Champion',
       name_ru: 'Чемпион Митраила',
@@ -2340,8 +2340,8 @@ const UNITS = {
       xp: 1560, passive: ['fanaticism 1', 'iron_will 1', 'dissipate 1'], ability: 'purge 1',
     },
     mithrails_exemplar: {
-      flavor_en: "The Exemplar makes the order’s faith visible.\nAdvance through fire, stand together, leave the alien no refuge.",
-      flavor_ru: "Экземплар ордена воплощает его веру.\nИдти сквозь огонь, держаться вместе, не оставить чужакам убежища.",
+      flavor_en: "The Exemplar makes the order’s faith visible. Advance through fire, stand together, leave the alien no refuge.",
+      flavor_ru: "Экземплар ордена воплощает его веру. Идти сквозь огонь, держаться вместе, не оставить чужакам убежища.",
       id: 'e2111', f: 'e', t: 4,
       name: 'Mithrails Exemplar',
       name_ru: 'Экземплар Митраила',
@@ -2355,8 +2355,8 @@ const UNITS = {
       xp: 4005, passive: ['fanaticism 1', 'iron_will 2', 'dissipate 1'], ability: 'purge 1',
     },
     mithrails_warden: {
-      flavor_en: "The Warden holds a consecrated boundary no foreign power may cross.\nIts ward turns shared discipline into a bulwark.",
-      flavor_ru: "Хранитель обороняет священный рубеж, который не смеет пересечь чужая сила.\nЕго защита превращает дисциплину в оплот.",
+      flavor_en: "The Warden holds a consecrated boundary no foreign power may cross. Its ward turns shared discipline into a bulwark.",
+      flavor_ru: "Хранитель обороняет священный рубеж, который не смеет пересечь чужая сила. Его защита превращает дисциплину в оплот.",
       id: 'e212', f: 'e', t: 3,
       name: 'Mithrails Warden',
       name_ru: 'Хранитель Митраила',
@@ -2370,8 +2370,8 @@ const UNITS = {
       xp: 1560, passive: ['aegis 1', 'iron_will 1', 'unbreakable 1'], ability: 'sanctuary 2',
     },
     mithrails_paragon: {
-      flavor_en: "The Paragon is the order’s perfected shield, unshaken as the enemy spends its strength.\nMithrail’s will stands in the line.",
-      flavor_ru: "Абсолют — совершенный щит ордена, не дрогнувший, пока враг тратит силы.\nВ строю стоит воля Митраила.",
+      flavor_en: "The Paragon is the order’s perfected shield, unshaken as the enemy spends its strength. Mithrail’s will stands in the line.",
+      flavor_ru: "Абсолют — совершенный щит ордена, не дрогнувший, пока враг тратит силы. В строю стоит воля Митраила.",
       id: 'e2121', f: 'e', t: 4,
       name: 'Mithrails Paragon',
       name_ru: 'Абсолют Митраила',
@@ -2385,8 +2385,8 @@ const UNITS = {
       xp: 4005, passive: ['aegis 1', 'iron_will 2', 'unbreakable 1'], ability: 'sanctuary 2',
     },
     priest: {
-      flavor_en: "The Priest keeps soldiers alive because the Empire needs every faithful hand.\nIts blessing sends the wounded back to victory’s work.",
-      flavor_ru: "Жрец спасает солдат, потому что Империи нужны все верные руки.\nБлагословение возвращает раненых к борьбе за победу.",
+      flavor_en: "The Priest keeps soldiers alive because the Empire needs every faithful hand. Its blessing sends the wounded back to victory’s work.",
+      flavor_ru: "Жрец спасает солдат, потому что Империи нужны все верные руки. Благословение возвращает раненых к борьбе за победу.",
       id: 'e22', f: 'e', t: 2,
       name: 'Priest',
       name_ru: 'Жрец',
@@ -2400,8 +2400,8 @@ const UNITS = {
       xp: 400, passive: ['renew 1','field_medic 1', 'vitality 1'], ability: 'prayer_of_healing 1',
     },
     ardent_priest: {
-      flavor_en: "The Ardent Priest’s prayer burns through exhaustion and fear.\nThe faithful rise together, strengthened by one another.",
-      flavor_ru: "Молитва Ревностного Жреца прожигает усталость и страх.\nВерные поднимаются вместе, укреплённые друг другом.",
+      flavor_en: "The Ardent Priest’s prayer burns through exhaustion and fear. The faithful rise together, strengthened by one another.",
+      flavor_ru: "Молитва Ревностного Жреца прожигает усталость и страх. Верные поднимаются вместе, укреплённые друг другом.",
       id: 'e221', f: 'e', t: 3,
       name: 'Ardent Priest',
       name_ru: 'Ревностный Жрец',
@@ -2415,8 +2415,8 @@ const UNITS = {
       xp: 1520, passive: ['renew 1', 'field_medic 1', 'vitality 2'], ability: 'prayer_of_healing 2',
     },
     high_priest: {
-      flavor_en: "The High Priest calls Mithrail’s fire upon the company, then turns it toward the foe.\nNo soldier endures alone.",
-      flavor_ru: "Верховный Жрец призывает огонь Митраила над отрядом, а затем направляет его на врага.\nНи один солдат не одинок.",
+      flavor_en: "The High Priest calls Mithrail’s fire upon the company, then turns it toward the foe. No soldier endures alone.",
+      flavor_ru: "Верховный Жрец призывает огонь Митраила над отрядом, а затем направляет его на врага. Ни один солдат не одинок.",
       id: 'e2211', f: 'e', t: 4,
       name: 'High Priest',
       name_ru: 'Верховный Жрец',
@@ -2430,8 +2430,8 @@ const UNITS = {
       xp: 3640, passive: ['renew 2', 'field_medic 1', 'vitality 2'], ability: 'prayer_of_healing 2',
     },
     seraphic_priest: {
-      flavor_en: "The Seraphic Priest gave its last breath for Aurex and rose beyond the need to breathe.\nIts healing light still serves the living.",
-      flavor_ru: "Серафический Жрец отдал последний вздох за Аурекс и восстал без нужды дышать.\nЕго целительный свет служит живым.",
+      flavor_en: "The Seraphic Priest gave its last breath for Aurex and rose beyond the need to breathe. Its healing light still serves the living.",
+      flavor_ru: "Серафический Жрец отдал последний вздох за Аурекс и восстал без нужды дышать. Его целительный свет служит живым.",
       id: 'e222', f: 'e', t: 3,
       name: 'Seraphic Priest',
       name_ru: 'Серафический Жрец',
@@ -2445,8 +2445,8 @@ const UNITS = {
       xp: 1520, passive: ['regenerate 1', 'stoicism 1', 'ethereal_form 1'], ability: 'redemption 2',
     },
     seraph: {
-      flavor_en: "The Seraph is a fallen priest whose vow shines without flesh or fatigue.\nIt restores the faithful so the advance does not stop.",
-      flavor_ru: "Серафим — павший жрец, чья клятва сияет без плоти и усталости.\nОн исцеляет верных, не давая наступлению остановиться.",
+      flavor_en: "The Seraph is a fallen priest whose vow shines without flesh or fatigue. It restores the faithful so the advance does not stop.",
+      flavor_ru: "Серафим — павший жрец, чья клятва сияет без плоти и усталости. Он исцеляет верных, не давая наступлению остановиться.",
       id: 'e2221', f: 'e', t: 4,
       name: 'Seraph',
       name_ru: 'Серафим',
@@ -2460,8 +2460,8 @@ const UNITS = {
       xp: 3640, passive: ['regenerate 1', 'stoicism 1', 'ethereal_form 2'], ability: 'redemption 2',
     },
     apprentice: {
-      flavor_en: "The Apprentice learns a spell is only useful as the soldier it protects.\nIts first lesson: strengthen the weakest point in the line.",
-      flavor_ru: "Ученик знает: заклинание полезно лишь настолько, насколько защищает солдата.\nПервый урок — укрепить слабое место строя.",
+      flavor_en: "The Apprentice learns a spell is only useful as the soldier it protects. Its first lesson: strengthen the weakest point in the line.",
+      flavor_ru: "Ученик знает: заклинание полезно лишь настолько, насколько защищает солдата. Первый урок — укрепить слабое место строя.",
       id: 'e4', f: 'e', t: 1,
       name: 'Apprentice',
       name_ru: 'Ученик',
@@ -2475,8 +2475,8 @@ const UNITS = {
       xp: 75, passive: 'concentration 1', ability: 'conflagration 1',
     },
     red_mage: {
-      flavor_en: "The Red Mage turns disciplined study into a wall of flame for the company to follow.\nThe foe’s refuge becomes the Empire’s road.",
-      flavor_ru: "Красный Маг превращает выучку в стену пламени, за которой наступает отряд.\nУбежище врага становится дорогой Империи.",
+      flavor_en: "The Red Mage turns disciplined study into a wall of flame for the company to follow. The foe’s refuge becomes the Empire’s road.",
+      flavor_ru: "Красный Маг превращает выучку в стену пламени, за которой наступает отряд. Убежище врага становится дорогой Империи.",
       id: 'e41', f: 'e', t: 2,
       name: 'Red Mage',
       name_ru: 'Красный Маг',
@@ -2490,8 +2490,8 @@ const UNITS = {
       xp: 430, passive: ['concentration 1', 'burn 1'], ability: 'conflagration 2',
     },
     ash_priest: {
-      flavor_en: "The Ash Priest burns corruption from ground the army must take.\nIts comrades keep the purifying fire moving forward.",
-      flavor_ru: "Жрец Пепла выжигает скверну с земли, нужной армии.\nТоварищи помогают очищающему огню идти вперёд.",
+      flavor_en: "The Ash Priest burns corruption from ground the army must take. Its comrades keep the purifying fire moving forward.",
+      flavor_ru: "Жрец Пепла выжигает скверну с земли, нужной армии. Товарищи помогают очищающему огню идти вперёд.",
       id: 'e411', f: 'e', t: 3,
       name: 'Ash Priest',
       name_ru: 'Пепельный Жрец',
@@ -2505,8 +2505,8 @@ const UNITS = {
       xp: 1520, passive: ['concentration 1', 'burn 2'], ability: 'conflagration 2',
     },
     ash_hierophant: {
-      flavor_en: "The Ash Hierophant commands a blaze that scatters enemy wards and ranks alike.\nNothing unclean is permitted to endure.",
-      flavor_ru: "Иерофант Пепла повелевает пламенем, рассеивающим и вражескую защиту, и строй.\nНечисти не позволено уцелеть.",
+      flavor_en: "The Ash Hierophant commands a blaze that scatters enemy wards and ranks alike. Nothing unclean is permitted to endure.",
+      flavor_ru: "Иерофант Пепла повелевает пламенем, рассеивающим и вражескую защиту, и строй. Нечисти не позволено уцелеть.",
       id: 'e4111', f: 'e', t: 4,
       name: 'Ash Hierophant',
       name_ru: 'Пепельный Иерофант',
@@ -2520,8 +2520,8 @@ const UNITS = {
       xp: 1520, passive: ['concentration 1', 'burn 2', 'dispel 1'], ability: 'conflagration 3',
     },
     cinder_knight: {
-      flavor_en: "The Cinder Blade joins a warrior’s steel to a mage’s living fire.\nIt cuts through the foe and burns the ground where ranks must close.",
-      flavor_ru: "Клинок Углей соединяет сталь воина с живым огнём мага.\nОн рассекает врага и выжигает землю, где сомкнутся ряды.",
+      flavor_en: "The Cinder Blade joins a warrior’s steel to a mage’s living fire. It cuts through the foe and burns the ground where ranks must close.",
+      flavor_ru: "Клинок Углей соединяет сталь воина с живым огнём мага. Он рассекает врага и выжигает землю, где сомкнутся ряды.",
       id: 'e412', f: 'e', t: 3,
       name: 'Cinder Blade',
       name_ru: 'Пепельный Клинок',
@@ -2535,8 +2535,8 @@ const UNITS = {
       xp: 1560, passive: ['concentration 1', 'burn 1', 'gravebane 1'], ability: 'ember_shroud 2',
     },
     dragon_knight: {
-      flavor_en: "The Dragonic Blade wields fire with a sworn knight’s discipline, never letting fury outrun formation.\nIts charge is measured flame.",
-      flavor_ru: "Драконий Клинок владеет огнём с дисциплиной рыцаря и не позволяет ярости опередить строй.\nЕго натиск — выверенное пламя.",
+      flavor_en: "The Dragonic Blade wields fire with a sworn knight’s discipline, never letting fury outrun formation. Its charge is measured flame.",
+      flavor_ru: "Драконий Клинок владеет огнём с дисциплиной рыцаря и не позволяет ярости опередить строй. Его натиск — выверенное пламя.",
       id: 'e4121', f: 'e', t: 4,
       name: 'Dragonic Blade',
       name_ru: 'Драконий Клинок',
@@ -2550,8 +2550,8 @@ const UNITS = {
       xp: 2730, passive: ['concentration 1', 'burn 2', 'gravebane 1'], ability: 'ember_shroud 3',
     },
     blue_mage: {
-      flavor_en: "The Blue Mage steals the enemy’s momentum with cold, giving infantry time to close.\nA spell is strongest when ranks act on it.",
-      flavor_ru: "Синий Маг отнимает у врага темп холодом, давая пехоте время сблизиться.\nЗаклинание сильнее, когда строй действует вслед за ним.",
+      flavor_en: "The Blue Mage steals the enemy’s momentum with cold, giving infantry time to close. A spell is strongest when ranks act on it.",
+      flavor_ru: "Синий Маг отнимает у врага темп холодом, давая пехоте время сблизиться. Заклинание сильнее, когда строй действует вслед за ним.",
       id: 'e42', f: 'e', t: 2,
       name: 'Blue Mage',
       name_ru: 'Синий Маг',
@@ -2565,8 +2565,8 @@ const UNITS = {
       xp: 480, passive: ['resist_aura_cold 1', 'chill 1'], ability: 'frost_armor 1',
     },
     cryomancer: {
-      flavor_en: "The Cryomancer makes the field impossible to cross.\nIts allies know the frozen foe will not escape the next volley.",
-      flavor_ru: "Криомант делает поле непроходимым.\nСоюзники знают: замёрзший противник не уйдёт от следующего залпа.",
+      flavor_en: "The Cryomancer makes the field impossible to cross. Its allies know the frozen foe will not escape the next volley.",
+      flavor_ru: "Криомант делает поле непроходимым. Союзники знают: замёрзший противник не уйдёт от следующего залпа.",
       id: 'e421', f: 'e', t: 3,
       name: 'Cryomancer',
       name_ru: 'Криомант',
@@ -2580,8 +2580,8 @@ const UNITS = {
       xp: 1560, passive: ['resist_aura_cold 1', 'chill 2'], ability: 'frost_armor 2',
     },
     winter_magus: {
-      flavor_en: "The Winter Magus brings killing frost, leaving Imperial ranks clear-eyed and steady.\nCold obedience serves a hotter cause.",
-      flavor_ru: "Зимний Маг насылает смертоносный мороз, оставляя ряды Империи стойкими.\nХолодная выучка служит горячей вере.",
+      flavor_en: "The Winter Magus brings killing frost, leaving Imperial ranks clear-eyed and steady. Cold obedience serves a hotter cause.",
+      flavor_ru: "Зимний Маг насылает смертоносный мороз, оставляя ряды Империи стойкими. Холодная выучка служит горячей вере.",
       id: 'e4211', f: 'e', t: 4,
       name: 'Winter Magus',
       name_ru: 'Зимний Маг',
@@ -2595,8 +2595,8 @@ const UNITS = {
       xp: 3640, passive: ['resist_aura_cold 1', 'chill 2', 'clear_mind 1'], ability: 'frost_armor 2',
     },
     warder_adept: {
-      flavor_en: "The Warder Adept shields the point where formation is about to buckle.\nIts magic buys the seconds soldiers need to stand fast.",
-      flavor_ru: "Хранитель защищает место, где строй готов дрогнуть.\nЕго магия дарит солдатам секунды, чтобы устоять.",
+      flavor_en: "The Warder Adept shields the point where formation is about to buckle. Its magic buys the seconds soldiers need to stand fast.",
+      flavor_ru: "Хранитель защищает место, где строй готов дрогнуть. Его магия дарит солдатам секунды, чтобы устоять.",
       id: 'e43', f: 'e', t: 2,
       name: 'Warder Adept',
       name_ru: 'Хранитель',
@@ -2610,8 +2610,8 @@ const UNITS = {
       xp: 480, passive: ['inspiration_initiative 1', 'aegis 1'], ability: 'frost_armor 1',
     },
     bulwark_magus: {
-      flavor_en: "The Bulwark Magus binds its ward across several comrades, making one defence from many shields.\nThe Empire stands together.",
-      flavor_ru: "Старший Хранитель связывает защиту нескольких товарищей, превращая множество щитов в одну оборону.\nИмперия стоит плечом к плечу.",
+      flavor_en: "The Bulwark Magus binds its ward across several comrades, making one defence from many shields. The Empire stands together.",
+      flavor_ru: "Старший Хранитель связывает защиту нескольких товарищей, превращая множество щитов в одну оборону. Империя стоит плечом к плечу.",
       id: 'e431', f: 'e', t: 3,
       name: 'Bulwark Magus',
       name_ru: 'Старший Хранитель',
@@ -2625,8 +2625,8 @@ const UNITS = {
       xp: 1560, passive: ['inspiration_initiative 1', 'aegis 2'], ability: 'frost_armor 2',
     },
     bulwark_archon: {
-      flavor_en: "The Bulwark Archon holds its ward under blows that scatter lesser formations.\nIts calm lets soldiers answer as one.",
-      flavor_ru: "Архонт Оплота держит защиту под ударами, что рассеяли бы слабый строй.\nЕго спокойствие помогает солдатам ответить единым ударом.",
+      flavor_en: "The Bulwark Archon holds its ward under blows that scatter lesser formations. Its calm lets soldiers answer as one.",
+      flavor_ru: "Архонт Оплота держит защиту под ударами, что рассеяли бы слабый строй. Его спокойствие помогает солдатам ответить единым ударом.",
       id: 'e4311', f: 'e', t: 4,
       name: 'Bulwark Archon',
       name_ru: 'Архонт Оплота',
@@ -2640,8 +2640,8 @@ const UNITS = {
       xp: 3640, passive: ['inspiration_initiative 1', 'aegis 2', 'stoicism 1'], ability: 'frost_armor 2',
     },
     protector: {
-      flavor_en: "The Aegis Warden guards the space between knight and caster, covering both before either must ask.\nIts shield makes unity real.",
-      flavor_ru: "Страж Эгиды прикрывает промежуток между рыцарем и магом прежде, чем попросят.\nЕго щит воплощает единство.",
+      flavor_en: "The Aegis Warden guards the space between knight and caster, covering both before either must ask. Its shield makes unity real.",
+      flavor_ru: "Страж Эгиды прикрывает промежуток между рыцарем и магом прежде, чем попросят. Его щит воплощает единство.",
       id: 'e432', f: 'e', t: 3,
       name: 'Aegis Warden',
       name_ru: 'Страж Эгиды',
@@ -2655,8 +2655,8 @@ const UNITS = {
       xp: 1560, passive: ['protector 2', 'aegis 1'], ability: 'blessing_of_protection 2',
     },
     aegis_sentinel: {
-      flavor_en: "The Aegis Sentinel plants an unyielding ward where the company is most exposed.\nEvery protected comrade returns strength to the line.",
-      flavor_ru: "Часовой Эгиды ставит несокрушимую защиту там, где отряд уязвимее всего.\nКаждый прикрытый товарищ возвращает силу строю.",
+      flavor_en: "The Aegis Sentinel plants an unyielding ward where the company is most exposed. Every protected comrade returns strength to the line.",
+      flavor_ru: "Часовой Эгиды ставит несокрушимую защиту там, где отряд уязвимее всего. Каждый прикрытый товарищ возвращает силу строю.",
       id: 'e4321', f: 'e', t: 4,
       name: 'Aegis Sentinel',
       name_ru: 'Часовой Эгиды',
@@ -2673,8 +2673,8 @@ const UNITS = {
 
   grail_of_sorrow: {
     mourning_prophet: {
-      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail.\nBlood quiets that loss for one battle, but cannot reverse it.",
-      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век.\nКровь заглушает утрату на одну битву, но не повернёт время вспять.",
+      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail. Blood quiets that loss for one battle, but cannot reverse it.",
+      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век. Кровь заглушает утрату на одну битву, но не повернёт время вспять.",
       id: 'h_g_1',
       name: 'Mourning Prophet',
       name_ru: 'Скорбящий Пророк',
@@ -2689,8 +2689,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     mourning_prophet_path_a_t2: {
-      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail.\nBlood quiets that loss for one battle, but cannot reverse it.",
-      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век.\nКровь заглушает утрату на одну битву, но не повернёт время вспять.",
+      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail. Blood quiets that loss for one battle, but cannot reverse it.",
+      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век. Кровь заглушает утрату на одну битву, но не повернёт время вспять.",
       id: 'h_g_1_a2',
       name: 'Mourning Prophet',
       name_ru: 'Скорбящий Пророк',
@@ -2705,8 +2705,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     mourning_prophet_path_a_t3: {
-      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail.\nBlood quiets that loss for one battle, but cannot reverse it.",
-      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век.\nКровь заглушает утрату на одну битву, но не повернёт время вспять.",
+      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail. Blood quiets that loss for one battle, but cannot reverse it.",
+      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век. Кровь заглушает утрату на одну битву, но не повернёт время вспять.",
       id: 'h_g_1_a3',
       name: 'Mourning Prophet',
       name_ru: 'Скорбящий Пророк',
@@ -2721,8 +2721,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     mourning_prophet_path_a_t4: {
-      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail.\nBlood quiets that loss for one battle, but cannot reverse it.",
-      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век.\nКровь заглушает утрату на одну битву, но не повернёт время вспять.",
+      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail. Blood quiets that loss for one battle, but cannot reverse it.",
+      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век. Кровь заглушает утрату на одну битву, но не повернёт время вспять.",
       id: 'h_g_1_a41',
       name: 'Mourning Prophet',
       name_ru: 'Скорбящий Пророк',
@@ -2737,8 +2737,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     mourning_prophet_path_a_t4_alt: {
-      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail.\nBlood quiets that loss for one battle, but cannot reverse it.",
-      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век.\nКровь заглушает утрату на одну битву, но не повернёт время вспять.",
+      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail. Blood quiets that loss for one battle, but cannot reverse it.",
+      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век. Кровь заглушает утрату на одну битву, но не повернёт время вспять.",
       id: 'h_g_1_a42',
       name: 'Mourning Prophet',
       name_ru: 'Скорбящий Пророк',
@@ -2753,8 +2753,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     mourning_prophet_path_b_t2: {
-      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail.\nBlood quiets that loss for one battle, but cannot reverse it.",
-      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век.\nКровь заглушает утрату на одну битву, но не повернёт время вспять.",
+      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail. Blood quiets that loss for one battle, but cannot reverse it.",
+      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век. Кровь заглушает утрату на одну битву, но не повернёт время вспять.",
       id: 'h_g_1_b2',
       name: 'Mourning Prophet',
       name_ru: 'Скорбящий Пророк',
@@ -2769,8 +2769,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     mourning_prophet_path_b_t3: {
-      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail.\nBlood quiets that loss for one battle, but cannot reverse it.",
-      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век.\nКровь заглушает утрату на одну битву, но не повернёт время вспять.",
+      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail. Blood quiets that loss for one battle, but cannot reverse it.",
+      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век. Кровь заглушает утрату на одну битву, но не повернёт время вспять.",
       id: 'h_g_1_b3',
       name: 'Mourning Prophet',
       name_ru: 'Скорбящий Пророк',
@@ -2785,8 +2785,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     mourning_prophet_path_b_t4: {
-      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail.\nBlood quiets that loss for one battle, but cannot reverse it.",
-      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век.\nКровь заглушает утрату на одну битву, но не повернёт время вспять.",
+      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail. Blood quiets that loss for one battle, but cannot reverse it.",
+      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век. Кровь заглушает утрату на одну битву, но не повернёт время вспять.",
       id: 'h_g_1_b41',
       name: 'Mourning Prophet',
       name_ru: 'Скорбящий Пророк',
@@ -2801,8 +2801,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     mourning_prophet_path_b_t4_alt: {
-      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail.\nBlood quiets that loss for one battle, but cannot reverse it.",
-      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век.\nКровь заглушает утрату на одну битву, но не повернёт время вспять.",
+      flavor_en: "The Mourning Prophet knows the price of the spell that stole a century from the Grail. Blood quiets that loss for one battle, but cannot reverse it.",
+      flavor_ru: "Скорбящий Пророк знает цену заклятия, отнявшего у Грааля целый век. Кровь заглушает утрату на одну битву, но не повернёт время вспять.",
       id: 'h_g_1_b42',
       name: 'Mourning Prophet',
       name_ru: 'Скорбящий Пророк',
@@ -2817,8 +2817,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     grail_warden: {
-      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind.\nNow it guards the dead who have nowhere else to rest.",
-      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием.\nТеперь он защищает мёртвых, которым негде обрести покой.",
+      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind. Now it guards the dead who have nowhere else to rest.",
+      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием. Теперь он защищает мёртвых, которым негде обрести покой.",
       id: 'h_g_2',
       name: 'Grail Warden',
       name_ru: 'Страж Грааля',
@@ -2833,8 +2833,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     grail_warden_path_a_t2: {
-      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind.\nNow it guards the dead who have nowhere else to rest.",
-      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием.\nТеперь он защищает мёртвых, которым негде обрести покой.",
+      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind. Now it guards the dead who have nowhere else to rest.",
+      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием. Теперь он защищает мёртвых, которым негде обрести покой.",
       id: 'h_g_2_a2',
       name: 'Grail Warden',
       name_ru: 'Страж Грааля',
@@ -2849,8 +2849,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     grail_warden_path_a_t3: {
-      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind.\nNow it guards the dead who have nowhere else to rest.",
-      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием.\nТеперь он защищает мёртвых, которым негде обрести покой.",
+      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind. Now it guards the dead who have nowhere else to rest.",
+      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием. Теперь он защищает мёртвых, которым негде обрести покой.",
       id: 'h_g_2_a3',
       name: 'Grail Warden',
       name_ru: 'Страж Грааля',
@@ -2865,8 +2865,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     grail_warden_path_a_t4: {
-      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind.\nNow it guards the dead who have nowhere else to rest.",
-      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием.\nТеперь он защищает мёртвых, которым негде обрести покой.",
+      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind. Now it guards the dead who have nowhere else to rest.",
+      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием. Теперь он защищает мёртвых, которым негде обрести покой.",
       id: 'h_g_2_a41',
       name: 'Grail Warden',
       name_ru: 'Страж Грааля',
@@ -2881,8 +2881,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     grail_warden_path_a_t4_alt: {
-      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind.\nNow it guards the dead who have nowhere else to rest.",
-      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием.\nТеперь он защищает мёртвых, которым негде обрести покой.",
+      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind. Now it guards the dead who have nowhere else to rest.",
+      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием. Теперь он защищает мёртвых, которым негде обрести покой.",
       id: 'h_g_2_a42',
       name: 'Grail Warden',
       name_ru: 'Страж Грааля',
@@ -2897,8 +2897,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     grail_warden_path_b_t2: {
-      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind.\nNow it guards the dead who have nowhere else to rest.",
-      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием.\nТеперь он защищает мёртвых, которым негде обрести покой.",
+      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind. Now it guards the dead who have nowhere else to rest.",
+      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием. Теперь он защищает мёртвых, которым негде обрести покой.",
       id: 'h_g_2_b2',
       name: 'Grail Warden',
       name_ru: 'Страж Грааля',
@@ -2913,8 +2913,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     grail_warden_path_b_t3: {
-      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind.\nNow it guards the dead who have nowhere else to rest.",
-      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием.\nТеперь он защищает мёртвых, которым негде обрести покой.",
+      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind. Now it guards the dead who have nowhere else to rest.",
+      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием. Теперь он защищает мёртвых, которым негде обрести покой.",
       id: 'h_g_2_b3',
       name: 'Grail Warden',
       name_ru: 'Страж Грааля',
@@ -2929,8 +2929,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     grail_warden_path_b_t4: {
-      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind.\nNow it guards the dead who have nowhere else to rest.",
-      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием.\nТеперь он защищает мёртвых, которым негде обрести покой.",
+      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind. Now it guards the dead who have nowhere else to rest.",
+      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием. Теперь он защищает мёртвых, которым негде обрести покой.",
       id: 'h_g_2_b41',
       name: 'Grail Warden',
       name_ru: 'Страж Грааля',
@@ -2945,8 +2945,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     grail_warden_path_b_t4_alt: {
-      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind.\nNow it guards the dead who have nowhere else to rest.",
-      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием.\nТеперь он защищает мёртвых, которым негде обрести покой.",
+      flavor_en: "The Grail Warden accepted the ruined body the mistranslated spell left behind. Now it guards the dead who have nowhere else to rest.",
+      flavor_ru: "Страж Грааля принял изувеченное тело, оставленное неверно прочитанным заклятием. Теперь он защищает мёртвых, которым негде обрести покой.",
       id: 'h_g_2_b42',
       name: 'Grail Warden',
       name_ru: 'Страж Грааля',
@@ -2961,8 +2961,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     mothers_voice: {
-      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged.\nAstaloth still hears it.",
-      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения.\nАсталот всё ещё слышит его.",
+      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged. Astaloth still hears it.",
+      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения. Асталот всё ещё слышит его.",
       id: 'h_g_3',
       name: 'Mothers Voice',
       name_ru: 'Голос Матери',
@@ -2977,8 +2977,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     mothers_voice_path_a_t2: {
-      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged.\nAstaloth still hears it.",
-      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения.\nАсталот всё ещё слышит его.",
+      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged. Astaloth still hears it.",
+      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения. Асталот всё ещё слышит его.",
       id: 'h_g_3_a2',
       name: 'Mothers Voice',
       name_ru: 'Голос Матери',
@@ -2993,8 +2993,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     mothers_voice_path_a_t3: {
-      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged.\nAstaloth still hears it.",
-      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения.\nАсталот всё ещё слышит его.",
+      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged. Astaloth still hears it.",
+      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения. Асталот всё ещё слышит его.",
       id: 'h_g_3_a3',
       name: 'Mothers Voice',
       name_ru: 'Голос Матери',
@@ -3009,8 +3009,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     mothers_voice_path_a_t4: {
-      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged.\nAstaloth still hears it.",
-      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения.\nАсталот всё ещё слышит его.",
+      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged. Astaloth still hears it.",
+      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения. Асталот всё ещё слышит его.",
       id: 'h_g_3_a41',
       name: 'Mothers Voice',
       name_ru: 'Голос Матери',
@@ -3025,8 +3025,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     mothers_voice_path_a_t4_alt: {
-      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged.\nAstaloth still hears it.",
-      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения.\nАсталот всё ещё слышит его.",
+      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged. Astaloth still hears it.",
+      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения. Асталот всё ещё слышит его.",
       id: 'h_g_3_a42',
       name: 'Mothers Voice',
       name_ru: 'Голос Матери',
@@ -3041,8 +3041,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     mothers_voice_path_b_t2: {
-      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged.\nAstaloth still hears it.",
-      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения.\nАсталот всё ещё слышит его.",
+      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged. Astaloth still hears it.",
+      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения. Асталот всё ещё слышит его.",
       id: 'h_g_3_b2',
       name: 'Mothers Voice',
       name_ru: 'Голос Матери',
@@ -3057,8 +3057,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     mothers_voice_path_b_t3: {
-      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged.\nAstaloth still hears it.",
-      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения.\nАсталот всё ещё слышит его.",
+      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged. Astaloth still hears it.",
+      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения. Асталот всё ещё слышит его.",
       id: 'h_g_3_b3',
       name: 'Mothers Voice',
       name_ru: 'Голос Матери',
@@ -3073,8 +3073,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     mothers_voice_path_b_t4: {
-      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged.\nAstaloth still hears it.",
-      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения.\nАсталот всё ещё слышит его.",
+      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged. Astaloth still hears it.",
+      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения. Асталот всё ещё слышит его.",
       id: 'h_g_3_b41',
       name: 'Mothers Voice',
       name_ru: 'Голос Матери',
@@ -3089,8 +3089,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     mothers_voice_path_b_t4_alt: {
-      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged.\nAstaloth still hears it.",
-      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения.\nАсталот всё ещё слышит его.",
+      flavor_en: "The spell stripped Mother’s Voice of its body, leaving a spirit that remembers the world before it aged. Astaloth still hears it.",
+      flavor_ru: "Заклятие лишило Голос Матери тела, оставив дух, помнящий мир до его старения. Асталот всё ещё слышит его.",
       id: 'h_g_3_b42',
       name: 'Mothers Voice',
       name_ru: 'Голос Матери',
@@ -3105,8 +3105,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     zombie_risen: {
-      flavor_en: "The Risen remember a hearth, a name, and the spell’s sudden winter.\nTheir broken mouths ask only for rest, though rest never comes.",
-      flavor_ru: "Восставшие помнят очаг, своё имя и внезапную зиму заклятия.\nИх разбитые уста просят лишь покоя, которого не будет.",
+      flavor_en: "The Risen remember a hearth, a name, and the spell’s sudden winter. Their broken mouths ask only for rest, though rest never comes.",
+      flavor_ru: "Восставшие помнят очаг, своё имя и внезапную зиму заклятия. Их разбитые уста просят лишь покоя, которого не будет.",
       id: 'gs1', f: 'g', t: 1,
       name: 'Risen',
       name_ru: 'Восставший',
@@ -3120,8 +3120,8 @@ const UNITS = {
       xp: 100, passive: ['horde 1', 'sustenance 1'], ability: 'shared_suffering 1',
     },
     poisonous_ghoul: {
-      flavor_en: "This ghoul’s flesh seeps the sickness that followed the stolen century.\nIt shambles forward without hunger, carrying the land’s decay with it.",
-      flavor_ru: "Из плоти упыря сочится зараза, пришедшая вместе с украденным веком.\nОн бредёт вперёд не от голода, неся с собой тление родной земли.",
+      flavor_en: "This ghoul’s flesh seeps the sickness that followed the stolen century. It shambles forward without hunger, carrying the land’s decay with it.",
+      flavor_ru: "Из плоти упыря сочится зараза, пришедшая вместе с украденным веком. Он бредёт вперёд не от голода, неся с собой тление родной земли.",
       id: 'gs11', f: 'g', t: 2,
       name: 'Poisonous Ghoul',
       name_ru: 'Ядовитый Упырь',
@@ -3135,8 +3135,8 @@ const UNITS = {
       xp: 480, passive: ['horde 1', 'poison 1'], ability: 'shared_suffering 1',
     },
     plague_knight: {
-      flavor_en: "The Plague Knight remembers the weight of a living hand on its sword.\nNow its rusted armor spreads the blight it once hoped to escape.",
-      flavor_ru: "Чумной Рыцарь помнит, как живая рука сжимала меч.\nТеперь его ржавые доспехи разносят язву, от которой он когда-то хотел спастись.",
+      flavor_en: "The Plague Knight remembers the weight of a living hand on its sword. Now its rusted armor spreads the blight it once hoped to escape.",
+      flavor_ru: "Чумной Рыцарь помнит, как живая рука сжимала меч. Теперь его ржавые доспехи разносят язву, от которой он когда-то хотел спастись.",
       id: 'gs111', f: 'g', t: 3,
       name: 'Plague Knight',
       name_ru: 'Чумной Рыцарь',
@@ -3150,8 +3150,8 @@ const UNITS = {
       xp: 1560, passive: ['horde 1', 'poison 2'], ability: 'shared_suffering 1',
     },
     plague_knight2: {
-      flavor_en: "A veteran of the risen host, the Plague Champion stands where lesser corpses collapse.\nIts presence turns a breach into a spreading sickness.",
-      flavor_ru: "Ветеран войска восставших, Чумной Поборник стоит там, где другие трупы падают.\nЕго присутствие превращает брешь в очаг заразы.",
+      flavor_en: "A veteran of the risen host, the Plague Champion stands where lesser corpses collapse. Its presence turns a breach into a spreading sickness.",
+      flavor_ru: "Ветеран войска восставших, Чумной Поборник стоит там, где другие трупы падают. Его присутствие превращает брешь в очаг заразы.",
       id: 'gs1111', f: 'g', t: 4,
       name: 'Plague Champion',
       name_ru: 'Чумной Поборник',
@@ -3165,8 +3165,8 @@ const UNITS = {
       xp: 1560, passive: ['horde 1', 'poison 2', 'aura_of_decay 1'], ability: 'shared_suffering 1',
     },
     cannibal_ghoul: {
-      flavor_en: "Neither fully zombie nor vampire, the Cannibal Ghoul is caught between acceptance and denial.\nIt feeds on the dead; the living still feel too warm.",
-      flavor_ru: "Упырь-Людоед не стал ни зомби, ни вампиром и застрял между смирением и отрицанием.\nОн пожирает мёртвых: живые напоминают ему об утраченном тепле.",
+      flavor_en: "Neither fully zombie nor vampire, the Cannibal Ghoul is caught between acceptance and denial. It feeds on the dead; the living still feel too warm.",
+      flavor_ru: "Упырь-Людоед не стал ни зомби, ни вампиром и застрял между смирением и отрицанием. Он пожирает мёртвых: живые напоминают ему об утраченном тепле.",
       id: 'gs12', f: 'g', t: 2,
       name: 'Cannibal Ghoul',
       name_ru: 'Упырь-Людоед',
@@ -3180,8 +3180,8 @@ const UNITS = {
       xp: 480, passive: ['horde 1', 'sustenance 1', 'lifesteal 1'], ability: 'shared_suffering 1',
     },
     abominate: {
-      flavor_en: "The Abominate has made a weapon of the body the spell ruined.\nEach wound it deals feeds the stubborn remnant that refuses to lie down.",
-      flavor_ru: "Мерзость - погубленное заклятием тело превращенное в иснтрумент.\nКаждая нанесённая рана подпитывает то упрямое начало, что не желает лечь в могилу.",
+      flavor_en: "The Abominate has made a weapon of the body the spell ruined. Each wound it deals feeds the stubborn remnant that refuses to lie down.",
+      flavor_ru: "Мерзость - погубленное заклятием тело превращенное в иснтрумент. Каждая нанесённая рана подпитывает то упрямое начало, что не желает лечь в могилу.",
       id: 'gs121', f: 'g', t: 3,
       name: 'Abominate',
       name_ru: 'Мерзость',
@@ -3195,8 +3195,8 @@ const UNITS = {
       xp: 1560, passive: ['horde 1', 'sustenance 1', 'lifesteal 2'], ability: 'shared_suffering 1',
     },
     abominate2: {
-      flavor_en: "Blood and grave-filth mingle beneath the Blood Abomination’s hide.\nIt steals warmth from its prey, yet cannot remember what warmth felt like.",
-      flavor_ru: "Под шкурой Кровавой Мерзости смешались кровь и могильная грязь.\nОно крадёт тепло жертв, хотя уже не помнит, каким оно было.",
+      flavor_en: "Blood and grave-filth mingle beneath the Blood Abomination’s hide. It steals warmth from its prey, yet cannot remember what warmth felt like.",
+      flavor_ru: "Под шкурой Кровавой Мерзости смешались кровь и могильная грязь. Оно крадёт тепло жертв, хотя уже не помнит, каким оно было.",
       id: 'gs1211', f: 'g', t: 4,
       name: 'Blood Abomination',
       name_ru: 'Кровавая Мерзость',
@@ -3210,8 +3210,8 @@ const UNITS = {
       xp: 1560, passive: ['horde 2', 'sustenance 1', 'lifesteal 2'], ability: 'shared_suffering 1',
     },
     cesswalker: {
-      flavor_en: "The Stitcher tends the bodies that the failed spell left twisted beyond recognition.\nIts careful hands cannot undo the curse, only keep the dead standing.",
-      flavor_ru: "Сшиватель ухаживает за телами, изуродованными неудачным заклятием до неузнаваемости.\nЕго руки не снимут проклятие, но удержат мёртвых на ногах.",
+      flavor_en: "The Stitcher tends the bodies that the failed spell left twisted beyond recognition. Its careful hands cannot undo the curse, only keep the dead standing.",
+      flavor_ru: "Сшиватель ухаживает за телами, изуродованными неудачным заклятием до неузнаваемости. Его руки не снимут проклятие, но удержат мёртвых на ногах.",
       id: 'gs13', f: 'g', t: 2,
       name: 'Stitcher',
       name_ru: 'Сшиватель',
@@ -3225,8 +3225,8 @@ const UNITS = {
       xp: 480, passive: ['resist_aura_nature 1', 'regenerate 1'], ability: 'blight 1',
     },
     blightwalker: {
-      flavor_en: "A Flesh Mender knows every seam where the spell split skin from bone.\nIt closes those rents so the dead may finish the work they remember.",
-      flavor_ru: "Костоправ знает каждый шов, где заклятие разорвало кожу и кость.\nОн зашивает раны, чтобы мёртвые могли закончить начатое.",
+      flavor_en: "A Flesh Mender knows every seam where the spell split skin from bone. It closes those rents so the dead may finish the work they remember.",
+      flavor_ru: "Костоправ знает каждый шов, где заклятие разорвало кожу и кость. Он зашивает раны, чтобы мёртвые могли закончить начатое.",
       id: 'gs131', f: 'g', t: 3,
       name: 'Flesh Mender',
       name_ru: 'Ткач Плоти',
@@ -3240,8 +3240,8 @@ const UNITS = {
       xp: 1560, passive: ['resist_aura_nature 1', 'regenerate 1', 'reanimate 1'], ability: 'blight 2',
     },
     blightwalker2: {
-      flavor_en: "The Blight Surgeon works with the patience of a physician and the tools of a grave robber.\nEvery repair serves a people who cannot heal.",
-      flavor_ru: "Чумной Хирург работает терпеливо, как лекарь, и пользуется орудиями могильщика.\nКаждый шов служит народу, который уже не исцелить.",
+      flavor_en: "The Blight Surgeon works with the patience of a physician and the tools of a grave robber. Every repair serves a people who cannot heal.",
+      flavor_ru: "Чумной Хирург работает терпеливо, как лекарь, и пользуется орудиями могильщика. Каждый шов служит народу, который уже не исцелить.",
       id: 'gs1311', f: 'g', t: 4,
       name: 'Blight Surgeon',
       name_ru: 'Врачеватель Порчи',
@@ -3255,8 +3255,8 @@ const UNITS = {
       xp: 1560, passive: ['resist_aura_nature 2', 'regenerate 1', 'reanimate 1'], ability: 'blight 2',
     },
     adept: {
-      flavor_en: "The Adept studies the original spell, searching for the mistranslated word that aged an entire domain in a heartbeat.\nThe page never grows clearer.",
-      flavor_ru: "Адепт изучает исходное заклятие, ищет слово, за миг состарившее целые земли.\nНо текст не становится понятнее.",
+      flavor_en: "The Adept studies the original spell, searching for the mistranslated word that aged an entire domain in a heartbeat. The page never grows clearer.",
+      flavor_ru: "Адепт изучает исходное заклятие, ищет слово, за миг состарившее целые земли. Но текст не становится понятнее.",
       id: 'gs3', f: 'g', t: 1,
       name: 'Adept',
       name_ru: 'Адепт',
@@ -3270,8 +3270,8 @@ const UNITS = {
       xp: 65, passive: 'poison 1', ability: null,
     },
     blood_adept: {
-      flavor_en: "The Blood Adept has chosen denial: if stolen life can sustain the body, perhaps the spell has not won.\nIts experiments leave a trail of pale victims.",
-      flavor_ru: "Кровавый Адепт выбрал отрицание: если украденная жизнь поддерживает тело, значит, заклятие ещё не победило.\nЗа его опытами остаются бледные жертвы.",
+      flavor_en: "The Blood Adept has chosen denial: if stolen life can sustain the body, perhaps the spell has not won. Its experiments leave a trail of pale victims.",
+      flavor_ru: "Кровавый Адепт выбрал отрицание: если украденная жизнь поддерживает тело, значит, заклятие ещё не победило. За его опытами остаются бледные жертвы.",
       id: 'gs31', f: 'g', t: 2,
       name: 'Blood Adept',
       name_ru: 'Адепт Крови',
@@ -3285,8 +3285,8 @@ const UNITS = {
       xp: 400, passive: ['banquet 1', 'bleed 1'], ability: 'hemorrhage 2',
     },
     crimson_mage: {
-      flavor_en: "The Crimson Mage draws vitality through rites once meant to advance the Grail’s art.\nEach success keeps hope alive and another victim empty.",
-      flavor_ru: "Багровый Маг вытягивает жизненную силу обрядами, призванными развивать искусство Грааля.\nКаждый успех питает надежду и оставляет новую жертву опустошённой.",
+      flavor_en: "The Crimson Mage draws vitality through rites once meant to advance the Grail’s art. Each success keeps hope alive and another victim empty.",
+      flavor_ru: "Багровый Маг вытягивает жизненную силу обрядами, призванными развивать искусство Грааля. Каждый успех питает надежду и оставляет новую жертву опустошённой.",
       id: 'gs312', f: 'g', t: 3,
       name: 'Crimson Mage',
       name_ru: 'Багровый Маг',
@@ -3300,8 +3300,8 @@ const UNITS = {
       xp: 1560, passive: ['banquet 1', 'bleed 1', 'vitality 1'], ability: 'hemorrhage 2',
     },
     crimson_archon: {
-      flavor_en: "The Crimson Archon commands the blood rites that sustain the Envious.\nA century of stolen years cannot restore the one moment they lost.",
-      flavor_ru: "Багровый Архонт повелевает обрядами крови, что поддерживают Завистливых.\nВек украденных лет не вернёт мгновение, в котором они всё потеряли.",
+      flavor_en: "The Crimson Archon commands the blood rites that sustain the Envious. A century of stolen years cannot restore the one moment they lost.",
+      flavor_ru: "Багровый Архонт повелевает обрядами крови, что поддерживают Завистливых. Век украденных лет не вернёт мгновение, в котором они всё потеряли.",
       id: 'gs3121', f: 'g', t: 4,
       name: 'Crimson Archon',
       name_ru: 'Багровый Архонт',
@@ -3315,8 +3315,8 @@ const UNITS = {
       xp: 3100, passive: ['banquet 1', 'bleed 2', 'vitality 1'], ability: 'hemorrhage 2',
     },
     blood_knight: {
-      flavor_en: "The Blood Knight meets living warriors at arm’s length, envying the beat beneath their armor.\nEvery victory lends its dead heart another pulse.",
-      flavor_ru: "Кровавый Рыцарь сходится с живыми врукопашную и завидует биению под их доспехами.\nКаждая победа дарит его мёртвому сердцу ещё один удар.",
+      flavor_en: "The Blood Knight meets living warriors at arm’s length, envying the beat beneath their armor. Every victory lends its dead heart another pulse.",
+      flavor_ru: "Кровавый Рыцарь сходится с живыми врукопашную и завидует биению под их доспехами. Каждая победа дарит его мёртвому сердцу ещё один удар.",
       id: 'gs311', f: 'g', t: 3,
       name: 'Blood Knight',
       name_ru: 'Рыцарь Крови',
@@ -3330,8 +3330,8 @@ const UNITS = {
       xp: 1560, passive: ['iron_will 1', 'duelist 1', 'leech 1'], ability: 'exsanguinate 1',
     },
     sanguine_lord: {
-      flavor_en: "The Sanguine Lord has learned to make the enemy’s strength answer to its own.\nIt calls this mastery, though the hunger began with a mistranslated prayer.",
-      flavor_ru: "Кровавый Лорд научился подчинять себе силу врага.\nОн зовёт это мастерством, хотя голод начался с неверно прочитанной молитвы.",
+      flavor_en: "The Sanguine Lord has learned to make the enemy’s strength answer to its own. It calls this mastery, though the hunger began with a mistranslated prayer.",
+      flavor_ru: "Кровавый Лорд научился подчинять себе силу врага. Он зовёт это мастерством, хотя голод начался с неверно прочитанной молитвы.",
       id: 'gs3111', f: 'g', t: 4,
       name: 'Sanguine Lord',
       name_ru: 'Кровавый Владыка',
@@ -3345,8 +3345,8 @@ const UNITS = {
       xp: 2900, passive: ['iron_will 2', 'duelist 1', 'leech 1'], ability: 'exsanguinate 1',
     },
     necromancer: {
-      flavor_en: "The Necromancer raises those the century took before they could be buried.\nTheir old faces haunt its work, but the hands do not falter.",
-      flavor_ru: "Некромант поднимает тех, кого забрал век прежде, чем их успели похоронить.\nПрежние лица преследуют его, но руки не дрожат.",
+      flavor_en: "The Necromancer raises those the century took before they could be buried. Their old faces haunt its work, but the hands do not falter.",
+      flavor_ru: "Некромант поднимает тех, кого забрал век прежде, чем их успели похоронить. Прежние лица преследуют его, но руки не дрожат.",
       id: 'gs32', f: 'g', t: 2,
       name: 'Necromancer',
       name_ru: 'Некромант',
@@ -3360,8 +3360,8 @@ const UNITS = {
       xp: 480, passive: ['unending_servitude 1', 'reanimate 1', 'stoicism 1'], ability: 'raise_dead 1',
     },
     death_lord: {
-      flavor_en: "The Death Lord commands the risen with the solemn authority of one who remembers being among them.\nNo servant is asked to forget its former name.",
-      flavor_ru: "Владыка Смерти повелевает восставшими с суровой властью того, кто помнит себя одним из них.\nНи одному слуге не велено забывать прежнее имя.",
+      flavor_en: "The Death Lord commands the risen with the solemn authority of one who remembers being among them. No servant is asked to forget its former name.",
+      flavor_ru: "Владыка Смерти повелевает восставшими с суровой властью того, кто помнит себя одним из них. Ни одному слуге не велено забывать прежнее имя.",
       id: 'gs321', f: 'g', t: 3,
       name: 'Death Lord',
       name_ru: 'Владыка Смерти',
@@ -3375,8 +3375,8 @@ const UNITS = {
       xp: 1760, passive: ['unending_servitude 1', 'reanimate 2', 'stoicism 1'], ability: 'raise_dead 2',
     },
     mothers_hand: {
-      flavor_en: "Mother’s Hand gathers the fallen as a parent once gathered children after a storm.\nAstaloth watches over the dead; her servants do the carrying.",
-      flavor_ru: "Рука Матери собирает павших, как мать некогда собирала детей после бури.\nАсталот хранит мёртвых, а её служители несут их на руках.",
+      flavor_en: "Mother’s Hand gathers the fallen as a parent once gathered children after a storm. Astaloth watches over the dead; her servants do the carrying.",
+      flavor_ru: "Рука Матери собирает павших, как мать некогда собирала детей после бури. Асталот хранит мёртвых, а её служители несут их на руках.",
       id: 'gs3211', f: 'g', t: 4,
       name: "Mother's Hand",
       name_ru: 'Длань Матери',
@@ -3390,8 +3390,8 @@ const UNITS = {
       xp: 3460, passive: ['unending_servitude 1', 'reanimate 2', 'stoicism 2'], ability: 'raise_dead 2',
     },
     plague_scholar: {
-      flavor_en: "The Plague Scholar records how the spell’s unnatural century changed every living thing.\nIts notes may yet spare another land the same mistake.",
-      flavor_ru: "Учёный Чумы записывает, как неестественный век заклятия изменил всё живое.\nВозможно, эти заметки уберегут другие земли от той же ошибки.",
+      flavor_en: "The Plague Scholar records how the spell’s unnatural century changed every living thing. Its notes may yet spare another land the same mistake.",
+      flavor_ru: "Учёный Чумы записывает, как неестественный век заклятия изменил всё живое. Возможно, эти заметки уберегут другие земли от той же ошибки.",
       id: 'gs33', f: 'g', t: 2,
       name: 'Plague Scholar',
       name_ru: 'Чумной Учёный',
@@ -3405,8 +3405,8 @@ const UNITS = {
       xp: 480, passive: ['poison 1', 'infect 1'], ability: 'blight 1',
     },
     plague_lord: {
-      flavor_en: "The Plague Lord has turned those grim studies into a weapon against the living.\nIt calls the spreading blight a warning, not a cure.",
-      flavor_ru: "Владыка Чумы превратил мрачные исследования в оружие против живых.\nОн считает разрастающуюся хворь предупреждением, а не исцелением.",
+      flavor_en: "The Plague Lord has turned those grim studies into a weapon against the living. It calls the spreading blight a warning, not a cure.",
+      flavor_ru: "Владыка Чумы превратил мрачные исследования в оружие против живых. Он считает разрастающуюся хворь предупреждением, а не исцелением.",
       id: 'gs331', f: 'g', t: 3,
       name: 'Plague Lord',
       name_ru: 'Владыка Чумы',
@@ -3420,8 +3420,8 @@ const UNITS = {
       xp: 1560, passive: ['poison 1', 'infect 1', 'dispel 1'], ability: 'blight 2',
     },
     plague_archon: {
-      flavor_en: "The Plague Archon carries the Scholar’s work to its most terrible conclusion.\nWherever it passes, the living see what one careless word can do.",
-      flavor_ru: "Архонт Чумы довёл труды Учёного до страшного конца.\nВезде, где он проходит, живые видят, что может сделать одно неверно прочитанное слово.",
+      flavor_en: "The Plague Archon carries the Scholar’s work to its most terrible conclusion. Wherever it passes, the living see what one careless word can do.",
+      flavor_ru: "Архонт Чумы довёл труды Учёного до страшного конца. Везде, где он проходит, живые видят, что может сделать одно неверно прочитанное слово.",
       id: 'gs3311', f: 'g', t: 4,
       name: 'Plague Archon',
       name_ru: 'Архонт Чумы',
@@ -3435,8 +3435,8 @@ const UNITS = {
       xp: 3640, passive: ['poison 2', 'infect 1', 'dispel 1'], ability: 'blight 3',
     },
     communicant: {
-      flavor_en: "The Communicant shares a sacrament of stolen blood with the dead who still envy the living.\nIts rite offers strength, never forgiveness.",
-      flavor_ru: "Причастник делится обрядом украденной крови с мертвецами, всё ещё завидующими живым.\nЕго таинство дарует силу, но не прощение.",
+      flavor_en: "The Communicant shares a sacrament of stolen blood with the dead who still envy the living. Its rite offers strength, never forgiveness.",
+      flavor_ru: "Причастник делится обрядом украденной крови с мертвецами, всё ещё завидующими живым. Его таинство дарует силу, но не прощение.",
       id: 'gs2', f: 'g', t: 1,
       name: 'Communicant',
       name_ru: 'Причастник',
@@ -3450,8 +3450,8 @@ const UNITS = {
       xp: 230, passive: ['sacrament 1', 'lifesteal 1'], ability: 'libation 1',
     },
     crimson_communicant: {
-      flavor_en: "The Crimson Communicant has learned to draw more from each stolen pulse.\nIts red vestments hide no illusion of a living heart.",
-      flavor_ru: "Багровый Причастник научился извлекать больше из каждого украденного пульса.\nКрасные одежды не скрывают иллюзии живого сердца.",
+      flavor_en: "The Crimson Communicant has learned to draw more from each stolen pulse. Its red vestments hide no illusion of a living heart.",
+      flavor_ru: "Багровый Причастник научился извлекать больше из каждого украденного пульса. Красные одежды не скрывают иллюзии живого сердца.",
       id: 'gs21', f: 'g', t: 2,
       name: 'Crimson Communicant',
       name_ru: 'Багровый Причастник',
@@ -3465,8 +3465,8 @@ const UNITS = {
       xp: 1250, passive: ['sacrament 1', 'lifesteal 2', 'shatter 1'], ability: 'libation 1',
     },
     chosen: {
-      flavor_en: "The Chosen is held up as proof that Astaloth has not abandoned her children.\nIt knows the Mother grieves; it knows the blood is still borrowed.",
-      flavor_ru: "Избранного считают доказательством, что Асталот не оставила своих детей.\nОн знает: Мать скорбит, а кровь всё ещё взята взаймы.",
+      flavor_en: "The Chosen is held up as proof that Astaloth has not abandoned her children. It knows the Mother grieves; it knows the blood is still borrowed.",
+      flavor_ru: "Избранного считают доказательством, что Асталот не оставила своих детей. Он знает: Мать скорбит, а кровь всё ещё взята взаймы.",
       id: 'gs211', f: 'g', t: 3,
       name: 'Chosen',
       name_ru: 'Избранный',
@@ -3480,8 +3480,8 @@ const UNITS = {
       xp: 4055, passive: ['sacrament 2', 'lifesteal 2', 'shatter 1'], ability: 'libation 2',
     },
     anointed: {
-      flavor_en: "The Anointed bears the full burden of the blood rite and its unanswered promise.\nThe living call it blessed; it remembers the century that vanished.",
-      flavor_ru: "Помазанник несёт всё бремя обряда крови и его невыполненного обещания.\nЖивые зовут его благословенным; он помнит исчезнувший век.",
+      flavor_en: "The Anointed bears the full burden of the blood rite and its unanswered promise. The living call it blessed; it remembers the century that vanished.",
+      flavor_ru: "Помазанник несёт всё бремя обряда крови и его невыполненного обещания. Живые зовут его благословенным; он помнит исчезнувший век.",
       id: 'gs2111', f: 'g', t: 4,
       name: 'Anointed',
       name_ru: 'Помазанник',
@@ -3495,8 +3495,8 @@ const UNITS = {
       xp: 7600, passive: ['sacrament 2', 'lifesteal 2', 'shatter 2'], ability: 'libation 2',
     },
     consecrated: {
-      flavor_en: "The Consecrated trades the sword for blood-magic, binding its hunger to a sacred purpose.\nEven so, the stolen life never feels like its own.",
-      flavor_ru: "Освящённый сменил меч на магию крови и связал голод со священной целью.\nНо украденная жизнь так и не стала своей.",
+      flavor_en: "The Consecrated trades the sword for blood-magic, binding its hunger to a sacred purpose. Even so, the stolen life never feels like its own.",
+      flavor_ru: "Освящённый сменил меч на магию крови и связал голод со священной целью. Но украденная жизнь так и не стала своей.",
       id: 'gs2112', f: 'g', t: 4,
       name: 'Consecrated',
       name_ru: 'Освящённый',
@@ -3510,8 +3510,8 @@ const UNITS = {
       xp: 7900, passive: ['sacrament 2', 'lifesteal 2', 'bleed 2'], ability: 'libation 2',
     },
     husk_colossus: {
-      flavor_en: "The Husk Colossus is assembled from bodies aged by the spell and memories too stubborn to fade.\nIt lumbers on because its people still need a wall.",
-      flavor_ru: "Колосс из останков собран из тел, состаренных заклятием, и памяти, не желающей угаснуть.\nОн бредёт вперёд, пока народу нужна стена.",
+      flavor_en: "The Husk Colossus is assembled from bodies aged by the spell and memories too stubborn to fade. It lumbers on because its people still need a wall.",
+      flavor_ru: "Колосс из останков собран из тел, состаренных заклятием, и памяти, не желающей угаснуть. Он бредёт вперёд, пока народу нужна стена.",
       id: 'gs4', f: 'g', t: 1,
       name: 'Husk Colossus',
       name_ru: 'Иссушенный Колосс',
@@ -3525,8 +3525,8 @@ const UNITS = {
       xp: 230, passive: ['infect 2', 'horde 1'], ability: 'raise_dead 2',
     },
     grail_seraph: {
-      flavor_en: "The Grail Seraph rises above the blighted host, though no living soul remains inside its ruined flesh.\nThe dead follow its silent radiance.",
-      flavor_ru: "Серафим Грааля возвышается над чумным войском, хотя в его изувеченной плоти нет живой души.\nМертвецы следуют за безмолвным сиянием.",
+      flavor_en: "The Grail Seraph rises above the blighted host, though no living soul remains inside its ruined flesh. The dead follow its silent radiance.",
+      flavor_ru: "Серафим Грааля возвышается над чумным войском, хотя в его изувеченной плоти нет живой души. Мертвецы следуют за безмолвным сиянием.",
       id: 'gs41', f: 'g', t: 2,
       name: 'Grail Seraph',
       name_ru: 'Серафим Грааля',
@@ -3540,8 +3540,8 @@ const UNITS = {
       xp: 1250, passive: ['infect 1', 'poison 2', 'horde 1'], ability: 'grails_blessing 2',
     },
     grail_angel: {
-      flavor_en: "The Grail Angel carries the old faith into a body the spell could not preserve.\nIts blessing strengthens the risen without calling them alive.",
-      flavor_ru: "Ангел Грааля несёт старую веру в теле, которое заклятие не пощадило.\nЕго благословение укрепляет восставших, не называя их живыми.",
+      flavor_en: "The Grail Angel carries the old faith into a body the spell could not preserve. Its blessing strengthens the risen without calling them alive.",
+      flavor_ru: "Ангел Грааля несёт старую веру в теле, которое заклятие не пощадило. Его благословение укрепляет восставших, не называя их живыми.",
       id: 'gs411', f: 'g', t: 3,
       name: 'Grail Angel',
       name_ru: 'Ангел Грааля',
@@ -3555,8 +3555,8 @@ const UNITS = {
       xp: 4055, passive: ['infect 1', 'poison 2', 'horde 2'], ability: 'grails_blessing 2',
     },
     grail_archangel: {
-      flavor_en: "The Grail Archangel towers above the dead as a monument to the faith that survived them.\nIts poisoned grace makes every fallen foe part of the host.",
-      flavor_ru: "Архангел Грааля высится над мёртвыми — памятник вере, пережившей их.\nЕго отравленная благодать обращает каждого павшего во вражеских рядах в часть войска.",
+      flavor_en: "The Grail Archangel towers above the dead as a monument to the faith that survived them. Its poisoned grace makes every fallen foe part of the host.",
+      flavor_ru: "Архангел Грааля высится над мёртвыми — памятник вере, пережившей их. Его отравленная благодать обращает каждого павшего во вражеских рядах в часть войска.",
       id: 'gs4111', f: 'g', t: 4,
       name: 'Grail Archangel',
       name_ru: 'Архангел Грааля',
@@ -3570,8 +3570,8 @@ const UNITS = {
       xp: 4055, passive: ['infect 2', 'poison 2', 'horde 2'], ability: 'grails_blessing 2',
     },
     sorrow_bearer: {
-      flavor_en: "The Sorrow Bearer carries the grief Astaloth cannot lay down.\nIts hands tend the dead with the tenderness once reserved for the living.",
-      flavor_ru: "Носитель Скорби несёт горе, от которого Асталот не может избавиться.\nЕго руки заботятся о мёртвых с прежней нежностью к живым.",
+      flavor_en: "The Sorrow Bearer carries the grief Astaloth cannot lay down. Its hands tend the dead with the tenderness once reserved for the living.",
+      flavor_ru: "Носитель Скорби несёт горе, от которого Асталот не может избавиться. Его руки заботятся о мёртвых с прежней нежностью к живым.",
       id: 'gs42', f: 'g', t: 2,
       name: 'Sorrow Bearer',
       name_ru: 'Носитель Скорби',
@@ -3585,8 +3585,8 @@ const UNITS = {
       xp: 1250, passive: ['vitality 2', 'eternal_grief 1', 'dispel 1'], ability: 'raise_dead 2',
     },
     sorrow_vessel: {
-      flavor_en: "The Sorrow Vessel holds memories too painful for the rest of the host to bear.\nIts healing is slow, but the dead recognize the care behind it.",
-      flavor_ru: "Сосуд Скорби хранит воспоминания, слишком тяжёлые для остального войска.\nЕго исцеление медленно, но мёртвые чувствуют заботу за ним.",
+      flavor_en: "The Sorrow Vessel holds memories too painful for the rest of the host to bear. Its healing is slow, but the dead recognize the care behind it.",
+      flavor_ru: "Сосуд Скорби хранит воспоминания, слишком тяжёлые для остального войска. Его исцеление медленно, но мёртвые чувствуют заботу за ним.",
       id: 'gs421', f: 'g', t: 3,
       name: 'Sorrow Vessel',
       name_ru: 'Сосуд Скорби',
@@ -3600,8 +3600,8 @@ const UNITS = {
       xp: 4055, passive: ['vitality 2', 'eternal_grief 1', 'dispel 2'], ability: 'raise_dead 2',
     },
     sorrow_reliquary: {
-      flavor_en: "The Sorrow Reliquary keeps the names of those lost when the spell was spoken.\nIts rites steady the fallen and cleanse what can still be cleansed.",
-      flavor_ru: "Реликварий Скорби хранит имена погибших в миг сотворения заклятия.\nЕго обряды укрепляют павших и очищают всё, что ещё можно очистить.",
+      flavor_en: "The Sorrow Reliquary keeps the names of those lost when the spell was spoken. Its rites steady the fallen and cleanse what can still be cleansed.",
+      flavor_ru: "Реликварий Скорби хранит имена погибших в миг сотворения заклятия. Его обряды укрепляют павших и очищают всё, что ещё можно очистить.",
       id: 'gs4211', f: 'g', t: 4,
       name: 'Sorrow Reliquary',
       name_ru: 'Реликварий Скорби',
@@ -3615,8 +3615,8 @@ const UNITS = {
       xp: 4055, passive: ['vitality 3', 'eternal_grief 1', 'dispel 2'], ability: 'raise_dead 2',
     },
     grail_acolyte: {
-      flavor_en: "The Grail Acolyte serves the vampires who deny that the spell’s cost is final.\nIts rites promise another stolen day, never a return to the old one.",
-      flavor_ru: "Послушник Грааля служит вампирам, отрицающим окончательность цены заклятия.\nЕго обряды сулят ещё один украденный день, но не возвращение прежнего.",
+      flavor_en: "The Grail Acolyte serves the vampires who deny that the spell’s cost is final. Its rites promise another stolen day, never a return to the old one.",
+      flavor_ru: "Послушник Грааля служит вампирам, отрицающим окончательность цены заклятия. Его обряды сулят ещё один украденный день, но не возвращение прежнего.",
       id: 'gs5', f: 'g', t: 1,
       name: 'Grail Acolyte',
       name_ru: 'Послушник Грааля',
@@ -3630,8 +3630,8 @@ const UNITS = {
       xp: 100, passive: 'communion 1', ability: 'blood_craze 1',
     },
     grail_tender: {
-      flavor_en: "The Grail Tender guards the blood that keeps its order moving.\nIt treats each living pulse as a reprieve the dead were never meant to receive.",
-      flavor_ru: "Хранитель Грааля оберегает кровь, поддерживающую его орден.\nКаждый живой пульс для него — отсрочка, которой мёртвым не полагалось.",
+      flavor_en: "The Grail Tender guards the blood that keeps its order moving. It treats each living pulse as a reprieve the dead were never meant to receive.",
+      flavor_ru: "Хранитель Грааля оберегает кровь, поддерживающую его орден. Каждый живой пульс для него — отсрочка, которой мёртвым не полагалось.",
       id: 'gs51', f: 'g', t: 2,
       name: 'Grail Tender',
       name_ru: 'Смотритель Грааля',
@@ -3645,8 +3645,8 @@ const UNITS = {
       xp: 480, passive: ['communion 1', 'resist_aura_life 1'], ability: 'second_thirst 1',
     },
     grail_keeper: {
-      flavor_en: "The Grail Keeper preserves the rites of denial through every wound and setback.\nIts careful wards protect a hope it cannot prove true.",
-      flavor_ru: "Страж Грааля хранит обряды отрицания, несмотря на раны и неудачи.\nЕго чары защищают надежду, которую невозможно доказать.",
+      flavor_en: "The Grail Keeper preserves the rites of denial through every wound and setback. Its careful wards protect a hope it cannot prove true.",
+      flavor_ru: "Страж Грааля хранит обряды отрицания, несмотря на раны и неудачи. Его чары защищают надежду, которую невозможно доказать.",
       id: 'gs511', f: 'g', t: 3,
       name: 'Grail Keeper',
       name_ru: 'Хранитель Грааля',
@@ -3660,8 +3660,8 @@ const UNITS = {
       xp: 1560, passive: ['communion 1', 'resist_aura_life 1', 'dispel 1'], ability: 'second_thirst 2',
     },
     grail_custodian: {
-      flavor_en: "The Grail Custodian carries the order’s sacred vessels and the terrible thirst they represent.\nIt serves the living by envying them in silence.",
-      flavor_ru: "Хранитель Грааля несёт священные сосуды ордена и заключённую в них жажду.\nОн служит живым, молча завидуя им.",
+      flavor_en: "The Grail Custodian carries the order’s sacred vessels and the terrible thirst they represent. It serves the living by envying them in silence.",
+      flavor_ru: "Хранитель Грааля несёт священные сосуды ордена и заключённую в них жажду. Он служит живым, молча завидуя им.",
       id: 'gs5111', f: 'g', t: 4,
       name: 'Grail Custodian',
       name_ru: 'Блюститель Грааля',
@@ -3675,8 +3675,8 @@ const UNITS = {
       xp: 1690, passive: ['communion 2', 'resist_aura_life 1', 'dispel 1'], ability: 'second_thirst 2',
     },
     grieving_servant: {
-      flavor_en: "The Grieving Servant remembers the faces of the living it once called family.\nNow it follows their warmth, unable to ask them to stay.",
-      flavor_ru: "Скорбящий Слуга помнит лица тех, кого когда-то называл родными.\nТеперь он следует за их теплом, не в силах попросить их остаться.",
+      flavor_en: "The Grieving Servant remembers the faces of the living it once called family. Now it follows their warmth, unable to ask them to stay.",
+      flavor_ru: "Скорбящий Слуга помнит лица тех, кого когда-то называл родными. Теперь он следует за их теплом, не в силах попросить их остаться.",
       id: 'gs52', f: 'g', t: 2,
       name: 'Grieving Servant',
       name_ru: 'Скорбящий Слуга',
@@ -3690,8 +3690,8 @@ const UNITS = {
       xp: 480, passive: ['communion 1', 'eternal_hunger 1'], ability: 'blood_craze 1',
     },
     grieving_custodian: {
-      flavor_en: "The Grieving Custodian has made a vigil of its envy, watching the living from the edge of their firelight.\nIts quiet hunger does not lessen.",
-      flavor_ru: "Скорбящий Хранитель превратил зависть в дозор у края живого огня.\nЕго тихий голод не становится слабее.",
+      flavor_en: "The Grieving Custodian has made a vigil of its envy, watching the living from the edge of their firelight. Its quiet hunger does not lessen.",
+      flavor_ru: "Скорбящий Хранитель превратил зависть в дозор у края живого огня. Его тихий голод не становится слабее.",
       id: 'gs521', f: 'g', t: 3,
       name: 'Grieving Custodian',
       name_ru: 'Скорбящий Блюститель',
@@ -3705,8 +3705,8 @@ const UNITS = {
       xp: 1560, passive: ['communion 2', 'eternal_hunger 1'], ability: 'blood_craze 2',
     },
     grieving_warden: {
-      flavor_en: "The Grieving Warden protects the dead while measuring every breath of its prey.\nIt cannot decide whether to guard life or take what it lacks.",
-      flavor_ru: "Скорбящий Страж оберегает мёртвых и считает каждый вздох добычи.\nОн не может решить, защищать ли жизнь или отнять недостающее.",
+      flavor_en: "The Grieving Warden protects the dead while measuring every breath of its prey. It cannot decide whether to guard life or take what it lacks.",
+      flavor_ru: "Скорбящий Страж оберегает мёртвых и считает каждый вздох добычи. Он не может решить, защищать ли жизнь или отнять недостающее.",
       id: 'gs5211', f: 'g', t: 4,
       name: 'Grieving Warden',
       name_ru: 'Скорбящий Страж',
@@ -3720,8 +3720,8 @@ const UNITS = {
       xp: 3640, passive: ['communion 2', 'eternal_hunger 1', 'execute 1'], ability: 'blood_craze 2',
     },
     ghost: {
-      flavor_en: "The Ghost recalls a voice, a doorway, then only the spell’s white flash.\nIt drifts through battle as if still searching for the body it lost.",
-      flavor_ru: "Призрак помнит голос, порог дома, а затем — лишь белую вспышку заклятия.\nОн бредёт сквозь бой, словно всё ещё ищет утраченное тело.",
+      flavor_en: "The Ghost recalls a voice, a doorway, then only the spell’s white flash. It drifts through battle as if still searching for the body it lost.",
+      flavor_ru: "Призрак помнит голос, порог дома, а затем — лишь белую вспышку заклятия. Он бредёт сквозь бой, словно всё ещё ищет утраченное тело.",
       id: 'gs6', f: 'g', t: 1,
       name: 'Ghost',
       name_ru: 'Призрак',
@@ -3735,8 +3735,8 @@ const UNITS = {
       xp: 75, passive: 'sorrow 1', ability: 'terror 1',
     },
     specter: {
-      flavor_en: "The Specter has no flesh left to age and no words left to spend.\nIt watches the living pass, solemn as a mourner at its own funeral.",
-      flavor_ru: "У Призрака нет плоти, которую можно состарить, и слов, которые можно растратить.\nОн молча смотрит на живых, словно на собственных похоронах.",
+      flavor_en: "The Specter has no flesh left to age and no words left to spend. It watches the living pass, solemn as a mourner at its own funeral.",
+      flavor_ru: "У Призрака нет плоти, которую можно состарить, и слов, которые можно растратить. Он молча смотрит на живых, словно на собственных похоронах.",
       id: 'gs61', f: 'g', t: 2,
       name: 'Specter',
       name_ru: 'Спектр',
@@ -3750,8 +3750,8 @@ const UNITS = {
       xp: 430, passive: ['sorrow 1', 'procession_of_grief 1'], ability: 'terror 1',
     },
     wraith: {
-      flavor_en: "The Wraith remembers its former shape only when a familiar name is spoken.\nIts passing chills the living, though it never meant to frighten them.",
-      flavor_ru: "Призрачный дух вспоминает прежний облик лишь услышав знакомое имя.\nЕго появление холодит живых, хотя пугать их он не хотел.",
+      flavor_en: "The Wraith remembers its former shape only when a familiar name is spoken. Its passing chills the living, though it never meant to frighten them.",
+      flavor_ru: "Призрачный дух вспоминает прежний облик лишь услышав знакомое имя. Его появление холодит живых, хотя пугать их он не хотел.",
       id: 'gs611', f: 'g', t: 3,
       name: 'Wraith',
       name_ru: 'Дух',
@@ -3765,8 +3765,8 @@ const UNITS = {
       xp: 1520, passive: ['sorrow 1', 'procession_of_grief 1', 'vow_of_the_grave 1',], ability: 'terror 2',
     },
     revenant: {
-      flavor_en: "The Revenant has gathered the last fragments of its identity and bound them against the cold.\nIt returns to battle because its unfinished grief remains.",
-      flavor_ru: "Мститель собрал последние обрывки личности и удержал их от холода.\nОн возвращается в бой, потому что его скорбь ещё не завершена.",
+      flavor_en: "The Revenant has gathered the last fragments of its identity and bound them against the cold. It returns to battle because its unfinished grief remains.",
+      flavor_ru: "Мститель собрал последние обрывки личности и удержал их от холода. Он возвращается в бой, потому что его скорбь ещё не завершена.",
       id: 'gs6111', f: 'g', t: 4,
       name: 'Revenant',
       name_ru: 'Ревенант',
@@ -3780,8 +3780,8 @@ const UNITS = {
       xp: 2760, passive: ['sorrow 2', 'procession_of_grief 1', 'vow_of_the_grave 1',], ability: 'terror 2',
     },
     apparition: {
-      flavor_en: "The Apparition appears only where the spell’s shadow still clings to the land.\nNo one can tell whether it remembers the people it passes through.",
-      flavor_ru: "Привидение возникает лишь там, где след заклятия ещё держится на земле.\nНикто не знает, помнит ли оно людей, сквозь которых проходит.",
+      flavor_en: "The Apparition appears only where the spell’s shadow still clings to the land. No one can tell whether it remembers the people it passes through.",
+      flavor_ru: "Привидение возникает лишь там, где след заклятия ещё держится на земле. Никто не знает, помнит ли оно людей, сквозь которых проходит.",
       id: 'gs62', f: 'g', t: 2,
       name: 'Apparition',
       name_ru: 'Привидение',
@@ -3795,8 +3795,8 @@ const UNITS = {
       xp: 430, passive: ['sorrow 1', 'dissipate 1'], ability: 'terror 1',
     },
     phantom: {
-      flavor_en: "The Phantom moves through steel as easily as through memory.\nIt keeps a single image of its old life, though each battle blurs the edges.",
-      flavor_ru: "Фантом проходит сквозь сталь так же легко, как сквозь память.\nОн хранит один образ прежней жизни, но каждая битва стирает его края.",
+      flavor_en: "The Phantom moves through steel as easily as through memory. It keeps a single image of its old life, though each battle blurs the edges.",
+      flavor_ru: "Фантом проходит сквозь сталь так же легко, как сквозь память. Он хранит один образ прежней жизни, но каждая битва стирает его края.",
       id: 'gs621', f: 'g', t: 3,
       name: 'Phantom',
       name_ru: 'Фантом',
@@ -3810,8 +3810,8 @@ const UNITS = {
       xp: 1520, passive: ['sorrow 1', 'dissipate 1', 'resist_aura_cold 1'], ability: 'terror 2',
     },
     nightmare: {
-      flavor_en: "The Nightmare is the shape fear gives to a spirit that cannot remember its own face.\nIts cold presence is dreadful, but its silence is sorrow.",
-      flavor_ru: "Кошмар — это облик, который страх придал духу, забывшему собственное лицо.\nЕго холод внушает ужас, но за молчанием скрыта скорбь.",
+      flavor_en: "The Nightmare is the shape fear gives to a spirit that cannot remember its own face. Its cold presence is dreadful, but its silence is sorrow.",
+      flavor_ru: "Кошмар — это облик, который страх придал духу, забывшему собственное лицо. Его холод внушает ужас, но за молчанием скрыта скорбь.",
       id: 'gs6211', f: 'g', t: 4,
       name: 'Nightmare',
       name_ru: 'Кошмар',
@@ -3825,8 +3825,8 @@ const UNITS = {
       xp: 2950, passive: ['sorrow 1', 'dissipate 2', 'resist_aura_cold 1' ], ability: 'terror 2',
     },
     pale_maiden: {
-      flavor_en: "The Pale Maiden was a mourner before the spell took her body.\nShe now keeps the funeral vow with a blade, guarding the names of the lost.",
-      flavor_ru: "Бледная Дева оплакивала умерших ещё до того, как заклятие отняло её тело.\nТеперь она хранит погребальный обет клинком и бережёт имена погибших.",
+      flavor_en: "The Pale Maiden was a mourner before the spell took her body. She now keeps the funeral vow with a blade, guarding the names of the lost.",
+      flavor_ru: "Бледная Дева оплакивала умерших ещё до того, как заклятие отняло её тело. Теперь она хранит погребальный обет клинком и бережёт имена погибших.",
       id: 'gs7', f: 'g', t: 1,
       name: 'Pale Maiden',
       name_ru: 'Бледная Дева',
@@ -3840,8 +3840,8 @@ const UNITS = {
       xp: 90, passive: ['ethereal_form 1', 'unending_servitude 1'], ability: 'terror 1',
     },
     pale_dame: {
-      flavor_en: "The Pale Dame has turned mourning into a discipline that does not break under steel.\nShe stands between the living and the dead she still loves.",
-      flavor_ru: "Бледная Дама превратила скорбь в дисциплину, не уступающую стали.\nОна встаёт между живыми и мёртвыми, которых всё ещё любит.",
+      flavor_en: "The Pale Dame has turned mourning into a discipline that does not break under steel. She stands between the living and the dead she still loves.",
+      flavor_ru: "Бледная Дама превратила скорбь в дисциплину, не уступающую стали. Она встаёт между живыми и мёртвыми, которых всё ещё любит.",
       id: 'gs71', f: 'g', t: 2,
       name: 'Pale Dame',
       name_ru: 'Бледная Госпожа',
@@ -3855,8 +3855,8 @@ const UNITS = {
       xp: 400, passive: ['ethereal_form 1', 'unending_servitude 1', 'fear 1'], ability: 'terror 1',
     },
     pale_matriarch: {
-      flavor_en: "The Pale Matriarch leads her order through rites older than the catastrophe.\nHer spectral guard bears each loss as a vow, not a grievance.",
-      flavor_ru: "Бледная Матриарх ведёт орден обрядами, пережившими катастрофу.\nЕё призрачная стража несёт каждую утрату как обет, а не обиду.",
+      flavor_en: "The Pale Matriarch leads her order through rites older than the catastrophe. Her spectral guard bears each loss as a vow, not a grievance.",
+      flavor_ru: "Бледная Матриарх ведёт орден обрядами, пережившими катастрофу. Её призрачная стража несёт каждую утрату как обет, а не обиду.",
       id: 'gs711', f: 'g', t: 3,
       name: 'Pale Matriarch',
       name_ru: 'Бледная Праматерь',
@@ -3870,8 +3870,8 @@ const UNITS = {
       xp: 1520, passive: ['ethereal_form 2', 'unending_servitude 1', 'fear 1'], ability: 'terror 2',
     },
     pale_sovereign: {
-      flavor_en: "The Pale Sovereign commands the mourners who chose the sword over endless lament.\nTheir solemn charge is to keep the last graves undisturbed.",
-      flavor_ru: "Бледная Государыня повелевает скорбящими, избравшими меч вместо вечных причитаний.\nИх суровый долг — не дать осквернить последние могилы.",
+      flavor_en: "The Pale Sovereign commands the mourners who chose the sword over endless lament. Their solemn charge is to keep the last graves undisturbed.",
+      flavor_ru: "Бледная Государыня повелевает скорбящими, избравшими меч вместо вечных причитаний. Их суровый долг — не дать осквернить последние могилы.",
       id: 'gs7111', f: 'g', t: 4,
       name: 'Pale Sovereign',
       name_ru: 'Бледная Владычица',
@@ -3885,8 +3885,8 @@ const UNITS = {
       xp: 3220, passive: ['ethereal_form 2', 'unending_servitude 1', 'fear 2'], ability: 'terror 2',
     },
     pale_votaress: {
-      flavor_en: "The Pale Votaress offers a vow to Astaloth on behalf of those who can no longer speak.\nThe Mother’s blessing steadies the living and the dead.",
-      flavor_ru: "Бледная Посвящённая даёт обет Асталот от имени тех, кто уже не может говорить.\nБлагословение Матери укрепляет и живых, и мёртвых.",
+      flavor_en: "The Pale Votaress offers a vow to Astaloth on behalf of those who can no longer speak. The Mother’s blessing steadies the living and the dead.",
+      flavor_ru: "Бледная Посвящённая даёт обет Асталот от имени тех, кто уже не может говорить. Благословение Матери укрепляет и живых, и мёртвых.",
       id: 'gs72', f: 'g', t: 2,
       name: 'Pale Votaress',
       name_ru: 'Бледная Послушница',
@@ -3900,8 +3900,8 @@ const UNITS = {
       xp: 400, passive: ['ethereal_form 1', 'unending_servitude 1', 'eternal_grief 1'], ability: 'mothers_blessing 1',
     },
     pale_abbess: {
-      flavor_en: "The Pale Abbess shelters her order beneath Astaloth’s grieving gaze.\nHer rites soothe wounds without pretending the lost century can be restored.",
-      flavor_ru: "Бледная Настоятельница укрывает орден под скорбящим взором Асталот.\nЕё обряды облегчают раны, не обещая вернуть украденный век.",
+      flavor_en: "The Pale Abbess shelters her order beneath Astaloth’s grieving gaze. Her rites soothe wounds without pretending the lost century can be restored.",
+      flavor_ru: "Бледная Настоятельница укрывает орден под скорбящим взором Асталот. Её обряды облегчают раны, не обещая вернуть украденный век.",
       id: 'gs721', f: 'g', t: 3,
       name: 'Pale Abbess',
       name_ru: 'Бледная Аббатиса',
@@ -3915,8 +3915,8 @@ const UNITS = {
       xp: 1520, passive: ['ethereal_form 2', 'unending_servitude 1', 'eternal_grief 1'], ability: 'mothers_blessing 1',
     },
     pale_prioress: {
-      flavor_en: "The Pale Prioress has made the funeral rite a shield for the whole host.\nEach prayer honors the dead as they were, not as the spell left them.",
-      flavor_ru: "Бледная Приоресса превратила погребальный обряд в щит для всего войска.\nКаждая молитва чтит умерших такими, какими они были, а не стали.",
+      flavor_en: "The Pale Prioress has made the funeral rite a shield for the whole host. Each prayer honors the dead as they were, not as the spell left them.",
+      flavor_ru: "Бледная Приоресса превратила погребальный обряд в щит для всего войска. Каждая молитва чтит умерших такими, какими они были, а не стали.",
       id: 'gs7211', f: 'g', t: 4,
       name: 'Pale Prioress',
       name_ru: 'Бледная Приоресса',
@@ -3930,8 +3930,8 @@ const UNITS = {
       xp: 3120, passive: ['ethereal_form 2', 'unending_servitude 1', 'eternal_grief 2'], ability: 'mothers_blessing 2',
     },
     pale_mourner: {
-      flavor_en: "The Pale Mourner walks at the head of the funeral train, slowing every foe who would profane its passage.\nGrief gives the blade its measured pace.",
-      flavor_ru: "Бледная Плакальщица идёт впереди погребальной процессии и замедляет каждого, кто осквернил бы её путь.\nСкорбь задаёт клинку размеренный шаг.",
+      flavor_en: "The Pale Mourner walks at the head of the funeral train, slowing every foe who would profane its passage. Grief gives the blade its measured pace.",
+      flavor_ru: "Бледная Плакальщица идёт впереди погребальной процессии и замедляет каждого, кто осквернил бы её путь. Скорбь задаёт клинку размеренный шаг.",
       id: 'gs73', f: 'g', t: 2,
       name: 'Pale Mourner',
       name_ru: 'Бледная Плакальщица',
@@ -3945,8 +3945,8 @@ const UNITS = {
       xp: 400, passive: ['ethereal_form 1', 'unending_servitude 1', 'slow 1'], ability: 'terror 1',
     },
     pale_lamenter: {
-      flavor_en: "The Pale Lamenter gives voice to names that time and the spell tried to erase.\nIts dirge drags the enemy into the same weary march.",
-      flavor_ru: "Бледная Причитальщица произносит имена, стёртые временем и заклятием.\nЕё плач вовлекает врагов в тот же тяжёлый поход.",
+      flavor_en: "The Pale Lamenter gives voice to names that time and the spell tried to erase. Its dirge drags the enemy into the same weary march.",
+      flavor_ru: "Бледная Причитальщица произносит имена, стёртые временем и заклятием. Её плач вовлекает врагов в тот же тяжёлый поход.",
       id: 'gs731', f: 'g', t: 3,
       name: 'Pale Lamenter',
       name_ru: 'Бледная Скорбница',
@@ -3960,8 +3960,8 @@ const UNITS = {
       xp: 1520, passive: ['ethereal_form 2', 'unending_servitude 1', 'slow 1'], ability: 'terror 2',
     },
     pale_dirge: {
-      flavor_en: "The Pale Dirge is both warrior and funeral song, its measured strikes keeping pace with the procession.\nNothing it mourns is forgotten.",
-      flavor_ru: "Бледный Плач — и воин, и погребальная песнь; размеренные удары сопровождают процессию.\nНи один оплаканный им не будет забыт.",
+      flavor_en: "The Pale Dirge is both warrior and funeral song, its measured strikes keeping pace with the procession. Nothing it mourns is forgotten.",
+      flavor_ru: "Бледный Плач — и воин, и погребальная песнь; размеренные удары сопровождают процессию. Ни один оплаканный им не будет забыт.",
       id: 'gs7311', f: 'g', t: 4,
       name: 'Pale Dirge',
       name_ru: 'Бледная Панихида',
@@ -3975,8 +3975,8 @@ const UNITS = {
       xp: 2720, passive: ['ethereal_form 2', 'unending_servitude 1', 'slow 2'], ability: 'terror 2',
     },
     mothers_tear: {
-      flavor_en: "Mother’s Tear remembers the moment the people changed before Astaloth’s eyes.\nIts vampiric hunger is denial sharpened into a weapon.",
-      flavor_ru: "Слеза Матери помнит миг, когда народ изменился на глазах Асталот.\nВампирский голод стал отрицанием, отточенным в оружие.",
+      flavor_en: "Mother’s Tear remembers the moment the people changed before Astaloth’s eyes. Its vampiric hunger is denial sharpened into a weapon.",
+      flavor_ru: "Слеза Матери помнит миг, когда народ изменился на глазах Асталот. Вампирский голод стал отрицанием, отточенным в оружие.",
       id: 'gs8', f: 'g', t: 1,
       name: "Mother's Tear",
       name_ru: 'Слеза Матери',
@@ -3990,8 +3990,8 @@ const UNITS = {
       xp: 90, passive: ['banquet 1', 'horde 1'], ability: 'mothers_blessing 1',
     },
     mothers_sorrow: {
-      flavor_en: "Mother’s Sorrow bears both the zombie’s ruined flesh and the vampire’s refusal to accept it.\nIts slow wound leaves the enemy sharing that pain.",
-      flavor_ru: "Скорбь Матери несёт и изувеченную плоть зомби, и отказ вампира смириться с ней.\nМедленная рана заставляет врага разделить эту боль.",
+      flavor_en: "Mother’s Sorrow bears both the zombie’s ruined flesh and the vampire’s refusal to accept it. Its slow wound leaves the enemy sharing that pain.",
+      flavor_ru: "Скорбь Матери несёт и изувеченную плоть зомби, и отказ вампира смириться с ней. Медленная рана заставляет врага разделить эту боль.",
       id: 'gs81', f: 'g', t: 2,
       name: "Mother's Sorrow",
       name_ru: 'Скорбь Матери',
@@ -4005,8 +4005,8 @@ const UNITS = {
       xp: 600, passive: ['bleed 1', 'vampires_vigil 1'], ability: 'mothers_blessing 1',
     },
     mothers_grief: {
-      flavor_en: "Mother’s Grief has learned to make its suffering linger in every wound it opens.\nThe living call it cruelty; the dead know it as recognition.",
-      flavor_ru: "Горе Матери научилось оставлять страдание в каждой ране.\nЖивые зовут это жестокостью; мёртвые узнают в этом сочувствие.",
+      flavor_en: "Mother’s Grief has learned to make its suffering linger in every wound it opens. The living call it cruelty; the dead know it as recognition.",
+      flavor_ru: "Горе Матери научилось оставлять страдание в каждой ране. Живые зовут это жестокостью; мёртвые узнают в этом сочувствие.",
       id: 'gs811', f: 'g', t: 3,
       name: "Mother's Grief",
       name_ru: 'Горе Матери',
@@ -4020,8 +4020,8 @@ const UNITS = {
       xp: 1860, passive: ['bleed 2', 'vampires_vigil 1'], ability: 'mothers_blessing 1',
     },
     mothers_anguish: {
-      flavor_en: "Mother’s Anguish leaves a deeper mark with every strike, as if pain could prove that feeling remains.\nIts hunger is a protest against the grave.",
-      flavor_ru: "Мука Матери оставляет всё более глубокий след, словно боль доказывает, что чувства ещё живы.\nЕё голод — протест против могилы.",
+      flavor_en: "Mother’s Anguish leaves a deeper mark with every strike, as if pain could prove that feeling remains. Its hunger is a protest against the grave.",
+      flavor_ru: "Мука Матери оставляет всё более глубокий след, словно боль доказывает, что чувства ещё живы. Её голод — протест против могилы.",
       id: 'gs8111', f: 'g', t: 4,
       name: "Mother's Anguish",
       name_ru: 'Мука Матери',
@@ -4035,8 +4035,8 @@ const UNITS = {
       xp: 2930, passive: ['bleed 3', 'vampires_vigil 1'], ability: 'mothers_blessing 1',
     },
     mothers_vigil: {
-      flavor_en: "Mother’s Vigil watches over the dead through the long, sleepless night.\nThe poison on its hands comes from a land that aged a hundred years at once.",
-      flavor_ru: "Бдение Матери сторожит мёртвых в бесконечной ночи без сна.\nЯд на его руках — наследие края, состарившегося на целый век за миг.",
+      flavor_en: "Mother’s Vigil watches over the dead through the long, sleepless night. The poison on its hands comes from a land that aged a hundred years at once.",
+      flavor_ru: "Бдение Матери сторожит мёртвых в бесконечной ночи без сна. Яд на его руках — наследие края, состарившегося на целый век за миг.",
       id: 'gs82', f: 'g', t: 2,
       name: "Mother's Vigil",
       name_ru: 'Бдение Матери',
@@ -4050,8 +4050,8 @@ const UNITS = {
       xp: 600, passive: ['poison 1', 'vow_of_silence 1'], ability: 'mothers_blessing 1',
     },
     mothers_shroud: {
-      flavor_en: "Mother’s Shroud wraps the risen in a quiet ward against the living.\nAstaloth’s care remains even where flesh, breath, and years are gone.",
-      flavor_ru: "Покров Матери укрывает восставших тихой защитой от живых.\nЗабота Асталот остаётся даже там, где исчезли плоть, дыхание и годы.",
+      flavor_en: "Mother’s Shroud wraps the risen in a quiet ward against the living. Astaloth’s care remains even where flesh, breath, and years are gone.",
+      flavor_ru: "Покров Матери укрывает восставших тихой защитой от живых. Забота Асталот остаётся даже там, где исчезли плоть, дыхание и годы.",
       id: 'gs821', f: 'g', t: 3,
       name: "Mother's Shroud",
       name_ru: 'Покров Матери',
@@ -4065,8 +4065,8 @@ const UNITS = {
       xp: 1860, passive: ['poison 2', 'vow_of_silence 1'], ability: 'mothers_blessing 1',
     },
     mothers_mantle: {
-      flavor_en: "Mother’s Mantle carries the weight of the dead without complaint.\nIts poison keeps intruders at bay while Astaloth’s unseen hand shelters the fallen.",
-      flavor_ru: "Мантия Матери без жалоб несёт тяжесть мёртвых.\nЯд отгоняет незваных гостей, пока незримая рука Асталот укрывает павших.",
+      flavor_en: "Mother’s Mantle carries the weight of the dead without complaint. Its poison keeps intruders at bay while Astaloth’s unseen hand shelters the fallen.",
+      flavor_ru: "Мантия Матери без жалоб несёт тяжесть мёртвых. Яд отгоняет незваных гостей, пока незримая рука Асталот укрывает павших.",
       id: 'gs8211', f: 'g', t: 4,
       name: "Mother's Mantle",
       name_ru: 'Мантия Матери',
@@ -4080,8 +4080,8 @@ const UNITS = {
       xp: 2860, passive: ['poison 3', 'vow_of_silence 1'], ability: 'mothers_blessing 1',
     },
     mothers_chalice: {
-      flavor_en: "Mother’s Chalice binds its followers through shared blood, a ritual born from refusal to accept the spell’s finality.\nNo draught restores the old world.",
-      flavor_ru: "Чаша Матери связывает последователей общей кровью — обрядом тех, кто отрицает окончательность заклятия.\nНи одно питьё не вернёт прежний мир.",
+      flavor_en: "Mother’s Chalice binds its followers through shared blood, a ritual born from refusal to accept the spell’s finality. No draught restores the old world.",
+      flavor_ru: "Чаша Матери связывает последователей общей кровью — обрядом тех, кто отрицает окончательность заклятия. Ни одно питьё не вернёт прежний мир.",
       id: 'gs83', f: 'g', t: 2,
       name: "Mother's Chalice",
       name_ru: 'Чаша Матери',
@@ -4095,8 +4095,8 @@ const UNITS = {
       xp: 600, passive: ['blood_bond 1', 'banquet 1', 'vitality 1'], ability: null,
     },
     mothers_vessel: {
-      flavor_en: "Mother’s Vessel holds the blood its order steals from the living and gives it back as strength.\nThe exchange sustains bodies, not the hope of undoing time.",
-      flavor_ru: "Сосуд Матери хранит кровь, отнятую орденом у живых, и возвращает её силой.\nЭтот обмен поддерживает тела, но не надежду повернуть время вспять.",
+      flavor_en: "Mother’s Vessel holds the blood its order steals from the living and gives it back as strength. The exchange sustains bodies, not the hope of undoing time.",
+      flavor_ru: "Сосуд Матери хранит кровь, отнятую орденом у живых, и возвращает её силой. Этот обмен поддерживает тела, но не надежду повернуть время вспять.",
       id: 'gs831', f: 'g', t: 3,
       name: "Mother's Vessel",
       name_ru: 'Сосуд Матери',
@@ -4110,8 +4110,8 @@ const UNITS = {
       xp: 1860, passive: ['blood_bond 1', 'banquet 2', 'vitality 1'], ability: null,
     },
     mothers_font: {
-      flavor_en: "Mother’s Font is the deep well of a faith that cannot accept its own ending.\nEvery shared draught prolongs the denial, never the lost century.",
-      flavor_ru: "Источник Матери — глубокий колодец веры, не желающей принять собственный конец.\nКаждый общий глоток продлевает отрицание, но не возвращает век.",
+      flavor_en: "Mother’s Font is the deep well of a faith that cannot accept its own ending. Every shared draught prolongs the denial, never the lost century.",
+      flavor_ru: "Источник Матери — глубокий колодец веры, не желающей принять собственный конец. Каждый общий глоток продлевает отрицание, но не возвращает век.",
       id: 'gs8311', f: 'g', t: 4,
       name: "Mother's Font",
       name_ru: 'Купель Матери',
@@ -4128,8 +4128,8 @@ const UNITS = {
   enemies: {
     crimson_basilica: {
       aggrails_herald: {
-        flavor_en: "The name Aggrails Herald appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nIt measures courage by the ground held after impact; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Имя «Вестник Агграила» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nДля него мужество измеряется землёй, удержанной после удара; начало было скромным, но клятва — великой.",
+        flavor_en: "The name Aggrails Herald appears beside an unlikely turning point; no two scouts agree on where it first appeared. It measures courage by the ground held after impact; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Имя «Вестник Агграила» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые. Для него мужество измеряется землёй, удержанной после удара; начало было скромным, но клятва — великой.",
         id: 'opb_e1', f: 'opb', t: 1,
         name: 'Aggrails Herald',
         name_ru: 'Вестник Агграила',
@@ -4143,8 +4143,8 @@ const UNITS = {
         xp: 130, passive: ['beacon_of_hope 1', 'sanctified_words 1'], ability: 'lions_roar 1',
       },
       exalted_herald: {
-        flavor_en: "The chronicle gives Exalted Herald a place earned far from any throne; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Возвышенный Вестник»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; начало было скромным, но клятва — великой.",
+        flavor_en: "The chronicle gives Exalted Herald a place earned far from any throne; no two scouts agree on where it first appeared. Each advance costs the enemy more than the map can show; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Возвышенный Вестник»; дозорные так и не сошлись во мнении, где оно появилось впервые. Каждый его шаг отнимает у врага больше, чем покажет карта; начало было скромным, но клятва — великой.",
         id: 'opb_e11', f: 'opb', t: 2,
         name: 'Exalted Herald',
         name_ru: 'Возвышенный Вестник',
@@ -4158,8 +4158,8 @@ const UNITS = {
         xp: 540, passive: ['beacon_of_hope 1', 'sanctified_words 1', 'beacon_of_despair 1'], ability: 'lions_roar 1',
       },
       exalted_evangelist: {
-        flavor_en: "Even the oldest map leaves a blank where Exalted Evangelist should be; no two scouts agree on where it first appeared.\nIt answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Возвышенный Евангелист»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nНа любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Even the oldest map leaves a blank where Exalted Evangelist should be; no two scouts agree on where it first appeared. It answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Возвышенный Евангелист»; дозорные так и не сошлись во мнении, где оно появилось впервые. На любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
         id: 'opb_e111', f: 'opb', t: 3,
         name: 'Exalted Evangelist',
         name_ru: 'Возвышенный Евангелист',
@@ -4173,8 +4173,8 @@ const UNITS = {
         xp: 1560, passive: ['beacon_of_hope 2', 'sanctified_words 1', 'beacon_of_despair 1'], ability: 'lions_roar 2', 
       },
       scarlet_recruit: {
-        flavor_en: "Even the oldest map leaves a blank where Recruit should be; the border folk recognize its silhouette before the horns sound.\nIt answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Новобранец»; пограничники узнают его силуэт прежде, чем звучат рога.\nНа любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Even the oldest map leaves a blank where Recruit should be; the border folk recognize its silhouette before the horns sound. It answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Новобранец»; пограничники узнают его силуэт прежде, чем звучат рога. На любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
         id: 'opb_e2', f: 'opb', t: 1,
         name: 'Recruit',
         name_ru: 'Новобранец',
@@ -4188,8 +4188,8 @@ const UNITS = {
         xp: 130, passive: ['aggrails_blessing 1', 'desecrate 1'], ability: null,
       },
       aggrails_devoted: {
-        flavor_en: "Few witnesses agree on how Aggrails Devoted first entered the story; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Преданный Агграила»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Few witnesses agree on how Aggrails Devoted first entered the story; no two scouts agree on where it first appeared. Each advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Преданный Агграила»; дозорные так и не сошлись во мнении, где оно появилось впервые. Каждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
         id: 'opb_e21', f: 'opb', t: 2,
         name: 'Aggrails Devoted',
         name_ru: 'Преданный Агграила',
@@ -4203,8 +4203,8 @@ const UNITS = {
         xp: 540, passive: ['aggrails_blessing 1', 'desecrate 1', 'protector 1'], ability: null,
       },
       aggrails_champion: {
-        flavor_en: "The name Aggrails Champion appears beside an unlikely turning point; the wilderness keeps its own record of this name.\nIt measures courage by the ground held after impact; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Имя «Поборник Агграила» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени.\nДля него мужество измеряется землёй, удержанной после удара; начало было скромным, но клятва — великой.",
+        flavor_en: "The name Aggrails Champion appears beside an unlikely turning point; the wilderness keeps its own record of this name. It measures courage by the ground held after impact; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Имя «Поборник Агграила» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени. Для него мужество измеряется землёй, удержанной после удара; начало было скромным, но клятва — великой.",
         id: 'opb_e211', f: 'opb', t: 3,
         name: 'Aggrails Champion',
         name_ru: 'Поборник Агграила',
@@ -4218,8 +4218,8 @@ const UNITS = {
         xp: 1560, passive: ['aggrails_blessing 1', 'desecrate 1', 'protector 2'], ability: null,
       },
       aggrails_desecrator: {
-        flavor_en: "The chronicle gives Aggrails Desecrator a place earned far from any throne; no two scouts agree on where it first appeared.\nIt measures courage by the ground held after impact; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Осквернитель Агграила»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nДля него мужество измеряется землёй, удержанной после удара; начало было скромным, но клятва — великой.",
+        flavor_en: "The chronicle gives Aggrails Desecrator a place earned far from any throne; no two scouts agree on where it first appeared. It measures courage by the ground held after impact; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Осквернитель Агграила»; дозорные так и не сошлись во мнении, где оно появилось впервые. Для него мужество измеряется землёй, удержанной после удара; начало было скромным, но клятва — великой.",
         id: 'opb_e212', f: 'opb', t: 3,
         name: 'Aggrails Desecrator',
         name_ru: 'Осквернитель Агграила',
@@ -4233,8 +4233,8 @@ const UNITS = {
         xp: 1560, passive: ['aggrails_blessing 2', 'desecrate 1', 'decay 1'], ability: null,
       },
       aggrails_blasphemer: {
-        flavor_en: "The chronicle gives Aggrails Blasphemer a place earned far from any throne; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Богохульник Агграила»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; начало было скромным, но клятва — великой.",
+        flavor_en: "The chronicle gives Aggrails Blasphemer a place earned far from any throne; no two scouts agree on where it first appeared. Each advance costs the enemy more than the map can show; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Богохульник Агграила»; дозорные так и не сошлись во мнении, где оно появилось впервые. Каждый его шаг отнимает у врага больше, чем покажет карта; начало было скромным, но клятва — великой.",
         id: 'opb_e2121', f: 'opb', t: 4,
         name: 'Aggrails Blasphemer',
         name_ru: 'Богохульник Агграила',
@@ -4248,8 +4248,8 @@ const UNITS = {
         xp: 4005, passive: ['aggrails_blessing 2', 'desecrate 2', 'decay 1'], ability: null,
       },
       aggrails_exorcist: {
-        flavor_en: "Even the oldest map leaves a blank where Aggrails Exorcist should be; the border folk recognize its silhouette before the horns sound.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Экзорцист Агграила»; пограничники узнают его силуэт прежде, чем звучат рога.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Even the oldest map leaves a blank where Aggrails Exorcist should be; the border folk recognize its silhouette before the horns sound. Each advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Экзорцист Агграила»; пограничники узнают его силуэт прежде, чем звучат рога. Каждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
         id: 'opb_e22', f: 'opb', t: 2,
         name: 'Aggrails Exorcist',
         name_ru: 'Экзорцист Агграила',
@@ -4263,8 +4263,8 @@ const UNITS = {
         xp: 540, passive: ['aggrails_blessing 1', 'pure_blood 1', 'choir 1'], ability: null,
       },
       aggrails_crusader: {
-        flavor_en: "The chronicle gives Aggrails Crusader a place earned far from any throne; the border folk recognize its silhouette before the horns sound.\nIt answers every challenge with the blunt certainty of iron; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Крестоносец Агграила»; пограничники узнают его силуэт прежде, чем звучат рога.\nНа любой вызов оно отвечает прямотой железа; начало было скромным, но клятва — великой.",
+        flavor_en: "The chronicle gives Aggrails Crusader a place earned far from any throne; the border folk recognize its silhouette before the horns sound. It answers every challenge with the blunt certainty of iron; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Крестоносец Агграила»; пограничники узнают его силуэт прежде, чем звучат рога. На любой вызов оно отвечает прямотой железа; начало было скромным, но клятва — великой.",
         id: 'opb_e221', f: 'opb', t: 3,
         name: 'Aggrails Crusader',
         name_ru: 'Крестоносец Агграила',
@@ -4278,8 +4278,8 @@ const UNITS = {
         xp: 1560, passive: ['aggrails_blessing 1', 'pure_blood 1', 'choir 2'], ability: null,
       },
       aggrails_lion: {
-        flavor_en: "The name Aggrails Lion appears beside an unlikely turning point; the border folk recognize its silhouette before the horns sound.\nIt measures courage by the ground held after impact; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Имя «Лев Агграила» появляется в летописи рядом с неожиданным поворотом событий; пограничники узнают его силуэт прежде, чем звучат рога.\nДля него мужество измеряется землёй, удержанной после удара; начало было скромным, но клятва — великой.",
+        flavor_en: "The name Aggrails Lion appears beside an unlikely turning point; the border folk recognize its silhouette before the horns sound. It measures courage by the ground held after impact; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Имя «Лев Агграила» появляется в летописи рядом с неожиданным поворотом событий; пограничники узнают его силуэт прежде, чем звучат рога. Для него мужество измеряется землёй, удержанной после удара; начало было скромным, но клятва — великой.",
         id: 'opb_e2211', f: 'opb', t: 4,
         name: 'Aggrails Lion',
         name_ru: 'Лев Агграила',
@@ -4293,8 +4293,8 @@ const UNITS = {
         xp: 4005, passive: ['aggrails_blessing 2', 'pure_blood 1', 'choir 2'], ability: null,
       },
       initiate: {
-        flavor_en: "Even the oldest map leaves a blank where Initiate should be; the border folk recognize its silhouette before the horns sound.\nA quiet gesture can alter the temper of a whole battle; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Посвящённая»; пограничники узнают его силуэт прежде, чем звучат рога.\nТихий жест способен изменить ход целой битвы; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Even the oldest map leaves a blank where Initiate should be; the border folk recognize its silhouette before the horns sound. A quiet gesture can alter the temper of a whole battle; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Посвящённая»; пограничники узнают его силуэт прежде, чем звучат рога. Тихий жест способен изменить ход целой битвы; оно до сих пор хранит знак своего первого дня службы.",
         id: 'opb_e3', f: 'opb', t: 1,
         name: 'Initiate',
         name_ru: 'Посвящённая',
@@ -4308,8 +4308,8 @@ const UNITS = {
         xp: 130, passive: ['vitality 1', 'pure_blood 1'], ability: 'infernal_mandate 1',
       },
       keeper_of_purity: {
-        flavor_en: "Few witnesses agree on how Keeper of Purity first entered the story; the wilderness keeps its own record of this name.\nA quiet gesture can alter the temper of a whole battle; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Хранительница Чистоты»; у дикой земли есть своя летопись этого имени.\nТихий жест способен изменить ход целой битвы; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Few witnesses agree on how Keeper of Purity first entered the story; the wilderness keeps its own record of this name. A quiet gesture can alter the temper of a whole battle; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Хранительница Чистоты»; у дикой земли есть своя летопись этого имени. Тихий жест способен изменить ход целой битвы; оно до сих пор хранит знак своего первого дня службы.",
         id: 'opb_e31', f: 'opb', t: 2,
         name: 'Keeper of Purity',
         name_ru: 'Хранительница Чистоты',
@@ -4323,8 +4323,8 @@ const UNITS = {
         xp: 540, passive: ['vitality 2', 'pure_blood 1'], ability: 'infernal_mandate 1',
       },
       high_keeper: {
-        flavor_en: "Few witnesses agree on how High Keeper first entered the story; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Верховный Хранитель»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Few witnesses agree on how High Keeper first entered the story; no two scouts agree on where it first appeared. A quiet gesture can alter the temper of a whole battle; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Верховный Хранитель»; дозорные так и не сошлись во мнении, где оно появилось впервые. Тихий жест способен изменить ход целой битвы; оно до сих пор хранит знак своего первого дня службы.",
         id: 'opb_e311', f: 'opb', t: 3,
         name: 'High Keeper',
         name_ru: 'Верховный Хранитель',
@@ -4338,8 +4338,8 @@ const UNITS = {
         xp: 1560, passive: ['vitality 2', 'beacon_of_hope 1', 'pure_blood 1'], ability: 'infernal_mandate 1',
       },
       grand_keeper: {
-        flavor_en: "The name Grand Keeper appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nIt reads omens in the space between breaths; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Имя «Великий Хранитель» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nОно читает знамения в промежутках между вдохами; начало было скромным, но клятва — великой.",
+        flavor_en: "The name Grand Keeper appears beside an unlikely turning point; no two scouts agree on where it first appeared. It reads omens in the space between breaths; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Имя «Великий Хранитель» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые. Оно читает знамения в промежутках между вдохами; начало было скромным, но клятва — великой.",
         id: 'opb_e3111', f: 'opb', t: 4,
         name: 'Grand Keeper',
         name_ru: 'Великий Хранитель',
@@ -4353,8 +4353,8 @@ const UNITS = {
         xp: 4005, passive: ['vitality 2', 'beacon_of_hope 2', 'pure_blood 1'], ability: 'infernal_mandate 2',
       },
       keeper_of_the_bloodied_veil: {
-        flavor_en: "The chronicle gives Keeper of the Bloodied Veil a place earned far from any throne; the wilderness keeps its own record of this name.\nEach advance costs the enemy more than the map can show; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Хранитель Окровавленной Завесы»; у дикой земли есть своя летопись этого имени.\nКаждый его шаг отнимает у врага больше, чем покажет карта; начало было скромным, но клятва — великой.",
+        flavor_en: "The chronicle gives Keeper of the Bloodied Veil a place earned far from any throne; the wilderness keeps its own record of this name. Each advance costs the enemy more than the map can show; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Хранитель Окровавленной Завесы»; у дикой земли есть своя летопись этого имени. Каждый его шаг отнимает у врага больше, чем покажет карта; начало было скромным, но клятва — великой.",
         id: 'opb_e3112', f: 'opb', t: 4,
         name: 'Keeper of the Bloodied Veil',
         name_ru: 'Хранитель Окровавленной Завесы',
@@ -4368,8 +4368,8 @@ const UNITS = {
         xp: 4005, passive: ['choir 2', 'communion 2', 'pure_blood 1'], ability: 'infernal_mandate 2',
       },
       crimson_scout: {
-        flavor_en: "Few witnesses agree on how Crimson Scout first entered the story; the border folk recognize its silhouette before the horns sound.\nIt waits for the instant an enemy forgets the ridge; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Багровый Разведчик»; пограничники узнают его силуэт прежде, чем звучат рога.\nОно ждёт мгновения, когда враг перестанет следить за высотой; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Few witnesses agree on how Crimson Scout first entered the story; the border folk recognize its silhouette before the horns sound. It waits for the instant an enemy forgets the ridge; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Багровый Разведчик»; пограничники узнают его силуэт прежде, чем звучат рога. Оно ждёт мгновения, когда враг перестанет следить за высотой; оно до сих пор хранит знак своего первого дня службы.",
         id: 'opb_e4', f: 'opb', t: 1,
         name: 'Crimson Scout',
         name_ru: 'Багровый Разведчик',
@@ -4383,8 +4383,8 @@ const UNITS = {
         xp: 130, passive: ['bleed 1', 'clear_shot 1'], ability: 'volley 1',
       },
       crimson_hunter: {
-        flavor_en: "The name Crimson Hunter appears beside an unlikely turning point; the wilderness keeps its own record of this name.\nIt waits for the instant an enemy forgets the ridge; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Имя «Багровый Охотник» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени.\nОно ждёт мгновения, когда враг перестанет следить за высотой; начало было скромным, но клятва — великой.",
+        flavor_en: "The name Crimson Hunter appears beside an unlikely turning point; the wilderness keeps its own record of this name. It waits for the instant an enemy forgets the ridge; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Имя «Багровый Охотник» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени. Оно ждёт мгновения, когда враг перестанет следить за высотой; начало было скромным, но клятва — великой.",
         id: 'opb_e41', f: 'opb', t: 2,
         name: 'Crimson Hunter',
         name_ru: 'Багровый Охотник',
@@ -4398,8 +4398,8 @@ const UNITS = {
         xp: 540, passive: ['bleed 1', 'clear_shot 1', 'find_weakness 1'], ability: 'volley 1',
       },
       crimson_stalker: {
-        flavor_en: "Even the oldest map leaves a blank where Crimson Stalker should be; the wilderness keeps its own record of this name.\nThe first warning is the silence after its shot; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Багровый Преследователь»; у дикой земли есть своя летопись этого имени.\nПервое предупреждение — тишина после выстрела; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Even the oldest map leaves a blank where Crimson Stalker should be; the wilderness keeps its own record of this name. The first warning is the silence after its shot; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Багровый Преследователь»; у дикой земли есть своя летопись этого имени. Первое предупреждение — тишина после выстрела; оно до сих пор хранит знак своего первого дня службы.",
         id: 'opb_e411', f: 'opb', t: 3,
         name: 'Crimson Stalker',
         name_ru: 'Багровый Преследователь',
@@ -4413,8 +4413,8 @@ const UNITS = {
         xp: 1560, passive: ['bleed 2', 'clear_shot 1', 'find_weakness 1'], ability: 'volley 2',
       },
       sister_aldra_1: {
-        flavor_en: "Few witnesses agree on how Sister Aldra first entered the story; the wilderness keeps its own record of this name.\nIt answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Сестра Алдра»; у дикой земли есть своя летопись этого имени.\nНа любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Few witnesses agree on how Sister Aldra first entered the story; the wilderness keeps its own record of this name. It answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Сестра Алдра»; у дикой земли есть своя летопись этого имени. На любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
         id: 'opb_e5', f: 'opb', t: 2,
         name: 'Sister Aldra',
         name_ru: 'Сестра Алдра',
@@ -4428,8 +4428,8 @@ const UNITS = {
         xp: 1320, passive: ['bleed 2', 'stoicism 1'], ability: null,
       },
       sister_aldra_2: {
-        flavor_en: "Even the oldest map leaves a blank where Sister Aldra should be; the border folk recognize its silhouette before the horns sound.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Сестра Алдра»; пограничники узнают его силуэт прежде, чем звучат рога.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Even the oldest map leaves a blank where Sister Aldra should be; the border folk recognize its silhouette before the horns sound. Each advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Сестра Алдра»; пограничники узнают его силуэт прежде, чем звучат рога. Каждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
         id: 'opb_e51', f: 'opb', t: 3,
         name: 'Sister Aldra',
         name_ru: 'Сестра Алдра',
@@ -4443,8 +4443,8 @@ const UNITS = {
         xp: 1860, passive: ['bleed 2', 'recuperate 1', 'stoicism 1'], ability: null,
       },
       sister_aldra_3: {
-        flavor_en: "Few witnesses agree on how Sister Aldra first entered the story; no two scouts agree on where it first appeared.\nIt measures courage by the ground held after impact; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Сестра Алдра»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nДля него мужество измеряется землёй, удержанной после удара; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Few witnesses agree on how Sister Aldra first entered the story; no two scouts agree on where it first appeared. It measures courage by the ground held after impact; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Сестра Алдра»; дозорные так и не сошлись во мнении, где оно появилось впервые. Для него мужество измеряется землёй, удержанной после удара; оно до сих пор хранит знак своего первого дня службы.",
         id: 'opb_e511', f: 'opb', t: 4,
         name: 'Sister Aldra',
         name_ru: 'Сестра Алдра',
@@ -4460,8 +4460,8 @@ const UNITS = {
     },
     glittering_abyss: {
       cryostax: {
-        flavor_en: "The chronicle gives Cryostax a place earned far from any throne; the wilderness keeps its own record of this name.\nEvery broken mechanism is a question worth answering; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Криостакс»; у дикой земли есть своя летопись этого имени.\nКаждый сломанный механизм для него — вопрос, на который стоит ответить; начало было скромным, но клятва — великой.",
+        flavor_en: "The chronicle gives Cryostax a place earned far from any throne; the wilderness keeps its own record of this name. Every broken mechanism is a question worth answering; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Криостакс»; у дикой земли есть своя летопись этого имени. Каждый сломанный механизм для него — вопрос, на который стоит ответить; начало было скромным, но клятва — великой.",
         id: 'mv_e1', f: 'mv', t: 1,
         name: 'Cryostax',
         name_ru: 'Криостакс',
@@ -4475,8 +4475,8 @@ const UNITS = {
         xp: 130, passive: 'inspiration_armor 1', ability: null,
       },
       glaciron: {
-        flavor_en: "Even the oldest map leaves a blank where Glacieron should be; no two scouts agree on where it first appeared.\nEvery broken mechanism is a question worth answering; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Глациерон»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый сломанный механизм для него — вопрос, на который стоит ответить; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Even the oldest map leaves a blank where Glacieron should be; no two scouts agree on where it first appeared. Every broken mechanism is a question worth answering; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Глациерон»; дозорные так и не сошлись во мнении, где оно появилось впервые. Каждый сломанный механизм для него — вопрос, на который стоит ответить; оно до сих пор хранит знак своего первого дня службы.",
         id: 'mv_e11', f: 'mv', t: 2,
         name: 'Glacieron',
         name_ru: 'Глациерон',
@@ -4490,8 +4490,8 @@ const UNITS = {
         xp: 540, passive: ['inspiration_armor 1', 'recuperate 1', 'magic_attunement 1'], ability: null,
       },
       arctyx: {
-        flavor_en: "The chronicle gives Arctyx a place earned far from any throne; no two scouts agree on where it first appeared.\nIt trusts a sound joint more than a grand promise; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Арктикс»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nХорошему креплению оно доверяет больше, чем громкому обещанию; начало было скромным, но клятва — великой.",
+        flavor_en: "The chronicle gives Arctyx a place earned far from any throne; no two scouts agree on where it first appeared. It trusts a sound joint more than a grand promise; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Арктикс»; дозорные так и не сошлись во мнении, где оно появилось впервые. Хорошему креплению оно доверяет больше, чем громкому обещанию; начало было скромным, но клятва — великой.",
         id: 'mv_e111', f: 'mv', t: 3,
         name: 'Arctyx',
         name_ru: 'Арктикс',
@@ -4505,8 +4505,8 @@ const UNITS = {
         xp: 1560, passive: ['inspiration_armor 1', 'recuperate 2', 'magic_attunement 1'], ability: null,
       },
       frostshard: {
-        flavor_en: "The name Frostshard appears beside an unlikely turning point; the wilderness keeps its own record of this name.\nIts metal remembers the hands that shaped it; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Имя «Морозный Осколок» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени.\nЕго металл помнит руки, которые придали ему форму; начало было скромным, но клятва — великой.",
+        flavor_en: "The name Frostshard appears beside an unlikely turning point; the wilderness keeps its own record of this name. Its metal remembers the hands that shaped it; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Имя «Морозный Осколок» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени. Его металл помнит руки, которые придали ему форму; начало было скромным, но клятва — великой.",
         id: 'mv_e2', f: 'mv', t: 1,
         name: 'Frostshard',
         name_ru: 'Морозный Осколок',
@@ -4520,8 +4520,8 @@ const UNITS = {
         xp: 130, passive: ['chill 1', 'dispel 1'], ability: 'permafrost 1',
       },
       rime_splinter: {
-        flavor_en: "The chronicle gives Rime Splinter a place earned far from any throne; no two scouts agree on where it first appeared.\nIts metal remembers the hands that shaped it; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Инеевый Осколок»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nЕго металл помнит руки, которые придали ему форму; начало было скромным, но клятва — великой.",
+        flavor_en: "The chronicle gives Rime Splinter a place earned far from any throne; no two scouts agree on where it first appeared. Its metal remembers the hands that shaped it; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Инеевый Осколок»; дозорные так и не сошлись во мнении, где оно появилось впервые. Его металл помнит руки, которые придали ему форму; начало было скромным, но клятва — великой.",
         id: 'mv_e21', f: 'mv', t: 2,
         name: 'Rime Splinter',
         name_ru: 'Инеевый Осколок',
@@ -4535,8 +4535,8 @@ const UNITS = {
         xp: 540, passive: ['chill 1', 'hungering_frost 1', 'dispel 1'], ability: 'permafrost 1',
       },
       glacial_prism: {
-        flavor_en: "Even the oldest map leaves a blank where Glacial Prism should be; the wilderness keeps its own record of this name.\nRunes beneath its plating glow when danger draws near; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Ледниковая Призма»; у дикой земли есть своя летопись этого имени.\nРуны под его бронёй вспыхивают, когда приближается опасность; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Even the oldest map leaves a blank where Glacial Prism should be; the wilderness keeps its own record of this name. Runes beneath its plating glow when danger draws near; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Ледниковая Призма»; у дикой земли есть своя летопись этого имени. Руны под его бронёй вспыхивают, когда приближается опасность; оно до сих пор хранит знак своего первого дня службы.",
         id: 'mv_e211', f: 'mv', t: 3,
         name: 'Glacial Prism',
         name_ru: 'Ледниковая Призма',
@@ -4550,8 +4550,8 @@ const UNITS = {
         xp: 1560, passive: ['chill 1', 'hungering_frost 2', 'dispel 1'], ability: 'permafrost 1',
       },
       chillrock: {
-        flavor_en: "The chronicle gives Chillrock a place earned far from any throne; no two scouts agree on where it first appeared.\nRunes beneath its plating glow when danger draws near; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Стылый Камень»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nРуны под его бронёй вспыхивают, когда приближается опасность; начало было скромным, но клятва — великой.",
+        flavor_en: "The chronicle gives Chillrock a place earned far from any throne; no two scouts agree on where it first appeared. Runes beneath its plating glow when danger draws near; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Стылый Камень»; дозорные так и не сошлись во мнении, где оно появилось впервые. Руны под его бронёй вспыхивают, когда приближается опасность; начало было скромным, но клятва — великой.",
         id: 'mv_e3', f: 'mv', t: 1,
         name: 'Chillrock',
         name_ru: 'Стылый Камень',
@@ -4565,8 +4565,8 @@ const UNITS = {
         xp: 305, passive: ['resist_aura_cold 1', 'rimeguard 1'], ability: null,
       },
       rimewarden: {
-        flavor_en: "The chronicle gives Rimewarden a place earned far from any throne; the wilderness keeps its own record of this name.\nIts maker left no voice inside, only an enduring purpose; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Инеевый Страж»; у дикой земли есть своя летопись этого имени.\nСоздатель не вложил в него голос — лишь цель, пережившую века; начало было скромным, но клятва — великой.",
+        flavor_en: "The chronicle gives Rimewarden a place earned far from any throne; the wilderness keeps its own record of this name. Its maker left no voice inside, only an enduring purpose; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Инеевый Страж»; у дикой земли есть своя летопись этого имени. Создатель не вложил в него голос — лишь цель, пережившую века; начало было скромным, но клятва — великой.",
         id: 'mv_e31', f: 'mv', t: 2,
         name: 'Rimewarden',
         name_ru: 'Инеевый Страж',
@@ -4580,8 +4580,8 @@ const UNITS = {
         xp: 1405, passive: ['resist_aura_cold 2', 'rimeguard 2'], ability: null,
       },
       glaciok: {
-        flavor_en: "Few witnesses agree on how Glaciok first entered the story; no two scouts agree on where it first appeared.\nIts maker left no voice inside, only an enduring purpose; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Глациок»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nСоздатель не вложил в него голос — лишь цель, пережившую века; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Few witnesses agree on how Glaciok first entered the story; no two scouts agree on where it first appeared. Its maker left no voice inside, only an enduring purpose; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Глациок»; дозорные так и не сошлись во мнении, где оно появилось впервые. Создатель не вложил в него голос — лишь цель, пережившую века; оно до сих пор хранит знак своего первого дня службы.",
         id: 'mv_e311', f: 'mv', t: 3,
         name: 'Glaciok',
         name_ru: 'Глациок',
@@ -4595,8 +4595,8 @@ const UNITS = {
         xp: 4055, passive: ['resist_aura_cold 2', 'rimeguard 2', 'stoicism 2'], ability: null,
       },
       cryodrox: {
-        flavor_en: "The name Cryodrox appears beside an unlikely turning point; the wilderness keeps its own record of this name.\nIts metal remembers the hands that shaped it; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Имя «Криодрокс» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени.\nЕго металл помнит руки, которые придали ему форму; начало было скромным, но клятва — великой.",
+        flavor_en: "The name Cryodrox appears beside an unlikely turning point; the wilderness keeps its own record of this name. Its metal remembers the hands that shaped it; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Имя «Криодрокс» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени. Его металл помнит руки, которые придали ему форму; начало было скромным, но клятва — великой.",
         id: 'mv_e4', f: 'mv', t: 2,
         name: 'Cryodrox',
         name_ru: 'Криодрокс',
@@ -4610,8 +4610,8 @@ const UNITS = {
         xp: 1715, passive: ['chill 1', 'dissipate 1', 'stoicism 1'], ability: null,
       },
       cryodrox2: {
-        flavor_en: "Few witnesses agree on how Cryodrox first entered the story; no two scouts agree on where it first appeared.\nIts metal remembers the hands that shaped it; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Криодрокс»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nЕго металл помнит руки, которые придали ему форму; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Few witnesses agree on how Cryodrox first entered the story; no two scouts agree on where it first appeared. Its metal remembers the hands that shaped it; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Криодрокс»; дозорные так и не сошлись во мнении, где оно появилось впервые. Его металл помнит руки, которые придали ему форму; оно до сих пор хранит знак своего первого дня службы.",
         id: 'mv_e41', f: 'mv', t: 3,
         name: 'Cryodrox',
         name_ru: 'Криодрокс',
@@ -4626,8 +4626,8 @@ const UNITS = {
       },
 
       cryodrox3: {
-        flavor_en: "Even the oldest map leaves a blank where Cryodrox should be; the wilderness keeps its own record of this name.\nRunes beneath its plating glow when danger draws near; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Криодрокс»; у дикой земли есть своя летопись этого имени.\nРуны под его бронёй вспыхивают, когда приближается опасность; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Even the oldest map leaves a blank where Cryodrox should be; the wilderness keeps its own record of this name. Runes beneath its plating glow when danger draws near; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Криодрокс»; у дикой земли есть своя летопись этого имени. Руны под его бронёй вспыхивают, когда приближается опасность; оно до сих пор хранит знак своего первого дня службы.",
         id: 'mv_e411', f: 'mv', t: 4,
         name: 'Cryodrox',
         name_ru: 'Криодрокс',
@@ -4644,8 +4644,8 @@ const UNITS = {
 
     chamber_of_unrest: {
       bone_knight: {
-        flavor_en: "Even the oldest map leaves a blank where Bone Knight should be; the wilderness keeps its own record of this name.\nIt answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Костяной Рыцарь»; у дикой земли есть своя летопись этого имени.\nНа любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Even the oldest map leaves a blank where Bone Knight should be; the wilderness keeps its own record of this name. It answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Костяной Рыцарь»; у дикой земли есть своя летопись этого имени. На любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
         id: 'dm_e1', f: 'dm', t: 1,
         name: 'Bone Knight',
         name_ru: 'Костяной Рыцарь',
@@ -4659,8 +4659,8 @@ const UNITS = {
         xp: 110, passive: ['iron_will 1', 'heartpiercer 1'], ability: 'terror 1',
       },
       dread_knight: {
-        flavor_en: "The chronicle gives Dread Knight a place earned far from any throne; no two scouts agree on where it first appeared.\nIt answers every challenge with the blunt certainty of iron; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Рыцарь Ужаса»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nНа любой вызов оно отвечает прямотой железа; начало было скромным, но клятва — великой.",
+        flavor_en: "The chronicle gives Dread Knight a place earned far from any throne; no two scouts agree on where it first appeared. It answers every challenge with the blunt certainty of iron; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Рыцарь Ужаса»; дозорные так и не сошлись во мнении, где оно появилось впервые. На любой вызов оно отвечает прямотой железа; начало было скромным, но клятва — великой.",
         id: 'dm_e11', f: 'dm', t: 2,
         name: 'Dread Knight',
         name_ru: 'Рыцарь Ужаса',
@@ -4674,8 +4674,8 @@ const UNITS = {
         xp: 375, passive: ['iron_will 1', 'heartpiercer 1', 'infect 1'], ability: 'terror 1',
       },
       death_knight: {
-        flavor_en: "Even the oldest map leaves a blank where Death Knight should be; no two scouts agree on where it first appeared.\nIt measures courage by the ground held after impact; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Рыцарь Смерти»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nДля него мужество измеряется землёй, удержанной после удара; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Even the oldest map leaves a blank where Death Knight should be; no two scouts agree on where it first appeared. It measures courage by the ground held after impact; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Рыцарь Смерти»; дозорные так и не сошлись во мнении, где оно появилось впервые. Для него мужество измеряется землёй, удержанной после удара; оно до сих пор хранит знак своего первого дня службы.",
         id: 'dm_e111', f: 'dm', t: 3,
         name: 'Death Knight',
         name_ru: 'Рыцарь Смерти',
@@ -4689,8 +4689,8 @@ const UNITS = {
         xp: 1015, passive: ['iron_will 1', 'heartpiercer 1', 'infect 2'], ability: 'terror 2',
       },
       oathbound_martyr: {
-        flavor_en: "The chronicle gives Oathbound Martyr a place earned far from any throne; the wilderness keeps its own record of this name.\nThe living feel a chill before they glimpse its form; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Мученик Клятвы»; у дикой земли есть своя летопись этого имени.\nЖивые ощущают холод прежде, чем различат его очертания; начало было скромным, но клятва — великой.",
+        flavor_en: "The chronicle gives Oathbound Martyr a place earned far from any throne; the wilderness keeps its own record of this name. The living feel a chill before they glimpse its form; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Мученик Клятвы»; у дикой земли есть своя летопись этого имени. Живые ощущают холод прежде, чем различат его очертания; начало было скромным, но клятва — великой.",
         id: 'dm_2', f: 'dm', t: 1,
         name: 'Oathbound Martyr',
         name_ru: 'Мученик Клятвы',
@@ -4704,8 +4704,8 @@ const UNITS = {
         xp: 145, passive: ['sacrament 1', 'regenerate 1'], ability: 'sanctuary 1',
       },
       oathsworn_martyr: {
-        flavor_en: "The name Oathsworn Martyr appears beside an unlikely turning point; the wilderness keeps its own record of this name.\nIts passage stirs dust asleep for generations; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Имя «Присягнувший Мученик» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени.\nЕго появление тревожит пыль, спавшую поколениями; начало было скромным, но клятва — великой.",
+        flavor_en: "The name Oathsworn Martyr appears beside an unlikely turning point; the wilderness keeps its own record of this name. Its passage stirs dust asleep for generations; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Имя «Присягнувший Мученик» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени. Его появление тревожит пыль, спавшую поколениями; начало было скромным, но клятва — великой.",
         id: 'dm_21', f: 'dm', t: 2,
         name: 'Oathsworn Martyr',
         name_ru: 'Присягнувший Мученик',
@@ -4719,8 +4719,8 @@ const UNITS = {
         xp: 450, passive: ['sacrament 1', 'regenerate 1', 'aegis 1'], ability: 'sanctuary 1',
       },
       martyr_of_the_vow: {
-        flavor_en: "The name Martyr of the Vow appears beside an unlikely turning point; the wilderness keeps its own record of this name.\nA half-remembered name follows it through locked doors; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Имя «Мученик Обета» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени.\nПолузабытое имя следует за ним сквозь запертые двери; начало было скромным, но клятва — великой.",
+        flavor_en: "The name Martyr of the Vow appears beside an unlikely turning point; the wilderness keeps its own record of this name. A half-remembered name follows it through locked doors; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Имя «Мученик Обета» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени. Полузабытое имя следует за ним сквозь запертые двери; начало было скромным, но клятва — великой.",
         id: 'dm_211', f: 'dm', t: 3,
         name: 'Martyr of the Vow',
         name_ru: 'Мученик Обета',
@@ -4734,8 +4734,8 @@ const UNITS = {
         xp: 1099, passive: ['sacrament 1', 'regenerate 1', 'aegis 2'], ability: 'sanctuary 2',
       },
       forgiven: {
-        flavor_en: "Few witnesses agree on how Forgiven first entered the story; the border folk recognize its silhouette before the horns sound.\nIt measures courage by the ground held after impact; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Прощенный»; пограничники узнают его силуэт прежде, чем звучат рога.\nДля него мужество измеряется землёй, удержанной после удара; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Few witnesses agree on how Forgiven first entered the story; the border folk recognize its silhouette before the horns sound. It measures courage by the ground held after impact; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Прощенный»; пограничники узнают его силуэт прежде, чем звучат рога. Для него мужество измеряется землёй, удержанной после удара; оно до сих пор хранит знак своего первого дня службы.",
         id: 'dm_2111', f: 'dm', t: 4,
         name: 'Forgiven',
         name_ru: 'Прощенный',
@@ -4749,8 +4749,8 @@ const UNITS = {
         xp: 1099, passive: ['unity 1', 'inner_fire 2', 'unwavering_faith 2'], ability: null,
       },
       forsaken: {
-        flavor_en: "Even the oldest map leaves a blank where Forsaken should be; the wilderness keeps its own record of this name.\nIts passage stirs dust asleep for generations; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Отверженный»; у дикой земли есть своя летопись этого имени.\nЕго появление тревожит пыль, спавшую поколениями; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Even the oldest map leaves a blank where Forsaken should be; the wilderness keeps its own record of this name. Its passage stirs dust asleep for generations; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Отверженный»; у дикой земли есть своя летопись этого имени. Его появление тревожит пыль, спавшую поколениями; оно до сих пор хранит знак своего первого дня службы.",
         id: 'dm_2112', f: 'dm', t: 4,
         name: 'Forsaken',
         name_ru: 'Отверженный',
@@ -4764,8 +4764,8 @@ const UNITS = {
         xp: 1099, passive: ['unity 1', 'light_of_dawn 2', 'beacon_of_hope 2'], ability: null,
       },
       wailing_ghost: {
-        flavor_en: "The name Wailing Ghost appears beside an unlikely turning point; the wilderness keeps its own record of this name.\nA half-remembered name follows it through locked doors; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Имя «Стенающий Призрак» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени.\nПолузабытое имя следует за ним сквозь запертые двери; начало было скромным, но клятва — великой.",
+        flavor_en: "The name Wailing Ghost appears beside an unlikely turning point; the wilderness keeps its own record of this name. A half-remembered name follows it through locked doors; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Имя «Стенающий Призрак» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени. Полузабытое имя следует за ним сквозь запертые двери; начало было скромным, но клятва — великой.",
         id: 'dm_e3', f: 'dm', t: 1,
         name: 'Wailing Ghost',
         name_ru: 'Стенающий Призрак',
@@ -4779,8 +4779,8 @@ const UNITS = {
         xp: 100, passive: ['chill 1', 'sorrow 1'], ability: 'frost_armor 1',
       },
       revenant: {
-        flavor_en: "Even the oldest map leaves a blank where Revenant should be; the border folk recognize its silhouette before the horns sound.\nIts passage stirs dust asleep for generations; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Ревенант»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго появление тревожит пыль, спавшую поколениями; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Even the oldest map leaves a blank where Revenant should be; the border folk recognize its silhouette before the horns sound. Its passage stirs dust asleep for generations; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Ревенант»; пограничники узнают его силуэт прежде, чем звучат рога. Его появление тревожит пыль, спавшую поколениями; оно до сих пор хранит знак своего первого дня службы.",
         id: 'dm_e31', f: 'dm', t: 2,
         name: 'Revenant',
         name_ru: 'Ревенант',
@@ -4794,8 +4794,8 @@ const UNITS = {
         xp: 348, passive: ['chill 1', 'sorrow 1', 'vow_of_silence 1'], ability: 'frost_armor 1',
       },
       soul_harvester: {
-        flavor_en: "Even the oldest map leaves a blank where Soul Harvester should be; the wilderness keeps its own record of this name.\nIts passage stirs dust asleep for generations; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Жнец Душ»; у дикой земли есть своя летопись этого имени.\nЕго появление тревожит пыль, спавшую поколениями; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Even the oldest map leaves a blank where Soul Harvester should be; the wilderness keeps its own record of this name. Its passage stirs dust asleep for generations; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Жнец Душ»; у дикой земли есть своя летопись этого имени. Его появление тревожит пыль, спавшую поколениями; оно до сих пор хранит знак своего первого дня службы.",
         id: 'dm_e311', f: 'dm', t: 3,
         name: 'Soul Harvester',
         name_ru: 'Жнец Душ',
@@ -4809,8 +4809,8 @@ const UNITS = {
         xp: 930, passive: ['chill 2', 'sorrow 1', 'vow_of_silence 1'], ability: 'frost_armor 2',
       },
       malgrath_the_undying_1: {
-        flavor_en: "Even the oldest map leaves a blank where Malgrath the Undying should be; no two scouts agree on where it first appeared.\nIt measures courage by the ground held after impact; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Малграт Неумирающий»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nДля него мужество измеряется землёй, удержанной после удара; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Even the oldest map leaves a blank where Malgrath the Undying should be; no two scouts agree on where it first appeared. It measures courage by the ground held after impact; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Малграт Неумирающий»; дозорные так и не сошлись во мнении, где оно появилось впервые. Для него мужество измеряется землёй, удержанной после удара; оно до сих пор хранит знак своего первого дня службы.",
         id: 'dm_e4', f: 'dm', t: 2,
         name: 'Malgrath the Undying',
         name_ru: 'Малграт Неумирающий',
@@ -4824,8 +4824,8 @@ const UNITS = {
         xp: 1920, passive: ['iron_will 1', 'reanimate 1', 'stoicism 1'], ability: null,
       },
       malgrath_the_undying_2: {
-        flavor_en: "Few witnesses agree on how Malgrath the Undying first entered the story; the wilderness keeps its own record of this name.\nIt answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Малграт Неумирающий»; у дикой земли есть своя летопись этого имени.\nНа любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Few witnesses agree on how Malgrath the Undying first entered the story; the wilderness keeps its own record of this name. It answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Малграт Неумирающий»; у дикой земли есть своя летопись этого имени. На любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
         id: 'dm_e41', f: 'dm', t: 3,
         name: 'Malgrath the Undying',
         name_ru: 'Малграт Неумирающий',
@@ -4839,8 +4839,8 @@ const UNITS = {
         xp: 2705, passive: ['iron_will 2', 'reanimate 1', 'stoicism 1'], ability: null,
       },
       malgrath_the_undying_3: {
-        flavor_en: "Even the oldest map leaves a blank where Malgrath the Undying should be; the border folk recognize its silhouette before the horns sound.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
-        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Малграт Неумирающий»; пограничники узнают его силуэт прежде, чем звучат рога.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
+        flavor_en: "Even the oldest map leaves a blank where Malgrath the Undying should be; the border folk recognize its silhouette before the horns sound. Each advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
+        flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Малграт Неумирающий»; пограничники узнают его силуэт прежде, чем звучат рога. Каждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
         id: 'dm_e411', f: 'dm', t: 4,
         name: 'Malgrath the Undying',
         name_ru: 'Малграт Неумирающий',
@@ -4856,8 +4856,8 @@ const UNITS = {
     },
     colossus: {
       reliquary_titan: {
-        flavor_en: "The name Reliquary Titan appears beside an unlikely turning point; the border folk recognize its silhouette before the horns sound.\nIt answers every challenge with the blunt certainty of iron; its beginnings were small, but the vow it made was not.",
-        flavor_ru: "Имя «Титан-Реликварий» появляется в летописи рядом с неожиданным поворотом событий; пограничники узнают его силуэт прежде, чем звучат рога.\nНа любой вызов оно отвечает прямотой железа; начало было скромным, но клятва — великой.",
+        flavor_en: "The name Reliquary Titan appears beside an unlikely turning point; the border folk recognize its silhouette before the horns sound. It answers every challenge with the blunt certainty of iron; its beginnings were small, but the vow it made was not.",
+        flavor_ru: "Имя «Титан-Реликварий» появляется в летописи рядом с неожиданным поворотом событий; пограничники узнают его силуэт прежде, чем звучат рога. На любой вызов оно отвечает прямотой железа; начало было скромным, но клятва — великой.",
         id: 'colossus', f: 'col', t: 4,
         name: 'Reliquary Titan',
         name_ru: 'Титан-Реликварий',
