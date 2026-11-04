@@ -182,11 +182,26 @@ function dotAmount(dmg, pct, def, target) {
 // every resistance — so a defending unit is capped on the same line as anything
 // else rather than being the one way over the top.
 const MITIGATION_CAP_PCT = 50;
+// A STAGGERED unit mitigates nothing (utils/battle-engine.js: maybeStagger).
+// Enforced here, in the two helpers every mitigated hit already goes through,
+// rather than by zeroing the unit's stored armor and resistances: those numbers
+// are moved during a battle by phase transitions, shreds and wards that each
+// keep their own undo ledger, and a stagger that wrote to them would hand the
+// boss back armor it never had the moment any of them reversed.
+//
+// Nothing is stored and nothing has to be given back. The stats are untouched —
+// the inspector still shows what the boss has — they simply do not count while
+// the stone is cracked open.
+function staggered(target) {
+  return (target?._stagger_rounds ?? 0) > 0;
+}
 function effectiveArmor(target) {
+  if (staggered(target)) return 0;
   const raw = (target?.armor ?? 0) + (target?.defend_armor_bonus || 0);
   return Math.max(0, Math.min(MITIGATION_CAP_PCT, raw));
 }
 function effectiveResist(target, type) {
+  if (staggered(target)) return 0;
   const res = (target?.unit_data?.resistances ?? target?.resistances ?? {})[type] ?? 0;
   return Math.max(0, Math.min(MITIGATION_CAP_PCT, res + (target?.defend_armor_bonus || 0)));
 }

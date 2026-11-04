@@ -23,13 +23,92 @@ const COLOSSUS_CURRENCY = 'Valor';
 // Season score for the order factions kill their boss in.
 const COLOSSUS_KILL_POINTS = { 1: 3, 2: 2, 3: 1 };
 
-// A phase is picked from the pool's HP, and it is LIVE: the boss changes phase
-// the moment damage takes it into a lower band, mid-battle, so a player who gets
-// the pool over a threshold watches the stone crack open and the fight change
-// under them. It used to be chosen once per attempt and frozen, which meant the
-// transitions — the most dramatic thing in the design — happened between
-// attempts where nobody could see them. `below_pct` is inclusive: at exactly 75%
-// the boss is in phase 2. Phases only ever go FORWARD (see maybeAdvancePhases).
+// The damage ONE ATTEMPT has to deal to walk the whole phase ladder. Phases are
+// read against this, not against the pool (see the note on COLOSSUS_PHASES), so
+// every player meets the same escalation whenever in the week they turn up.
+//
+// THE NUMBER TO TUNE. The thresholds fall out of it: a quarter of the arc opens
+// phase 2, half opens phase 3, three quarters opens phase 4. At 240 that is
+// 60 / 120 / 180 damage.
+//
+// Measured against what an attempt actually does. A bare five-unit squad of
+// tier-3 definitions — no hero, no items, no casts — deals 16-25 a round and
+// about 140 over the ~11 rounds before the Withering finishes it; the same at
+// tier 4 is 25 a round and about 170. Real squads sit above both, and the top
+// milestone's pace (2500 a week over roughly a squad a day) is ~360 an attempt.
+// So at 240: a weak squad still reaches phase 3, a middling one opens phase 4
+// near the end, and a strong one fights inside Last Light for a while.
+//
+// Raise it if testers are reaching phase 4 in the first few rounds; lower it if
+// most attempts end in phase 1 or 2.
+const COLOSSUS_PHASE_ARC = 240;
+
+// What the pool pays for depth. Damage credited to the faction's bar is
+// multiplied by this, picked from the deepest phase the attempt reached.
+//
+// Without it, per-attempt phases would be a pure tax: the deeper you push the
+// harder the boss hits and the less raw damage you manage, so the optimal play
+// would be to stall in phase 1 — which is the opposite of the point. The bonus
+// is paid on the phase REACHED, and reaching phase 4 means having already dealt
+// three quarters of the arc, so there is nothing to cheese: you cannot buy the
+// multiplier without doing the damage that earns it.
+const COLOSSUS_PHASE_BONUS_PCT = { 1: 0, 2: 15, 3: 30, 4: 45 };
+
+// Stagger: deal `threshold` damage to the boss inside a SINGLE round and the
+// stone cracks — it loses its next turn, and for `rounds` rounds its armor and
+// every resistance count for nothing (utils/passive-processor.js: effectiveArmor
+// and effectiveResist both read _stagger_rounds).
+//
+// This is the one thing in the fight that rewards a burst build. Armor 25 and a
+// 25-40 resistance table are flat for the whole attempt otherwise, which makes
+// steady chip damage strictly correct and every setup turn a waste.
+//
+// THE OTHER NUMBER TO TUNE, and the harder of the two, because what it has to
+// beat is a round the player SET UP rather than an average one. Plain attacks
+// from a five-unit squad come to 16-25 a round (see COLOSSUS_PHASE_ARC), so 50
+// is about twice an ordinary round: out of reach by accident, and reachable with
+// a hero cast, a damage buff or a focused alpha strike. Watch the testers: if
+// nobody ever staggers it, this is too high and the feature is dead; if it is
+// staggered most rounds, the boss never gets a turn.
+//
+// Armor AND resistances, not armor alone: armor only answers physical damage, so
+// an armor-only stagger would be worth a great deal to one squad and nothing at
+// all to a caster line.
+const COLOSSUS_STAGGER = { threshold: 50, rounds: 2 };
+
+// The pool multiplier for an attempt that reached `phase`.
+function colossusPhaseBonusPct(phase) {
+  return COLOSSUS_PHASE_BONUS_PCT[Number(phase)] ?? 0;
+}
+
+// Pool damage credited for `dealt` raw damage by an attempt that reached `phase`.
+function colossusCreditedDamage(dealt, phase) {
+  const raw = Math.max(0, Math.floor(Number(dealt) || 0));
+  return Math.round(raw * (1 + colossusPhaseBonusPct(phase) / 100));
+}
+
+// A phase is read from the damage THIS ATTEMPT has dealt, against the arc
+// below, and it is LIVE: the boss changes phase the moment a blow takes the
+// attempt past a threshold, mid-battle, so the player watches the stone crack
+// open and the fight change under them.
+//
+// It used to be read from the POOL's HP, and that was the single worst thing
+// about the fight. The pool is the faction's weekly progress, so the phase a
+// player met was decided by everyone else's schedule: Monday attempts were
+// always phase 1, Friday attempts always phase 4, and nobody ever fought the
+// ladder. The escalation — the whole point of having phases — was invisible to
+// every individual player, and the late-week attempts were strictly harder for
+// exactly the same payout.
+//
+// Per attempt, everyone gets the whole arc. The pool keeps its own job: it is
+// the shared bar on the Colossus page and the thing a faction kills. What ties
+// the two back together is the phase bonus below — damage credited to the pool
+// is multiplied by how deep into the ladder the attempt reached, so pushing
+// into the harder phases pays for itself instead of punishing you.
+//
+// `below_pct` is a percentage of the arc REMAINING and is inclusive: at exactly
+// 75% left (a quarter of the arc dealt) the boss is in phase 2. Phases only ever
+// go FORWARD (see maybeAdvancePhases).
 //
 // Overrides replace fields on the base unit in data/units.js. Every phase
 // declares the SAME set of fields, so applying one on top of another is total
@@ -159,6 +238,9 @@ function colossusWeek(now = Date.now()) {
   };
 }
 
+// The pool's band. NOT the phase a fight is in any more — attempts walk their own
+// ladder (see COLOSSUS_PHASE_ARC) — so this is only ever "how beaten down is the
+// shared bar", which is what the landing-page demo draws with it.
 function colossusPhaseFor(hp, maxHp = COLOSSUS_MAX_HP) {
   const pct = maxHp > 0 ? (hp / maxHp) * 100 : 0;
   return [...COLOSSUS_PHASES].reverse().find(p => pct <= p.below_pct) ?? COLOSSUS_PHASES[0];
@@ -168,12 +250,16 @@ function colossusBaseDef() {
   return UNITS.enemies?.colossus?.reliquary_titan ?? null;
 }
 
-// The boss as it stands for an attempt: base unit, the phase's changes, and the
-// pool's current HP. Same flat shape getEncounter returns.
+// The boss as it stands for an attempt: base unit, the opening phase's changes,
+// and the pool's current HP. Same flat shape getEncounter returns.
+//
+// Every attempt opens in phase 1, whatever the pool is down to. The ladder is
+// walked by the damage this attempt deals, so the pool decides only how much HP
+// is left to take off — never how hard the fight is.
 function buildColossusBoss(hp) {
   const def = colossusBaseDef();
   if (!def) return null;
-  const phase = colossusPhaseFor(hp);
+  const phase = COLOSSUS_PHASES[0];
   const current = Math.max(0, Math.min(COLOSSUS_MAX_HP, Math.floor(hp)));
   return {
     ...def,
@@ -187,10 +273,20 @@ function buildColossusBoss(hp) {
     spells:        phase.spells,
     phase:         phase.id,
     // The whole ladder travels with the boss, because the engine advances it
-    // mid-battle (maybeAdvancePhases) rather than reading this module: the boss's
-    // battle HP IS the pool, so `battle_hp / max_hp` is the pool percentage the
-    // thresholds are written against.
+    // mid-battle (maybeAdvancePhases) rather than reading this module.
     phases:        COLOSSUS_PHASES,
+    // What the ladder is measured against. 'attempt' tells the engine to read
+    // the band from damage dealt SINCE THIS ATTEMPT OPENED — `current_hp` above
+    // is that starting point, and it is frozen on the battle record, so a reload
+    // mid-attempt measures from the same place. Leave it out and the engine
+    // falls back to the unit's own HP fraction, which is what every other
+    // phase-laddered unit wants.
+    phase_basis:   'attempt',
+    phase_arc:     COLOSSUS_PHASE_ARC,
+    // Stagger (see COLOSSUS_STAGGER). Read off unit_data by the engine, so any
+    // unit can be given one without the engine changing.
+    stagger_threshold: COLOSSUS_STAGGER.threshold,
+    stagger_rounds:    COLOSSUS_STAGGER.rounds,
     // Withering is the attempt's timer: it wears the player's army down, never the boss.
     wither_immune: true,
   };
@@ -214,12 +310,14 @@ function colossusGrants(rewards, factionCrystal) {
 export {
   COLOSSUS_MAX_HP, COLOSSUS_RESET, COLOSSUS_CELL, COLOSSUS_CURRENCY, COLOSSUS_KILL_POINTS,
   COLOSSUS_PHASES, COLOSSUS_MILESTONES, COLOSSUS_KILL_REWARD, COLOSSUS_REST_REFRESH,
+  COLOSSUS_PHASE_ARC, COLOSSUS_PHASE_BONUS_PCT, COLOSSUS_STAGGER,
   colossusWeek, colossusPhaseFor, colossusBaseDef, buildColossusBoss, colossusMilestonesCrossed, colossusGrants,
-  colossusRefreshBill,
+  colossusRefreshBill, colossusPhaseBonusPct, colossusCreditedDamage,
 };
 if (typeof module !== 'undefined') module.exports = {
   COLOSSUS_MAX_HP, COLOSSUS_RESET, COLOSSUS_CELL, COLOSSUS_CURRENCY, COLOSSUS_KILL_POINTS,
   COLOSSUS_PHASES, COLOSSUS_MILESTONES, COLOSSUS_KILL_REWARD, COLOSSUS_REST_REFRESH,
+  COLOSSUS_PHASE_ARC, COLOSSUS_PHASE_BONUS_PCT, COLOSSUS_STAGGER,
   colossusWeek, colossusPhaseFor, colossusBaseDef, buildColossusBoss, colossusMilestonesCrossed, colossusGrants,
-  colossusRefreshBill,
+  colossusRefreshBill, colossusPhaseBonusPct, colossusCreditedDamage,
 };

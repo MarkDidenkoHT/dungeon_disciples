@@ -534,6 +534,12 @@ class BattleEngine {
       // ANNOUNCED for its next turn ({ spell_id, power, round, targetId }).
       _spell_cycle_idx: 0,
       _telegraph:       null,
+      // Stagger (see maybeStagger). `_stagger_mark_hp` is the HP this unit
+      // started the current ROUND on, which is what a round's damage is measured
+      // against; advanceRound re-marks it.
+      _stagger_rounds:       0,
+      _stagger_skip_pending: false,
+      _stagger_mark_hp:      battleHp,
       // Frozen copy of the stats a buff/debuff can move, taken before anything
       // has been applied. Armor, initiative and resistances are all mutated in
       // place during a battle, so without this there is nothing left to compare
@@ -2404,6 +2410,11 @@ class BattleEngine {
     // Before the win check: a boss that has just been pushed into a new phase
     // should announce it, and one that died is skipped by maybeAdvancePhases.
     this.maybeAdvancePhases();
+    // After the phase, so a round big enough to do both reads as the escalation
+    // it is: the stone cracks into its next phase and is staggered by the same
+    // blow. Also after the gainPower above, which this must not interfere with —
+    // a stagger costs the boss a TURN, not the power it has already banked.
+    this.maybeStagger();
     const win = this.checkWin();
     if (win) { this.done = true; this.winner = win; return true; }
     if (this.getActingOrder().length === 0) this.advanceRound();
@@ -2511,6 +2522,20 @@ class BattleEngine {
           c._stun_initiative_lost = 0;
         }
       }
+
+      // Stagger's timer, and the mark its trigger is measured against. Both move
+      // here, at the round boundary: the window a stagger opens is "the rest of
+      // this round plus the next one" (stagger_rounds is 2), and a round's damage
+      // never carries over into the next round's total.
+      //
+      // The skip is NOT cancelled when the timer runs out — if the boss has not
+      // reached its turn yet, it still owes one. The flag is cleared only by the
+      // turn it costs (doStaggerSkip), which is the whole price of a stagger.
+      if (c._stagger_rounds > 0) {
+        c._stagger_rounds--;
+        if (c._stagger_rounds === 0) this.clearEffect(c, 'stagger');
+      }
+      c._stagger_mark_hp = c.battle_hp;
 
       if (c._sanctuary_rounds > 0) {
         c._sanctuary_rounds--;
@@ -3608,19 +3633,113 @@ class BattleEngine {
 
   // ── Boss phases ───────────────────────────────────────────────────────────
   // A unit def may carry `phases`: the ordered ladder data/colossus.js writes, as
-  // [{ id, below_pct, name, overrides, spells }]. The band is read from the
-  // unit's own HP fraction, so for the Colossus — whose battle HP IS the faction
-  // pool — it is the pool percentage the thresholds are written against.
+  // [{ id, below_pct, name, overrides, spells }].
   phaseListFor(unit) {
     const phases = unit?.unit_data?.phases;
     return Array.isArray(phases) ? phases : [];
   }
 
+  // How much of the ladder is LEFT, as the percentage `below_pct` is written
+  // against. Two bases:
+  //
+  //   * the default — the unit's own HP fraction. A boss that gets angrier as it
+  //     is worn down, which is what every ordinary phase ladder wants.
+  //   * `phase_basis: 'attempt'` — the damage dealt since THIS FIGHT opened,
+  //     against `phase_arc`. The Faction Colossus needs this because its battle
+  //     HP is the faction's weekly pool, not a health bar: read the HP fraction
+  //     and the phase a player meets is set by what everyone else did earlier in
+  //     the week, so no individual attempt ever walks the ladder (see the note
+  //     in data/colossus.js).
+  //
+  // The attempt's starting HP is `unit_data.current_hp`, which is where
+  // createCombatant took battle_hp from and is frozen on the battle record — so
+  // a reload mid-fight measures from the same place rather than restarting the
+  // arc from wherever the boss happens to be.
+  phaseRemainingPct(unit) {
+    const data = unit?.unit_data || {};
+    if (data.phase_basis === 'attempt') {
+      const arc = Number(data.phase_arc) || 0;
+      if (arc <= 0) return 100;
+      const startHp = Number.isFinite(Number(data.current_hp)) ? Number(data.current_hp) : unit.max_hp;
+      const dealt   = Math.max(0, startHp - unit.battle_hp);
+      return Math.max(0, 100 - (dealt / arc) * 100);
+    }
+    return unit.max_hp > 0 ? (unit.battle_hp / unit.max_hp) * 100 : 0;
+  }
+
   phaseForHp(unit) {
     const phases = this.phaseListFor(unit);
     if (!phases.length) return null;
-    const pct = unit.max_hp > 0 ? (unit.battle_hp / unit.max_hp) * 100 : 0;
+    const pct = this.phaseRemainingPct(unit);
     return [...phases].reverse().find(p => pct <= p.below_pct) ?? phases[0];
+  }
+
+  // ── Stagger ───────────────────────────────────────────────────────────────
+  // A unit def may carry `stagger_threshold` (and optionally `stagger_rounds`):
+  // take that much damage inside a SINGLE round and it is staggered — it loses
+  // its next turn, and while the stagger holds its armor and every resistance
+  // count for nothing (effectiveArmor / effectiveResist in passive-processor.js
+  // both check _stagger_rounds).
+  //
+  // Measured off a mark taken at the top of each round rather than at a damage
+  // choke point, because there is no choke point — damage lands in a dozen
+  // places. The mark is reset in advanceRound and read here, which is called
+  // from afterAction, so the stone cracks on the blow that cracked it.
+  //
+  // It cannot re-trigger while it is already staggered: the armor is already
+  // gone, and a second announcement would say nothing. Once it expires the next
+  // round's burst can stagger it again, which is the mastery play — keeping it
+  // broken open costs the player a real spike every round.
+  staggerThresholdFor(unit) {
+    const n = Number(unit?.unit_data?.stagger_threshold) || 0;
+    return n > 0 ? n : 0;
+  }
+
+  maybeStagger() {
+    for (const unit of this.combatants) {
+      if (!unit.alive) continue;
+      const threshold = this.staggerThresholdFor(unit);
+      if (!threshold) continue;
+      if (unit._stagger_rounds > 0) continue;
+      const mark = Number.isFinite(Number(unit._stagger_mark_hp)) ? Number(unit._stagger_mark_hp) : unit.battle_hp;
+      const lost = mark - unit.battle_hp;
+      if (lost < threshold) continue;
+
+      unit._stagger_rounds       = Math.max(1, Number(unit.unit_data?.stagger_rounds) || 2);
+      unit._stagger_skip_pending = true;
+      // Re-marked so the damage that caused this stagger is not also counted
+      // toward the next one the moment this one expires.
+      unit._stagger_mark_hp = unit.battle_hp;
+      this.registerEffect(unit, {
+        key: 'stagger', name: 'Staggered — no armor, no resistances',
+        icon: 'shatter', polarity: 'negative', dispellable: false,
+      });
+      this.pushLog({
+        type: 'stagger', value: lost, rounds: unit._stagger_rounds,
+        actorId: unit.id, actorName: unit.unit_name, actorCell: unit.cellIndex,
+        message:    `${unit.unit_name} is STAGGERED — ${lost} damage in one round. Its armor and resistances fail, and it loses its next turn.`,
+        message_ru: `${unit.unit_name} ОГЛУШЁН — ${lost} урона за один раунд. Броня и сопротивления бессильны, следующий ход потерян.`,
+      });
+    }
+  }
+
+  // The turn a stagger costs. Takes the same shape as doNone so the round
+  // advances exactly as it would for any other spent turn.
+  doStaggerSkip(actor) {
+    actor._stagger_skip_pending = false;
+    // Logged as a 'skip', not as a type of its own: the client's turn accounting
+    // (ACTOR_ENTRY_TYPES, closesFxGroup) already knows a skip is a unit's whole
+    // turn, and a new type would have had to be added to both lists to stop this
+    // turn being swallowed into the previous actor's animation group. The
+    // `stagger` flag is what makes the log line say why.
+    this.pushLog({
+      type: 'skip', stagger: true,
+      actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+      message:    `${actor.unit_name} is still reeling and cannot move.`,
+      message_ru: `${actor.unit_name} ещё не оправился и не может двигаться.`,
+    });
+    actor.acted_this_round = true;
+    return this.afterAction(actor);
   }
 
   // Writes a phase onto a living boss. `overrides` is total, not partial — every
@@ -3849,6 +3968,17 @@ class BattleEngine {
         newLog.push(...this.log.slice(before));
         continue;
       }
+      // Staggered: this is the turn the stagger costs. Before chooseAiAction, so
+      // nothing is decided and no telegraph is declared on a turn that is not
+      // being taken — an announcement made here would land a round late and
+      // read as a lie. A telegraph already pending is left alone: it was
+      // promised, the player played a round against it, and it resolves on the
+      // boss's next real turn.
+      if (actor._stagger_skip_pending) {
+        this.doStaggerSkip(actor);
+        newLog.push(...this.log.slice(before));
+        continue;
+      }
       const actionDef = actor.unit_data?.action;
       const actionType = typeof actionDef === 'object' ? actionDef?.action_type : null;
       if (actionType === 'none') {
@@ -3978,6 +4108,14 @@ class BattleEngine {
         // An announcement is a promise: a reload must not cancel the spell the
         // player just spent a round preparing for.
         _telegraph:       c._telegraph ?? null,
+        // Stagger state. The open window and the turn still owed both have to
+        // survive a reload — without them a player could reload away the boss's
+        // lost turn, or lose the vulnerability they had just paid a burst round
+        // for. The mark goes too, or a reload mid-round zeroes the damage already
+        // dealt toward the next stagger.
+        _stagger_rounds:       c._stagger_rounds ?? 0,
+        _stagger_skip_pending: c._stagger_skip_pending ?? false,
+        _stagger_mark_hp:      c._stagger_mark_hp ?? c.battle_hp,
         acted_this_round: c.acted_this_round,
         used_active:      c.used_active ?? false,
         _rosterId:        c._rosterId ?? null,
@@ -4135,6 +4273,11 @@ class BattleEngine {
       }
       c._spell_cycle_idx    = s._spell_cycle_idx ?? 0;
       c._telegraph          = s._telegraph ?? null;
+      c._stagger_rounds       = s._stagger_rounds ?? 0;
+      c._stagger_skip_pending = s._stagger_skip_pending ?? false;
+      c._stagger_mark_hp      = s._stagger_mark_hp ?? c.battle_hp;
+      // The portrait badge needs no line here: it is an _effects record, and
+      // _effects is restored wholesale from the saved buffs further down.
       if (s._base_stats) c._base_stats = s._base_stats;
       if (s._resistances) {
         c.unit_data = c.unit_data || {};

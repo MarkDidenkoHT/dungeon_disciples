@@ -4455,6 +4455,17 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .log-entry--telegraph {
   color: #ff9d5c; font-weight: 600; font-size: 0.7rem;
 }
+/* A stagger is the player's own doing, so it reads as a win rather than a
+   warning — banded like a phase change because it is the same size of moment. */
+.log-entry--stagger {
+  color: #7fd4ff; text-align: center; font-weight: 700; font-size: 0.74rem;
+  letter-spacing: 0.02em; padding: 4px 0; margin: 3px 0;
+  border-top: 1px solid rgba(127, 212, 255, 0.35);
+  border-bottom: 1px solid rgba(127, 212, 255, 0.35);
+}
+.log-entry--stagger_skip {
+  color: #7fd4ff; font-weight: 600; font-size: 0.7rem;
+}
 .log-entry--error { color: #c84a3a; font-style: italic; }
 .log-actor  { color: #000; }
 .log-target { color: #3a4ac8; }
@@ -5245,6 +5256,205 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .power-strip--enemy .power-pip--full {
   background: var(--danger);
   box-shadow: 0 0 4px var(--danger);
+}
+
+/* ── Boss intent strip ─────────────────────────────────────────────────────
+   Full width under the arena: the boss's phase, how close the attempt is to
+   the next one, the next two spells in its rotation, and the stagger meter.
+   Compact on purpose — it sits between the boards and the initiative queue in
+   a fixed-height column, so it gets one line per row and no more. */
+.boss-intent {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  margin: 4px 10px 0;
+  padding: 6px 8px;
+
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(10, 14, 20, 0.72);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.bi-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bi-phase {
+  flex: 0 0 auto;
+  color: var(--danger);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Progress to the NEXT phase, not through the whole ladder — see the note in
+   bossIntentState. */
+.bi-arc {
+  position: relative;
+  flex: 1 1 auto;
+
+  height: 4px;
+  border-radius: 2px;
+  background: #1e2735;
+  overflow: hidden;
+}
+
+.bi-arc-fill {
+  display: block;
+  height: 100%;
+  background: var(--danger);
+  opacity: 0.8;
+  transition: width 0.3s ease-out;
+}
+
+.bi-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bi-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+
+  opacity: 0.72;
+}
+
+.bi-row--ready { opacity: 1; }
+
+.bi-label {
+  flex: 0 0 auto;
+  min-width: 42px;
+
+  color: var(--muted, #7b8798);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.bi-name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* The power price, read against the enemy strip's own pips. */
+.bi-cost {
+  flex: 0 0 auto;
+  min-width: 14px;
+  padding: 0 4px;
+
+  border-radius: 3px;
+  background: #1e2735;
+  color: var(--danger);
+  font-weight: 700;
+  text-align: center;
+}
+
+.bi-row--ready .bi-cost {
+  background: var(--danger);
+  color: #0a0e14;
+}
+
+.bi-state {
+  flex: 0 0 auto;
+  color: var(--muted, #7b8798);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* An announced cast is the one row worth interrupting the player for: it is
+   already committed and it lands next turn. */
+.bi-row--telegraph {
+  opacity: 1;
+  color: var(--danger);
+  font-weight: 700;
+  animation: bi-telegraph 1.1s ease-in-out infinite;
+}
+
+.bi-row--telegraph .bi-label,
+.bi-row--telegraph .bi-state { color: var(--danger); }
+
+@keyframes bi-telegraph {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+.bi-stagger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bi-meter {
+  position: relative;
+  flex: 1 1 auto;
+
+  height: 5px;
+  border-radius: 3px;
+  background: #1e2735;
+  overflow: hidden;
+}
+
+.bi-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  /* Cold to hot as the round's damage piles up, so a nearly-full meter reads as
+     "one more hit" without a number being read. */
+  background: linear-gradient(90deg, #3d6ea8, #e0a02c);
+  transition: width 0.25s ease-out;
+}
+
+.bi-meter-num {
+  flex: 0 0 auto;
+  min-width: 44px;
+
+  color: var(--muted, #7b8798);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.bi-stagger--active .bi-label {
+  color: var(--danger);
+  animation: bi-telegraph 0.9s ease-in-out infinite;
+}
+
+.bi-stagger--active .bi-meter-fill {
+  background: var(--danger);
+  box-shadow: 0 0 6px var(--danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bi-row--telegraph,
+  .bi-stagger--active .bi-label { animation: none; }
+  .bi-arc-fill,
+  .bi-meter-fill { transition: none; }
+}
+
+/* The attempt's depth, on the result screen. */
+.colossus-result-phase {
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.colossus-result-bonus {
+  color: var(--muted, #7b8798);
+  font-size: 11px;
 }
 
 .spell-track {
@@ -10783,6 +10993,9 @@ body[data-faction="grail_of_sorrow"] .tome-layer-arrow--live {
 .colossus-hero-text { display: flex; flex-direction: column; gap: 2px; }
 .colossus-hero-name { font-weight: bold; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.9); }
 .colossus-hero-phase { font-size: 0.72rem; color: #e8d9b0; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
+/* The rule of the fight, under the opening phase's flavour. Quieter than it
+   because it is a mechanic rather than a mood. */
+.colossus-hero-escalates { font-size: 0.66rem; color: #b6a98a; line-height: 1.3; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
 .colossus-boss { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
 /* The card's top half is one button: tapping it opens this faction's detail and
    closes whichever other faction was open. */

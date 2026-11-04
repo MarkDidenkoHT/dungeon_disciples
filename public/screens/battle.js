@@ -11,6 +11,9 @@ import { createBattleRealtimeController } from '../battle-realtime.js';
 import { assetUrl } from '../asset_base.js';
 import { SPELLS, POWER_MAX, POWER_NAMES, spellParamsAtPower } from '../../data/spells.js';
 import { QUESTS_BY_ID } from '../../data/quests.js';
+// Named so the result screen can say which phase the attempt reached, in the
+// player's own language.
+import { COLOSSUS_PHASES } from '../../data/colossus.js';
 import { openDailyTasks } from '../daily.js';
 
 const ROWS = 3;
@@ -201,6 +204,23 @@ const BT = {
   colossusDealt: { en: n => `${n} damage dealt`, ru: n => `Нанесено урона: ${n}` },
   colossusLeft:  { en: (hp, max) => `Boss HP ${hp} / ${max}`, ru: (hp, max) => `HP босса ${hp} / ${max}` },
   colossusWeek:  { en: n => `Your week: ${n}`, ru: n => `Ваш урон за неделю: ${n}` },
+  // The phase the attempt reached, and what the pool paid for reaching it.
+  colossusPhase: { en: (n, name) => `Reached phase ${n} — ${name}`, ru: (n, name) => `Достигнута фаза ${n} — ${name}` },
+  colossusBonus: { en: (pct, n) => `+${pct}% depth bonus · ${n} credited to the pool`,
+                   ru: (pct, n) => `+${pct}% за глубину · в общий счёт зачтено ${n}` },
+  // ── Boss intent strip ────────────────────────────────────────────────────
+  biPhase:      { en: n => `Phase ${n}`,  ru: n => `Фаза ${n}` },
+  biNext:       { en: 'NEXT',             ru: 'ДАЛЬШЕ' },
+  biThen:       { en: 'THEN',             ru: 'ПОТОМ' },
+  biIncoming:   { en: 'INCOMING',         ru: 'УДАР' },
+  biBanking:    { en: (have, cost) => `banking ${have}/${cost}`, ru: (have, cost) => `копит ${have}/${cost}` },
+  biReady:      { en: 'ready',            ru: 'готово' },
+  biStagger:    { en: 'Stagger',          ru: 'Оглушение' },
+  biStaggered:  { en: n => `STAGGERED · ${n}`, ru: n => `ОГЛУШЁН · ${n}` },
+  biArc:        { en: (dealt, arc) => `${dealt} / ${arc} toward the next phase`,
+                  ru: (dealt, arc) => `${dealt} / ${arc} до следующей фазы` },
+  biStaggerTip: { en: (lost, thr) => `${lost} of ${thr} damage this round — fill it and its armor and resistances fail`,
+                  ru: (lost, thr) => `${lost} из ${thr} урона за раунд — заполни, и броня с сопротивлениями падут` },
   claimed:      { en: 'Rewards already processed.', ru: 'Награды уже начислены.' },
   questsHead:   { en: 'Quests',                     ru: 'Задания' },
   questReached: { en: 'Milestone reached!',         ru: 'Этап пройден!' },
@@ -1736,6 +1756,163 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     return BL === 'ru' ? names.ru : names.en;
   }
 
+  // ── Boss intent ────────────────────────────────────────────────────────────
+  // Everything the strip under the arena needs, read off the boss combatant the
+  // server already sends in full. No new endpoint and no new battle_data field:
+  // the rotation, the phase ladder, the arc and the stagger threshold all ride
+  // on unit_data, and the banked power is on the snapshot.
+  //
+  // Null for every fight without a rotation boss, which hides the strip.
+  function bossIntentState() {
+    const boss = (state?.combatants || [])
+      .find(c => c.side === 'enemy' && c.alive && c.unit_data?.spell_cycle);
+    if (!boss) return null;
+    const data = boss.unit_data || {};
+
+    const phases = Array.isArray(data.phases) ? data.phases : [];
+    const phase  = phases.find(p => p.id === boss._phase) || null;
+
+    // How far this attempt has walked its own ladder. Only meaningful on the
+    // per-attempt basis (data/colossus.js) — on an HP-fraction ladder the health
+    // bar already says it, so the arc row is left off.
+    let arc = null;
+    const arcTotal = Number(data.phase_arc) || 0;
+    if (data.phase_basis === 'attempt' && arcTotal > 0) {
+      const startHp = Number.isFinite(Number(data.current_hp)) ? Number(data.current_hp) : boss.max_hp;
+      const dealt   = Math.max(0, startHp - boss.battle_hp);
+      // Against the NEXT threshold rather than the whole arc: "how close is the
+      // next change" is the question being asked, and a bar that creeps across
+      // four phases answers it four times worse.
+      const band    = arcTotal / Math.max(1, phases.length);
+      const inBand  = band > 0 ? (dealt % band) : 0;
+      const last    = phases.length && boss._phase === phases[phases.length - 1].id;
+      arc = {
+        dealt, total: arcTotal,
+        pct: last ? 100 : Math.min(100, (inBand / band) * 100),
+        last,
+      };
+    }
+
+    // The rotation, from where it stands. `_spell_cycle_idx` points at the entry
+    // the boss will cast or is banking toward (aiPickCycledSpell), so the queue
+    // reads forward from it.
+    const cycle = Array.isArray(data.spells) ? data.spells : [];
+    const have  = Number(state?.power?.enemy ?? 0);
+    const queue = [];
+    if (cycle.length) {
+      const at = ((Number(boss._spell_cycle_idx) || 0) % cycle.length + cycle.length) % cycle.length;
+      for (let k = 0; k < Math.min(2, cycle.length); k++) {
+        const entry = cycle[(at + k) % cycle.length];
+        const def   = entry?.spell_id ? findSpellById(entry.spell_id) : null;
+        if (!def) continue;
+        queue.push({
+          name: spellName(def, player),
+          cost: Number(entry.power) || 0,
+          icon: def.effect_icon || null,
+          // Affordability is only honest for the head of the queue: the boss
+          // banks a point per turn, so the second entry's cost will be met out
+          // of power it has not earned yet.
+          ready: k === 0 && have >= (Number(entry.power) || 0),
+        });
+      }
+    }
+
+    // An announced cast outranks the rotation: it is already committed, it lands
+    // next turn, and it is the thing the player has one round to answer.
+    const tDef = boss._telegraph?.spell_id ? findSpellById(boss._telegraph.spell_id) : null;
+    const telegraph = tDef ? { name: spellName(tDef, player), icon: tDef.effect_icon || null } : null;
+
+    // The stagger meter. `_stagger_mark_hp` is the HP the boss opened the round
+    // on, so the gap is exactly what the engine measures against the threshold.
+    let stagger = null;
+    const threshold = Number(data.stagger_threshold) || 0;
+    if (threshold > 0) {
+      const mark = Number.isFinite(Number(boss._stagger_mark_hp)) ? Number(boss._stagger_mark_hp) : boss.battle_hp;
+      const lost = Math.max(0, mark - boss.battle_hp);
+      const rounds = Number(boss._stagger_rounds) || 0;
+      stagger = {
+        lost, threshold, rounds,
+        pct: Math.min(100, (lost / threshold) * 100),
+        active: rounds > 0,
+      };
+    }
+
+    return { boss, phase, arc, queue, telegraph, stagger, have };
+  }
+
+  function renderBossIntent() {
+    const el = ui?.bossIntent;
+    if (!el) return;
+    const s = bossIntentState();
+    el.classList.toggle('hidden', !s);
+    if (!s) { el.innerHTML = ''; intentSig = null; return; }
+
+    const phaseLabel = s.phase
+      ? `${BT.biPhase[BL](s.phase.id)} · ${BL === 'ru' ? s.phase.name_ru : s.phase.name}`
+      : '';
+
+    const rows = [];
+    if (s.telegraph) {
+      rows.push(`
+        <div class="bi-row bi-row--telegraph">
+          <span class="bi-label">${BTx('biIncoming')}</span>
+          <span class="bi-name">${escBI(s.telegraph.name)}</span>
+          <span class="bi-state">⚠</span>
+        </div>`);
+    }
+    // The announced cast takes the first slot, so the rotation fills what is
+    // left rather than pushing the strip to three rows on a phone.
+    const slots = s.telegraph ? 1 : 2;
+    const labels = [BTx('biNext'), BTx('biThen')];
+    s.queue.slice(0, slots).forEach((q, i) => {
+      const label = s.telegraph ? labels[1] : labels[i];
+      const stateTxt = q.ready ? BTx('biReady') : (i === 0 ? BT.biBanking[BL](s.have, q.cost) : '');
+      rows.push(`
+        <div class="bi-row${q.ready ? ' bi-row--ready' : ''}">
+          <span class="bi-label">${label}</span>
+          <span class="bi-name">${escBI(q.name)}</span>
+          <span class="bi-cost" title="${powerLabel()}">${q.cost}</span>
+          <span class="bi-state">${escBI(stateTxt)}</span>
+        </div>`);
+    });
+
+    const arcRow = s.arc && !s.arc.last
+      ? `<span class="bi-arc" title="${BT.biArc[BL](s.arc.dealt, s.arc.total)}">
+           <span class="bi-arc-fill" style="width:${s.arc.pct.toFixed(1)}%"></span>
+         </span>`
+      : '';
+
+    const st = s.stagger;
+    const staggerRow = st
+      ? `<div class="bi-stagger${st.active ? ' bi-stagger--active' : ''}">
+           <span class="bi-label">${st.active ? BT.biStaggered[BL](st.rounds) : BTx('biStagger')}</span>
+           <span class="bi-meter" title="${BT.biStaggerTip[BL](st.lost, st.threshold)}">
+             <span class="bi-meter-fill" style="width:${(st.active ? 100 : st.pct).toFixed(1)}%"></span>
+           </span>
+           <span class="bi-meter-num">${st.lost}/${st.threshold}</span>
+         </div>`
+      : '';
+
+    // Signature-gated like the initiative strip: render() runs on every board
+    // refresh and rewriting this innerHTML each time restarts the pulse on the
+    // telegraph row and the stagger meter's transition.
+    const sig = JSON.stringify([phaseLabel, rows, arcRow, staggerRow]);
+    if (sig === intentSig) return;
+    intentSig = sig;
+
+    el.innerHTML = `
+      <div class="bi-head">
+        <span class="bi-phase">${escBI(phaseLabel)}</span>
+        ${arcRow}
+      </div>
+      <div class="bi-rows">${rows.join('')}</div>
+      ${staggerRow}
+    `;
+  }
+
+  const escBI = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  let intentSig = null;
+
   // ── Casting ────────────────────────────────────────────────────────────────
   // Researched combat spells only, and only those the current power can pay for
   // — a list that shows what you cannot afford is a list of disappointments.
@@ -2064,7 +2241,16 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         : '';
       return `<div class="log-entry">${line}${detail}${entry.killed ? ' 💀' : ''}</div>`;
     }
-    if (entry.type === 'skip') return `<div class="log-entry log-entry--skip">${BTf('logSkip')(actor())}</div>`;
+    if (entry.type === 'skip') {
+      // A turn lost to a stagger is the player's own doing and says so, in the
+      // engine's own words (doStaggerSkip). Every other skip is the stock line.
+      if (entry.stagger) {
+        const lang = player?.settings?.language;
+        const msg  = (lang && lang !== 'en' && entry.message_ru) ? entry.message_ru : entry.message;
+        return `<div class="log-entry log-entry--stagger_skip">${msg}</div>`;
+      }
+      return `<div class="log-entry log-entry--skip">${BTf('logSkip')(actor())}</div>`;
+    }
     if (entry.type === 'bark') {
       if (player?.settings?.barks_enabled === false) return '';
       return `<div class="log-entry log-entry--bark">${actor()}: "${barkText(entry)}"</div>`;
@@ -2085,7 +2271,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // before it lands (utils/battle-engine.js: applyPhase / declareTelegraph).
     // Both carry their own sentence in both languages, like a litany notice, so
     // there is no template to keep in step with the engine.
-    if (entry.type === 'phase' || entry.type === 'telegraph') {
+    // The stagger line joins them: composed in both languages by the engine
+    // (maybeStagger) for the same reason — the sentence names numbers the client
+    // would otherwise have to re-derive.
+    if (entry.type === 'phase' || entry.type === 'telegraph' || entry.type === 'stagger') {
       const lang = player?.settings?.language;
       const msg  = (lang && lang !== 'en' && entry.message_ru) ? entry.message_ru : entry.message;
       return `<div class="log-entry log-entry--${entry.type}">${msg}</div>`;
@@ -2354,6 +2543,20 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             <div class="power-strip power-strip--enemy" id="power-enemy" data-side="enemy"></div>
           </div>
         </div>
+        <!-- The boss's INTENT. Only drawn for an enemy that fights on a rotation
+             (spell_cycle in its definition — today that is the Faction
+             Colossus). No backticks in here: this comment lives inside a
+             template literal, and one would close it.
+             The one place in the fight where its design is visible: the phase it is in,
+             how close the attempt is to the next one, the next two spells in the
+             rotation with what it can pay for, and how close this round's damage
+             is to staggering it.
+             None of this is new information — the rotation has always been a
+             fixed order and the phases have always been readable from the pool —
+             it was simply invisible, which made a legible fight look like a dice
+             roll. Full width, under the arena, because it is about the fight
+             rather than about either board. -->
+        <div class="boss-intent hidden" id="boss-intent"></div>
         <div class="init-queue" id="init-queue"></div>
         <div class="action-panel">
           <!-- Each button is an icon tile with its role caption BELOW the tile,
@@ -2396,6 +2599,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     ui = {
       screen: root.querySelector('.screen-battle'),
       initQueue: root.querySelector('#init-queue'),
+      bossIntent: root.querySelector('#boss-intent'),
       powerPlayer: root.querySelector('#power-player'),
       powerEnemy:  root.querySelector('#power-enemy'),
       playerGrid: root.querySelector('#battle-grid-player'),
@@ -3153,6 +3357,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       .sort((a, b) => b.initiative - a.initiative);
 
     renderPowerStrips();
+    // Same place and the same reason: the boss's phase, rotation position and
+    // stagger meter all move with the board, so they are refreshed wherever it
+    // is — turn transitions, reconnects, snapshot updates.
+    renderBossIntent();
 
     // While a batch plays, playbackSequence owns the strip and the ring: it is
     // walking the order one unit at a time and nobody is lit between turns.
@@ -3623,10 +3831,23 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             <span class="reward-chip-icon">${CRYSTAL_ICONS[g.item] || (g.item === 'Gold' ? GOLD_ICON : '⚜')}</span>
             <span class="reward-chip-amt">+${g.amount}</span>
           </div>`).join('');
+        // How deep the attempt got, and what the pool paid for it. The big
+        // number is the RAW damage the player actually did; the depth line below
+        // explains why the pool moved by more than that, which is the one thing
+        // about the new phase arc a player has to be told rather than infer.
+        const endPhase = COLOSSUS_PHASES.find(p => p.id === c.end_phase);
+        const phaseLine = endPhase
+          ? `<div class="colossus-result-phase">${BT.colossusPhase[BL](endPhase.id, BL === 'ru' ? endPhase.name_ru : endPhase.name)}</div>`
+          : '';
+        const bonusLine = c.bonus_pct > 0
+          ? `<div class="colossus-result-bonus">${BT.colossusBonus[BL](c.bonus_pct, c.applied)}</div>`
+          : '';
         rewardsEl.innerHTML = `
           <div class="result-outcome ${c.killed ? 'result-outcome--win' : 'result-outcome--loss'}">${c.killed ? BTx('colossusSlain') : BTx('colossusOver')}</div>
           <div class="colossus-result">
-            <div class="colossus-result-dealt">${BT.colossusDealt[BL](c.applied)}</div>
+            <div class="colossus-result-dealt">${BT.colossusDealt[BL](c.dealt ?? c.applied)}</div>
+            ${phaseLine}
+            ${bonusLine}
             <div class="colossus-bar"><div class="colossus-bar-fill" style="width:${pct}%"></div></div>
             <div class="colossus-result-meta">${BT.colossusLeft[BL](c.hp_left, c.max_hp)} · ${BT.colossusWeek[BL](c.week_total)}</div>
           </div>

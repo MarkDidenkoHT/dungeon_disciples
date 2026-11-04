@@ -10,7 +10,7 @@ import { COLOSSUS_PHASES, COLOSSUS_CURRENCY, colossusBaseDef, COLOSSUS_REST_REFR
 
 const CT = {
   you:         { en: 'You',               ru: 'Вы' },
-  phase:       { en: n => `Phase ${n}`,   ru: n => `Фаза ${n}` },
+  hpLeft:      { en: pct => `${pct}% left`, ru: pct => `осталось ${pct}%` },
   hp:          { en: (hp, max) => `${hp} / ${max} HP`, ru: (hp, max) => `${hp} / ${max} HP` },
   attack:      { en: 'Attack',            ru: 'В бой' },
   slain:       { en: (place, when) => `Slain ${place} · ${when}`, ru: (place, when) => `Повержен ${place} · ${when}` },
@@ -34,7 +34,7 @@ const CT = {
   wakeFailed:  { en: 'Could not wake that unit.', ru: 'Не удалось поднять юнита.' },
   working:     { en: '…',                 ru: '…' },
   statHp:           { en: 'Boss HP',        ru: 'HP босса' },
-  statPhase:        { en: 'Phase',          ru: 'Фаза' },
+  statLeft:         { en: 'HP left',        ru: 'Осталось HP' },
   statContributors: { en: 'Fighters',       ru: 'Бойцов' },
   statAttempts:     { en: 'Attempts',       ru: 'Попыток' },
   top:         { en: 'Top contributors', ru: 'Лучшие бойцы' },
@@ -44,8 +44,13 @@ const CT = {
   loadFailed:  { en: 'Could not load the Colossus.', ru: 'Не удалось загрузить Колосса.' },
   retry:       { en: 'Retry',             ru: 'Повторить' },
   resets:      { en: 'Resets in',         ru: 'Сброс через' },
-  cardAlive:   { en: (pct, phase) => `${pct}% HP · Phase ${phase}`, ru: (pct, phase) => `${pct}% HP · Фаза ${phase}` },
+  cardAlive:   { en: pct => `${pct}% HP left`, ru: pct => `Осталось ${pct}% HP` },
   cardSlain:   { en: 'Slain this week',   ru: 'Повержен на этой неделе' },
+  // Said on the page because it is the one rule of the fight a player cannot see
+  // from the outside: every attempt starts gentle and gets worse as you hurt it,
+  // and the deeper you push the more the pool credits you.
+  escalates:   { en: n => `Every attempt opens here and escalates through ${n} phases as you damage it. The deeper you get, the more your damage counts toward the pool.`,
+                 ru: n => `Каждая попытка начинается отсюда и проходит через ${n} фаз по мере урона. Чем глубже — тем больше урона зачтётся в общий счёт.` },
 };
 
 const FACTIONS = {
@@ -69,7 +74,7 @@ export function colossusCardStatus(state, L) {
   const mine = state?.bosses?.[0];
   if (!mine) return '';
   if (mine.killed_at) return CT.cardSlain[L];
-  return CT.cardAlive[L](Math.ceil((mine.hp / mine.max_hp) * 100), mine.phase);
+  return CT.cardAlive[L](Math.ceil((mine.hp / mine.max_hp) * 100));
 }
 
 function timeLeft(ms, L) {
@@ -87,11 +92,6 @@ function grantIcon(item) {
 function grantChips(grants) {
   return (grants || []).map(g =>
     `<span class="colossus-chip" title="${esc(g.item)}">${grantIcon(g.item)} +${g.amount}</span>`).join('');
-}
-
-function phaseName(id, L) {
-  const p = COLOSSUS_PHASES.find(x => x.id === id);
-  return p ? (L === 'ru' ? p.name_ru : p.name) : '';
 }
 
 function topListHtml(boss, L) {
@@ -113,7 +113,12 @@ function bossCardHtml(boss, { mine, open, L }) {
     : '';
   const status = slain
     ? `<span class="colossus-boss-slain">♛ ${CT.slain[L](CT.place[L][(boss.kill_rank || 1) - 1] || '', when)}</span>`
-    : `<span class="colossus-boss-phase">${CT.phase[L](boss.phase)}</span>`;
+    // NOT a phase any more. Attempts walk their own phase ladder now (see
+    // data/colossus.js), so the pool's band says nothing about the fight a
+    // player is about to have — showing "Phase 4" here while their own battle
+    // opened in phase 1 was the one reading of this screen that could only
+    // mislead. What the pool genuinely is, is how much of it is left.
+    : `<span class="colossus-boss-phase">${CT.hpLeft[L](Math.ceil(pct))}</span>`;
   const crest = faction
     ? `<img class="colossus-crest" src="${assetUrl(`/assets/crests/${faction.crest}.jpg`)}" alt="" onerror="this.style.visibility='hidden'">`
     : '';
@@ -143,7 +148,7 @@ function bossCardHtml(boss, { mine, open, L }) {
       <div class="colossus-boss-detail">
         <div class="colossus-detail-stats">
           <span>${CT.statHp[L]}: <b>${boss.hp} / ${boss.max_hp}</b></span>
-          <span>${CT.statPhase[L]}: <b>${slain ? '—' : esc(phaseName(boss.phase, L))}</b></span>
+          <span>${CT.statLeft[L]}: <b>${slain ? '—' : `${Math.ceil(pct)}%`}</b></span>
           <span>${CT.statContributors[L]}: <b>${boss.contributors ?? 0}</b></span>
           <span>${CT.statAttempts[L]}: <b>${boss.attempts ?? 0}</b></span>
         </div>
@@ -189,7 +194,11 @@ function portraitUrl(unitId) {
 export async function renderColossusPage(host, state, { player, L, onAttack, onRefresh }) {
   if (!host) return;
   const mine  = state.bosses?.[0];
-  const phase = COLOSSUS_PHASES.find(p => p.id === mine?.phase);
+  // The phase every attempt OPENS in, which is the first one — the ladder is
+  // walked by the damage a single attempt deals, not by the pool, so this is the
+  // same for everyone all week and the line below can promise the escalation
+  // rather than report a band the player will not meet.
+  const phase = COLOSSUS_PHASES[0];
   const def   = colossusBaseDef();
   const me    = state.me || {};
 
@@ -234,6 +243,7 @@ export async function renderColossusPage(host, state, { player, L, onAttack, onR
         <div class="colossus-hero-text">
           <span class="colossus-hero-name">${esc((L === 'ru' ? def?.name_ru : def?.name) || def?.name || '')}</span>
           ${phase && !mine?.killed_at ? `<span class="colossus-hero-phase">${esc(L === 'ru' ? phase.name_ru : phase.name)} — ${esc(L === 'ru' ? phase.description_ru : phase.description)}</span>` : ''}
+          ${!mine?.killed_at ? `<span class="colossus-hero-escalates">${CT.escalates[L](COLOSSUS_PHASES.length)}</span>` : ''}
         </div>
       </div>
 

@@ -11,7 +11,7 @@
 // health falls, and the card reads differently at every step.
 import { renderColossusPage } from '../vendor/public/colossus-page.js';
 import {
-  COLOSSUS_MAX_HP, COLOSSUS_MILESTONES, colossusPhaseFor, colossusWeek,
+  COLOSSUS_MAX_HP, COLOSSUS_MILESTONES, colossusWeek,
 } from '../vendor/data/colossus.js';
 import {
   player, faction, FACTIONS, L, demoState, seedResources,
@@ -50,7 +50,6 @@ function boss(factionId, hp) {
     faction: factionId,
     hp,
     max_hp: COLOSSUS_MAX_HP,
-    phase: colossusPhaseFor(hp).id,
     killed_at: null,
     contributors: factionId === faction ? 14 : 9 + Math.floor(hp / 2000),
     attempts: factionId === faction ? 61 : 40,
@@ -99,7 +98,6 @@ function attack() {
   // About what a mid-game party takes off it in one battle.
   const hit = 240 + Math.floor(Math.random() * 420);
   mine.hp = Math.max(0, mine.hp - hit);
-  mine.phase = colossusPhaseFor(mine.hp).id;
   mine.attempts += 1;
   if (mine.hp === 0) {
     mine.killed_at = Date.now();
