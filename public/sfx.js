@@ -1,4 +1,4 @@
-import { assetUrl } from './asset_base.js';
+import { createAssetAudio } from './asset_base.js';
 // One-shot battle and UI sound effects, mirroring music.js. An ability def in
 // data/unit_abilities.js may carry an `animation_sound` base name, and battle
 // playback plays its matching file from /assets/sfx/abilities/<name>.mp3.
@@ -7,11 +7,6 @@ import { assetUrl } from './asset_base.js';
 // By the time battle playback runs the user has already tapped through the UI,
 // so the browser's audio gesture-unlock has happened — no unlock dance needed
 // like music.js has for autoplay-on-load.
-
-// Resolved per play, not at import: the base can still flip to the origin
-// while this module loads (see asset_base.js), and audio has no retry hook.
-const abilitySfxUrl = name => assetUrl(`/assets/sfx/abilities/${name}.mp3`);
-const uiSfxUrl = name => assetUrl(`/assets/sfx/ui/${name}.mp3`);
 
 let _enabled = true;
 
@@ -38,7 +33,7 @@ export function playAbilitySound(name) {
   _lastName = name;
   _lastAt   = now;
   try {
-    const a  = new Audio(abilitySfxUrl(name));
+    const a  = createAssetAudio(`/assets/sfx/abilities/${name}.mp3`);
     a.volume = 0.7;
     a.play().catch(() => {}); // missing file / autoplay block — stay silent
   } catch {}
@@ -47,7 +42,7 @@ export function playAbilitySound(name) {
 export function playUiSound(name) {
   if (!_enabled || !name) return;
   try {
-    const a  = new Audio(uiSfxUrl(name));
+    const a  = createAssetAudio(`/assets/sfx/ui/${name}.mp3`);
     a.volume = 0.7;
     a.play().catch(() => {}); // missing file / autoplay block — stay silent
   } catch {}
