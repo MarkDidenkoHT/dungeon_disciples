@@ -1420,7 +1420,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
     if ((p.hot_pct != null || p.hot_pct_per_tag != null) && target) {
       target._hot = (target._hot ?? 0) + Math.floor(dmg * pctFor(p, engine, owner.side, "hot_pct", "hot_pct_per_tag") / 100);
       engine.registerEffect(target, {
-        key: 'hot', name: def.name, polarity: 'positive', dispellable: def.dispellable === true, clear: { _hot: 0 },
+        key: 'hot', name: def.name, polarity: 'positive', dispellable: def.dispellable === true, clear: { _hot: 0, _hot_permanent: 0 },
       });
       engine.pushLog({ type: 'status', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: target._hot });
     }

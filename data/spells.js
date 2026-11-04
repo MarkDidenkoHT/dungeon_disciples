@@ -192,6 +192,23 @@ const SPELLS = {
       effect_name: 'purgation',
       params: { dispel_polarity: 'positive', dispel_count: 1 },
     },
+    {
+      id: 'e_spell_4',
+      name: 'Everlasting Renewal',
+      name_ru: 'Вечное обновление',
+      category: 'buff',
+      tier: 3,
+      type: 'combat',
+      effect_icon: 'renew',
+      description: 'Make one ally’s current Renew heal permanent. Costs 2 power.',
+      description_ru: 'Делает текущее исцеление «Обновления» союзника постоянным. Стоит 2 силы.',
+      cost: { crystals: { Crystals_Life: 20, Crystals_Fire: 5 } },
+      power_cost: 2,
+      effect_type: 'buff',
+      class: 'boon',
+      target_scope: 'single_ally',
+      params: { make_hot_permanent: true },
+    },
   ],
 
   choir_of_the_cursed: [

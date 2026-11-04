@@ -449,6 +449,7 @@ class BattleEngine {
       _dot_permanent:     0,
       _bleed_permanent:   0,
       _chill_permanent:   0,
+      _hot_permanent:     0,
       _dot_source_key:    null,
       _poison_source_key: null,
       _bleed_source_key:  null,
@@ -1921,7 +1922,7 @@ class BattleEngine {
       poison: ['_poison_dmg', null],
       decay:  ['_decay',     null],
       shield: ['_shield',    null],
-      hot:    ['_hot',       null],
+      hot:    ['_hot',       '_hot_permanent'],
     };
   }
 
@@ -2157,8 +2158,11 @@ class BattleEngine {
       const actual = Math.max(0, Math.min(ticked, unit.max_hp - unit.battle_hp));
       unit.battle_hp += actual;
       this.pushLog({ type: 'passive', passive: 'Renew', actorName: '💚', targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, value: actual, heal: true });
-      unit._hot = 0;
-      this.clearEffect(unit, 'hot');
+      if (unit._hot_permanent > 0) unit._hot = unit._hot_permanent;
+      else {
+        unit._hot = 0;
+        this.clearEffect(unit, 'hot');
+      }
       if (actual > 0) this.fireHealTriggers(unit, unit, actual);
     }
   }
@@ -3362,6 +3366,7 @@ class BattleEngine {
     if (p.heal_pct && !p.resurrect_hp_pct && targets.every(c => c.battle_hp >= c.max_hp)) return false;
     if (p.make_bleed_permanent && targets.every(c => !(c._bleed_dmg > 0) || c._bleed_permanent > 0)) return false;
     if (p.make_burn_permanent && targets.every(c => !(c.dot_dmg > 0) || c._dot_permanent > 0)) return false;
+    if (p.make_hot_permanent && targets.every(c => !(c._hot > 0) || c._hot_permanent > 0)) return false;
     if (p.armor_boost && targets.every(c => (c.armor ?? 0) >= MITIGATION_CAP_PCT)) return false;
     return true;
   }
@@ -3499,6 +3504,11 @@ class BattleEngine {
     const scope = def?.target_scope;
     if (scope === 'single_enemy') return this.aiSpellVictim(actor)?.id ?? null;
     if (scope === 'single_ally') {
+      if (def.params?.make_hot_permanent === true) {
+        return this.combatants
+          .filter(c => c.side === actor.side && c.alive && !c._untargetable && c._hot > 0 && !(c._hot_permanent > 0))
+          .sort((a, b) => (a.battle_hp / a.max_hp) - (b.battle_hp / b.max_hp))[0]?.id ?? null;
+      }
       // Skips `_untargetable` for the same reason the enemy pick does: a bonded
       // passenger is deliberately the lowest-HP unit on its side, so a heal or a
       // ward aimed by this sort would land on it every single time.
@@ -3931,6 +3941,7 @@ class BattleEngine {
         buffs: {
           dot_dmg:             c.dot_dmg,
           _hot:                c._hot,
+          _hot_permanent:      c._hot_permanent ?? 0,
           _shield:             c._shield ?? 0,
           _decay:              c._decay  ?? 0,
           _stacks:             c._stacks,
@@ -4092,6 +4103,7 @@ class BattleEngine {
       c._bleed_source_key = b._bleed_source_key ?? null;
       c._chill_source_key = b._chill_source_key ?? null;
       c._hot               = b._hot               ?? 0;
+      c._hot_permanent     = b._hot_permanent     ?? 0;
       c._shield            = b._shield            ?? 0;
       c._decay             = b._decay             ?? 0;
       c._stacks            = b._stacks            || {};
@@ -4251,6 +4263,11 @@ class BattleEngine {
       for (const c of targets) {
         if (params.make_bleed_permanent && (c._bleed_dmg ?? 0) > 0) c._bleed_permanent = c._bleed_dmg;
         if (params.make_burn_permanent && (c.dot_dmg ?? 0) > 0) c._dot_permanent = c.dot_dmg;
+      }
+    }
+    if (params.make_hot_permanent === true) {
+      for (const c of targets) {
+        if ((c._hot ?? 0) > 0) c._hot_permanent = c._hot;
       }
     }
     if (params.heal_all_allies && params.heal_flat > 0 && params._caster_side) {
