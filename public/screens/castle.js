@@ -429,6 +429,25 @@ export function renderCastle(root, params = {}) {
     openSubSheet(title, bodyHtml, badgesHtml);
   }
 
+  function unitDescriptionButtonHtml(unit) {
+    if (!unit) return '';
+    const label = castleLang === 'ru' ? 'Описание бойца' : 'Unit description';
+    return `<button type="button" class="unit-description-btn"
+                    data-unit-description="${escapeHtml(unit.id)}"
+                    aria-label="${label}" title="${label}">
+              <img src="${assetUrl('/assets/icons/scroll.png')}" alt="">
+            </button>`;
+  }
+
+  function openUnitDescription(unit) {
+    if (!unit) return;
+    const description = castleLang === 'ru' ? unit.flavor_ru : unit.flavor_en;
+    const paragraphs = (description || '').split(/\r?\n/).filter(Boolean)
+      .map(line => `<p class="ability-modal-desc">${escapeHtml(line)}</p>`)
+      .join('');
+    openAbilityModal(unitName(unit, player), paragraphs);
+  }
+
   // What the hero's active slot says when tapped. It does not list the spells —
   // the Spell Tome is where they are read and researched, and duplicating that
   // list here would be a second place to keep in step. This only answers the
@@ -3252,6 +3271,7 @@ export function renderCastle(root, params = {}) {
           // Same field the Temple page reads, so the slot sheet and the
           // calling page cannot disagree about what a unit is sworn to.
           calling: unitCallingId(rosterUnit),
+          portraitOverlayHtml: unitDescriptionButtonHtml(liveUnit),
           buildingLabel: levelLabelFor(def, slotLevel),
           itemSlotHtml, extraSlotHtml: treeBtnHtml, activeSlotHtml: spellSlotHtml, progress,
           tome: tomeForUnit(rosterUnit),
@@ -3329,6 +3349,7 @@ export function renderCastle(root, params = {}) {
           itemSlotHtml,
           activeSlotHtml: spellSlotHtml,
           extraSlotHtml: treeButtonHtml(c.unit.id),
+          portraitOverlayHtml: unitDescriptionButtonHtml(c.unit),
           // The REAL bars, not a placeholder. The unit standing in this slot
           // still has the HP and XP it had a moment ago — browsing a branch
           // does not change them — so the rows carry true numbers and, being
@@ -3420,6 +3441,12 @@ export function renderCastle(root, params = {}) {
     }
 
     body?.addEventListener('click', e => {
+      const descriptionBtn = e.target.closest('[data-unit-description]');
+      if (descriptionBtn) {
+        openUnitDescription(getUnitByUnitId(descriptionBtn.dataset.unitDescription));
+        return;
+      }
+
       // Before handleUnitInspect: the tree button is an .ability-icon by shape,
       // so the generic inspector would swallow it looking for an ability key.
       // Reads the id off the BUTTON, not the closed-over one: the card is

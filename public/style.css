@@ -3846,6 +3846,33 @@ button.cost-bar-item:active { transform: scale(0.9); }
   text-shadow: 0 1px 4px #000;
 }
 
+.unit-description-btn {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 4;
+  width: 40px;
+  height: 40px;
+  padding: 3px;
+  border: 1px solid rgba(220, 190, 130, 0.7);
+  border-radius: 7px;
+  background: rgba(15, 18, 24, 0.78);
+  cursor: pointer;
+}
+
+.unit-description-btn:hover,
+.unit-description-btn:focus-visible {
+  background: rgba(15, 18, 24, 0.96);
+  border-color: var(--accent);
+}
+
+.unit-portrait .unit-description-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
 .unit-identity-tags {
   display: flex;
   flex-wrap: wrap;

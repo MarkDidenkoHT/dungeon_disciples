@@ -4257,5 +4257,92 @@ function tagHeroUnits(node) {
 }
 tagHeroUnits(UNITS);
 
+const UNIT_FLAVOR_ORIGINS = {
+  d: {
+    en: 'The Choir of the Cursed forged {name} into a living verse of ruin.',
+    ru: 'В Хоре Проклятых имя «{name}» стало предвестием погибели.',
+  },
+  e: {
+    en: 'The Empire taught {name} to face the dark without flinching.',
+    ru: 'В Империи имя «{name}» стало знаком стойкости перед лицом тьмы.',
+  },
+  g: {
+    en: 'The Grail of Sorrow left its mark on {name} long before the first battle.',
+    ru: 'Печать Грааля Скорби видна в истории «{name}» задолго до первой битвы.',
+  },
+  opb: {
+    en: 'Beyond the frontier, {name} learned that survival is its own kind of strength.',
+    ru: 'За рубежом земель даже имя «{name}» означает, что кто-то выжил.',
+  },
+  mv: {
+    en: 'The wilds shaped {name} into a creature that never yields its ground.',
+    ru: 'Дикие земли оставили след в истории «{name}»: уступать здесь не принято.',
+  },
+  dm: {
+    en: 'Death could not keep {name}; now it marches with the memory of its last life.',
+    ru: 'Смерть оборвала жизнь, но не историю «{name}»; теперь она продолжается на поле боя.',
+  },
+  col: {
+    en: 'Older than the kingdoms around it, {name} wakes when the world needs a reckoning.',
+    ru: 'Легенды о «{name}» старше царств, что ныне дрожат при его пробуждении.',
+  },
+};
+
+const UNIT_FLAVOR_ROLES = [
+  [['Caster', 'Mage', 'Priest'], {
+    en: 'Its magic reaches past the front line, turning distance into a weakness.',
+    ru: 'Магия достаёт за передний ряд и превращает расстояние в слабость.',
+  }],
+  [['Archer', 'Ranger'], {
+    en: 'Every shot finds the one opening an enemy hoped to keep hidden.',
+    ru: 'Каждый выстрел находит брешь, которую враг надеялся скрыть.',
+  }],
+  [['Warrior', 'Knight', 'Tank'], {
+    en: 'It advances by inches and makes every one of them costly.',
+    ru: 'Наступление идёт шаг за шагом, и каждый шаг дорого обходится врагу.',
+  }],
+  [['Demon'], {
+    en: 'Its fury is a promise the battlefield cannot ignore.',
+    ru: 'Его ярость — обещание, которое поле боя не сможет забыть.',
+  }],
+  [['Spirit', 'Skeleton', 'Undead'], {
+    en: 'Steel may pass through it; the old grudges never do.',
+    ru: 'Сталь проходит сквозь мертвецов, но старые обиды — никогда.',
+  }],
+  [['Beast', 'Dragon'], {
+    en: 'Its instincts strike before an enemy can finish a plan.',
+    ru: 'Его инстинкты опережают любой замысел противника.',
+  }],
+  [['Hero'], {
+    en: 'Stories gather around it, though few foes live to tell them.',
+    ru: 'Каждая победа прибавляет главу к легенде, но мало кто доживает до её рассказа.',
+  }],
+];
+
+function addUnitFlavorText(node) {
+  for (const unit of Object.values(node || {})) {
+    if (!unit || typeof unit !== 'object') continue;
+    if (typeof unit.id === 'string') {
+      const origin = UNIT_FLAVOR_ORIGINS[unit.f] || {
+        en: 'In lands scarred by war, {name} learned to make every strike count.',
+        ru: 'В землях, израненных войной, «{name}» научился наносить решающие удары.',
+      };
+      const name = unit.name || unit.id;
+      const nameRu = unit.name_ru || name;
+      const role = UNIT_FLAVOR_ROLES.find(([tags]) =>
+        tags.some(tag => unit.tags?.includes(tag)),
+      )?.[1] || {
+        en: 'In battle, it makes the ground it holds feel impossible to take.',
+        ru: 'Удержанная позиция кажется неприступной даже самым смелым врагам.',
+      };
+      unit.flavor_en ||= `${origin.en.replace('{name}', name)}\n${role.en}`;
+      unit.flavor_ru ||= `${origin.ru.replace('{name}', nameRu)}\n${role.ru}`;
+    } else {
+      addUnitFlavorText(unit);
+    }
+  }
+}
+addUnitFlavorText(UNITS);
+
 export { UNITS, UNIT_ABILITIES };
 if (typeof module !== 'undefined') module.exports = { UNITS, UNIT_ABILITIES };
