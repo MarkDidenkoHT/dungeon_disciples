@@ -560,6 +560,31 @@ const PVP_WIN_XP = 100;
 // must still lose the turn eventually, or their opponent waits forever.
 const PVP_JOIN_GRACE_MS = 45000;
 
+// What the player receiving the turn still has to WATCH before they can use it.
+//
+// The clock is stamped at the moment of the write, but a write can hand over a
+// board with four enemy turns queued behind it — and the client plays those one
+// at a time, animation by animation, before the buttons come back. That viewing
+// time came straight out of the player's own thirty seconds: a round where the
+// enemy out-rolled the whole party could leave eight or nine seconds of it, and
+// a player who sat watching an exchange they could not interrupt would find the
+// turn already half gone.
+//
+// So the deadline carries an allowance for what the turn's log actually
+// contains. Per ENTRY rather than per turn, because the pacing is per entry
+// (each one holds the board for its animation) — and capped, so a freak
+// hundred-entry exchange cannot stall a duel. Deliberately a little generous:
+// the cost of over-counting is a slow turn, the cost of under-counting is a
+// turn spent on a player who was never given one.
+const PVP_PLAYBACK_MS_PER_ENTRY = 500;
+const PVP_PLAYBACK_CAP_MS       = 20000;
+
+function playbackAllowanceMs(entries) {
+  const n = Array.isArray(entries) ? entries.length : 0;
+  if (!n) return 0;
+  return Math.min(PVP_PLAYBACK_CAP_MS, n * PVP_PLAYBACK_MS_PER_ENTRY);
+}
+
 function isPvpRecord(record) {
   return record?.battle_kind === 'pvp' || record?.battle_data?.kind === 'pvp';
 }
@@ -775,10 +800,14 @@ function stampFirstDeadline(record, engine, chat_id) {
 // rather than when the previous one was requested.
 function withTurnDeadline(battle_data, record, engine) {
   if (!isClockedRecord(record)) return battle_data;
+  // engine.log is everything THIS request caused — the acting player's move and
+  // every enemy turn that answered it. That is exactly what the player receiving
+  // the turn has to sit through, so it is what the allowance is measured from.
+  const watching = playbackAllowanceMs(engine.log);
   return {
     ...battle_data,
     kind: isBotRecord(record) ? 'pvp_bot' : 'pvp',
-    turn_deadline: engine.done ? null : Date.now() + PVP_TURN_MS,
+    turn_deadline: engine.done ? null : Date.now() + PVP_TURN_MS + watching,
     turn_provisional: false,
     turn_ms: PVP_TURN_MS,
   };

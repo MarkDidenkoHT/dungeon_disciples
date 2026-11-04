@@ -1895,8 +1895,11 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .modal-header {
   display: flex;
   align-items: center;
-  padding: 8px;
+  gap: 8px;
+  padding: 12px 14px;
   flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent);
 }
 
 .modal-title-text {
@@ -1979,10 +1982,13 @@ button.cost-bar-item:active { transform: scale(0.9); }
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-
   overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  color: var(--text);
+  line-height: 1.5;
 }
 
 /* Reconnect is a blocking decision, so give it a centered, illustrated panel
@@ -2005,7 +2011,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   animation: reconnect-modal-in .24s cubic-bezier(.2,.75,.25,1);
 }
 .modal--reconnect .modal-header { display: none; }
-.modal--reconnect .modal-body { overflow-y: auto; }
+.modal--reconnect .modal-body { overflow-y: auto; padding: 0; }
 .reconnect-content { display: flex; flex-direction: column; }
 .reconnect-art {
   position: relative;
@@ -3838,6 +3844,33 @@ button.cost-bar-item:active { transform: scale(0.9); }
   text-transform: uppercase;
   color: var(--calling-tint, var(--text));
   text-shadow: 0 1px 4px #000;
+}
+
+.unit-description-btn {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 4;
+  width: 40px;
+  height: 40px;
+  padding: 3px;
+  border: 1px solid rgba(220, 190, 130, 0.7);
+  border-radius: 7px;
+  background: rgba(15, 18, 24, 0.78);
+  cursor: pointer;
+}
+
+.unit-description-btn:hover,
+.unit-description-btn:focus-visible {
+  background: rgba(15, 18, 24, 0.96);
+  border-color: var(--accent);
+}
+
+.unit-portrait .unit-description-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .unit-identity-tags {
@@ -10424,6 +10457,17 @@ body[data-faction="grail_of_sorrow"] .tutorial-ring {
 
 @media (prefers-reduced-motion: reduce) {
   .turn-timer--urgent .turn-timer-secs { animation: none; }
+}
+
+/* The clock is HELD while an exchange is still playing out: the number on it
+   belongs to a turn that has not been handed over yet, so it stops counting and
+   says so rather than running down against a player who has no buttons. The
+   urgent pulse is suppressed too — nothing is urgent while nobody can act. */
+.turn-timer--held {
+  opacity: 0.55;
+}
+.turn-timer--held .turn-timer-secs {
+  animation: none;
 }
 
 .battle-concede-btn {

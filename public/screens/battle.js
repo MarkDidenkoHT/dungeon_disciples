@@ -804,6 +804,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     }
   }
 
+  // The ring classes, in one place: playback moves them by hand and patchCell
+  // has to preserve them while it does.
+  const ACTING_CLASSES = ['battle-cell--acting', 'battle-cell--acting--enemy', 'battle-cell--acting-enemy'];
   const ACTOR_ENTRY_TYPES = new Set(['action', 'ability', 'spell', 'defend', 'skip', 'pool', 'cast']);
   // A 'pool' entry is a unit's turn only when something GRANTED the pool — a
   // warder whose action is the ward names itself as the source. A pool filled
@@ -827,6 +830,17 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // animation finished, and a column of AI units read as one burst rather than
   // as a queue being walked.
   const TURN_SETTLE_MS = 150;
+  // The least time a turn may occupy the board, measured from the moment its
+  // portrait lit up.
+  //
+  // Not every turn animates something: a defend, a skip, an action whose effect
+  // has no art, an entry whose animation was already covered by the group above
+  // it. Those awaited nothing at all, so the ring crossed them in the settle
+  // beat alone — and a column of fast AI units is mostly made of turns like
+  // that. The result read as one burst with the strip flickering through it,
+  // which is the whole "four units and it's fireworks" complaint: the turns were
+  // sequential, they were just too short to be seen as turns.
+  const MIN_TURN_MS = 600;
   // Litany pacing. Spoken-only lines hold
   // playback for LITANY_VERSE_MS; performed verses hold for the same time,
   // including their animation. The lethal verse holds for nothing because the
@@ -874,8 +888,39 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         .filter(c => (c.alive || dyingHere.has(c.id) || c.id === activeId) &&
           !dead.has(c.id) && (!acted.has(c.id) || c.id === activeId))
         .sort((a, b) => b.initiative - a.initiative),
-      activeId);
+      activeId,
+      // Nobody is lit between turns during playback. See drawInitQueue.
+      false);
     queueNow();
+
+    // Every animation this turn started but did not await: the riders that layer
+    // over a strike, the battle-start traits, the opening wards. They are
+    // deliberately not awaited one by one — four of them behind one swing would
+    // make a turn four animations long — but they ARE part of the turn, and the
+    // turn is not over until they have finished.
+    //
+    // Without this ledger the ring moved on after the ONE awaited animation, so
+    // a unit's bleed, its riposte and its ward were still playing while the next
+    // portrait lit up and started its own. Four fast AI units turned the board
+    // into overlapping fireworks with no way to read which unit had done what.
+    // Collected here and drained at the turn boundary, so nothing a unit did
+    // outlives its own turn.
+    let turnFx = [];
+    const fireAndHold = (run) => {
+      try {
+        const p = run();
+        // Effects are async but a few are not; Promise.resolve flattens both,
+        // and a rejection must not abort the batch — a failed animation is not
+        // a reason to stop the fight.
+        if (p && typeof p.then === 'function') turnFx.push(Promise.resolve(p).catch(() => {}));
+      } catch { /* an effect that throws is still not a reason to stop */ }
+    };
+    const settleTurnFx = async () => {
+      if (!turnFx.length) return;
+      const pending = turnFx;
+      turnFx = [];
+      await Promise.all(pending);
+    };
 
     // Whose turn is currently playing. Keyed off the actor ON THE ENTRY rather
     // than the resolved combatant id: idFor can come back null (it matches by
@@ -884,18 +929,36 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     let lastTurnKey = null;
     let activeActorId = null;
     let turnsPlayed = 0;
+    // When the turn currently on the board took it over, so the hand-over can
+    // top it up to MIN_TURN_MS.
+    let turnStartedAt = 0;
+    const holdOutTurn = async () => {
+      if (!turnStartedAt) return;
+      const left = MIN_TURN_MS - (Date.now() - turnStartedAt);
+      turnStartedAt = 0;
+      if (left > 0) await new Promise(r => setTimeout(r, left));
+    };
     let pendingLeadIn = leadIn;
     const turnKeyOf = e => `${e.actorId ?? ''}|${e.actorName ?? ''}|${e.actorCell ?? ''}`;
     const setActiveActor = id => {
       if (activeActorId) {
         root.querySelector(`.battle-cell[data-id="${activeActorId}"]`)
-          ?.classList.remove('battle-cell--acting--enemy', 'battle-cell--acting-enemy');
+          ?.classList.remove(...ACTING_CLASSES);
       }
       activeActorId = id;
       const active = id && state.combatants.find(c => c.id === id);
-      if (active?.side === 'enemy') {
-        root.querySelector(`.battle-cell[data-id="${id}"]`)
-          ?.classList.add('battle-cell--acting--enemy', 'battle-cell--acting-enemy');
+      const cell = id ? root.querySelector(`.battle-cell[data-id="${id}"]`) : null;
+      // The plain ring is applied to BOTH sides now. It used to be enemy-only,
+      // which left the ring from the last render() sitting on the player's unit
+      // for the whole batch — so the board said "your unit is up" while the
+      // enemy column went to work on it. render() no longer paints a ring at all
+      // while a batch is playing (see ringActor), so this is the only thing
+      // moving it and it has to cover every actor.
+      if (cell) {
+        cell.classList.add('battle-cell--acting');
+        if (active?.side === 'enemy') {
+          cell.classList.add('battle-cell--acting--enemy', 'battle-cell--acting-enemy');
+        }
       }
     };
 
@@ -918,6 +981,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       // action follows immediately and the new order would otherwise never be
       // on screen long enough to read.
       if (entry.type === 'round') {
+        // Nothing from the closing round may bleed across the boundary, and the
+        // last turn of it gets its full hold like any other.
+        await settleTurnFx();
+        await holdOutTurn();
         // The ring comes off the unit that closed the old round BEFORE the slate
         // is wiped. Leaving activeActorId set across the boundary meant the new
         // round's first hand-over added last round's actor to the set it had
@@ -940,6 +1007,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           // Strictly one at a time: the unit that just went holds the board for
           // a breath, and only then does it leave the queue and the next one
           // step up. The lead-in has its own, longer hold.
+          //
+          // The drain comes FIRST, before the breath and before the ring moves:
+          // the settle is meant to be a pause on a finished turn, not a pause
+          // with the last turn's riders still going off in it.
+          await settleTurnFx();
+          await holdOutTurn();
           if (activeActorId && !pendingLeadIn) await new Promise(r => setTimeout(r, TURN_SETTLE_MS));
           if (activeActorId) acted.add(activeActorId);
           lastTurnKey = turnKey;
@@ -954,12 +1027,18 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           } else if (turnsPlayed > 0) {
             await new Promise(r => setTimeout(r, TURN_GAP_MS));
           }
+          // Clocked AFTER the telegraph, so the hold is time the turn's own
+          // events get rather than time the pause already spent.
+          turnStartedAt = Date.now();
           turnsPlayed++;
         }
       }
       if (entry.killed && entry.targetId && !dead.has(entry.targetId)) {
         dead.add(entry.targetId);
-        queueNow();
+        // The unit on the board keeps the strip's highlight across a kill: a
+        // bare queueNow() names nobody as active, which would blank the
+        // highlight on the unit that is mid-turn and still ringed on the board.
+        queueNow(activeActorId);
       }
       // Append this log line to the visible battle log
       const logEl = ui?.battleLog;
@@ -1046,15 +1125,15 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         // turn, and playback still waits for it.
         if (entry.at_start) {
           const anchor = targetCellFor(entry) || actorCell;
-          if (anchor) EFFECTS[effectName](anchor);
+          if (anchor) fireAndHold(() => EFFECTS[effectName](anchor));
         } else if (RIDER_FX.has(effectName)) {
           const anchor = targetCell || actorCell;
-          if (anchor) EFFECTS[effectName](anchor, { actorCell, targetCell });
+          if (anchor) fireAndHold(() => EFFECTS[effectName](anchor, { actorCell, targetCell }));
         } else if (TRAIT_FX.has(effectName)) {
           const anchor = actorCell || targetCell;
           // `value` is what the entry counted — the tag total for a muster. The
           // traits that predate it take a single argument and ignore the rest.
-          if (anchor) EFFECTS[effectName](anchor, { value: entry.value });
+          if (anchor) fireAndHold(() => EFFECTS[effectName](anchor, { value: entry.value }));
         } else if (FAN_OUT_FX.has(effectName)) {
           // Collapse the consecutive run of entries this actor produced for the
           // same passive, and play once against every victim. Grouping by RUN
@@ -1164,7 +1243,20 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       // enemy at full health right through the enemy's own turn, and every bar
       // on the field then snapped at once.
       applyEntryHp(entry);
+      // Same idea for the icon columns: an entry that moved the effect registry
+      // says so, and the unit it moved them on is repainted here.
+      if (entry.effects_changed) {
+        refreshCellStates(entry.targetId);
+        if (entry.targetIds) for (const tid of entry.targetIds) refreshCellStates(tid);
+      }
     }
+    // The last turn in the batch gets the same treatment as every other: its
+    // riders finish before its ring comes off and before the caller is told the
+    // board has caught up (which is when the buttons come back and the clock
+    // starts). Otherwise the player was handed the turn over a board still
+    // finishing the enemy's.
+    await settleTurnFx();
+    await holdOutTurn();
     if (activeActorId) {
       acted.add(activeActorId);
       setActiveActor(null);
@@ -1224,6 +1316,33 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       }
       cellEl.classList.toggle('battle-cell--dead', dead);
     }
+  }
+
+  // Repaint ONE unit's buff/debuff icon columns from `state`, mid-playback.
+  //
+  // The columns are otherwise rewritten only by patchCell, which runs in
+  // render() — and render() is held back for the whole batch while `processing`
+  // is set. So a dispel tore the effect off the unit, played its animation, and
+  // the stripped badge stayed on the portrait through every turn that followed
+  // it, snapping away several seconds later when the batch ended.
+  //
+  // `state` is the END-of-batch state, so this is very slightly ahead of the
+  // animation for anything the same batch re-applies. That is the same trade
+  // applyEntryHp already makes, and it is the right way round: a badge that
+  // disappears when the player sees it torn off beats one that lingers.
+  // Driven off `effects_changed` on the log entry (see the dispel paths in
+  // utils/passive-processor.js), so only the entries that actually move the
+  // registry pay for it.
+  function refreshCellStates(id) {
+    if (id == null) return;
+    const occ = (state.combatants || []).find(c => String(c.id) === String(id));
+    if (!occ) return;
+    const cellEl = document.querySelector(`.battle-cell[data-id="${id}"]`);
+    if (!cellEl) return;
+    const debuffEl = cellEl.querySelector('.bc-debuff-icons');
+    if (debuffEl) debuffEl.innerHTML = debuffIconsHtml(occ);
+    const buffEl = cellEl.querySelector('.bc-buff-icons');
+    if (buffEl) buffEl.innerHTML = buffIconsHtml(occ);
   }
 
   function triggerAnim(el, cls) {
@@ -1827,10 +1946,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       if (realtimeController) realtimeController.setLastLogId(lastLogId);
       if (result.done) { renderResult(result.winner); return; }
       processing = false;
+      // The clock follows the board, not the response: the turn becomes the
+      // player's when the enemy's reply has finished playing. See readTurnMeta.
+      applyPendingTurnMeta();
       render();
     } catch (err) {
       console.error('Cast failed:', err);
       processing = false;
+      applyPendingTurnMeta();
       alert(err.message || 'Cast failed');
       render();
       resyncAfterFailedWrite();
@@ -2652,6 +2775,15 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     for (const ac of ['anim-hit', 'anim-death', 'battle-cell--bark-active']) {
       if (cellEl.classList.contains(ac)) cls += ` ${ac}`;
     }
+    // className is rewritten wholesale below, so a render() landing mid-batch
+    // would wipe the ring setActiveActor had just put on the acting unit — and
+    // nothing would put it back until the next hand-over. Preserved for exactly
+    // the span where playback owns it.
+    if (processing) {
+      for (const ac of ACTING_CLASSES) {
+        if (cellEl.classList.contains(ac) && !cls.includes(ac)) cls += ` ${ac}`;
+      }
+    }
     cellEl.className = cls;
     if (aegisLevel) cellEl.style.setProperty('--aegis-level', aegisLevel);
     else            cellEl.style.removeProperty('--aegis-level');
@@ -2759,19 +2891,25 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // strip, mid-animation, several times a turn. Skipping the identical repaint
   // costs one string compare.
   let initQueueSig = null;
-  function drawInitQueue(order, activeId = null) {
+  // `highlightFirst` is what the strip does when nobody is named as active.
+  // render() wants the head of the queue lit — that IS whose turn it is. Playback
+  // does NOT: between two turns nobody is acting, and lighting the head of the
+  // queue there is how the strip announced the player's unit as up while four
+  // enemies were still swinging. Explicit rather than defaulted, so a caller
+  // cannot get it by accident.
+  function drawInitQueue(order, activeId = null, highlightFirst = true) {
     if (!ui?.initQueue) return;
     // Everything the markup below actually reads. HP is in it because the pip
     // carries an HP bar, so a hit has to repaint even when the order has not
     // moved.
-    const sig = `${activeId ?? ''}#` + order
+    const sig = `${activeId ?? ''}/${highlightFirst ? 1 : 0}#` + order
       .map(c => `${c.id}:${c.battle_hp ?? 0}/${c.max_hp ?? 0}:${unitCallingId(c) ?? ''}`)
       .join('|');
     if (sig === initQueueSig) return;
     initQueueSig = sig;
     ui.initQueue.innerHTML = order.map((c, i) => {
       const portrait = getPortraitUrl(c);
-      const isActive = activeId ? c.id === activeId : i === 0;
+      const isActive = activeId ? c.id === activeId : (highlightFirst && i === 0);
       const side     = c.side;
       // The queue card used to show the portrait alone, so a unit one hit from
       // death looked exactly like one at full health — the player had to find it
@@ -2869,6 +3007,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // (see applyExpiredTurns in routes/index.js).
   let isPvpBattle  = String(mode || '').startsWith('pvp');
   let turnDeadline = null;
+  // Declared ahead of the readTurnMeta(turnMeta) call below — see the note on
+  // the function for what it parks and why.
+  let pendingTurnMeta = null;
   let yourTurn     = false;
   let turnTicker   = null;
   let expiryNudge  = 0;
@@ -2877,13 +3018,34 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // the way in), so the first turn is already running when we arrive.
   readTurnMeta(turnMeta);
 
+  // The turn meta that arrived while a batch was still playing. The server
+  // answers an action with the state AFTER the enemy has finished replying to
+  // it, so `your_turn` and the new deadline describe a turn the player cannot
+  // take yet — they have four enemy turns still to watch. Applying it on
+  // arrival is what put "Your turn" on the clock, counting down, over a board
+  // the player could not touch.
+  //
+  // So it is parked here and applied by applyPendingTurnMeta() when playback
+  // hands the board over. The deadline is an absolute instant either way, so
+  // nothing about the server's clock is being faked — the player is just not
+  // told the turn is theirs before it is.
   // Anything that carries the fields — an action response, a cast response, a
   // state refresh — moves the clock. One place, so no path can forget.
-  function readTurnMeta(data) {
+  function readTurnMeta(data, { defer = false } = {}) {
     if (!data) return;
+    if (defer || processing) { pendingTurnMeta = data; return; }
+    pendingTurnMeta = null;
     if (data.kind === 'pvp' && !isPvpBattle) { isPvpBattle = true; labelLeaveBtn(); }
     if (data.turn_deadline !== undefined) turnDeadline = data.turn_deadline;
     if (data.your_turn     !== undefined) yourTurn     = !!data.your_turn;
+  }
+
+  // Called by every playback caller once the board has caught up and
+  // `processing` is clear again.
+  function applyPendingTurnMeta() {
+    const data = pendingTurnMeta;
+    pendingTurnMeta = null;
+    if (data) readTurnMeta(data);
   }
 
   function updateTurnTimer() {
@@ -2894,6 +3056,17 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       return;
     }
     box.hidden = false;
+    // A batch in the air means the clock on screen belongs to a turn that has
+    // not been handed over yet. Leave the box exactly as it is: the number must
+    // not run down against a player who has no buttons, and the expiry nudge
+    // below must not fire — it asks the server to spend the turn, which while
+    // the enemy's own turns are still animating is the client asking for the
+    // player's turn to be thrown away.
+    if (processing) {
+      box.classList.add('turn-timer--held');
+      return;
+    }
+    box.classList.remove('turn-timer--held');
 
     const left = Math.max(0, turnDeadline - Date.now());
     const secs = Math.ceil(left / 1000);
@@ -2981,12 +3154,21 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     renderPowerStrips();
 
-    drawInitQueue(actingOrder);
+    // While a batch plays, playbackSequence owns the strip and the ring: it is
+    // walking the order one unit at a time and nobody is lit between turns.
+    // render() handing the highlight to the head of the queue underneath it is
+    // how the board announced the player's turn over the enemy's — `state` is
+    // the END state, so the head of that queue is whoever acts NEXT, not now.
+    drawInitQueue(actingOrder, null, !processing);
 
     // Both attrition phases are keyed off the round, so this is refreshed
     // wherever the board is — turn transitions, reconnects, snapshot updates.
     applyAttritionAura();
 
+    // Same reasoning for the cell ring: whose turn it is is not settled until
+    // the batch has been played, so render() paints no ring at all while one is
+    // in the air and setActiveActor is left to move it.
+    const ringActor = processing ? null : actor;
     for (const side of ['player', 'enemy']) {
       const gridEl = side === 'player' ? ui.playerGrid : ui.enemyGrid;
       const existingCells = gridEl.querySelectorAll('.battle-cell[data-id]');
@@ -2996,11 +3178,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         [...expectedIds].some(id => !existingIds.has(id)) ||
         [...existingIds].some(id => !expectedIds.has(id));
       if (needsRebuild) {
-        gridEl.innerHTML = renderSide(side, actor, validTargetKeys);
+        gridEl.innerHTML = renderSide(side, ringActor, validTargetKeys);
       } else {
         for (const occ of state.combatants.filter(c => c.side === side)) {
           const cellEl = gridEl.querySelector(`.battle-cell[data-id="${occ.id}"]`);
-          if (cellEl) patchCell(cellEl, occ, actor, validTargetKeys);
+          if (cellEl) patchCell(cellEl, occ, ringActor, validTargetKeys);
         }
       }
     }
@@ -3149,10 +3331,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       await playbackSequence(newLogs);
       if (realtimeController) realtimeController.setLastLogId(lastLogId);
       processing = false;
+      // See readTurnMeta: the server answers with the state after the enemy has
+      // already replied, so the clock is handed over only now.
+      applyPendingTurnMeta();
       render();
         } catch (err) {
           console.error('Action failed:', err);
           processing = false;
+          applyPendingTurnMeta();
           const log = ui?.battleLog;
           if (log) {
             const actorUnit = state.combatants.find(c => c.id === actor_id);
@@ -3547,6 +3733,15 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   if (state && state.done) {
     renderResult(state.winner);
   } else {
+    // Claimed BEFORE the first render(). A freshly created battle is handed to
+    // this screen with round 1's enemy turns already resolved, so `state` says
+    // it is the player's turn — and the render below would light their unit in
+    // the queue, ring their cell, arm a target and start their clock, all over
+    // a board about to spend several seconds animating the enemies who went
+    // first. The flag is what tells render() that whose turn it is has not been
+    // settled yet.
+    const hasOpeningPlayback = !reconnect && Array.isArray(logs) && logs.length > 0;
+    if (hasOpeningPlayback) processing = true;
     render();
     // A freshly created battle already contains round 1's opening enemy turns:
     // POST /battle/create runs engine.runAiTurns() before responding, so every
@@ -3555,12 +3750,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // is why round 1 was the one round whose enemy attacks never animated.
     // Replay them here instead. Reconnects keep the plain dump — that log is
     // history the player has already watched.
-    if (!reconnect && Array.isArray(logs) && logs.length) {
-      processing = true;               // blocks input + the realtime handler during playback
+    if (hasOpeningPlayback) {
       if (ui?.battleLog) ui.battleLog.innerHTML = '';
       playbackSequence(logs, { leadIn: true })
         .catch(err => console.error('Initial playback failed:', err))
-        .finally(() => { processing = false; render(); });
+        .finally(() => { processing = false; applyPendingTurnMeta(); render(); });
     }
   }
 
@@ -3569,10 +3763,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       battleId: battle_id,
       playerId: player.chat_id,
       onStateChange: async (data) => {
-        // BEFORE the guards below: a state refresh that carries no new log
-        // entries still carries a new deadline, and the clock has to follow the
-        // turn even when nothing else on the screen changes.
-        readTurnMeta(data);
+        // Parked, not applied. A refresh that carries no new log entries still
+        // carries a new deadline and the clock has to follow it — that case
+        // applies it a few lines down. But a refresh that DOES carry entries
+        // describes the turn after they have all played, and applying it here
+        // was what started the player's clock over an enemy column that had not
+        // swung yet. See readTurnMeta.
+        readTurnMeta(data, { defer: true });
         if (!data?.state || battleResolved) return;
         // Skip if sendAction is already handling this turn's entries directly.
         // The lastLogId guard means onStateChange will only have genuinely new
@@ -3585,6 +3782,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         if (processing) return false;
         const newLogs = dedupeIncoming(Array.isArray(data.logs) ? data.logs : []);
         if (!newLogs.length) {
+          // Nothing to play, so nothing to wait for: the clock is the only thing
+          // this refresh carried.
+          applyPendingTurnMeta();
           // State update only, no new log entries - just reconcile state
           state = { ...data.state, log: state.log || [] };
           // A PvP concession resolves the battle without appending a combat
@@ -3632,13 +3832,21 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
           // in refreshFromServer reports it and the board reconciles on the next
           // state read.
           processing = false;
+          // The clock was parked at the top of this handler for the span of the
+          // playback; this is where the turn is actually handed to the player.
+          applyPendingTurnMeta();
         }
         render();
         return true;
       },
       onError: (err) => {
         console.error('battle realtime error', err);
-        processing = false;
+        // NOT `processing = false`. A flag is only cleared by whoever set it
+        // (see the note where this handler claims it): a stream error landing
+        // mid-playback used to unlock the buttons and the clock under a batch
+        // that was still animating, which is the same two-playbacks-at-once
+        // race the claim was added to stop. A playback owns the flag until its
+        // own `finally` runs.
         render();
       },
       // Only in a duel: there is a person on the other end whose move can

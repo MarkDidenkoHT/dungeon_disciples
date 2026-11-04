@@ -420,13 +420,29 @@ function dispatchPassive(trigger, owner, def, ctx) {
     // records. Stacked pools such as Bleed live in a single registry entry, so
     // dispelEffects(count) would erase every stack when it selected that entry.
     const reduced = engine.reduceEffect(targetUnit, polarity, p.dispel_count);
-    if (!reduced) return;
-    engine.pushLog({
-      type: 'passive', passive: def.name,
+    // One shape for both outcomes. `effects_changed` is what tells the client to
+    // redraw this unit's buff/debuff badges as the dispel animates rather than
+    // when the whole batch has finished — see playbackSequence.
+    //
+    // The target is NOT named inside the message: the 'passive' branch of
+    // formatLogEntry already prints "<actor> → <target>" ahead of it, so a
+    // sentence that named the victim again printed it twice on one line.
+    const line = {
+      type: 'passive', passive: def.name, effects_changed: true,
       actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
       targetId: targetUnit.id, targetName: targetUnit.unit_name, targetCell: targetUnit.cellIndex,
-      value: reduced.from - reduced.to, heal: polarity === 'negative',
-      message: `${def.name} — ${targetUnit.unit_name}'s ${reduced.name} ${polarity === 'negative' ? 'is cleansed' : 'is stripped away'} (${reduced.from} → ${reduced.to})`,
+      heal: polarity === 'negative',
+    };
+    // A dispel that found nothing is still something the player asked for and
+    // watched happen. Returning silently is what made a Dispel unit look broken:
+    // it swung, the purple mote played, and the log said nothing at all.
+    if (!reduced) {
+      engine.pushLog({ ...line, value: 0,
+        message: `${def.name} — nothing to ${polarity === 'negative' ? 'cleanse' : 'strip'}` });
+      return;
+    }
+    engine.pushLog({ ...line, value: reduced.from - reduced.to,
+      message: `${def.name} — ${reduced.name} ${polarity === 'negative' ? 'cleansed' : 'stripped'} (${reduced.from} → ${reduced.to})`,
     });
   };
   if (trigger === 'on_battle_start') {
@@ -1834,18 +1850,27 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   // strips buffs (cast on an enemy). Count defaults to all. Both read the unit's
   // _effects registry, so any effect registered via engine.registerEffect is
   // covered automatically — no dispel needs to know individual mechanics.
+  // actorId / targetId: the client resolves both cells by id first (a player and
+  // an enemy routinely share a cellIndex), and `effects_changed` is what gets
+  // the stripped badges off the portrait as the animation plays.
   if (p.dispel_negative != null && target) {
     const removed = engine.dispelEffects(target, 'negative', p.dispel_negative === true ? Infinity : p.dispel_negative);
-    engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex,
+    engine.pushLog({ type: 'ability', ability: abilityKey, effects_changed: true,
+      actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+      targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
+      value: removed.length, heal: true,
       message: removed.length
-        ? `${def.name} — cleansed ${removed.map(e => e.name).join(', ')} from ${target.unit_name}`
+        ? `${def.name} — cleansed ${removed.map(e => e.name).join(', ')}`
         : `${def.name} — nothing to cleanse` });
   }
   if (p.dispel_positive != null && target) {
     const removed = engine.dispelEffects(target, 'positive', p.dispel_positive === true ? Infinity : p.dispel_positive);
-    engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex,
+    engine.pushLog({ type: 'ability', ability: abilityKey, effects_changed: true,
+      actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+      targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
+      value: removed.length, heal: false,
       message: removed.length
-        ? `${def.name} — stripped ${removed.map(e => e.name).join(', ')} from ${target.unit_name}`
+        ? `${def.name} — stripped ${removed.map(e => e.name).join(', ')}`
         : `${def.name} — nothing to strip` });
   }
   if (p.cleanse_debuffs && target) {
@@ -1864,7 +1889,10 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     for (const key of Object.keys(target._flags)) {
       if (key.endsWith('_applied')) target._flags[key] = false;
     }
-    engine.pushLog({ type: 'ability', actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, message: `${def.name} — stripped all debuffs` });
+    engine.pushLog({ type: 'ability', ability: abilityKey, effects_changed: true,
+      actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+      targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
+      message: `${def.name} — stripped all debuffs` });
   }
   if (p.make_burn_permanent === true && target) {
     if ((target.dot_dmg ?? 0) > 0) {
@@ -2339,6 +2367,18 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       if (!dead && p.lock_passives_rounds != null && !target._passive_lock_immune) {
         target._passives_locked_rounds = Math.max(target._passives_locked_rounds ?? 0, p.lock_passives_rounds);
         target._passives_locked = true;
+        // A silence is a debuff the portrait already draws, so a cleanse has to
+        // be able to reach it. Without a record in `_effects` it was invisible
+        // to every dispel in the game: the icon sat there for its full duration
+        // and a Dispel aimed at the unit reported nothing to cleanse.
+        engine.registerEffect(target, {
+          // No `icon`: DEBUFF_DEFS already draws this one off the counter
+          // field, and a record carrying art would put a second identical tile
+          // beside it. The record exists so a dispel can FIND the silence; the
+          // badge it clears is the counter's.
+          key: 'passive_lock', name: def.name, polarity: 'negative', dispellable: true,
+          clear: { _passives_locked_rounds: 0, _passives_locked: false },
+        });
         shut.push(`passives disabled for ${p.lock_passives_rounds} rounds`);
       } else if (!dead && p.lock_passives_rounds != null) {
         // Immune. Said out loud, or the silence simply appears not to have
@@ -2348,6 +2388,13 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       if (!dead && p.lock_actives_rounds != null) {
         target._actives_locked_rounds = Math.max(target._actives_locked_rounds ?? 0, p.lock_actives_rounds);
         target._actives_locked = true;
+        // Same as the silence above: a disarm is a drawn debuff, so it is a
+        // dispellable record rather than a counter nothing can touch.
+        engine.registerEffect(target, {
+          // Iconless, for the same reason as the silence above.
+          key: 'active_lock', name: def.name, polarity: 'negative', dispellable: true,
+          clear: { _actives_locked_rounds: 0, _actives_locked: false },
+        });
         shut.push(`ability disabled for ${p.lock_actives_rounds} rounds`);
       }
 
@@ -2364,6 +2411,14 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   if (p.physical_dmg_reduction_pct != null && target && def.target === 'enemy') {
     target._terror_reduction = Math.min(100, (target._terror_reduction ?? 0) + p.physical_dmg_reduction_pct);
     target._terror_rounds = p.duration_rounds ?? 2;
+    // Dispellable, like the two locks above: Terror is drawn on the portrait and
+    // a cleanse that cannot lift what the player can see is the dispel bug.
+    // The undo clears BOTH halves, the way the round counter running out does.
+    engine.registerEffect(target, {
+      // Iconless: DEBUFF_DEFS draws Terror off `_terror_rounds`.
+      key: 'terror', name: def.name, polarity: 'negative', dispellable: true,
+      clear: { _terror_rounds: 0, _terror_reduction: 0 },
+    });
     // actorId + targetId are what the client resolves the two cells by (a player
     // and an enemy routinely share a cellIndex, so the cell alone cannot find
     // one). Without them Terror logged correctly and drew nothing.

@@ -1929,11 +1929,28 @@ class BattleEngine {
   effectMagnitude(unit, eff) {
     const pool = BattleEngine.EFFECT_POOLS[eff.key];
     if (pool) return Math.max(0, Number(unit[pool[0]]) || 0);
+    const restore = eff.restore || {};
+    const divide  = eff.divide  || {};
+    // Whether this effect has a size AT ALL that can be read off its record.
+    // The distinction matters at both ends: an effect with a ledger that has
+    // been shaved down to nothing must measure zero so it is removed, while an
+    // effect that never had one must NOT measure zero or no dispel can reach
+    // it. Asking "is there a ledger" rather than "is the total above zero"
+    // separates the two — a spent record and a flag-shaped one both total 0.
+    const hasLedger = Object.keys(restore).length > 0 ||
+                      Object.keys(divide).length  > 0 ||
+                      eff.amount != null;
+    // An effect whose size lives in none of them — a flag-shaped ward (Mother's
+    // Blessing), a silence, a Terror, any timed state whose whole undo is a
+    // `clear` — is binary: it comes off whole, so it measures 1. Measuring
+    // those as zero is how a passive Dispel looked straight past the only
+    // debuff on its ally and reported there was nothing to cleanse.
+    if (!hasLedger) return 1;
     let total = 0;
-    for (const amt of Object.values(eff.restore || {})) total += Math.abs(Number(amt) || 0);
+    for (const amt of Object.values(restore)) total += Math.abs(Number(amt) || 0);
     // A pure damage buff has nothing in `restore`, so without this it measured
     // zero and Dispel skipped the strongest effect on the board.
-    for (const f of Object.values(eff.divide || {})) {
+    for (const f of Object.values(divide)) {
       total += Math.round(Math.abs(1 - (Number(f) || 1)) * 100);
     }
     return total;
@@ -1979,6 +1996,16 @@ class BattleEngine {
         eff.restore[path] = (Number(amount) || 0) - step * sign;
         left -= step;
       }
+      // Nothing in the ledger moved, so there is nothing to shave: this is a
+      // flag, a lock or a timed state whose undo is a `clear`. It comes off
+      // WHOLE rather than surviving a dispel that had already selected it —
+      // the other half of the magnitude fallback above.
+      if (left === taken) {
+        this.revertEffect(unit, eff);
+        this.cancelPendingExpiry(unit, eff.key);
+        unit._effects = unit._effects.filter(e => e !== eff);
+        return { key: eff.key, name: eff.name, from: mag, to: 0 };
+      }
     }
     if (eff.amount != null) eff.amount = Math.max(0, eff.amount - taken);
     // `divide` undoes by division and has no "half of it" — once a shave gets
@@ -2001,9 +2028,25 @@ class BattleEngine {
 
   dispelEffects(unit, polarity, count = Infinity) {
     if (!unit?._effects?.length) return [];
-    const matching = unit._effects
-      .filter(e => e.polarity === polarity && e.dispellable !== false)
-      .slice(0, count);
+    const eligible = unit._effects.filter(e => e.polarity === polarity && e.dispellable !== false);
+    // An uncounted dispel (Purge, a cleanse) takes the lot, spent records
+    // included — there is nothing to spend badly and leaving stale entries
+    // behind only gives a later dispel something empty to find.
+    //
+    // A COUNTED one (Purgation strips one blessing per point of power, Dispel's
+    // recurring form one per round) has picks to waste, and `slice` spent them
+    // in registry order: whatever happened to be applied first, which is
+    // routinely the battle-start ward that has already lapsed. So the picks go
+    // to the effects that are actually doing something, strongest first — the
+    // same choice reduceEffect makes, for the same reason.
+    const matching = count === Infinity
+      ? eligible
+      : eligible
+          .map(e => ({ e, mag: this.effectMagnitude(unit, e) }))
+          .filter(x => x.mag > 0)
+          .sort((a, b) => b.mag - a.mag)
+          .slice(0, count)
+          .map(x => x.e);
     if (!matching.length) return [];
     // revertEffect handles dotted `_flags.x` paths and clamps stats at 0.
     for (const eff of matching) {
@@ -2454,7 +2497,11 @@ class BattleEngine {
 
       if (c._terror_rounds > 0) {
         c._terror_rounds--;
-        if (c._terror_rounds === 0) c._terror_reduction = 0;
+        // The record is what a dispel finds. Left behind after the timer ran
+        // out it was a dispellable negative effect with nothing behind it, so a
+        // Dispel would spend its one pick cleansing a Terror that had already
+        // gone and leave the bleed it was aimed at.
+        if (c._terror_rounds === 0) { c._terror_reduction = 0; this.clearEffect(c, 'terror'); }
       }
 
       if (c._stun_rounds > 0) {
@@ -2530,6 +2577,10 @@ class BattleEngine {
       c._actives_locked_rounds  = Math.max(0, (c._actives_locked_rounds  ?? 0) - 1);
       c._passives_locked = c._passives_locked_rounds > 0;
       c._actives_locked  = c._actives_locked_rounds  > 0;
+      // Same as Terror above: drop the dispel's handle on a lock that has
+      // expired on its own.
+      if (!c._passives_locked) this.clearEffect(c, 'passive_lock');
+      if (!c._actives_locked)  this.clearEffect(c, 'active_lock');
     }
     this.fireTrigger('on_round_start', { actor: null, target: null, dmg: 0, dying: null });
     // Reanimate: revive units that were marked for revival last round
@@ -2603,7 +2654,7 @@ class BattleEngine {
         if (unit?.alive) {
           const removed = this.dispelEffects(unit, effect.polarity, effect.count);
           if (removed.length) {
-            this.pushLog({ type: 'status', spell: effect.name, targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, message: `${unit.unit_name} loses ${removed.map(e => e.key).join(', ')}` });
+            this.pushLog({ type: 'status', spell: effect.name, targetName: unit.unit_name, targetId: unit.id, targetCell: unit.cellIndex, effects_changed: true, message: `${unit.unit_name} loses ${removed.map(e => e.name || e.key).join(', ')}` });
           }
         }
         // Re-queue for the next round until the duration is spent. Requeue even
@@ -4494,6 +4545,12 @@ class BattleEngine {
           actorName: params._spell_name || 'Dispel',
           targetId: c.id, targetName: c.unit_name, targetCell: c.cellIndex,
           value: removed.length, heal: false,
+          // The portrait's icon columns are stale the instant an effect record
+          // is torn off, and the client redraws them only when a whole batch
+          // has finished playing — so a stripped buff kept its badge through
+          // every turn that followed it. This flag is what tells playback to
+          // refresh THIS unit's badges the moment the dispel animates.
+          effects_changed: true,
           message: removed.length
             ? `${removed.map(e => e.name).join(', ')} stripped`
             : 'nothing to strip',

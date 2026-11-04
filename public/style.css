@@ -10459,6 +10459,17 @@ body[data-faction="grail_of_sorrow"] .tutorial-ring {
   .turn-timer--urgent .turn-timer-secs { animation: none; }
 }
 
+/* The clock is HELD while an exchange is still playing out: the number on it
+   belongs to a turn that has not been handed over yet, so it stops counting and
+   says so rather than running down against a player who has no buttons. The
+   urgent pulse is suppressed too — nothing is urgent while nobody can act. */
+.turn-timer--held {
+  opacity: 0.55;
+}
+.turn-timer--held .turn-timer-secs {
+  animation: none;
+}
+
 .battle-concede-btn {
   position: relative;
   flex: 0 0 auto;
