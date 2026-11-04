@@ -1,6 +1,7 @@
 import { api, bootstrapCache, refreshResourceBar, navigate } from './api.js';
 import { CRYSTAL_ICONS, GOLD_ICON } from './utils.js';
 import { assetUrl } from './asset_base.js';
+import { playUiSound } from './sfx.js';
 import { DAILY_TASKS, DAILY_REWARDS } from '../data/daily_tasks.js';
 import { QUESTS_BY_ID } from '../data/quests.js';
 import { TOKEN_DEFS } from '../data/embark.js';
@@ -374,6 +375,7 @@ export function openDailyTasks(player, { tab } = {}) {
     btn.disabled = true;
     try {
       await api('/daily/claim', { chat_id: player.chat_id, reward: rewardId });
+      playUiSound('collect_reward');
       const def = DAILY_REWARDS.find(r => r.id === rewardId);
       if (def) {
         celebrateClaim(btn, `<span class="quest-reward">${questIcon(rewardIconHtml(def, bootstrapCache.data?.faction_crystal))}<span>${rewardLabel(def)}</span></span>`);
@@ -389,6 +391,7 @@ export function openDailyTasks(player, { tab } = {}) {
     try {
       const tier = bootstrapCache.data?.quests?.find(q => q.id === questId)?.tier ?? 0;
       await api('/quests/claim', { chat_id: player.chat_id, quest: questId });
+      playUiSound('collect_reward');
       celebrateClaim(btn, questRewardHtml(QUESTS_BY_ID[questId]?.rewards[tier], bootstrapCache.data?.faction_crystal));
       await afterClaim();
     } catch (err) {
@@ -424,6 +427,7 @@ export function openDailyTasks(player, { tab } = {}) {
       }
     }
     if (claimed) {
+      playUiSound('collect_reward');
       celebrateClaim(btn, `<span class="quest-reward">${T(
         `${claimed} quest rewards claimed`,
         `Получено наград за задания: ${claimed}`,

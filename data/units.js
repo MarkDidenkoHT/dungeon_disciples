@@ -2201,7 +2201,7 @@ const UNITS = {
       hp: 30, armor: 5, initiative: 10,
       resistances: { air: 0, fire: 5, life: 40, death: 5, cold: 0, nature: 5 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 4, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'holy_heal',
+      damage_source: null, action_power: 4, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'long_buff_cast',
       xp: 75, passive: ['inspiration_damage 1'], ability: 'prayer_of_healing 1',
     },
     sister_initiate: {
@@ -2216,7 +2216,7 @@ const UNITS = {
       hp: 40, armor: 5, initiative: 10,
       resistances: { air: 0, fire: 5, life: 40, death: 5, cold: 0, nature: 5 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 5, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'holy_heal',
+      damage_source: null, action_power: 5, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'long_buff_cast',
       xp: 400, passive: ['inspiration_damage 1', 'rite_of_battle 1'], ability: 'prayer_of_healing 1',
     },
     battle_sister: {
@@ -2231,7 +2231,7 @@ const UNITS = {
       hp: 45, armor: 10, initiative: 10,
       resistances: { air: 5, fire: 10, life: 40, death: 10, cold: 5, nature: 10 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 6, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'holy_heal',
+      damage_source: null, action_power: 6, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'long_buff_cast',
       xp: 1560, passive: ['inspiration_damage 1', 'rite_of_battle 1', 'pure_blood 1'], ability: 'prayer_of_healing 1',
     },
     sister_superior: {
@@ -2246,7 +2246,7 @@ const UNITS = {
       hp: 55, armor: 10, initiative: 10,
       resistances: { air: 10, fire: 10, life: 40, death: 10, cold: 10, nature: 10 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 7, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'holy_heal',
+      damage_source: null, action_power: 7, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'long_buff_cast',
       xp: 3640, passive: ['inspiration_damage 1', 'rite_of_battle 2', 'pure_blood 1'], ability: 'prayer_of_healing 2',
     },
     sister_guardian: {
@@ -2261,7 +2261,7 @@ const UNITS = {
       hp: 35, armor: 10, initiative: 10,
       resistances: { air: 0, fire: 10, life: 40, death: 10, cold: 0, nature: 5 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 6, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'holy_heal',
+      damage_source: null, action_power: 6, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'long_buff_cast',
       xp: 400, passive: ['inner_fire 1', 'stoicism 1'], ability: 'redemption 1',
     },
     battle_guardian: {
@@ -2276,7 +2276,7 @@ const UNITS = {
       hp: 45, armor: 10, initiative: 10,
       resistances: { air: 5, fire: 10, life: 40, death: 10, cold: 5, nature: 10 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 7, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'holy_heal',
+      damage_source: null, action_power: 7, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'long_buff_cast',
       xp: 1560, passive: ['inner_fire 1', 'stoicism 1', 'dispel 1'], ability: 'redemption 2',
     },
     sister_protector: {
@@ -2291,7 +2291,7 @@ const UNITS = {
       hp: 50, armor: 15, initiative: 10,
       resistances: { air: 10, fire: 15, life: 40, death: 15, cold: 10, nature: 10 },
       action: 'empower', target_type: 'ally', targets: 1, range: 3,
-      damage_source: null, action_power: 8, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'holy_heal',
+      damage_source: null, action_power: 8, action_icon: 'holy_heal.jpg', action_animation: 'empower', action_sfx: 'long_buff_cast',
       xp: 3640, passive: ['inner_fire 1', 'stoicism 1', 'dispel 2'], ability: 'redemption 2',
     },
     acolyte: {

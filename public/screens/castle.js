@@ -32,6 +32,7 @@ import {
   renderItemPassive, renderItemTags, renderHeroSpellSlot, unitCallingId,
   CRYSTAL_ICON_SRC,
 } from '../utils.js';
+import { playUiSound } from '../sfx.js';
 import { getEquipBlock } from '../../data/item_rules.js';
 import { missingRequiredTags } from '../../data/items.js';
 import { errandRosterIds, maybeShowErrandsIntro } from '../errands.js';
@@ -4217,6 +4218,7 @@ export function renderCastle(root, params = {}) {
         slot,
         building_id,
       });
+      playUiSound('building_complete');
       // The throne step was the ONE step that never recorded itself, so it
       // replayed on every visit with a level 0 throne while every other step
       // stayed flagged. Chain-wise it is the first beat, and it is finished the

@@ -17,6 +17,7 @@ import { hideTutorial }     from './tutorial.js';
 import { openDailyTasks, closeDailyTasks, refreshDailyButton } from './daily.js';
 import { openErrandsSheet, refreshErrandButton, errandsUnlocked } from './errands.js';
 import { initMusic, playFactionTheme, setMusicEnabled } from './music.js';
+import { initSfx } from './sfx.js';
 import { setUiLanguage, closeSheet, closeSubSheet, applyFactionTheme, gameAlert } from './utils.js';
 
 // Every alert() in the game goes through our own dialog, not Telegram's popup.
@@ -569,6 +570,7 @@ async function boot() {
     }
 
     initMusic(player);
+    initSfx(player);
     if (player.faction) { playFactionTheme(player.faction); applyFactionTheme(player.faction); }
 
     // Where this player was headed anyway, once consent is settled.
