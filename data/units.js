@@ -3,8 +3,8 @@ import { UNIT_ABILITIES } from './unit_abilities.js';
 const UNITS = {
   choir_of_the_cursed: {
     black_castellan: {
-      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest.\nIt drives the Choir forward as if every demon were expendable—because to it, every demon is.",
+      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание.\nОн гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
       id: 'h_d_1',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -19,8 +19,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     black_castellan_path_a_t2: {
-      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest.\nIt drives the Choir forward as if every demon were expendable—because to it, every demon is.",
+      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание.\nОн гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
       id: 'h_d_1_a2',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -35,8 +35,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     black_castellan_path_a_t3: {
-      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest.\nIt drives the Choir forward as if every demon were expendable—because to it, every demon is.",
+      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание.\nОн гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
       id: 'h_d_1_a3',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -51,8 +51,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     black_castellan_path_a_t4: {
-      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest.\nIt drives the Choir forward as if every demon were expendable—because to it, every demon is.",
+      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание.\nОн гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
       id: 'h_d_1_a41',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -67,8 +67,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     black_castellan_path_a_t4_alt: {
-      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest.\nIt drives the Choir forward as if every demon were expendable—because to it, every demon is.",
+      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание.\nОн гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
       id: 'h_d_1_a42',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -83,8 +83,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     black_castellan_path_b_t2: {
-      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest.\nIt drives the Choir forward as if every demon were expendable—because to it, every demon is.",
+      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание.\nОн гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
       id: 'h_d_1_b2',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -99,8 +99,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     black_castellan_path_b_t3: {
-      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest.\nIt drives the Choir forward as if every demon were expendable—because to it, every demon is.",
+      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание.\nОн гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
       id: 'h_d_1_b3',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -115,8 +115,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     black_castellan_path_b_t4: {
-      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest.\nIt drives the Choir forward as if every demon were expendable—because to it, every demon is.",
+      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание.\nОн гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
       id: 'h_d_1_b41',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -131,8 +131,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     black_castellan_path_b_t4_alt: {
-      flavor_en: "Even the oldest map leaves a blank where Black Castellan should be; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Чёрный Кастелян»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Black Castellan was once a towering ornament above the court; Aggrail's song woke it into a commander that knows only conquest.\nIt drives the Choir forward as if every demon were expendable—because to it, every demon is.",
+      flavor_ru: "Прежде Чёрный Кастелян был исполинским украшением дворца; песнь Агграила пробудила в нём полководца, знающего лишь завоевание.\nОн гонит Хор вперёд, считая каждого демона расходным материалом, — потому что для него так и есть.",
       id: 'h_d_1_b42',
       name: 'Black Castellan',
       name_ru: 'Чёрный Кастелян',
@@ -147,8 +147,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     choir_regent: {
-      flavor_en: "The name Choir Regent appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
+      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name.\nIt welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
+      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный.\nОн принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
       id: 'h_d_2',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -163,8 +163,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     choir_regent_path_a_t2: {
-      flavor_en: "The name Choir Regent appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
+      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name.\nIt welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
+      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный.\nОн принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
       id: 'h_d_2_a2',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -179,8 +179,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     choir_regent_path_a_t3: {
-      flavor_en: "The name Choir Regent appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
+      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name.\nIt welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
+      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный.\nОн принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
       id: 'h_d_2_a3',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -195,8 +195,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     choir_regent_path_a_t4: {
-      flavor_en: "The name Choir Regent appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
+      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name.\nIt welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
+      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный.\nОн принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
       id: 'h_d_2_a41',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -211,8 +211,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     choir_regent_path_a_t4_alt: {
-      flavor_en: "The name Choir Regent appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
+      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name.\nIt welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
+      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный.\nОн принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
       id: 'h_d_2_a42',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -227,8 +227,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     choir_regent_path_b_t2: {
-      flavor_en: "The name Choir Regent appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
+      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name.\nIt welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
+      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный.\nОн принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
       id: 'h_d_2_b2',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -243,8 +243,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     choir_regent_path_b_t3: {
-      flavor_en: "The name Choir Regent appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
+      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name.\nIt welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
+      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный.\nОн принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
       id: 'h_d_2_b3',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -259,8 +259,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     choir_regent_path_b_t4: {
-      flavor_en: "The name Choir Regent appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
+      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name.\nIt welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
+      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный.\nОн принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
       id: 'h_d_2_b41',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -275,8 +275,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     choir_regent_path_b_t4_alt: {
-      flavor_en: "The name Choir Regent appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Регент Хора» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
+      flavor_en: "The Choir Regent was at court when strange performers began chanting in a tongue no scholar could name.\nIt welcomed their power, then crowned itself master of the chorus; the song has never acknowledged its claim.",
+      flavor_ru: "Регент Хора был при дворе, когда чужеземные исполнители запели на языке, которого не знал ни один учёный.\nОн принял их силу, а затем объявил себя владыкой хора; песнь так и не признала его притязаний.",
       id: 'h_d_2_b42',
       name: 'Choir Regent',
       name_ru: 'Регент Хора',
@@ -291,8 +291,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     infernal_ascendant: {
-      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness.\nIts body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
+      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию.\nЕго тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
       id: 'h_d_3',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -307,8 +307,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 100
     },
     infernal_ascendant_path_a_t2: {
-      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness.\nIts body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
+      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию.\nЕго тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
       id: 'h_d_3_a2',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -323,8 +323,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     infernal_ascendant_path_a_t3: {
-      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness.\nIts body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
+      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию.\nЕго тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
       id: 'h_d_3_a3',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -339,8 +339,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     infernal_ascendant_path_a_t4: {
-      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness.\nIts body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
+      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию.\nЕго тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
       id: 'h_d_3_a41',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -355,8 +355,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     infernal_ascendant_path_a_t4_alt: {
-      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness.\nIts body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
+      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию.\nЕго тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
       id: 'h_d_3_a42',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -371,8 +371,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     infernal_ascendant_path_b_t2: {
-      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness.\nIts body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
+      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию.\nЕго тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
       id: 'h_d_3_b2',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -387,8 +387,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 480
     },
     infernal_ascendant_path_b_t3: {
-      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness.\nIts body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
+      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию.\nЕго тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
       id: 'h_d_3_b3',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -403,8 +403,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 1560
     },
     infernal_ascendant_path_b_t4: {
-      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness.\nIts body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
+      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию.\nЕго тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
       id: 'h_d_3_b41',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -419,8 +419,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     infernal_ascendant_path_b_t4_alt: {
-      flavor_en: "Few witnesses agree on how Infernal Ascendant first entered the story; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Инфернальный Вознесённый»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Infernal Ascendant was once a courtier who mistook Aggrail's corruption for a ladder to greatness.\nIts body has climbed beyond humanity, and it will sacrifice whatever remains to rise still higher.",
+      flavor_ru: "Инфернальный Вознесённый был придворным, принявшим порчу Агграила за лестницу к величию.\nЕго тело уже переросло человеческий облик, и он пожертвует всем оставшимся, чтобы подняться ещё выше.",
       id: 'h_d_3_b42',
       name: 'Infernal Ascendant',
       name_ru: 'Инфернальный Вознесённый',
@@ -435,8 +435,8 @@ const UNITS = {
       building_slot: 'slot_0', xp: 3095
     },
     imp: {
-      flavor_en: "Few witnesses agree on how Imp first entered the story; the wilderness keeps its own record of this name.\nNo handler has taught it the meaning of hesitation; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Бес»; у дикой земли есть своя летопись этого имени.\nНи один укротитель не научил его смыслу колебаний; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The first dissonant notes of Aggrail's song shook a little demon loose from the dark beneath the court.\nIt has learned one rule since: seize whatever is weak before the music moves on.",
+      flavor_ru: "Первые фальшивые ноты песни Агграила вытряхнули беса из тьмы под дворцом.\nС тех пор он усвоил лишь одно: хватай слабого, пока музыка не смолкла.",
       id: 'd1', f: 'd', t: 1,
       name: 'Imp',
       name_ru: 'Бес',
@@ -450,8 +450,8 @@ const UNITS = {
       xp: 230, passive: ['rage 1', 'aggrails_blessing 1'], ability: 'pact 1',
     },
     tormentor: {
-      flavor_en: "The name Tormentor appears beside an unlikely turning point; the border folk recognize its silhouette before the horns sound.\nA low growl is the only warning it offers; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Мучитель» появляется в летописи рядом с неожиданным поворотом событий; пограничники узнают его силуэт прежде, чем звучат рога.\nТихое рычание — единственное предупреждение, которое оно даёт; начало было скромным, но клятва — великой.",
+      flavor_en: "The Tormentor makes a melody of every cry it tears from its victims.\nAggrail's song gave it strength, not restraint; it hurts because it delights in the sound.",
+      flavor_ru: "Мучитель складывает в мелодию каждый крик, вырванный у жертвы.\nПесня Агграила дала ему силу, но не сдержанность: он мучает, потому что наслаждается звуком.",
       id: 'd11', f: 'd', t: 2,
       name: 'Tormentor',
       name_ru: 'Мучитель',
@@ -465,8 +465,8 @@ const UNITS = {
       xp: 1250, passive: ['rage 2', 'aggrails_blessing 1', 'choir 1'], ability: 'pact 1',
     },
     praetor: {
-      flavor_en: "The name Praetor appears beside an unlikely turning point; the border folk recognize its silhouette before the horns sound.\nNo handler has taught it the meaning of hesitation; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Претор» появляется в летописи рядом с неожиданным поворотом событий; пограничники узнают его силуэт прежде, чем звучат рога.\nНи один укротитель не научил его смыслу колебаний; начало было скромным, но клятва — великой.",
+      flavor_en: "The Praetor calls lesser demons into line only to spend them without a second thought.\nIt serves Aggrail for the strength to command—and would gladly devour any rival who stood higher.",
+      flavor_ru: "Претор сгоняет низших демонов в строй, лишь затем чтобы без колебаний бросить их на гибель.\nОн служит Агграилу ради власти повелевать и с радостью пожрал бы любого соперника выше себя.",
       id: 'd111', f: 'd', t: 3,
       name: 'Praetor',
       name_ru: 'Претор',
@@ -480,8 +480,8 @@ const UNITS = {
       xp: 4055, passive: ['rage 2', 'aggrails_blessing 2', 'choir 1'], ability: 'pact 2',
     },
     conqueror: {
-      flavor_en: "The chronicle gives Conqueror a place earned far from any throne; the border folk recognize its silhouette before the horns sound.\nIts instincts catch the wind’s change before banners do; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Завоеватель»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго чутьё замечает перемену ветра раньше знамён; начало было скромным, но клятва — великой.",
+      flavor_en: "The Conqueror does not want a kingdom; it wants every living thing in reach beneath its claws.\nEach victory only sharpens its hunger, and Aggrail's chorus answers with another verse of ruin.",
+      flavor_ru: "Завоевателю не нужно королевство: он хочет, чтобы всё живое вокруг оказалось под его когтями.\nКаждая победа лишь разжигает голод, а хор Агграила отвечает новым куплетом разрушения.",
       id: 'd1111', f: 'd', t: 4,
       name: 'Conqueror',
       name_ru: 'Завоеватель',
@@ -495,8 +495,8 @@ const UNITS = {
       xp: 8200, passive: ['rage 2', 'aggrails_blessing 2', 'choir 2'], ability: 'pact 2',
     },
     decimator: {
-      flavor_en: "Even the oldest map leaves a blank where Decimator should be; no two scouts agree on where it first appeared.\nIt answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Дециматор»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nНа любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Decimator's command is a shockwave: demons surge behind it, eager to claim their share of the slaughter.\nIt calls this loyalty; the fallen know they were only useful until the next blow.",
+      flavor_ru: "Приказ Дециматора — ударная волна: демоны бросаются следом, надеясь урвать свою долю бойни.\nОн называет это верностью; павшие знают, что были нужны лишь до следующего удара.",
       id: 'd1112', f: 'd', t: 4,
       name: 'Decimator',
       name_ru: 'Дециматор',
@@ -510,8 +510,8 @@ const UNITS = {
       xp: 8200, passive: ['rage 2', 'aegis 2', 'warding 2'], ability: 'pact 2',
     },
     chorister: {
-      flavor_en: "Even the oldest map leaves a blank where Chorister should be; no two scouts agree on where it first appeared.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Хорист»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "Once a court singer, the Chorister now lends its voice to the note that first corrupted the palace.\nIts shrill refrain sets skin alight and turns fear into an instrument for the Choir.",
+      flavor_ru: "Когда-то Хорист пел при дворе, теперь его голос поддерживает ноту, осквернившую дворец.\nПронзительный припев жжёт кожу и превращает страх в орудие Хора.",
       id: 'd12', f: 'd', t: 2,
       name: 'Chorister',
       name_ru: 'Хорист',
@@ -525,8 +525,8 @@ const UNITS = {
       xp: 1250, passive: ['rage 1', 'fear 1', 'burn 1'], ability: 'pact 1',
     },
     chanter: {
-      flavor_en: "The name Chanter appears beside an unlikely turning point; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Певчий» появляется в летописи рядом с неожиданным поворотом событий; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; начало было скромным, но клятва — великой.",
+      flavor_en: "The Chanter shapes Aggrail's discord into a command that crawls beneath the skin.\nThose who hear it falter as their own terror rises to meet the burning verse.",
+      flavor_ru: "Певчий превращает диссонанс Агграила в приказ, заползающий под кожу.\nУслышавшие его теряют решимость, когда их собственный ужас встречает пылающий напев.",
       id: 'd121', f: 'd', t: 3,
       name: 'Chanter',
       name_ru: 'Певчий',
@@ -540,8 +540,8 @@ const UNITS = {
       xp: 4055, passive: ['rage 2', 'fear 1', 'burn 2'], ability: 'pact 2',
     },
     archchanter: {
-      flavor_en: "Few witnesses agree on how Archchanter first entered the story; the border folk recognize its silhouette before the horns sound.\nA quiet gesture can alter the temper of a whole battle; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Архипевчий»; пограничники узнают его силуэт прежде, чем звучат рога.\nТихий жест способен изменить ход целой битвы; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Archchanter leads the Choir's voices into a crescendo that makes even hardened demons tremble.\nIt calls the terror holy—not because it believes, but because fear keeps the lesser wills obedient.",
+      flavor_ru: "Архипевчий ведёт голоса Хора к крещендо, от которого содрогаются даже закалённые демоны.\nОн зовёт этот ужас священным не из веры: страх удерживает слабые души в повиновении.",
       id: 'd1211', f: 'd', t: 4,
       name: 'Archchanter',
       name_ru: 'Архипевчий',
@@ -555,8 +555,8 @@ const UNITS = {
       xp: 7280, passive: ['rage 2', 'fear 2', 'burn 2'], ability: 'pact 2',
     },
     doomchanter: {
-      flavor_en: "Even the oldest map leaves a blank where Doomchanter should be; the wilderness keeps its own record of this name.\nA quiet gesture can alter the temper of a whole battle; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Певчий Гибели»; у дикой земли есть своя летопись этого имени.\nТихий жест способен изменить ход целой битвы; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Doomchanter sings of a final silence, and its verse leaves rot where living breath once stirred.\nIt offers no release from the curse; it wants every last heartbeat to become part of the song.",
+      flavor_ru: "Певчий Гибели поёт о последней тишине, и его куплет оставляет гниль там, где теплилось дыхание.\nОн не сулит избавления от проклятия: каждый удар сердца должен стать частью песни.",
       id: 'd1212', f: 'd', t: 4,
       name: 'Doomchanter',
       name_ru: 'Певчий Гибели',
@@ -570,8 +570,8 @@ const UNITS = {
       xp: 7280, passive: ['decay 3','fear 1', 'infect 2'], ability: 'rite_of_reclamation 2',
     },
     ash_acolyte: {
-      flavor_en: "The chronicle gives Ash Acolyte a place earned far from any throne; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Пепельный Послушник»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; начало было скромным, но клятва — великой.",
+      flavor_en: "The Ash Acolyte gathers the cinders left by Aggrail's fire and turns them into a ward for its own kind.\nIt purges weakness without pity; the Choir keeps only what can endure the next verse.",
+      flavor_ru: "Пепельный Послушник собирает угли огня Агграила и сплетает из них защиту для своих.\nОн выжигает слабость без жалости: Хор оставляет лишь тех, кто выдержит следующий куплет.",
       id: 'd2', f: 'd', t: 1,
       name: 'Ash Acolyte',
       name_ru: 'Пепельный Послушник',
@@ -585,8 +585,8 @@ const UNITS = {
       xp: 75, passive: ['unending_servitude 1', 'shield 1'], ability: 'purge 1',
     },
     emberkeeper: {
-      flavor_en: "The chronicle gives Emberkeeper a place earned far from any throne; no two scouts agree on where it first appeared.\nIt reads omens in the space between breaths; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Хранитель Углей»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nОно читает знамения в промежутках между вдохами; начало было скромным, но клятва — великой.",
+      flavor_en: "The Emberkeeper tends a coal that will not die, feeding it verses stolen from the palace's last living choir.\nIts warmth shields the faithful; the keeper asks no one whether they wish to be saved.",
+      flavor_ru: "Хранитель Углей бережёт неугасимый уголёк, питая его стихами, украденными у последнего живого хора дворца.\nЕго жар укрывает верных, не спрашивая, желают ли они спасения.",
       id: 'd21', f: 'd', t: 2,
       name: 'Emberkeeper',
       name_ru: 'Хранитель Углей',
@@ -600,8 +600,8 @@ const UNITS = {
       xp: 400, passive: ['unending_servitude 1', 'shield 2'], ability: 'purge 1',
     },
     pyre_warden: {
-      flavor_en: "The name Pyre Warden appears beside an unlikely turning point; the wilderness keeps its own record of this name.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Смотритель Костра» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
+      flavor_en: "The Pyre Warden tends the Choir's fire and sings courage into those who must approach it.\nThe song lends them speed, not hope; Aggrail has no use for hope.",
+      flavor_ru: "Смотритель Костра поддерживает огонь Хора и песней подгоняет тех, кому предстоит к нему приблизиться.\nНапев дарит им быстроту, но не надежду: Агграилу надежда ни к чему.",
       id: 'd211', f: 'd', t: 3,
       name: 'Pyre Warden',
       name_ru: 'Смотритель Костра',
@@ -615,8 +615,8 @@ const UNITS = {
       xp: 1850, passive: ['inspiration_initiative 1', 'shield 2'], ability: 'purge 1',
     },
     ashen_warden: {
-      flavor_en: "The name Ashen Warden appears beside an unlikely turning point; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Пепельный Страж» появляется в летописи рядом с неожиданным поворотом событий; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; начало было скромным, но клятва — великой.",
+      flavor_en: "The Ashen Warden stands watch where the dead rise to answer Aggrail's call.\nIts ash-veiled hymn keeps their chill from the living; the Choir needs its servants intact until the work is done.",
+      flavor_ru: "Пепельный Страж караулит там, где мёртвые поднимаются на зов Агграила.\nОкутанный пеплом гимн заслоняет их ледяное дыхание от живых: Хору нужны слуги целыми, пока дело не завершено.",
       id: 'd2111', f: 'd', t: 4,
       name: 'Ashen Warden',
       name_ru: 'Пепельный Страж',
@@ -630,8 +630,8 @@ const UNITS = {
       xp: 3350, passive: ['inspiration_initiative 1', 'shield 2', 'resist_aura_death 1'], ability: 'purge 1',
     },
     pyre_choir: {
-      flavor_en: "The chronicle gives Pyre Choir a place earned far from any throne; the wilderness keeps its own record of this name.\nIts craft begins where ordinary sight gives up; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Хор Погребального Костра»; у дикой земли есть своя летопись этого имени.\nЕго искусство начинается там, где обычный взгляд бессилен; начало было скромным, но клятва — великой.",
+      flavor_en: "The Pyre Choir sings over the roots and burrows of the transformed capital, where even nature has learned to burn.\nIts chorus hardens the faithful against the wild; nothing beyond the spiral is meant to survive.",
+      flavor_ru: "Хор Погребального Костра поёт над корнями и подземельями изменённой столицы, где даже природа научилась гореть.\nЕго голоса закаляют верных против дикого мира: за пределами спирали ничто не должно уцелеть.",
       id: 'd2112', f: 'd', t: 4,
       name: 'Pyre Choir',
       name_ru: 'Хор Погребального Костра',
@@ -645,8 +645,8 @@ const UNITS = {
       xp: 3150, passive: ['inspiration_initiative 1', 'shield 2', 'resist_aura_nature 1' ], ability: 'purge 1',
     },
     clay_gargoyle: {
-      flavor_en: "Even the oldest map leaves a blank where Clay Gargoyle should be; no two scouts agree on where it first appeared.\nIts maker left no voice inside, only an enduring purpose; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Глиняная Горгулья»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nСоздатель не вложил в него голос — лишь цель, пережившую века; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Clay Gargoyle was a court ornament before Aggrail's song taught stone to hunger.\nIt now leaves its pedestal to crush intruders, returning to stillness only when the court commands it.",
+      flavor_ru: "Прежде Глиняная Горгулья украшала дворец; песня Агграила научила камень голодать.\nТеперь она сходит с постамента, чтобы раздавить незваных гостей, и замирает лишь по приказу двора.",
       id: 'd3', f: 'd', t: 1,
       name: 'Clay Gargoyle',
       name_ru: 'Глиняная Горгулья',
@@ -660,8 +660,8 @@ const UNITS = {
       xp: 230, passive: ['unbreakable 1', 'aegis 1'], ability: 'stone_form 1',
     },
     stone_gargoyle: {
-      flavor_en: "The chronicle gives Stone Gargoyle a place earned far from any throne; the border folk recognize its silhouette before the horns sound.\nIts maker left no voice inside, only an enduring purpose; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Каменная Горгулья»; пограничники узнают его силуэт прежде, чем звучат рога.\nСоздатель не вложил в него голос — лишь цель, пережившую века; начало было скромным, но клятва — великой.",
+      flavor_en: "The Stone Gargoyle's old carved wings once watched over feasts and coronations.\nNow they bear it down upon the Choir's enemies, and its unyielding body answers every blow with another.",
+      flavor_ru: "Прежде резные крылья Каменной Горгульи взирали на пиры и коронации.\nТеперь они несут её на врагов Хора, а несокрушимое тело отвечает на каждый удар новым.",
       id: 'd31', f: 'd', t: 2,
       name: 'Stone Gargoyle',
       name_ru: 'Каменная Горгулья',
@@ -675,8 +675,8 @@ const UNITS = {
       xp: 1250, passive: ['unbreakable 2', 'aegis 1', 'resist_aura_death 1'], ability: 'stone_form 1',
     },
     onyx_gargoyle: {
-      flavor_en: "The name Onyx Gargoyle appears beside an unlikely turning point; the wilderness keeps its own record of this name.\nIts maker left no voice inside, only an enduring purpose; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Ониксовая Горгулья» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени.\nСоздатель не вложил в него голос — лишь цель, пережившую века; начало было скромным, но клятва — великой.",
+      flavor_en: "The Onyx Gargoyle absorbs the firelight, leaving only its eyes to mark its descent from the blackened towers.\nA dead thing of stone, it bears the Choir's curse more faithfully than any courtier.",
+      flavor_ru: "Ониксовая Горгулья поглощает свет огня; лишь глаза выдают её спуск с почерневших башен.\nМёртвый камень несёт проклятие Хора вернее любого придворного.",
       id: 'd311', f: 'd', t: 3,
       name: 'Onyx Gargoyle',
       name_ru: 'Ониксовая Горгулья',
@@ -690,8 +690,8 @@ const UNITS = {
       xp: 4055, passive: ['unbreakable 2', 'aegis 1', 'resist_aura_death 2'], ability: 'stone_form 2',
     },
     obsidian_gargoyle: {
-      flavor_en: "The name Obsidian Gargoyle appears beside an unlikely turning point; the border folk recognize its silhouette before the horns sound.\nIts metal remembers the hands that shaped it; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Обсидиановая Горгулья» появляется в летописи рядом с неожиданным поворотом событий; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго металл помнит руки, которые придали ему форму; начало было скромным, но клятва — великой.",
+      flavor_en: "The Obsidian Gargoyle is the court's dark reflection, its jagged wings edged like broken glass.\nIt endures the blows meant for its masters, then turns that borrowed violence back upon the attackers.",
+      flavor_ru: "Обсидиановая Горгулья — тёмное отражение двора, чьи зазубренные крылья остры, как битое стекло.\nОна принимает удары, предназначенные хозяевам, а затем обрушивает эту чужую ярость на нападающих.",
       id: 'd3111', f: 'd', t: 4,
       name: 'Obsidian Gargoyle',
       name_ru: 'Обсидиановая Горгулья',
@@ -705,8 +705,8 @@ const UNITS = {
       xp: 7280, passive: ['unbreakable 2', 'aegis 2', 'resist_aura_death 2'], ability: 'stone_form 2',
     },
     quartz_gargoyle: {
-      flavor_en: "Few witnesses agree on how Quartz Gargoyle first entered the story; the border folk recognize its silhouette before the horns sound.\nIts maker left no voice inside, only an enduring purpose; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Кварцевая Горгулья»; пограничники узнают его силуэт прежде, чем звучат рога.\nСоздатель не вложил в него голос — лишь цель, пережившую века; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Quartz Gargoyle catches the infernal glow and scatters it across the spiral stairways of the sunken capital.\nEvery glittering shard is a warning: the palace's ornaments have joined the hunt.",
+      flavor_ru: "Кварцевая Горгулья ловит адское сияние и рассыпает его по винтовым лестницам опускающейся столицы.\nКаждая сверкающая грань — предупреждение: дворцовые украшения вышли на охоту.",
       id: 'd32', f: 'd', t: 2,
       name: 'Quartz Gargoyle',
       name_ru: 'Кварцевая Горгулья',
@@ -720,8 +720,8 @@ const UNITS = {
       xp: 1250, passive: ['unbreakable 2', 'aegis 1', 'resist_aura_cold 1'], ability: 'stone_form 1',
     },
     azurite_gargoyle: {
-      flavor_en: "Even the oldest map leaves a blank where Azurite Gargoyle should be; the border folk recognize its silhouette before the horns sound.\nRunes beneath its plating glow when danger draws near; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Азуритовая Горгулья»; пограничники узнают его силуэт прежде, чем звучат рога.\nРуны под его бронёй вспыхивают, когда приближается опасность; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Azurite Gargoyle's runes flare blue when an enemy nears, and the stone answers with a sudden, crushing weight.\nNo warning is needed; the transformed statue was built to make escape impossible.",
+      flavor_ru: "Руны Азуритовой Горгульи вспыхивают синим при приближении врага, и камень обрушивается на него тяжёлой хваткой.\nПредупреждения не нужны: изменённая статуя создана, чтобы не оставить пути к бегству.",
       id: 'd321', f: 'd', t: 3,
       name: 'Azurite Gargoyle',
       name_ru: 'Азуритовая Горгулья',
@@ -735,8 +735,8 @@ const UNITS = {
       xp: 4055, passive: ['unbreakable 2', 'aegis 2', 'resist_aura_cold 1'], ability: 'stone_form 2',
     },
     malachite_gargoyle: {
-      flavor_en: "The chronicle gives Malachite Gargoyle a place earned far from any throne; the wilderness keeps its own record of this name.\nRunes beneath its plating glow when danger draws near; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Малахитовая Горгулья»; у дикой земли есть своя летопись этого имени.\nРуны под его бронёй вспыхивают, когда приближается опасность; начало было скромным, но клятва — великой.",
+      flavor_en: "The Malachite Gargoyle's green stone veins shine with the corruption that flooded the palace foundations.\nIt lashes out at anything that draws near, as if the capital itself had grown claws.",
+      flavor_ru: "Зелёные прожилки Малахитовой Горгульи светятся порчей, затопившей дворцовые подземелья.\nОна бросается на всякого, кто приблизится, словно сама столица отрастила когти.",
       id: 'd3211', f: 'd', t: 4,
       name: 'Malachite Gargoyle',
       name_ru: 'Малахитовая Горгулья',
@@ -750,8 +750,8 @@ const UNITS = {
       xp: 7280, passive: ['unbreakable 2', 'aegis 2', 'resist_aura_cold 2'], ability: 'stone_form 2',
     },
     alabaster_gargoyle: {
-      flavor_en: "The chronicle gives Alabaster Gargoyle a place earned far from any throne; the border folk recognize its silhouette before the horns sound.\nIts maker left no voice inside, only an enduring purpose; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Алебастровая Горгулья»; пограничники узнают его силуэт прежде, чем звучат рога.\nСоздатель не вложил в него голос — лишь цель, пережившую века; начало было скромным, но клятва — великой.",
+      flavor_en: "The Alabaster Gargoyle sings a pale note that steadies the Choir, though no breath moves behind its stone lips.\nThe court once prized it as decoration; now it preserves only those useful to Aggrail.",
+      flavor_ru: "Алебастровая Горгулья выводит бледную ноту, укрепляющую Хор, хотя за каменными губами нет дыхания.\nКогда-то двор ценил её как украшение; теперь она хранит лишь тех, кто полезен Агграилу.",
       id: 'd3212', f: 'd', t: 4,
       name: 'Alabaster Gargoyle',
       name_ru: 'Алебастровая Горгулья',
@@ -765,8 +765,8 @@ const UNITS = {
       xp: 7380, passive: ['unbreakable 2', 'aegis 2', 'resist_aura_life 2'], ability: 'stone_form 2',
     },
     basalt_gargoyle: {
-      flavor_en: "Few witnesses agree on how Basalt Gargoyle first entered the story; the border folk recognize its silhouette before the horns sound.\nRunes beneath its plating glow when danger draws near; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Базальтовая Горгулья»; пограничники узнают его силуэт прежде, чем звучат рога.\nРуны под его бронёй вспыхивают, когда приближается опасность; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Basalt Gargoyle breaks from its perch like a piece of the city wall coming loose.\nIts heavy limbs strike with the force of the falling capital, and the Choir calls the ruin a blessing.",
+      flavor_ru: "Базальтовая Горгулья срывается с карниза, словно от столицы откололась часть стены.\nЕё тяжёлые лапы бьют с силой рушащегося города, а Хор называет это разрушение благословением.",
       id: 'd33', f: 'd', t: 2,
       name: 'Basalt Gargoyle',
       name_ru: 'Базальтовая Горгулья',
@@ -780,8 +780,8 @@ const UNITS = {
       xp: 1250, passive: ['unbreakable 2', 'aegis 1', 'chain 1'], ability: 'stone_form 1',
     },
     slagstone_gargoyle: {
-      flavor_en: "Even the oldest map leaves a blank where Slagstone Gargoyle should be; the border folk recognize its silhouette before the horns sound.\nIts metal remembers the hands that shaped it; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Шлаковая Горгулья»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго металл помнит руки, которые придали ему форму; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Slagstone Gargoyle drags a wake of molten grit from the furnace halls beneath the court.\nAnyone caught in its path is chained to the burning city by stone and flame.",
+      flavor_ru: "Шлаковая Горгулья тянет за собой шлейф расплавленной крошки из дворцовых плавилен.\nПопавших на её пути камень и пламя приковывают к горящему городу.",
       id: 'd331', f: 'd', t: 3,
       name: 'Slagstone Gargoyle',
       name_ru: 'Шлаковая Горгулья',
@@ -795,8 +795,8 @@ const UNITS = {
       xp: 4055, passive: ['unbreakable 2', 'aegis 2', 'chain 1'], ability: 'stone_form 2',
     },
     cinderstone_gargoyle: {
-      flavor_en: "The name Magma Gargoyle appears beside an unlikely turning point; the wilderness keeps its own record of this name.\nIts metal remembers the hands that shaped it; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Магмовая Горгулья» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени.\nЕго металл помнит руки, которые придали ему форму; начало было скромным, но клятва — великой.",
+      flavor_en: "The Cinderstone Gargoyle carries the furnace-heart of the descending city in its cracked chest.\nWhen it strikes, molten fire leaps from stone to stone until the whole passage answers with flame.",
+      flavor_ru: "В расколотой груди Магмовой Горгульи горит сердце печи опускающегося города.\nОт её удара расплавленный огонь скачет с камня на камень, пока весь проход не вспыхнет.",
       id: 'd3311', f: 'd', t: 4,
       name: 'Magma Gargoyle',
       name_ru: 'Магмовая Горгулья',
@@ -810,8 +810,8 @@ const UNITS = {
       xp: 7280, passive: ['unbreakable 2', 'aegis 2', 'chain 2'], ability: 'stone_form 2',
     },
     heretic: {
-      flavor_en: "The chronicle gives Heretic a place earned far from any throne; the wilderness keeps its own record of this name.\nIt measures courage by the ground held after impact; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Еретик»; у дикой земли есть своя летопись этого имени.\nДля него мужество измеряется землёй, удержанной после удара; начало было скромным, но клятва — великой.",
+      flavor_en: "The Heretic heard the court's new song and mistook corruption for deliverance.\nNow it fights with borrowed fury, desperate to prove that surrendering its old life was worth the price.",
+      flavor_ru: "Еретик услышал новую песнь двора и принял порчу за избавление.\nТеперь он сражается заимствованной яростью, желая доказать, что отказ от прежней жизни стоил этой цены.",
       id: 'd4', f: 'd', t: 1,
       name: 'Heretic',
       name_ru: 'Еретик',
@@ -825,8 +825,8 @@ const UNITS = {
       xp: 100, passive: 'chorus_of_war 1', ability: 'furious_strike 1',
     },
     posessed: {
-      flavor_en: "Even the oldest map leaves a blank where Posessed should be; the border folk recognize its silhouette before the horns sound.\nIt answers every challenge with the blunt certainty of iron; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Одержимый»; пограничники узнают его силуэт прежде, чем звучат рога.\nНа любой вызов оно отвечает прямотой железа; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Possessed still remembers a human name, but Aggrail's voice drowns it beneath a chorus of commands.\nEach wound loosens the demon's hold on restraint; each answer is another savage blow.",
+      flavor_ru: "Одержимый ещё помнит человеческое имя, но голос Агграила заглушает его хором приказов.\nС каждой раной демон всё меньше сдерживается, и каждый ответ становится новым яростным ударом.",
       id: 'd41', f: 'd', t: 2,
       name: 'Posessed',
       name_ru: 'Одержимый',
@@ -840,8 +840,8 @@ const UNITS = {
       xp: 444, passive: ['chorus_of_war 1', 'rage 1'], ability: 'furious_strike 1',
     },
     vessel: {
-      flavor_en: "The chronicle gives Vessel a place earned far from any throne; no two scouts agree on where it first appeared.\nEach advance costs the enemy more than the map can show; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Сосуд»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nКаждый его шаг отнимает у врага больше, чем покажет карта; начало было скромным, но клятва — великой.",
+      flavor_en: "The Vessel has given its body to a demon in exchange for strength enough to break the enemy line.\nThe bargain leaves no self to reclaim; the thing inside has already begun to treat its flesh as its own.",
+      flavor_ru: "Сосуд отдал тело демону в обмен на силу, способную сокрушить вражеский строй.\nВернуть себя уже некому: обитатель тела давно считает эту плоть своей.",
       id: 'd411', f: 'd', t: 3,
       name: 'Vessel',
       name_ru: 'Сосуд',
@@ -855,8 +855,8 @@ const UNITS = {
       xp: 1560, passive: ['chorus_of_war 1', 'rage 1', 'execute 1'], ability: 'furious_strike 1',
     },
     broken_vessel: {
-      flavor_en: "Few witnesses agree on how Broken Vessel first entered the story; the wilderness keeps its own record of this name.\nIt measures courage by the ground held after impact; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Сломленный Сосуд»; у дикой земли есть своя летопись этого имени.\nДля него мужество измеряется землёй, удержанной после удара; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Broken Vessel is what remains when the mortal shell can no longer contain its guest.\nThe demon does not mourn its discarded host; it has gained a stronger shape and a clearer path to power.",
+      flavor_ru: "Сломленный Сосуд — то, что остаётся, когда смертная оболочка больше не в силах удержать гостя.\nДемон не скорбит об оставленном хозяине: он обрёл более крепкую форму и прямой путь к силе.",
       id: 'd4111', f: 'd', t: 4,
       name: 'Broken Vessel',
       name_ru: 'Сломленный Сосуд',
@@ -870,8 +870,8 @@ const UNITS = {
       xp: 2690, passive: ['chorus_of_war 1', 'rage 1', 'execute 2'], ability: 'furious_strike 1',
     },
     pain_projector: {
-      flavor_en: "Even the oldest map leaves a blank where Pain Projector should be; the border folk recognize its silhouette before the horns sound.\nIt reads omens in the space between breaths; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Проводник Боли»; пограничники узнают его силуэт прежде, чем звучат рога.\nОно читает знамения в промежутках между вдохами; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Pain Projector was made to endure the wound that powers the Choir's advance, and has long since forgotten how to beg for mercy.",
+      flavor_ru: "Проводник Боли создан терпеть раны, питающие наступление Хора, и давно забыл, как просить пощады.",
       id: 'd412', f: 'd', t: 3,
       name: 'Pain Projector',
       name_ru: 'Проводник Боли',
@@ -885,8 +885,8 @@ const UNITS = {
       xp: 1560, passive: ['regenerate 1', 'recuperate 1', 'volcanic_skin 1'], ability: null,
     },
     agony_engine: {
-      flavor_en: "The chronicle gives Agony Avatar a place earned far from any throne; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Аватар Агонии»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
+      flavor_en: "The Agony Engine is a living furnace fed by pain, its shell pulsing with every wound it inflicts upon itself.\nThe Choir spends its suffering as freely as its victims; only the power drawn from it matters.",
+      flavor_ru: "Аватар Агонии — живое горнило, питаемое мукой; его оболочка пульсирует с каждой нанесённой себе раной.\nХор тратит его страдания так же безжалостно, как страдания жертв: важна лишь добытая сила.",
       id: 'd4121', f: 'd', t: 4,
       name: 'Agony Avatar',
       name_ru: 'Аватар Агонии',
@@ -900,8 +900,8 @@ const UNITS = {
       xp: 2535, passive: ['regenerate 1', 'recuperate 2', 'volcanic_skin 1'], ability: null,
     },
     peer: {
-      flavor_en: "The name Peer appears beside an unlikely turning point; the wilderness keeps its own record of this name.\nIts craft begins where ordinary sight gives up; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Пэр» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени.\nЕго искусство начинается там, где обычный взгляд бессилен; начало было скромным, но клятва — великой.",
+      flavor_en: "The Peer still wears the posture of a courtier, though the infernal flame has hollowed out everything beneath the finery.\nIt calls itself superior to the common crowd and borrows Aggrail's fire to make the claim convincing.",
+      flavor_ru: "Пэр всё ещё держится как придворный, хотя адское пламя выжгло всё под его нарядами.\nОн считает себя выше простолюдинов и занимает огонь Агграила, чтобы это доказать.",
       id: 'd6', f: 'd', t: 1,
       name: 'Peer',
       name_ru: 'Пэр',
@@ -915,8 +915,8 @@ const UNITS = {
       xp: 100, passive: ['magic_attunement 1', 'resist_aura_fire 1'], ability: 'infernal_mandate 1',
     },
     nether_baron: {
-      flavor_en: "The name Nether Baron appears beside an unlikely turning point; the wilderness keeps its own record of this name.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Барон Преисподней» появляется в летописи рядом с неожиданным поворотом событий; у дикой земли есть своя летопись этого имени.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
+      flavor_en: "The Nether Baron commands lesser spirits with a gesture once reserved for servants of the court.\nIts infernal mandate turns that old entitlement into flame—and every obedient soul confirms its imagined nobility.",
+      flavor_ru: "Барон Преисподней повелевает низшими духами жестом, прежде предназначенным дворцовым слугам.\nАдский приказ превращает былую спесь в пламя, а каждая покорная душа подтверждает его мнимое благородство.",
       id: 'd61', f: 'd', t: 2,
       name: 'Nether Baron',
       name_ru: 'Барон Преисподней',
@@ -930,8 +930,8 @@ const UNITS = {
       xp: 480, passive: ['magic_attunement 1', 'resist_aura_fire 1', 'sovereigns_levy 1'], ability: 'infernal_mandate 2',
     },
     nether_lord: {
-      flavor_en: "The name Nether Lord appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Владыка Преисподней» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
+      flavor_en: "The Nether Lord has learned to shape the court's corruption into a command that bites through armour and pride alike.\nIt mistakes obedience for respect, and demands more of both with every victory.",
+      flavor_ru: "Владыка Преисподней научился превращать порчу двора в приказ, прожигающий и броню, и гордость.\nОн принимает повиновение за уважение и после каждой победы требует всё больше того и другого.",
       id: 'd611', f: 'd', t: 3,
       name: 'Nether Lord',
       name_ru: 'Владыка Преисподней',
@@ -945,8 +945,8 @@ const UNITS = {
       xp: 1560, passive: ['magic_attunement 1', 'resist_aura_fire 2', 'sovereigns_levy 1'], ability: 'infernal_mandate 2',
     },
     nether_sovereign: {
-      flavor_en: "The chronicle gives Nether Sovereign a place earned far from any throne; the border folk recognize its silhouette before the horns sound.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Государь Преисподней»; пограничники узнают его силуэт прежде, чем звучат рога.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
+      flavor_en: "The Nether Sovereign rules from the upper reaches of a capital that now spirals down toward hell.\nIt sees the city's descent as a throne rising above the world, and will burn any who dispute its claim.",
+      flavor_ru: "Государь Преисподней правит с высот столицы, чья спираль уходит всё глубже к аду.\nОн считает падение города троном над всем миром и сожжёт каждого, кто оспорит его право.",
       id: 'd6111', f: 'd', t: 4,
       name: 'Nether Sovereign',
       name_ru: 'Государь Преисподней',
@@ -960,8 +960,8 @@ const UNITS = {
       xp: 1820, passive: ['magic_attunement 1', 'resist_aura_fire 3', 'sovereigns_levy 1'], ability: 'infernal_mandate 3',
     },
     veiled_peer: {
-      flavor_en: "The name Veiled Peer appears beside an unlikely turning point; no two scouts agree on where it first appeared.\nIts craft begins where ordinary sight gives up; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Имя «Пэр Завесы» появляется в летописи рядом с неожиданным поворотом событий; дозорные так и не сошлись во мнении, где оно появилось впервые.\nЕго искусство начинается там, где обычный взгляд бессилен; начало было скромным, но клятва — великой.",
+      flavor_en: "The Veiled Peer hides a courtier's face behind a shroud of stolen death-magic.\nIt whispers of restoration to the desperate, then takes their life to feed the court's unending hunger.",
+      flavor_ru: "Пэр Завесы скрывает придворное лицо под покровом украденной магии смерти.\nОн шепчет отчаявшимся о возрождении, а затем забирает их жизнь, чтобы утолить ненасытный голод двора.",
       id: 'd62', f: 'd', t: 2,
       name: 'Veiled Peer',
       name_ru: 'Пэр Завесы',
@@ -975,8 +975,8 @@ const UNITS = {
       xp: 480, passive: ['magic_attunement 1', 'essence_of_power 1', 'resist_aura_death 1'], ability: 'rite_of_reclamation 1',
     },
     shrouded_peer: {
-      flavor_en: "The chronicle gives Shrouded Peer a place earned far from any throne; the wilderness keeps its own record of this name.\nIt reads omens in the space between breaths; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Пэр Покрова»; у дикой земли есть своя летопись этого имени.\nОно читает знамения в промежутках между вдохами; начало было скромным, но клятва — великой.",
+      flavor_en: "The Shrouded Peer draws a deeper veil across its face as the stolen power gathers around it.\nIt calls the dead back only to bind them to the court; no servant is ever permitted to leave.",
+      flavor_ru: "Пэр Покрова всё глубже скрывает лицо, пока вокруг него сгущается украденная сила.\nОн возвращает мёртвых лишь для того, чтобы привязать их ко двору: ни одному слуге не позволено уйти.",
       id: 'd621', f: 'd', t: 3,
       name: 'Shrouded Peer',
       name_ru: 'Пэр Покрова',
@@ -990,8 +990,8 @@ const UNITS = {
       xp: 1560, passive: ['magic_attunement 1', 'essence_of_power 1', 'resist_aura_death 2'], ability: 'rite_of_reclamation 1',
     },
     peer_of_the_pale_court: {
-      flavor_en: "Few witnesses agree on how Peer of the Pale Court first entered the story; no two scouts agree on where it first appeared.\nIt reads omens in the space between breaths; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Пэр Бледного Двора»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nОно читает знамения в промежутках между вдохами; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Peer of the Pale Court wears death like court regalia, each pallid layer marking another stolen life.\nIt raises the fallen for the Choir's use and calls this dominion over the grave a return to its former grandeur.",
+      flavor_ru: "Пэр Бледного Двора носит смерть как придворные регалии; каждый бледный слой отмечает очередную украденную жизнь.\nОн поднимает павших для нужд Хора и считает эту власть над могилой возвращением былого величия.",
       id: 'd6211', f: 'd', t: 4,
       name: 'Peer of the Pale Court',
       name_ru: 'Пэр Бледного Двора',
@@ -1005,8 +1005,8 @@ const UNITS = {
       xp: 3095, passive: ['magic_attunement 1', 'essence_of_power 1', 'resist_aura_death 3'], ability: 'rite_of_reclamation 2',
     },
     dread_herald: {
-      flavor_en: "The chronicle gives Dread Herald a place earned far from any throne; no two scouts agree on where it first appeared.\nIts craft begins where ordinary sight gives up; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Глашатай Ужаса»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nЕго искусство начинается там, где обычный взгляд бессилен; начало было скромным, но клятва — великой.",
+      flavor_en: "The Dread Herald carries the court's verdict in a voice that drains courage before the first blow falls.\nIts masters call the terror justice; the Herald needs no other truth.",
+      flavor_ru: "Глашатай Ужаса несёт приговор двора голосом, отнимающим мужество ещё до первого удара.\nХозяева зовут страх правосудием; Глашатаю другой правды не нужно.",
       id: 'd6212', f: 'd', t: 4,
       name: 'Dread Herald',
       name_ru: 'Глашатай Ужаса',
@@ -1020,8 +1020,8 @@ const UNITS = {
       xp: 3095, passive: ['magic_attunement 1', 'beacon_of_despair 2', 'resist_aura_life 2'], ability: 'rite_of_reclamation 2',
     },
     flame_spawn: {
-      flavor_en: "Even the oldest map leaves a blank where Flame Spawn should be; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Порождение Пламени»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Flame Spawn is a scrap of Aggrail's fire given hunger and shape.\nIt hurls a verse of cataclysm without regard for what burns beside its target—including its own kind.",
+      flavor_ru: "Порождение Пламени — частица огня Агграила, наделённая голодом и обликом.\nОно обрушивает куплет катаклизма, не заботясь о том, что сгорит рядом с целью, даже если это его сородичи.",
       id: 'd7', f: 'd', t: 1,
       name: 'Flame Spawn',
       name_ru: 'Порождение Пламени',
@@ -1035,8 +1035,8 @@ const UNITS = {
       xp: 110, passive: ['volcanic_skin 1', 'unending_servitude 1'], ability: 'verse_of_cataclysm 1',
     },
     blaze_spawn: {
-      flavor_en: "Few witnesses agree on how Blaze Spawn first entered the story; no two scouts agree on where it first appeared.\nIt reads omens in the space between breaths; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Порождение Полымя»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nОно читает знамения в промежутках между вдохами; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Blaze Spawn's fire gutters, then flares brighter whenever it tastes fresh fear.\nIts final verse lingers as a burning curse, so even survivors carry the Choir's song away.",
+      flavor_ru: "Огонь Порождения Полымя меркнет, а затем вспыхивает ярче, почуяв новый страх.\nПоследний куплет остаётся горящим проклятием, и даже выжившие уносят с собой песню Хора.",
       id: 'd71', f: 'd', t: 2,
       name: 'Blaze Spawn',
       name_ru: 'Порождение Полымя',
@@ -1050,8 +1050,8 @@ const UNITS = {
       xp: 540, passive: ['volcanic_skin 1', 'last_verse 1', 'unending_servitude 1'], ability: 'verse_of_cataclysm 1',
     },
     inferno_spawn: {
-      flavor_en: "Few witnesses agree on how Inferno Spawn first entered the story; the border folk recognize its silhouette before the horns sound.\nIt reads omens in the space between breaths; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Порождение Инферно»; пограничники узнают его силуэт прежде, чем звучат рога.\nОно читает знамения в промежутках между вдохами; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Inferno Spawn burns with a deeper note, its body a furnace that cannot be reasoned with or extinguished.\nWhen it falls, its last verse breaks outward in a wave of fire.",
+      flavor_ru: "Порождение Инферно горит низкой нотой; его тело — горнило, с которым нельзя договориться и которое не погасить.\nПадая, оно выпускает последний куплет волной огня.",
       id: 'd711', f: 'd', t: 3,
       name: 'Inferno Spawn',
       name_ru: 'Порождение Инферно',
@@ -1065,8 +1065,8 @@ const UNITS = {
       xp: 1860, passive: ['volcanic_skin 2', 'last_verse 1', 'unending_servitude 1'], ability: 'verse_of_cataclysm 2',
     },
     inferno_scion: {
-      flavor_en: "Few witnesses agree on how Inferno Scion first entered the story; the wilderness keeps its own record of this name.\nIt reads omens in the space between breaths; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Отпрыск Инферно»; у дикой земли есть своя летопись этого имени.\nОно читает знамения в промежутках между вдохами; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Inferno Scion is no mere spark but the offspring of a fire that has swallowed whole halls.\nIt carries that hunger into battle, and its death leaves a final, blazing command.",
+      flavor_ru: "Отпрыск Инферно — не искра, а дитя пламени, поглотившего целые залы.\nОн несёт этот голод в бой, а его гибель оборачивается последним огненным приказом.",
       id: 'd7111', f: 'd', t: 4,
       name: 'Inferno Scion',
       name_ru: 'Отпрыск Инферно',
@@ -1080,8 +1080,8 @@ const UNITS = {
       xp: 1860, passive: ['volcanic_skin 2', 'last_verse 2', 'unending_servitude 1'], ability: 'verse_of_cataclysm 2',
     },
     ember_spawn: {
-      flavor_en: "Few witnesses agree on how Ember Spawn first entered the story; no two scouts agree on where it first appeared.\nIt reads omens in the space between breaths; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Порождение Углей»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nОно читает знамения в промежутках между вдохами; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Ember Spawn hums beneath the larger demons' roar, adding its small voice to the Choir's growing chorus.\nWhere it passes, cinders cling to armour and kindle at the next command.",
+      flavor_ru: "Порождение Углей гудит под рёвом старших демонов, вплетая тонкий голос в нарастающий хор.\nТам, где оно проходит, угли липнут к броне и вспыхивают по следующему приказу.",
       id: 'd72', f: 'd', t: 2,
       name: 'Ember Spawn',
       name_ru: 'Порождение Углей',
@@ -1095,8 +1095,8 @@ const UNITS = {
       xp: 540, passive: ['choir 1', 'burn 1', 'unending_servitude 1'], ability: 'ember_shroud 1',
     },
     cinder_spawn: {
-      flavor_en: "The chronicle gives Cinder Spawn a place earned far from any throne; the wilderness keeps its own record of this name.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Порождение Жара»; у дикой земли есть своя летопись этого имени.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
+      flavor_en: "The Cinder Spawn's call is answered by a quickening blaze that races across the enemy ranks.\nIt sings not for its kin but for the instant when every nearby flame becomes its own.",
+      flavor_ru: "На зов Порождения Жара откликается пламя, стремительно пробегающее по вражеским рядам.\nОно поёт не ради сородичей, а ради мгновения, когда каждый огонь вокруг станет его собственным.",
       id: 'd721', f: 'd', t: 3,
       name: 'Cinder Spawn',
       name_ru: 'Порождение Жара',
@@ -1110,8 +1110,8 @@ const UNITS = {
       xp: 1860, passive: ['choir 1', 'burn 2', 'unending_servitude 1'], ability: 'ember_shroud 2',
     },
     pyroclast_spawn: {
-      flavor_en: "Few witnesses agree on how Pyroclast Spawn first entered the story; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Порождение Пирокласта»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Pyroclast Spawn's chorus swells until its burning voice shakes ash from the ruined towers.\nIt does not distinguish friend from foe; the Choir's victory is all that gives the destruction meaning.",
+      flavor_ru: "Хор Порождения Пирокласта крепнет, пока его пылающий голос не стряхивает пепел с разрушенных башен.\nОно не различает своих и чужих: лишь победа Хора придаёт разрушению смысл.",
       id: 'd7211', f: 'd', t: 4,
       name: 'Pyroclast Spawn',
       name_ru: 'Порождение Пирокласта',
@@ -1125,8 +1125,8 @@ const UNITS = {
       xp: 1860, passive: ['choir 2', 'burn 2', 'unending_servitude 1'], ability: 'ember_shroud 2',
     },
     cultist: {
-      flavor_en: "Few witnesses agree on how Cultist first entered the story; the wilderness keeps its own record of this name.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Культист»; у дикой земли есть своя летопись этого имени.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Cultist was among the courtiers who mistook the strangers' unknown song for a promise of greatness.\nIt still wears its old finery, now scorched by the power it begged Aggrail to grant.",
+      flavor_ru: "Культист был среди придворных, принявших незнакомую песнь чужеземцев за обещание величия.\nОн всё ещё носит прежние наряды, опалённые силой, которой вымолил у Агграила.",
       id: 'd5', f: 'd', t: 1,
       name: 'Cultist',
       name_ru: 'Культист',
@@ -1140,8 +1140,8 @@ const UNITS = {
       xp: 75, passive: 'burn 1', ability: 'mark_of_ash 1',
     },  
     choir_servant: {
-      flavor_en: "Few witnesses agree on how Choir Servant first entered the story; no two scouts agree on where it first appeared.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Слуга Хора»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Choir Servant repeats the strangers' first chant until its words kindle fellfire in the air.\nIt calls itself chosen, though the demons keep it only because its voice is useful.",
+      flavor_ru: "Слуга Хора повторяет первый напев чужеземцев, пока слова не разжигают скверный огонь в воздухе.\nОн считает себя избранным, хотя демоны терпят его лишь за полезный голос.",
       id: 'd51', f: 'd', t: 2,
       name: 'Choir Servant',
       name_ru: 'Слуга Хора',
@@ -1155,8 +1155,8 @@ const UNITS = {
       xp: 400, passive: ['burn 1', 'fellfire 1'], ability: 'mark_of_ash 1',
     },
     choir_ascendant: {
-      flavor_en: "The chronicle gives Choir Ascendant a place earned far from any throne; no two scouts agree on where it first appeared.\nA quiet gesture can alter the temper of a whole battle; its beginnings were small, but the vow it made was not.",
-      flavor_ru: "Летопись отводит этому имени место, заслуженное вдали от трона: «Вознесённый Хора»; дозорные так и не сошлись во мнении, где оно появилось впервые.\nТихий жест способен изменить ход целой битвы; начало было скромным, но клятва — великой.",
+      flavor_en: "The Choir Ascendant has begun to outgrow its human shape, its voice splitting into several hungry notes.\nIt calls each new mutation a divine reward and each burning strike proof of its worth.",
+      flavor_ru: "Вознесённый Хора начинает перерастать человеческий облик, а его голос распадается на несколько голодных нот.\nОн считает каждую мутацию наградой свыше, а каждый пылающий удар — доказательством своей ценности.",
       id: 'd511', f: 'd', t: 3,
       name: 'Choir Ascendant',
       name_ru: 'Вознесённый Хора',
@@ -1170,8 +1170,8 @@ const UNITS = {
       xp: 1350, passive: ['burn 2', 'fellfire 1'], ability: 'mark_of_ash 1',
     },
     choir_exalted: {
-      flavor_en: "Even the oldest map leaves a blank where Choir Exalted should be; the border folk recognize its silhouette before the horns sound.\nA quiet gesture can alter the temper of a whole battle; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Превознесённый Хора»; пограничники узнают его силуэт прежде, чем звучат рога.\nТихий жест способен изменить ход целой битвы; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Choir Exalted has surrendered the last of its human outline to the song, but kept its appetite for power.\nIt scorches the battlefield with fellfire, certain that Aggrail's attention is the same as love.",
+      flavor_ru: "Превознесённый Хора отдал песне последние черты человеческого облика, но сохранил жажду силы.\nОн испепеляет поле боя скверным огнём, принимая внимание Агграила за любовь.",
       id: 'd5111', f: 'd', t: 4,
       name: 'Choir Exalted',
       name_ru: 'Превознесённый Хора',
@@ -1185,8 +1185,8 @@ const UNITS = {
       xp: 3380, passive: ['burn 2', 'fellfire 2'], ability: 'mark_of_ash 1',
     },
     ash_cantor: {
-      flavor_en: "Even the oldest map leaves a blank where Ash Cantor should be; the wilderness keeps its own record of this name.\nA quiet gesture can alter the temper of a whole battle; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Пепельный Кантор»; у дикой земли есть своя летопись этого имени.\nТихий жест способен изменить ход целой битвы; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Ash Cantor sings the dead back to their feet, not from mercy but to keep the Choir's ranks full.\nIts ember-hymn gives the fallen another moment to serve before the silence claims them again.",
+      flavor_ru: "Пепельный Кантор поднимает мёртвых не из милосердия, а чтобы ряды Хора не редели.\nЕго угольный гимн дарует павшим ещё миг службы, прежде чем тишина заберёт их вновь.",
       id: 'd52', f: 'd', t: 2,
       name: 'Ash Cantor',
       name_ru: 'Пепельный Кантор',
@@ -1200,8 +1200,8 @@ const UNITS = {
       xp: 400, passive: ['renew 1', 'resist_aura_fire 1'], ability: 'rite_of_reclamation 1',
     },
     ash_precentor: {
-      flavor_en: "Even the oldest map leaves a blank where Ash Precentor should be; the border folk recognize its silhouette before the horns sound.\nIts craft begins where ordinary sight gives up; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Даже на древнейшей карте нет дороги, по которой пришло имя «Пепельный Регент»; пограничники узнают его силуэт прежде, чем звучат рога.\nЕго искусство начинается там, где обычный взгляд бессилен; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Ash Precentor conducts the funeral hymn of a court that refuses to admit it is dead.\nIts voice rouses the Choir's servants and shields them from rival powers; only Aggrail may claim what remains.",
+      flavor_ru: "Пепельный Регент ведёт погребальный гимн двора, отказывающегося признать собственную смерть.\nЕго голос поднимает слуг Хора и укрывает их от чужой силы: оставшееся принадлежит лишь Агграилу.",
       id: 'd521', f: 'd', t: 3,
       name: 'Ash Precentor',
       name_ru: 'Пепельный Регент',
@@ -1215,8 +1215,8 @@ const UNITS = {
       xp: 1350, passive: ['renew 1', 'resist_aura_fire 2'], ability: 'rite_of_reclamation 2',
     },
     ash_liturgist: {
-      flavor_en: "Few witnesses agree on how Ash Liturgist first entered the story; the border folk recognize its silhouette before the horns sound.\nA quiet gesture can alter the temper of a whole battle; it still carries the keepsake from its first day in service.",
-      flavor_ru: "Немногие свидетели сходятся во мнении, как впервые появилось имя «Пепельный Литургист»; пограничники узнают его силуэт прежде, чем звучат рога.\nТихий жест способен изменить ход целой битвы; оно до сих пор хранит знак своего первого дня службы.",
+      flavor_en: "The Ash Liturgist cuts discord from the Choir's hymn with a gesture and seals the wound with fire.\nIt calls this purity, though every note serves the same cruel master.",
+      flavor_ru: "Пепельный Литургист жестом высекает разлад из гимна Хора и запечатывает рану огнём.\nОн называет это очищением, хотя каждая нота служит одному и тому же жестокому владыке.",
       id: 'd5211', f: 'd', t: 4,
       name: 'Ash Liturgist',
       name_ru: 'Пепельный Литургист',
