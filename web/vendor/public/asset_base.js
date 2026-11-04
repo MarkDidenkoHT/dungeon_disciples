@@ -80,6 +80,41 @@ export function assetUrl(path) {
   return ASSET_BASE + p.replace(/^\/assets/, '');
 }
 
+// Audio elements do not pass through installAssetFallback's <img> listener.
+// Attach the same per-file CDN-to-origin retry directly to each audio element.
+export function createAssetAudio(path) {
+  const p = path.startsWith('/') ? path : `/${path}`;
+  const key = normalizePath(p);
+  const audio = new Audio(assetUrl(p));
+  let retryingOrigin = !audio.src.startsWith(ASSET_CDN);
+  audio.addEventListener('error', () => {
+    const src = audio.currentSrc || audio.src;
+    if (!retryingOrigin && src.startsWith(ASSET_CDN)) {
+      cdnMissing.add(key);
+      retryingOrigin = true;
+      if (!originMissing.has(key)) {
+        audio.src = p;
+        if (audioPlayIntents.has(audio)) playAssetAudio(audio).catch(() => {});
+      }
+      return;
+    }
+    originMissing.add(key);
+  });
+  return audio;
+}
+
+const audioPlayIntents = new WeakSet();
+
+export function playAssetAudio(audio) {
+  audioPlayIntents.add(audio);
+  return audio.play();
+}
+
+export function pauseAssetAudio(audio) {
+  audioPlayIntents.delete(audio);
+  audio.pause();
+}
+
 // The background images in style.css cannot call assetUrl, so each one is
 // a CSS variable declared with a CDN URL. On fallback they are rewritten here.
 const CSS_IMAGE_VARS = [

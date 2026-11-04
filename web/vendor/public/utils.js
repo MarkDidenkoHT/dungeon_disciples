@@ -1,4 +1,4 @@
-import { assetUrl } from './asset_base.js';
+import { assetUrl, createAssetAudio, playAssetAudio } from './asset_base.js';
 import { UNITS }          from '../data/units.js';
 import { UNIT_ABILITIES } from '../data/unit_abilities.js';
 import { applyItemModifiers, ITEM_DEFS, missingRequiredTags } from '../data/items.js';
@@ -231,9 +231,9 @@ export const RESIST_ORDER = ['air', 'fire', 'nature', 'cold', 'life', 'death'];
 const PAGE_TURN_SOUND_PATH = '/assets/mp3/ui/turn-page.mp3';
 
 export function playPageTurnSound() {
-  const audio = new Audio(assetUrl(PAGE_TURN_SOUND_PATH));
+  const audio = createAssetAudio(PAGE_TURN_SOUND_PATH);
   audio.volume = 0.55;
-  audio.play().catch(() => {});
+  playAssetAudio(audio).catch(() => {});
 }
 
 // The raw art paths, so a caller that builds its own <img> (the heal control on

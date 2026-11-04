@@ -1,4 +1,4 @@
-import { createAssetAudio } from './asset_base.js';
+import { createAssetAudio, playAssetAudio, pauseAssetAudio } from './asset_base.js';
 const FACTION_THEME_PATH = {
   empire:              '/assets/sfx/themes/empire.mp3',
   choir_of_the_cursed: '/assets/sfx/themes/choir.mp3',
@@ -26,7 +26,7 @@ function unlockAudio() {
   );
   if (_faction && _enabled) {
     _audio = createAudio(themePath(_faction));
-    _audio.play().catch(() => {});
+    playAssetAudio(_audio).catch(() => {});
   }
 }
 
@@ -41,31 +41,31 @@ export function playFactionTheme(faction) {
   const path = themePath(faction);
   if (!path) return;
   if (_faction === faction) {
-    if (_enabled && _audio?.paused) _audio.play().catch(() => {});
+    if (_enabled && _audio?.paused) playAssetAudio(_audio).catch(() => {});
     return;
   }
-  if (_audio) { _audio.pause(); _audio.src = ''; _audio = null; }
+  if (_audio) { pauseAssetAudio(_audio); _audio.src = ''; _audio = null; }
   _faction = faction;
   if (!_enabled || !_unlocked) return;
   _audio = createAudio(path);
-  _audio.play().catch(() => {});
+  playAssetAudio(_audio).catch(() => {});
 }
 
 export function stopTheme() {
-  if (_audio) { _audio.pause(); _audio.src = ''; _audio = null; }
+  if (_audio) { pauseAssetAudio(_audio); _audio.src = ''; _audio = null; }
   _faction = null;
 }
 
 export function setMusicEnabled(enabled) {
   _enabled = enabled;
   if (!enabled) {
-    if (_audio) _audio.pause();
+    if (_audio) pauseAssetAudio(_audio);
   } else {
     if (_faction && !_audio && _unlocked) {
       _audio = createAudio(themePath(_faction));
-      _audio.play().catch(() => {});
+      playAssetAudio(_audio).catch(() => {});
     } else if (_audio?.paused) {
-      _audio.play().catch(() => {});
+      playAssetAudio(_audio).catch(() => {});
     }
   }
 }

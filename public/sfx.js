@@ -1,4 +1,4 @@
-import { createAssetAudio } from './asset_base.js';
+import { createAssetAudio, playAssetAudio } from './asset_base.js';
 // One-shot battle and UI sound effects, mirroring music.js. An ability def in
 // data/unit_abilities.js may carry an `animation_sound` base name, and battle
 // playback plays its matching file from /assets/sfx/abilities/<name>.mp3.
@@ -35,7 +35,7 @@ export function playAbilitySound(name) {
   try {
     const a  = createAssetAudio(`/assets/sfx/abilities/${name}.mp3`);
     a.volume = 0.7;
-    a.play().catch(() => {}); // missing file / autoplay block — stay silent
+    playAssetAudio(a).catch(() => {}); // missing file / autoplay block — stay silent
   } catch {}
 }
 
@@ -44,6 +44,6 @@ export function playUiSound(name) {
   try {
     const a  = createAssetAudio(`/assets/sfx/ui/${name}.mp3`);
     a.volume = 0.7;
-    a.play().catch(() => {}); // missing file / autoplay block — stay silent
+    playAssetAudio(a).catch(() => {}); // missing file / autoplay block — stay silent
   } catch {}
 }
