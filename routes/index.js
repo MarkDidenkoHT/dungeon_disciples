@@ -607,12 +607,47 @@ function isClockedRecord(record) {
   return isPvpRecord(record) || isBotRecord(record);
 }
 
+// A bot yields only when the player still has a full, healthy advantage and the
+// bot's remaining force is both badly outnumbered and starting to fall.
+const BOT_CONCEDE_MAX_SURVIVORS = 2;
+const BOT_CONCEDE_MIN_HEALTHY_PLAYER_UNITS = 5;
+const BOT_CONCEDE_HP_THRESHOLD = 0.5;
+
+function concedeBotIfOutmatched(engine) {
+  if (engine.done) return false;
+  const living = engine.combatants.filter(c => c.alive && c.battle_hp > 0);
+  const bots = living.filter(c => c.side === 'enemy');
+  const healthyPlayers = living.filter(c => c.side === 'player'
+    && c.max_hp > 0 && c.battle_hp / c.max_hp >= BOT_CONCEDE_HP_THRESHOLD);
+  const woundedBot = bots.some(c => c.max_hp > 0
+    && c.battle_hp / c.max_hp <= BOT_CONCEDE_HP_THRESHOLD);
+
+  if (bots.length > BOT_CONCEDE_MAX_SURVIVORS
+      || healthyPlayers.length < BOT_CONCEDE_MIN_HEALTHY_PLAYER_UNITS
+      || !woundedBot) return false;
+
+  engine.done = true;
+  engine.winner = 'player';
+  engine.pushLog({
+    type: 'notice',
+    message: 'The bot concedes — its remaining fighters cannot turn the battle.',
+    message_ru: 'Противник сдаётся — оставшиеся бойцы уже не могут переломить ход битвы.',
+  });
+  return true;
+}
+
+function runBotTurns(engine) {
+  engine.runAiTurns();
+  concedeBotIfOutmatched(engine);
+}
+
 // After a move: a person on the other side answers in their own time, anything
 // else answers now. Turns nobody can take are spent either way.
 function answerTurns(record, engine) {
   if (engine.done) return;
   if (isPvpRecord(record)) engine.runIdleTurns();
-  else                     engine.runAiTurns();
+  else if (isBotRecord(record)) runBotTurns(engine);
+  else engine.runAiTurns();
 }
 
 // Which engine side this player commands, or null if the battle is not theirs.
@@ -5963,7 +5998,7 @@ async function createBotBattle(entry, { template, bandId, rules = null }) {
   });
   engine.firePendingRoundEffects();
   // The bot may hold the first turn; it takes it now, as a region encounter does.
-  if (!engine.done) engine.runAiTurns();
+  if (!engine.done) runBotTurns(engine);
 
   const battle_data = {
     ...buildBattleData(engine, {
