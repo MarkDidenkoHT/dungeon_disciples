@@ -1954,82 +1954,93 @@ class BattleEngine {
     if (!hasLedger) return 1;
     let total = 0;
     for (const amt of Object.values(restore)) total += Math.abs(Number(amt) || 0);
-    // A pure damage buff has nothing in `restore`, so without this it measured
-    // zero and Dispel skipped the strongest effect on the board.
+    // `amount` often describes the same magnitude as the undo ledger (e.g. one
+    // Infect stack has both amount: 1 and restore: { _infect_stacks: -1 }).
+    // Count that once, while still measuring effects whose only magnitude is
+    // `amount` or `divide`.
     for (const f of Object.values(divide)) {
       total += Math.round(Math.abs(1 - (Number(f) || 1)) * 100);
     }
-    return total;
+    return Math.max(total, Math.abs(Number(eff.amount) || 0));
   }
 
-  // Shaves `points` off ONE effect instead of removing it whole: Bleed 4 under a
-  // Dispel 1 becomes Bleed 3. The strongest eligible effect is chosen, since
-  // that is the one actually threatening the unit. An effect reduced to nothing
-  // is removed and reverted like a normal dispel.
+  // Spends `points` across eligible effects, strongest first. A four-stack
+  // debuff under Dispel 2 becomes a one-stack debuff; when one effect runs out,
+  // the remaining points continue to the next eligible effect.
   //
   // Returns { key, name, from, to } for the log, or null when nothing applied.
   reduceEffect(unit, polarity, points) {
     if (!unit?._effects?.length || !(points > 0)) return null;
-    const eligible = unit._effects
+    const measure = () => unit._effects
       .filter(e => e.polarity === polarity && e.dispellable !== false)
       .map(e => ({ eff: e, mag: this.effectMagnitude(unit, e) }))
       .filter(x => x.mag > 0)
       .sort((a, b) => b.mag - a.mag);
-    if (!eligible.length) return null;
+    const initial = measure();
+    if (!initial.length) return null;
+    const from = initial.reduce((sum, x) => sum + x.mag, 0);
+    const names = new Set();
+    let remaining = points;
 
-    const { eff, mag } = eligible[0];
-    const taken = Math.min(points, mag);
-    const pool  = BattleEngine.EFFECT_POOLS[eff.key];
-    if (pool) {
-      const [field, permanent] = pool;
-      unit[field] = Math.max(0, (Number(unit[field]) || 0) - taken);
-      if (permanent) unit[permanent] = Math.min(Number(unit[permanent]) || 0, unit[field]);
-    } else {
-      // Hand back `taken` points of whatever the effect took, field by field.
-      let left = taken;
-      for (const [path, amount] of Object.entries(eff.restore || {})) {
-        if (left <= 0) break;
-        const size = Math.abs(Number(amount) || 0);
-        if (!size) continue;
-        const step = Math.min(left, size);
-        const sign = Number(amount) < 0 ? -1 : 1;
-        const parts = path.split('.');
-        const owner = this._effectPathOwner(unit, parts, false);
-        if (owner) {
-          const last = parts[parts.length - 1];
-          owner[last] = Math.max(0, (Number(owner[last]) || 0) + step * sign);
+    while (remaining > 0) {
+      const strongest = measure()[0];
+      if (!strongest) break;
+      const { eff, mag } = strongest;
+      const taken = Math.min(remaining, mag);
+      names.add(eff.name);
+      const pool = BattleEngine.EFFECT_POOLS[eff.key];
+      if (pool) {
+        const [field, permanent] = pool;
+        unit[field] = Math.max(0, (Number(unit[field]) || 0) - taken);
+        if (permanent) unit[permanent] = Math.min(Number(unit[permanent]) || 0, unit[field]);
+      } else {
+        // Hand back `taken` points of whatever the effect took, field by field.
+        let left = taken;
+        for (const [path, amount] of Object.entries(eff.restore || {})) {
+          if (left <= 0) break;
+          const size = Math.abs(Number(amount) || 0);
+          if (!size) continue;
+          const step = Math.min(left, size);
+          const sign = Number(amount) < 0 ? -1 : 1;
+          const parts = path.split('.');
+          const owner = this._effectPathOwner(unit, parts, false);
+          if (owner) {
+            const last = parts[parts.length - 1];
+            owner[last] = Math.max(0, (Number(owner[last]) || 0) + step * sign);
+          }
+          eff.restore[path] = (Number(amount) || 0) - step * sign;
+          left -= step;
         }
-        eff.restore[path] = (Number(amount) || 0) - step * sign;
-        left -= step;
+        // Flag-shaped effects have no partial ledger, so remove them whole.
+        if (left === taken) {
+          this.revertEffect(unit, eff);
+          this.cancelPendingExpiry(unit, eff.key);
+          unit._effects = unit._effects.filter(e => e !== eff);
+          remaining -= taken;
+          continue;
+        }
       }
-      // Nothing in the ledger moved, so there is nothing to shave: this is a
-      // flag, a lock or a timed state whose undo is a `clear`. It comes off
-      // WHOLE rather than surviving a dispel that had already selected it —
-      // the other half of the magnitude fallback above.
-      if (left === taken) {
+      if (eff.amount != null) eff.amount = Math.max(0, eff.amount - taken);
+      // A divide ledger has no partial inverse; remove it whole.
+      if (eff.divide && Object.keys(eff.divide).length) {
         this.revertEffect(unit, eff);
         this.cancelPendingExpiry(unit, eff.key);
         unit._effects = unit._effects.filter(e => e !== eff);
-        return { key: eff.key, name: eff.name, from: mag, to: 0 };
+      } else if (this.effectMagnitude(unit, eff) <= 0) {
+        this.revertEffect(unit, eff);
+        this.cancelPendingExpiry(unit, eff.key);
+        unit._effects = unit._effects.filter(e => e !== eff);
       }
-    }
-    if (eff.amount != null) eff.amount = Math.max(0, eff.amount - taken);
-    // `divide` undoes by division and has no "half of it" — once a shave gets
-    // this far it takes the effect whole rather than looping on it forever.
-    if (eff.divide && Object.keys(eff.divide).length) {
-      this.revertEffect(unit, eff);
-      this.cancelPendingExpiry(unit, eff.key);
-      unit._effects = unit._effects.filter(e => e !== eff);
-      return { key: eff.key, name: eff.name, from: mag, to: 0 };
+      remaining -= taken;
     }
 
-    const now = this.effectMagnitude(unit, eff);
-    if (now <= 0) {
-      this.revertEffect(unit, eff);
-      this.cancelPendingExpiry(unit, eff.key);
-      unit._effects = unit._effects.filter(e => e !== eff);
-    }
-    return { key: eff.key, name: eff.name, from: mag, to: Math.max(0, mag - taken) };
+    const to = measure().reduce((sum, x) => sum + x.mag, 0);
+    return {
+      key: initial[0].eff.key,
+      name: [...names].join(', '),
+      from,
+      to,
+    };
   }
 
   dispelEffects(unit, polarity, count = Infinity) {
