@@ -2183,9 +2183,11 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background: #141c2a;
 }
 
-/* Metallic frame for active + passive ability icons, item slots and the Evolution button — the dark theme of the
+/* Metallic frame for active + passive ability icons, item slots, the Evolution button and
+   disabled (empty) slots — the dark theme of the
    "Metallic Icon Border Example": gunmetal conic ring, soft dark glow, rounded
    corners, dark gradient face, inner top highlight and a slow sheen. */
+.ability-icon[disabled],
 .ability-icon--passive:not([disabled]),
 .ability-icon--active:not([disabled]),
 .ability-icon--item:not([disabled]),
@@ -2200,6 +2202,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
     0 0.5vh 1.2vh rgba(0, 0, 0, 0.25);
 }
 
+.ability-icon[disabled] .ability-icon-img,
 .ability-icon--passive:not([disabled]) .ability-icon-img,
 .ability-icon--active:not([disabled]) .ability-icon-img,
 .ability-icon--item:not([disabled]) .ability-icon-img,
@@ -2207,6 +2210,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   border-radius: calc(1.6vh - 2px);
 }
 
+.ability-icon[disabled]::after,
 .ability-icon--passive:not([disabled])::after,
 .ability-icon--active:not([disabled])::after,
 .ability-icon--item:not([disabled])::after,
@@ -2252,7 +2256,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .ability-icon--empty {
-  opacity: 0.2;
+  opacity: 0.5;
   cursor: default;
   pointer-events: none;
 }
