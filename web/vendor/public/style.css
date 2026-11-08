@@ -2170,11 +2170,12 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background: #141c2a;
 }
 
-/* Metallic frame for active + passive ability icons — the dark theme of the
+/* Metallic frame for active + passive ability icons and item slots — the dark theme of the
    "Metallic Icon Border Example": gunmetal conic ring, soft dark glow, rounded
    corners, dark gradient face, inner top highlight and a slow sheen. */
 .ability-icon--passive:not([disabled]),
-.ability-icon--active:not([disabled]) {
+.ability-icon--active:not([disabled]),
+.ability-icon--item:not([disabled]) {
   border: 2px solid transparent;
   border-radius: 1.6vh;
   background:
@@ -2186,12 +2187,14 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .ability-icon--passive:not([disabled]) .ability-icon-img,
-.ability-icon--active:not([disabled]) .ability-icon-img {
+.ability-icon--active:not([disabled]) .ability-icon-img,
+.ability-icon--item:not([disabled]) .ability-icon-img {
   border-radius: calc(1.6vh - 2px);
 }
 
 .ability-icon--passive:not([disabled])::after,
-.ability-icon--active:not([disabled])::after {
+.ability-icon--active:not([disabled])::after,
+.ability-icon--item:not([disabled])::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -2212,7 +2215,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
 }
 
 .ability-icon--passive:not([disabled]):active,
-.ability-icon--active:not([disabled]):active {
+.ability-icon--active:not([disabled]):active,
+.ability-icon--item:not([disabled]):active {
   background:
     linear-gradient(145deg, #313238, #212227) padding-box,
     conic-gradient(from 180deg, #6a6c76, #3a3b42, #121316, #3a3b42, #6a6c76) border-box;
@@ -8290,9 +8294,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .ability-icon--rarity-epic   { border-color: var(--rarity-epic); }
 .ability-icon--rarity-mythic { border-color: var(--rarity-mythic); }
 .ability-icon--rarity-shattered { border-color: var(--rarity-shattered); }
-.ability-icon--item:not([disabled]):active {
-  border-color: var(--accent);
-}
 .ability-icon--item-empty {
   opacity: 0.5;
 }
