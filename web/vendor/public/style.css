@@ -10,6 +10,7 @@
   --img-resource-bar: url('https://assets.markdidenkowork.workers.dev/icons/ui/recource_bar.png');
   --img-battle-prep-bg: url('https://assets.markdidenkowork.workers.dev/screens/battle_prep_bg.jpeg');
   --img-action-panel: url('https://assets.markdidenkowork.workers.dev/icons/ui/action_panel.png');
+  --img-evolution-tree-bg: url('https://assets.markdidenkowork.workers.dev/screens/evolution_tree_bg.jpg');
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1978,6 +1979,18 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .modal-close-btn:active { color: var(--text); border-color: var(--muted); }
 
+/* The Evolution sheet (castle unit tree) gets its own art in place of the flat
+   surface colour. On the .modal, not the scrolling body, so the art stays put
+   while a tall tree scrolls over it. The origin copy is a second layer under
+   the CDN one: until the file is on the CDN that layer is what shows. */
+.modal:has(.utree-root) {
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.35)),
+    var(--img-evolution-tree-bg) center / cover no-repeat,
+    url('/assets/screens/evolution_tree_bg.jpg') center / cover no-repeat,
+    var(--surface);
+}
+
 .modal-body {
   flex: 1;
   overflow-y: auto;
@@ -2170,12 +2183,13 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background: #141c2a;
 }
 
-/* Metallic frame for active + passive ability icons and item slots — the dark theme of the
+/* Metallic frame for active + passive ability icons, item slots and the Evolution button — the dark theme of the
    "Metallic Icon Border Example": gunmetal conic ring, soft dark glow, rounded
    corners, dark gradient face, inner top highlight and a slow sheen. */
 .ability-icon--passive:not([disabled]),
 .ability-icon--active:not([disabled]),
-.ability-icon--item:not([disabled]) {
+.ability-icon--item:not([disabled]),
+.ability-icon--tree:not([disabled]) {
   border: 2px solid transparent;
   border-radius: 1.6vh;
   background:
@@ -2188,13 +2202,15 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .ability-icon--passive:not([disabled]) .ability-icon-img,
 .ability-icon--active:not([disabled]) .ability-icon-img,
-.ability-icon--item:not([disabled]) .ability-icon-img {
+.ability-icon--item:not([disabled]) .ability-icon-img,
+.ability-icon--tree:not([disabled]) .ability-icon-img {
   border-radius: calc(1.6vh - 2px);
 }
 
 .ability-icon--passive:not([disabled])::after,
 .ability-icon--active:not([disabled])::after,
-.ability-icon--item:not([disabled])::after {
+.ability-icon--item:not([disabled])::after,
+.ability-icon--tree:not([disabled])::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -2216,7 +2232,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .ability-icon--passive:not([disabled]):active,
 .ability-icon--active:not([disabled]):active,
-.ability-icon--item:not([disabled]):active {
+.ability-icon--item:not([disabled]):active,
+.ability-icon--tree:not([disabled]):active {
   background:
     linear-gradient(145deg, #313238, #212227) padding-box,
     conic-gradient(from 180deg, #6a6c76, #3a3b42, #121316, #3a3b42, #6a6c76) border-box;
@@ -2244,9 +2261,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   border-color: #3d5a3a;
   font-size: 3vh;
   line-height: 1;
-}
-.ability-icon--tree:not([disabled]):active {
-  border-color: #6aa05e;
 }
 
 .utree {

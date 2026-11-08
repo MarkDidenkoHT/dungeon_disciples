@@ -129,6 +129,7 @@ const CSS_IMAGE_VARS = [
   ['--img-resource-bar',       '/assets/icons/ui/recource_bar.png'],
   ['--img-battle-prep-bg',     '/assets/screens/battle_prep_bg.jpeg'],
   ['--img-action-panel',       '/assets/icons/ui/action_panel.png'],
+  ['--img-evolution-tree-bg',  '/assets/screens/evolution_tree_bg.jpg'],
 ];
 
 function remember(useFallback) {
