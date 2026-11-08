@@ -34,7 +34,7 @@ const { calcUnitPower } = require('./army-power.js');
 // Only the rules that touch the SQUAD reach adaptSlotsToRules. `twist` and
 // `engravings_off` change the battle instead (battleRulesOf), so sweeping them
 // would produce a column of identical rows.
-const SQUAD_RULE_KINDS = new Set(['ban_tag', 'size_only', 'loyalty_max', 'item_rarity_max', 'no_items']);
+const SQUAD_RULE_KINDS = new Set(['max_tag', 'size_only', 'loyalty_max', 'item_rarity_max', 'no_items']);
 
 // How far below the unadapted band's ⚔ an adapted army may land before it stops
 // being an opponent. Some loss is the rule doing its job — the player pays it

@@ -47,52 +47,79 @@ const TOURNEY_PRIZES = {
 //     of, and locked those players out of the evening rather than making them
 //     think about their squad.
 //
-// A `ban_tag` rule names ONE tag, spelled exactly as data/units.js writes it on
-// the unit. There is no `no_undead`: there is no Undead tag, so that rule banned
-// nobody — it announced a ban on a word printed on no card in the game and then
-// let every skeleton-and-vampire squad through the gate. Zombie, Vampire and
-// Skeleton are three tags, so they would be three rules, never one under a group
-// name the player cannot check their own roster against.
+// A tag rule CAPS a tag, it does not ban one. The bans came first, and they were
+// not rules — they were evenings a player sat out. `no_demons` took roughly four
+// in five units off a Choir roster, heroes included, so the player who owned
+// that roster had no squad to bring and nothing to think about; the same held
+// for any tag a faction is built out of. A cap of TOURNEY_TAG_CAP leaves every
+// roster something to field and still makes the mono-tag squad find bodies
+// elsewhere, which is what a rule that changes the evening is for.
+//
+// Capping is also why Caster is back in the pool. 164 units carry it, and the
+// ban left the Choir 9 units and the bot pool 3 templates of 27
+// (scripts/check-bot-templates.js): every squad on the field would have been
+// built out of the same three answers. A cap costs those rosters a few slots
+// instead of the roster.
+//
+// A `max_tag` rule names ONE tag, spelled exactly as data/units.js writes it on
+// the unit, and the count includes the HERO — the hero is the unit a mono-tag
+// roster is built around, so a cap that skipped it would barely bite. There is
+// no `max_undead`, for the same reason there was no honest `no_undead`: there is
+// no Undead tag, so that rule bound nobody — it announced a rule on a word
+// printed on no card in the game and then let every skeleton-and-vampire squad
+// through the gate. Zombie, Vampire and Skeleton are three tags, so they are
+// three rules, never one under a group name the player cannot check their own
+// roster against.
 //
 // The tags with a rule are the ones a PLAYER can field. Absent on purpose:
 //
 //   • Skeleton, Boss — enemy-only. No unit in choir_of_the_cursed, empire or
-//     grail_of_sorrow carries either, so the ban is empty: the `no_undead` bug
-//     again, with a correctly spelled tag.
+//     grail_of_sorrow carries either, so the cap binds nobody: the `no_undead`
+//     bug again, with a correctly spelled tag.
 //   • Archer — two Empire units and nothing in the other two factions. Real, but
 //     it changes no squad anyone would have brought.
-//   • Caster — 164 units carry it, and banning it leaves the Choir 9 units and
-//     the bot pool 3 templates of 27 (scripts/check-bot-templates.js). Every
-//     squad on the field would be built out of the same three answers, which is
-//     the opposite of what a rule that changes the evening is for.
 //
 // `grim` is the one twist left. It is listed so the name and the shape survive,
 // but the cron does not roll it either (RULE_KINDS in the tourney-notify edge
 // function) until the engine halves healing. Anything added here must be
 // enforced somewhere before the cron is allowed to draw it. The cron also keeps
-// its own copy of the tag bans (TAG_BANS in supabase/functions/tourney-notify):
-// a rule that rolls there and is missing here announces a ban nothing enforces.
+// its own copy of the tag caps (TAG_CAPS in supabase/functions/tourney-notify):
+// a rule that rolls there and is missing here announces a cap nothing enforces.
+// The cron still names the retired `no_*` ban ids in its message table, so a row
+// rolled before the caps landed reads correctly until it is paid out; they are
+// gone from here, because nothing has to enforce a rule that can no longer be
+// drawn.
+
+// How many units carrying the night's tag a squad may bring, hero included.
+// Three is the number that leaves every faction a squad and still forces the
+// mono-tag roster to bring something else. The edge function holds the same
+// number as TAG_CAP — the two have to agree, or the card announces one limit
+// and the queue gate enforces another.
+const TOURNEY_TAG_CAP = 3;
+
 const TOURNEY_RULES = [
-  { id: 'no_knights',    kind: 'ban_tag',         tag: 'Knight',
-    name: 'No Knights',           name_ru: 'Без рыцарей' },
-  { id: 'no_demons',     kind: 'ban_tag',         tag: 'Demon',
-    name: 'No Demons',            name_ru: 'Без демонов' },
-  { id: 'no_holy',       kind: 'ban_tag',         tag: 'Holy',
-    name: 'No Holy',              name_ru: 'Без святых' },
-  { id: 'no_zombies',    kind: 'ban_tag',         tag: 'Zombie',
-    name: 'No Zombies',           name_ru: 'Без зомби' },
-  { id: 'no_spirits',    kind: 'ban_tag',         tag: 'Spirit',
-    name: 'No Spirits',           name_ru: 'Без духов' },
-  { id: 'no_vampires',   kind: 'ban_tag',         tag: 'Vampire',
-    name: 'No Vampires',          name_ru: 'Без вампиров' },
-  { id: 'no_warriors',   kind: 'ban_tag',         tag: 'Warrior',
-    name: 'No Warriors',          name_ru: 'Без воинов' },
-  { id: 'no_constructs', kind: 'ban_tag',         tag: 'Construct',
-    name: 'No Constructs',        name_ru: 'Без конструктов' },
-  { id: 'no_engineers',  kind: 'ban_tag',         tag: 'Engineer',
-    name: 'No Engineers',         name_ru: 'Без инженеров' },
-  { id: 'no_court',      kind: 'ban_tag',         tag: 'Court',
-    name: 'No Court',             name_ru: 'Без Двора' },
+  { id: 'max_casters',    kind: 'max_tag', tag: 'Caster',    max: TOURNEY_TAG_CAP,
+    name: `No more than ${TOURNEY_TAG_CAP} Casters`,    name_ru: `Магов не больше ${TOURNEY_TAG_CAP}` },
+  { id: 'max_knights',    kind: 'max_tag', tag: 'Knight',    max: TOURNEY_TAG_CAP,
+    name: `No more than ${TOURNEY_TAG_CAP} Knights`,    name_ru: `Рыцарей не больше ${TOURNEY_TAG_CAP}` },
+  { id: 'max_demons',     kind: 'max_tag', tag: 'Demon',     max: TOURNEY_TAG_CAP,
+    name: `No more than ${TOURNEY_TAG_CAP} Demons`,     name_ru: `Демонов не больше ${TOURNEY_TAG_CAP}` },
+  { id: 'max_holy',       kind: 'max_tag', tag: 'Holy',      max: TOURNEY_TAG_CAP,
+    name: `No more than ${TOURNEY_TAG_CAP} Holy`,       name_ru: `Святых не больше ${TOURNEY_TAG_CAP}` },
+  { id: 'max_zombies',    kind: 'max_tag', tag: 'Zombie',    max: TOURNEY_TAG_CAP,
+    name: `No more than ${TOURNEY_TAG_CAP} Zombies`,    name_ru: `Зомби не больше ${TOURNEY_TAG_CAP}` },
+  { id: 'max_spirits',    kind: 'max_tag', tag: 'Spirit',    max: TOURNEY_TAG_CAP,
+    name: `No more than ${TOURNEY_TAG_CAP} Spirits`,    name_ru: `Духов не больше ${TOURNEY_TAG_CAP}` },
+  { id: 'max_vampires',   kind: 'max_tag', tag: 'Vampire',   max: TOURNEY_TAG_CAP,
+    name: `No more than ${TOURNEY_TAG_CAP} Vampires`,   name_ru: `Вампиров не больше ${TOURNEY_TAG_CAP}` },
+  { id: 'max_warriors',   kind: 'max_tag', tag: 'Warrior',   max: TOURNEY_TAG_CAP,
+    name: `No more than ${TOURNEY_TAG_CAP} Warriors`,   name_ru: `Воинов не больше ${TOURNEY_TAG_CAP}` },
+  { id: 'max_constructs', kind: 'max_tag', tag: 'Construct', max: TOURNEY_TAG_CAP,
+    name: `No more than ${TOURNEY_TAG_CAP} Constructs`, name_ru: `Конструктов не больше ${TOURNEY_TAG_CAP}` },
+  { id: 'max_engineers',  kind: 'max_tag', tag: 'Engineer',  max: TOURNEY_TAG_CAP,
+    name: `No more than ${TOURNEY_TAG_CAP} Engineers`,  name_ru: `Инженеров не больше ${TOURNEY_TAG_CAP}` },
+  { id: 'max_court',      kind: 'max_tag', tag: 'Court',     max: TOURNEY_TAG_CAP,
+    name: `No more than ${TOURNEY_TAG_CAP} Court`,      name_ru: `Двора не больше ${TOURNEY_TAG_CAP}` },
   { id: 'tiles_only',    kind: 'size_only',       sizes: ['tile'],
     name: 'Tile-size units only', name_ru: 'Только одноклеточные' },
   { id: 'lean_squad',    kind: 'loyalty_max',     max: 3,
@@ -147,9 +174,15 @@ function checkTourneyRules(units, rules, { itemsByRosterId = {} } = {}) {
   const list = (rules || []).map(r => (typeof r === 'string' ? TOURNEY_RULES_BY_ID[r] : r)).filter(Boolean);
 
   for (const rule of list) {
-    if (rule.kind === 'ban_tag') {
+    // Counted over the WHOLE squad, hero included: the hero is the unit a
+    // mono-tag roster is built around, so a cap that skipped it would barely
+    // bite the squads it exists for.
+    if (rule.kind === 'max_tag') {
+      const cap = rule.max ?? TOURNEY_TAG_CAP;
       const guilty = units.filter(u => unitTags(u).includes(rule.tag));
-      if (guilty.length) problems.push({ rule: rule.id, text: `${rule.tag} units are banned today` });
+      if (guilty.length > cap) {
+        problems.push({ rule: rule.id, text: `${guilty.length} ${rule.tag} units, limit is ${cap}` });
+      }
     }
 
     if (rule.kind === 'size_only') {
@@ -194,11 +227,11 @@ function battleRulesOf(rules) {
 
 export {
   TOURNEY_START_UTC_HOUR, TOURNEY_END_UTC_HOUR, TOURNEY_MODE, TOURNEY_BATTLES, TOURNEY_POINTS,
-  TOURNEY_TIEBREAKERS, TOURNEY_PRIZES, TOURNEY_RULES, TOURNEY_RULES_BY_ID,
+  TOURNEY_TIEBREAKERS, TOURNEY_PRIZES, TOURNEY_TAG_CAP, TOURNEY_RULES, TOURNEY_RULES_BY_ID,
   ruleName, checkTourneyRules, battleRulesOf, loyaltyOf, RARITY_ORDER,
 };
 if (typeof module !== 'undefined') module.exports = {
   TOURNEY_START_UTC_HOUR, TOURNEY_END_UTC_HOUR, TOURNEY_MODE, TOURNEY_BATTLES, TOURNEY_POINTS,
-  TOURNEY_TIEBREAKERS, TOURNEY_PRIZES, TOURNEY_RULES, TOURNEY_RULES_BY_ID,
+  TOURNEY_TIEBREAKERS, TOURNEY_PRIZES, TOURNEY_TAG_CAP, TOURNEY_RULES, TOURNEY_RULES_BY_ID,
   ruleName, checkTourneyRules, battleRulesOf, loyaltyOf, RARITY_ORDER,
 };
