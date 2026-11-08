@@ -2170,37 +2170,64 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background: #141c2a;
 }
 
+/* Metallic frame for active + passive ability icons — the dark theme of the
+   "Metallic Icon Border Example": gunmetal conic ring, soft dark glow, rounded
+   corners, dark gradient face, inner top highlight and a slow sheen. */
 .ability-icon--passive:not([disabled]),
 .ability-icon--active:not([disabled]) {
+  border: 2px solid transparent;
+  border-radius: 1.6vh;
+  background:
+    linear-gradient(145deg, #2a2b30, #1b1c20) padding-box,
+    conic-gradient(from 180deg, #5a5c66, #2e2f35, #0c0d0f, #2e2f35, #5a5c66) border-box;
   box-shadow:
-    0 0 10px 2px rgba(190, 195, 210, 0.5),
-    0 2px 5px rgba(0, 0, 0, 0.35);
+    0 0 1.4vh 0.25vh rgba(0, 0, 0, 0.6),
+    0 0.5vh 1.2vh rgba(0, 0, 0, 0.25);
 }
 
-.ability-icon--passive:not([disabled]) {
-  border-color: #2e4e6a;
+.ability-icon--passive:not([disabled]) .ability-icon-img,
+.ability-icon--active:not([disabled]) .ability-icon-img {
+  border-radius: calc(1.6vh - 2px);
 }
 
-.ability-icon--passive:not([disabled]):active {
-  border-color: #4a80aa;
+.ability-icon--passive:not([disabled])::after,
+.ability-icon--active:not([disabled])::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: calc(1.6vh - 2px);
+  pointer-events: none;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.35) 50%, transparent 60%);
+  background-size: 200% 200%;
+  animation: ability-icon-sheen 4s ease-in-out infinite;
 }
 
-.ability-icon--active:not([disabled]) {
-  border-color: #5a3e12;
+@keyframes ability-icon-sheen {
+  0%   { background-position: 80% 50%; }
+  50%  { background-position: 20% 50%; }
+  100% { background-position: 80% 50%; }
 }
 
+.ability-icon--passive:not([disabled]):active,
 .ability-icon--active:not([disabled]):active {
-  border-color: var(--accent);
+  background:
+    linear-gradient(145deg, #313238, #212227) padding-box,
+    conic-gradient(from 180deg, #6a6c76, #3a3b42, #121316, #3a3b42, #6a6c76) border-box;
 }
 
 .ability-icon--active.ability-icon--selected {
-  border-color: var(--accent);
-  background: #141c2a;
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 0 1.4vh 0.25vh rgba(0, 0, 0, 0.6);
 }
 
 .ability-icon--passive.ability-icon--selected {
-  border-color: #4a80aa;
-  background: #141c2a;
+  box-shadow:
+    0 0 0 2px #4a80aa,
+    0 0 1.4vh 0.25vh rgba(0, 0, 0, 0.6);
 }
 
 .ability-icon--empty {
@@ -2359,6 +2386,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
 
 .ability-rank-up {
   position: absolute;
+  z-index: 2;
   top: -4px;
   right: -4px;
   min-width: 16px;
