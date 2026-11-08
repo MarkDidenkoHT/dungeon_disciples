@@ -1038,6 +1038,25 @@ function dispatchPassive(trigger, owner, def, ctx) {
         if (frontEnemy.battle_hp <= 0) { frontEnemy.alive = false; engine.applyOnDeathPassives(frontEnemy); }
       }
     }
+    // Defile: the living enemy with the least HP takes typed death damage per
+    // Zombie ally, then gains Decay per Holy ally. Decay goes on first so a
+    // killing blow does not leave a pool logged on a corpse.
+    if (p.defile === true) {
+      const foeSide = owner.side === 'player' ? 'enemy' : 'player';
+      const foes = engine.combatants.filter(c => c.side === foeSide && c.alive);
+      if (foes.length > 0) {
+        const target = foes.reduce((a, b) => (a.battle_hp <= b.battle_hp ? a : b));
+        const decayAmt = (p.defile_decay_per_tag ?? 0) * tagCount(engine, owner.side, p.decay_tag_required ?? 'Holy');
+        if (decayAmt > 0) engine.applyDecay(target, decayAmt, def, owner);
+        const dmgBase = (p.defile_dmg_per_tag ?? 0) * tagCount(engine, owner.side, p.tag_required ?? 'Zombie');
+        if (dmgBase > 0) {
+          const type = p.defile_damage_type ?? 'death';
+          const dmgAmt = hurt(target, typedAmount(target, dmgBase, type), engine, type);
+          engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: target.unit_name, targetId: target.id, targetCell: target.cellIndex, value: dmgAmt, heal: false });
+          if (target.battle_hp <= 0) { target.alive = false; engine.applyOnDeathPassives(target); }
+        }
+      }
+    }
   }
   // Procession of Grief. The ONE on_hit rider that fires for somebody else's
   // attack: the Spirit owns the passive, the Zombie swinging the axe delivers
