@@ -887,7 +887,6 @@ export function renderUnitProgressRow(progress, opts = {}) {
     if (!opts.reserve) return '';
     const blank = `
       <div class="levelup-row unit-progress-row unit-progress-row--ghost">
-        <span class="unit-progress-key"></span>
         <div class="levelup-xp-bar"></div>
       </div>`;
     return block(blank + blank, '', '', true);
@@ -901,7 +900,6 @@ export function renderUnitProgressRow(progress, opts = {}) {
     const state   = pct <= 33 ? 'critical' : (hp.cur < hp.max ? 'damaged' : 'ok');
     rows.push(`
       <div class="levelup-row unit-progress-row">
-        <span class="unit-progress-key">HP</span>
         <div class="levelup-xp-bar">
           <div class="levelup-xp-fill unit-hp-fill--${state}" style="width:${pct}%"></div>
           <span class="levelup-xp-label">${hp.cur}/${hp.max}</span>
@@ -914,7 +912,6 @@ export function renderUnitProgressRow(progress, opts = {}) {
     const pct = Math.max(0, Math.min(100, (xp.cur / xp.req) * 100));
     rows.push(`
       <div class="levelup-row unit-progress-row">
-        <span class="unit-progress-key">XP</span>
         <div class="levelup-xp-bar">
           <div class="levelup-xp-fill" style="width:${pct}%"></div>
           <span class="levelup-xp-label">${xp.cur}/${xp.req}</span>
@@ -924,7 +921,6 @@ export function renderUnitProgressRow(progress, opts = {}) {
     // Top tier: there is nothing left to advance into, so a bar would be a lie.
     rows.push(`
       <div class="levelup-row unit-progress-row">
-        <span class="unit-progress-key">XP</span>
         <span class="levelup-xp-label">${xp.cur}${xp.maxed ? ` · ${uiText('Max tier', 'Макс. уровень')}` : ''}</span>
       </div>`);
   }

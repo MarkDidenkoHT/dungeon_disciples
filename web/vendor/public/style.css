@@ -2632,11 +2632,14 @@ button.cost-bar-item:active { transform: scale(0.9); }
   margin: 2px -1px;
 }
 
+/* Same width as the core-stat and resist columns above (.unit-core-stats--side,
+   .unit-resists-grid--side), so the potion sits under one and the tome under
+   the other, edge to edge. */
 .unit-progress-side {
-  flex: 0 0 64px;
+  flex: 0 0 15vw;
+  min-width: 0;
   display: flex;
 }
-.unit-progress-side:last-child { flex-basis: 48px; }
 
 .unit-progress-bars {
   flex: 1;
@@ -2757,15 +2760,6 @@ button.cost-bar-item:active { transform: scale(0.9); }
   line-height: 12px;
   text-align: center;
   font-variant-numeric: tabular-nums;
-}
-
-.unit-progress-key {
-  font-size: 0.6rem;
-  color: var(--muted);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  flex-shrink: 0;
-  min-width: 18px;
 }
 
 .unit-hp-fill--ok       { background: #4caf50; }
@@ -11867,7 +11861,6 @@ html[lang="ru"] .tier-tab,
 html[lang="ru"] .tourney-board-title,
 html[lang="ru"] .trait-label,
 html[lang="ru"] .turn-timer-label,
-html[lang="ru"] .unit-progress-key,
 html[lang="ru"] .unit-slide-badge,
 html[lang="ru"] .unit-tag,
 html[lang="ru"] .item-card-tag,
