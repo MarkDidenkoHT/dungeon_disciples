@@ -2170,6 +2170,13 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background: #141c2a;
 }
 
+.ability-icon--passive:not([disabled]),
+.ability-icon--active:not([disabled]) {
+  box-shadow:
+    0 0 8px 1px rgba(170, 175, 190, 0.28),
+    0 2px 5px rgba(0, 0, 0, 0.35);
+}
+
 .ability-icon--passive:not([disabled]) {
   border-color: #2e4e6a;
 }
