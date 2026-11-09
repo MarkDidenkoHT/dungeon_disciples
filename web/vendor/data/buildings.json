@@ -6874,6 +6874,12 @@
           "building_id": "cu_dread_knight",
           "label": "Dread Knight",
           "label_ru": "Рыцарь ужаса"
+        },
+        {
+          "unit_id": "dm_e12",
+          "building_id": "cu_adept_of_metallon",
+          "label": "Adept of Metallon",
+          "label_ru": "Адепт Металлона"
         }
       ],
       "dm_e11": [
@@ -6882,6 +6888,14 @@
           "building_id": "cu_death_knight",
           "label": "Death Knight",
           "label_ru": "Рыцарь смерти"
+        }
+      ],
+      "dm_e12": [
+        {
+          "unit_id": "dm_e121",
+          "building_id": "cu_metallon_invoker",
+          "label": "Metallon Invoker",
+          "label_ru": "Призыватель Металлона"
         }
       ],
       "dm_2": [
