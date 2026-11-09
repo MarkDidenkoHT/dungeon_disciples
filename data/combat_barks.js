@@ -50,7 +50,7 @@ const BARK_UNIT_GROUPS = {
   grail_seraphs: ['gs41', 'gs411', 'gs4111'],
   grail_sorrow_vessels: ['gs42', 'gs421', 'gs4211'],
   grail_acolytes: ['gs5', 'gs51', 'gs511', 'gs5111', 'gs52', 'gs521', 'gs5211'],
-  grail_ghosts: ['gs6', 'gs61', 'gs611', 'gs6111', 'gs62', 'gs621', 'gs6211'],
+  grail_ghosts: ['gs6', 'gs61', 'gs611', 'gs6111', 'gs62', 'gs621', 'gs6211', 'gs622', 'gs6221'],
   grail_pale_sisters: ['gs7', 'gs71', 'gs711', 'gs7111', 'gs72', 'gs721', 'gs7211', 'gs73', 'gs731', 'gs7311'],
   grail_mothers: ['gs8', 'gs81', 'gs811', 'gs8111', 'gs82', 'gs821', 'gs8211', 'gs83', 'gs831', 'gs8311'],
 

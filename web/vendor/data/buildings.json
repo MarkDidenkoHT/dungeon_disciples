@@ -4162,7 +4162,8 @@
           "tier": 2,
           "unit_id": "gs62",
           "upgrades": [
-            "phantom_mist"
+            "phantom_mist",
+            "lament_mist"
           ],
           "cost": {
             "gold": 35,
@@ -4193,6 +4194,29 @@
           "category": "barracks",
           "tier": 4,
           "unit_id": "gs6211",
+          "upgrades": [],
+          "cost": {
+            "gold": 400
+          }
+        },
+        {
+          "id": "lament_mist",
+          "label": "Lament Mist",
+          "label_ru": "Туман плача",
+          "category": "barracks",
+          "tier": 3,
+          "unit_id": "gs622",
+          "upgrades": [
+            "sorrow_mist"
+          ]
+        },
+        {
+          "id": "sorrow_mist",
+          "label": "Sorrow Mist",
+          "label_ru": "Туман скорби",
+          "category": "barracks",
+          "tier": 4,
+          "unit_id": "gs6221",
           "upgrades": [],
           "cost": {
             "gold": 400
@@ -6554,6 +6578,12 @@
           "building_id": "phantom_mist",
           "label": "Phantom Mist",
           "label_ru": "Туман фантомов"
+        },
+        {
+          "unit_id": "gs622",
+          "building_id": "lament_mist",
+          "label": "Lament Mist",
+          "label_ru": "Туман плача"
         }
       ],
       "gs621": [
@@ -6562,6 +6592,14 @@
           "building_id": "nightmare_mist",
           "label": "Nightmare Mist",
           "label_ru": "Туман кошмаров"
+        }
+      ],
+      "gs622": [
+        {
+          "unit_id": "gs6221",
+          "building_id": "sorrow_mist",
+          "label": "Sorrow Mist",
+          "label_ru": "Туман скорби"
         }
       ],
       "gs7": [
