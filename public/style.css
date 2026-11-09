@@ -2384,6 +2384,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border);
   border-radius: 10px;
+   background: var(--surface);
 }
 .utree-ability--open { display: block; }
 .utree-ability-head {
