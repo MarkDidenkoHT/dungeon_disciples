@@ -6,6 +6,20 @@ This doc is what the lines say; `data/litanies.js` and `data/combat_barks.js` ar
 A bark is a sentence shouted across a battle line by someone who is busy. Everything
 below follows from that.
 
+## System shape
+
+New rules use the event keys `on_hit`, `on_kill`, `on_death`, `on_buff` and
+`on_healed`. Group related unit-definition IDs explicitly in
+`BARK_UNIT_GROUPS` in `data/combat_barks.js`, then select those groups in a bark's
+`actor` and `target` filters. Groups do not infer descendants, so branch membership
+stays deliberate. Exact `id`/`ids` selectors are also available. Use tag filters for
+intentionally broad fallback lines, not as a substitute for branch identity.
+
+A bark rule can have `dialogue` instead of `lines` to make a short exchange. Each
+exchange has an `actor` and `target` object with localized `text` and `text_ru`;
+both units get their own bark log entries, in that order. Old `attack`, `kill`,
+`death` and `heal_low_hp` rules remain supported as the existing content is migrated.
+
 ---
 
 ## 1. The five rules

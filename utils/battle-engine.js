@@ -5,7 +5,7 @@ const { filterByTagRules } = require('./tag-rules.js');
 const { columnAdjacentCells } = require('../data/formation_synergies.js');
 const { SPELLS } = require('../data/spells');
 const { aiDoctrineFor } = require('../data/ai_profiles.js');
-const { COMBAT_BARKS, BARK_CHANCES, HEAL_BARK_THRESHOLD_PCT } = require('../data/combat_barks');
+const { COMBAT_BARKS, BARK_CHANCES, BARK_UNIT_GROUPS, HEAL_BARK_THRESHOLD_PCT } = require('../data/combat_barks');
 const { matchAvailableLitany } = require('../data/litanies');
 const { callingIdOf } = require('../data/callings');
 
@@ -575,6 +575,11 @@ class BattleEngine {
         _actionTargetIds: this._activeAction.targetIds,
       } : {}),
     });
+    if (trigger === 'on_hit' && ctx?.actor && ctx?.target?.alive && ctx.dmg > 0) {
+      this.checkBark('on_hit', ctx.actor, { target: ctx.target });
+    } else if (trigger === 'on_kill' && ctx?.actor && ctx?.target) {
+      this.checkBark('on_kill', ctx.actor, { target: ctx.target });
+    }
   }
   getFootprint(unit) {
     const size = unit.size ?? 'tile';
@@ -835,8 +840,10 @@ class BattleEngine {
     this._in_ally_buff = true;
     try {
       for (const t of targets) {
-        if (!t || t.id === source?.id || !t.alive) continue;
+        if (!t || !t.alive) continue;
         if (source && t.side !== source.side) continue;
+        this.checkBark('on_buff', source, { target: t });
+        if (t.id === source?.id) continue;
         this.fireTrigger('on_receive_ally_buff', { actor: source, target: t, dmg: 0, dying: null });
       }
     } finally {
@@ -1014,11 +1021,12 @@ class BattleEngine {
     return raised;
   }
 
-  applyOnDeathPassives(dying) {
+  applyOnDeathPassives(dying, { killer = null, deferDeathBark = false } = {}) {
     this.tallyKill(dying);
     this.revokeGrantedBuffs(dying);
     this.recomputeTagScaledGrants(dying.side, dying.unit_data?.tags ?? []);
     this.fireTrigger('on_death', { dying, actor: dying, target: null, dmg: 0 });
+    if (!deferDeathBark) this.checkBark('on_death', dying, { target: killer });
     const bonded = this.combatants.find(c => c._unity_host_id === dying.id && c.alive);
     if (bonded) {
       bonded.alive = false;
@@ -1034,6 +1042,7 @@ class BattleEngine {
       this.pushLog({ type: 'passive', passive: 'Unity', actorId: bonded.id, actorName: bonded.unit_name, actorCell: bonded.cellIndex, targetId: bonded.id, targetName: bonded.unit_name, targetCell: bonded.cellIndex, killed: true, message: `${bonded.unit_name} perishes with their host.` });
       this.revokeGrantedBuffs(bonded);
       this.fireTrigger('on_death', { dying: bonded, actor: bonded, target: null, dmg: 0 });
+      this.checkBark('on_death', bonded, { target: killer });
     }
     const dyingTags = dying.unit_data?.tags ?? [];
     if (dyingTags.includes('Specter')) {
@@ -1433,6 +1442,7 @@ class BattleEngine {
         if (poolAction === 'shield') {
           const added = this.grantShield(t, power, label, actor);
           this.creditDeed(actor, added);
+          if (added > 0) this.checkBark('on_buff', actor, { target: t });
         } else {
           this.applyDecay(t, power, label, actor);
         }
@@ -1459,6 +1469,7 @@ class BattleEngine {
         value: bonusFlat,
         message: `${actor.unit_name} empowers ${target.unit_name} — +${bonusFlat} action power on the next action`,
       });
+      if (bonusFlat > 0) this.checkBark('on_buff', actor, { target });
       // Empower is a support action too: let pool-trigger passives such as
       // Dispel remove an ally's negative effects when the buff is applied.
       this.fireTrigger('on_pool', { actor, target, dmg: bonusFlat, dying: null });
@@ -1546,14 +1557,16 @@ class BattleEngine {
           this.pushLog({ type: 'passive', passive: duelistDef.name, actorId: target.id, actorName: target.unit_name, actorCell: target.cellIndex, targetName: actor.unit_name, targetCell: actor.cellIndex, message: `${duelistDef.name} — preemptive strike for ${preemptDmg}${actorDied ? ', cancelling the attack!' : ''}`, value: preemptDmg, heal: false });
           if (actorDied) {
             actor.alive = false;
-            this.applyOnDeathPassives(actor);
+            this.applyOnDeathPassives(actor, { killer: target, deferDeathBark: true });
             this.fireTrigger('on_hit',        { actor: target, target: actor, dmg: preemptDmg, dying: null });
             this.fireTrigger('on_hit_received', { actor: target, target: actor, dmg: preemptDmg, dying: null });
             this.fireTrigger('on_kill',       { actor: target, target: actor, dmg: preemptDmg, dying: null });
             this.fireTrigger('on_ally_death', { actor: target, target: actor, dmg: preemptDmg, dying: actor });
+            this.checkBark('on_death', actor, { target });
             actor.acted_this_round = true;
             return this.afterAction(actor);
           }
+          this.checkBark('on_hit', target, { target: actor });
         }
       }
       actor._empower_used_this_action = (actor._empower_bonus_flat ?? 0) > 0;
@@ -1596,7 +1609,7 @@ class BattleEngine {
             this.tallyDamage(target, remaining, actor.unit_data?.damage_source);
             this.creditDeed(actor, remaining);
             const dead = target.battle_hp <= 0;
-            if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
+            if (dead) { target.alive = false; this.applyOnDeathPassives(target, { killer: actor, deferDeathBark: true }); }
             this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - dmg, absorbed: dmg - remaining, killed: !target.alive });
             this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
             this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });
@@ -1604,10 +1617,7 @@ class BattleEngine {
             if (dead && !target.alive) {
               this.fireTrigger('on_kill', { actor, target, dmg: remaining, dying: null });
               this.fireTrigger('on_ally_death', { actor, target, dmg: remaining, dying: target });
-              this.checkBark('kill', actor, { target });
-              this.checkBark('death', target, { target: actor }); // the dying unit's last words; its "target" is the killer
-            } else {
-              this.checkBark('attack', actor, { target });
+              this.checkBark('on_death', target, { target: actor }); // the dying unit's last words; its "target" is the killer
             }
           } else {
             this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
@@ -1637,9 +1647,8 @@ class BattleEngine {
     const heal   = Math.max(0, Math.min(afterDecay, target.max_hp - target.battle_hp));
     const preHealRatio = target.max_hp > 0 ? target.battle_hp / target.max_hp : 1;
     target.battle_hp += heal;
-    this.fireHealTriggers(actor, target, heal);
+    this.fireHealTriggers(actor, target, heal, preHealRatio);
     this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: heal, heal: true });
-    this.checkBark('heal_low_hp', actor, { target, preHealRatio });
     return heal;
   }
 
@@ -1684,7 +1693,7 @@ class BattleEngine {
       this.tallyDamage(target, remaining, actor.unit_data?.damage_source);
       this.creditDeed(actor, remaining);
       const dead = target.battle_hp <= 0;
-      if (dead) { target.alive = false; this.applyOnDeathPassives(target); }
+      if (dead) { target.alive = false; this.applyOnDeathPassives(target, { killer: actor, deferDeathBark: true }); }
       this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: remaining, rawDmg, resisted: rawDmg - dmg, absorbed: dmg - remaining, killed: !target.alive });
       this.fireTrigger('on_hit', { actor, target, dmg: remaining, dying: null });
       this.fireTrigger('on_hit_received', { actor, target, dmg: remaining, dying: null });
@@ -1692,10 +1701,7 @@ class BattleEngine {
       if (dead && !target.alive) {
         this.fireTrigger('on_kill', { actor, target, dmg: remaining, dying: null });
         this.fireTrigger('on_ally_death', { actor, target, dmg: remaining, dying: target });
-        this.checkBark('kill', actor, { target });
-        this.checkBark('death', target, { target: actor });
-      } else {
-        this.checkBark('attack', actor, { target });
+        this.checkBark('on_death', target, { target: actor });
       }
     } else {
       this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, value: 0, killed: false });
@@ -2312,10 +2318,11 @@ class BattleEngine {
   }
   // Every heal that lands goes through here, which is why the deed credit
   // sits here rather than at each caller.
-  fireHealTriggers(healer, target, amount) {
+  fireHealTriggers(healer, target, amount, preHealRatio = null) {
     this.creditDeed(healer, amount);
     this.fireTrigger('on_heal', { actor: healer, target, dmg: amount, dying: null });
     this.fireTrigger('on_healed', { actor: healer, target, dmg: amount, dying: null });
+    if (amount > 0) this.checkBark('on_healed', healer, { target, preHealRatio });
   }
   // A hero spending its turn on a spell. Returns { ok } or { error } — the
   // caller (the /battle/cast route, or the AI) decides what to do with a
@@ -4861,9 +4868,8 @@ class BattleEngine {
     this.log.push(entry);
   }
 
-  // Cosmetic combat barks - see data/combat_barks.js for the rule format and
-  // the decaying-chance rules. Purely flavor text; never affects gameplay state
-  // beyond the log, and must never be allowed to throw into combat resolution.
+  // Cosmetic combat barks - see data/combat_barks.js for groups and rules.
+  // Purely flavor text; never affects gameplay state beyond the log.
   barkTags(unit) {
     if (!unit) return [];
     const tags = unit.unit_data?.tags ?? unit.tags ?? [];
@@ -4878,12 +4884,31 @@ class BattleEngine {
     return unit?.unit_data?.f ?? unit?.f ?? null;
   }
 
+  barkUnitId(unit) {
+    return unit?.unit_data?.unit_id ?? unit?.unit_data?.id ?? unit?.unit_id ?? null;
+  }
+
   // Returns the filter's specificity score, or -1 if the unit does not match.
   // An absent filter matches anything at score 0.
   barkFilterScore(filter, unit) {
     if (!filter) return 0;
     if (!unit) return -1;
     let score = 0;
+    const unitId = this.barkUnitId(unit);
+    if (filter.id != null) {
+      if (unitId !== filter.id) return -1;
+      score += 300;
+    }
+    if (filter.ids != null) {
+      const ids = Array.isArray(filter.ids) ? filter.ids : [filter.ids];
+      if (!ids.includes(unitId)) return -1;
+      score += 300;
+    }
+    if (filter.group != null) {
+      const ids = BARK_UNIT_GROUPS[filter.group];
+      if (!ids || !ids.includes(unitId)) return -1;
+      score += 100;
+    }
     if (filter.name != null) {
       if (unit.unit_name !== filter.name) return -1;
       score += 100; // a named rule must always beat any tag combination
@@ -4990,9 +5015,6 @@ class BattleEngine {
   }
   checkBark(triggerKey, owner, ctx = {}) {
     if (!owner) return;
-    if (triggerKey === 'heal_low_hp') {
-      if (ctx.preHealRatio == null || ctx.preHealRatio >= HEAL_BARK_THRESHOLD_PCT / 100) return;
-    }
 
     // Chance decays per unit, per trigger, per battle; check it before the
     // (more expensive) rule scan so most calls cost almost nothing.
@@ -5005,26 +5027,58 @@ class BattleEngine {
     let best = -1;
     let pool = [];    // English lines
     let poolRu = [];  // Russian lines, kept index-aligned with pool
+    let dialoguePool = [];
+    const legacyTrigger = {
+      on_hit: 'attack',
+      on_kill: 'kill',
+      on_death: 'death',
+      on_healed: 'heal_low_hp',
+    }[triggerKey];
     for (const rule of COMBAT_BARKS) {
-      if (rule.trigger !== triggerKey) continue;
+      if (rule.trigger !== triggerKey && rule.trigger !== legacyTrigger) continue;
+      if (rule.trigger === 'heal_low_hp' &&
+          (ctx.preHealRatio == null || ctx.preHealRatio >= HEAL_BARK_THRESHOLD_PCT / 100)) continue;
       const aScore = this.barkFilterScore(rule.actor, owner);
       if (aScore < 0) continue;
       const tScore = this.barkFilterScore(rule.target, ctx.target);
       if (tScore < 0) continue;
       const score = aScore + tScore;
       if (score < best) continue;
-      if (score > best) { best = score; pool = []; poolRu = []; }
+      if (score > best) { best = score; pool = []; poolRu = []; dialoguePool = []; }
+      if (rule.dialogue) {
+        dialoguePool.push(...rule.dialogue);
+        continue;
+      }
       const lines = rule.lines ?? [];
       pool.push(...lines);
       // Pad ru so it stays index-aligned even if a rule lacks/short lines_ru.
       poolRu.push(...lines.map((_, i) => (rule.lines_ru ?? [])[i] ?? ''));
     }
-    if (!pool.length) return;
+    if (!pool.length && !dialoguePool.length) return;
 
     owner._bark_counts[triggerKey] = spoken + 1;
-    const idx = Math.floor(Math.random() * pool.length);
+    const choice = Math.floor(Math.random() * (dialoguePool.length + pool.length));
+    if (choice < dialoguePool.length) {
+      const exchange = dialoguePool[choice];
+      this.pushBark(owner, exchange.actor);
+      this.pushBark(ctx.target, exchange.target);
+      return;
+    }
+    const idx = choice - dialoguePool.length;
+    this.pushBark(owner, { text: pool[idx], text_ru: poolRu[idx] });
+  }
+
+  pushBark(speaker, line) {
+    if (!speaker || !line) return;
     // Carry both languages; the client picks by the viewer's language (no fallback).
-    this.pushLog({ type: 'bark', actorId: owner.id, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, text: pool[idx], text_ru: poolRu[idx] });
+    this.pushLog({
+      type: 'bark',
+      actorId: speaker.id,
+      actorName: speaker.unit_name,
+      actorCell: speaker.cellIndex,
+      text: line.text ?? '',
+      text_ru: line.text_ru ?? '',
+    });
   }
 }
 module.exports = { BattleEngine, getAbilities };

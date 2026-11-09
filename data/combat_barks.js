@@ -1,9 +1,9 @@
 // Cosmetic combat barks - zero mechanical effect, purely flavor text shown as a
 // toast next to the unit that speaks. Nothing here is ever read by game logic.
 //
-// A bark is a RULE: a trigger, an optional actor filter, an optional target
-// filter, and the lines to pick from. The engine collects every rule that
-// matches, keeps only the most specific ones, and picks one line at random.
+// A bark is a RULE: an event, optional actor and target selectors, and lines.
+// Prefer explicit unit groups/IDs; tags remain useful for broad fallback rules.
+// The engine keeps only the most specific matching rules and picks at random.
 // See BattleEngine.checkBark() in utils/battle-engine.js.
 //
 // Filters:
@@ -11,11 +11,14 @@
 //   tag:  'Demon'          matches if the unit carries that tag
 //   tags: ['Holy','Court'] matches if the unit carries ALL of them
 //   not:  'Skeleton' | []  excludes units carrying any of these tags
+//   id:   'e211'           matches one exact unit definition ID
+//   ids:  ['e211','e2111'] matches any listed unit definition ID
+//   group: 'templar'       matches IDs listed in BARK_UNIT_GROUPS.templar
 //   omit the filter entirely to match anything
 //
-// Specificity (higher wins, ties are pooled together):
-//   +100 name, +2 per tag, +0 per `not` (a gate only), on each of actor and
-//   target. A named rule therefore always beats any tag rule.
+// Specificity (higher wins, ties are pooled together): +300 exact ID, +100
+// group/name, +3 faction, +2 per tag, +0 per `not` (a gate only), on actor
+// and target. Explicit groups therefore beat broad tag rules.
 //
 // The ONLY tags any unit in data/units.js carries are:
 //   Archer, Beast, Caster, Construct, Court, Demon, Engineer, Holy, Knight,
@@ -57,20 +60,32 @@
 // English and Russian line; the client shows the one for the viewer's language
 // (no English fallback). Keep lines and lines_ru index-aligned when editing.
 //
-// Triggers:
-//   attack       actor lands a damaging hit that does NOT kill
-//   kill         actor's hit kills the target
-//   death        the dying unit's own last words (target filter = the killer)
-//   heal_low_hp  actor heals an ally who was below `threshold_pct` HP
+// Events:
+//   on_hit       actor lands a damaging hit that does NOT kill
+//   on_kill      actor's hit kills the target
+//   on_death     the dying unit's own last words (target filter = the killer)
+//   on_buff      actor grants a real buff to an ally
+//   on_healed    actor restores an ally's HP
+// Older attack/kill/death/heal_low_hp rules remain supported while content is
+// gradually moved to explicit groups.
 //
 // Speak chance decays per unit, per trigger, per battle - see BARK_CHANCES.
 // Attack barks are the noisiest trigger, so they are tuned lower.
 
 const BARK_CHANCES = {
-  attack:      [0.30, 0.12], // 1st bark 30%, 2nd 12%, then silent for the battle
-  kill:        [0.55, 0.30],
-  death:       [0.60, 0.00], // you only die once, but revives exist
-  heal_low_hp: [0.50, 0.25],
+  on_hit:    [0.30, 0.12], // 1st bark 30%, 2nd 12%, then silent for the battle
+  on_kill:   [0.55, 0.30],
+  on_death:  [0.60, 0.00], // you only die once, but revives exist
+  on_buff:   [0.35, 0.15],
+  on_healed: [0.50, 0.25],
+};
+
+// Keep related branches together by definition ID, not overlapping tags.
+// Add IDs here when a branch changes; no implicit descendants are included.
+const BARK_UNIT_GROUPS = {
+  bound_sentinels: ['e3', 'e31', 'e311', 'e3111'],
+  empire_sisters: ['e8', 'e81', 'e811', 'e8111', 'e82', 'e821', 'e8211'],
+  templar_champions: ['e211', 'e2111'],
 };
 
 // Only considered for the heal_low_hp trigger: the ally must have been below
@@ -1024,6 +1039,54 @@ const COMBAT_BARKS = [
       'Дорога... подождёт...',
     ],
   },
+  {
+    trigger: 'on_buff',
+    actor: { group: 'empire_sisters' },
+    target: { group: 'templar_champions' },
+    dialogue: [
+      {
+        actor: { text: 'What is your duty!', text_ru: 'Каков твой долг!' },
+        target: { text: 'To serve Mithrail’s will!', text_ru: 'Служить воле Митраила!' },
+      },
+    ],
+  },
+  {
+    trigger: 'on_hit',
+    actor: { group: 'bound_sentinels' },
+    lines: ['The line holds. Advance.', 'I know this weight. I chose it.'],
+    lines_ru: ['Строй держится. Вперёд.', 'Я знаю эту тяжесть. Я сам её выбрал.'],
+  },
+  {
+    trigger: 'on_kill',
+    actor: { group: 'bound_sentinels' },
+    lines: ['One less threat to the living.', 'The ranks may pass in safety.'],
+    lines_ru: ['Живым угрожает на одного врага меньше.', 'Теперь строй пройдёт безопасно.'],
+  },
+  {
+    trigger: 'on_death',
+    actor: { group: 'bound_sentinels' },
+    lines: ['The oath... still holds.', 'I return the vessel. Keep the line.'],
+    lines_ru: ['Клятва... всё ещё крепка.', 'Возвращаю тело. Держите строй.'],
+  },
+  {
+    trigger: 'on_healed',
+    actor: { group: 'empire_sisters' },
+    lines: ['Back to the line.', 'There is still work to do.'],
+    lines_ru: ['Возвращайся в строй.', 'Работа ещё не окончена.'],
+  },
 ];
 
-export { COMBAT_BARKS, BARK_CHANCES, HEAL_BARK_THRESHOLD_PCT };
+for (const [group, ids] of Object.entries(BARK_UNIT_GROUPS)) {
+  if (!Array.isArray(ids) || !ids.length || ids.some(id => typeof id !== 'string')) {
+    throw new Error(`Invalid combat bark unit group: ${group}`);
+  }
+}
+for (const rule of COMBAT_BARKS) {
+  for (const [role, selector] of Object.entries({ actor: rule.actor, target: rule.target })) {
+    if (selector?.group && !Object.prototype.hasOwnProperty.call(BARK_UNIT_GROUPS, selector.group)) {
+      throw new Error(`Unknown combat bark unit group "${selector.group}" in ${rule.trigger} ${role}`);
+    }
+  }
+}
+
+export { COMBAT_BARKS, BARK_CHANCES, BARK_UNIT_GROUPS, HEAL_BARK_THRESHOLD_PCT };
