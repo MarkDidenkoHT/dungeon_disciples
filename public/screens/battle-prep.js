@@ -1,7 +1,7 @@
 import { assetUrl } from '../asset_base.js';
 import { api, navigate, resourceCache, refreshResourceBar, bootstrapCache }  from '../api.js';
 import { errandRosterIds } from '../errands.js';
-import { SPELLS, SPELL_CATEGORIES } from '../../data/spells.js';
+import { SPELLS, SPELL_CATEGORIES, spellIconPath } from '../../data/spells.js';
 import { applyEngraving } from '../../data/engravings.js';
 
 // The Spell Tome's tabs minus non-combat, which is roster-only and has nothing
@@ -608,7 +608,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
       return `
         <div class="spell-list-row ${!affordable && !used ? 'spell-list-row--disabled' : ''} ${used ? 'spell-list-row--used' : ''}"
              data-spell-id="${spell.id}">
-          <div class="spell-list-icon"><img src="${assetUrl(`/assets/icons/spells/${spell.id}.png`)}" class="spell-icon-img" alt="${spellName(spell, player)}" onerror="this.style.display='none'"></div>
+          <div class="spell-list-icon"><img src="${assetUrl(spellIconPath(spell))}" class="spell-icon-img" alt="${spellName(spell, player)}" onerror="this.style.display='none'"></div>
           <div class="spell-list-info">
             <div class="spell-list-name">${spellName(spell, player)}</div>
             <div class="spell-list-meta">

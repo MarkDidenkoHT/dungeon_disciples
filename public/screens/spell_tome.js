@@ -1,7 +1,7 @@
 import { assetUrl } from '../asset_base.js';
 import { api, refreshResourceBar, resourceCache, structuresCache, bootstrapCache } from '../api.js';
 import { showCostBar, hideCostBar, primeCostBar } from '../cost-bar.js';
-import { SPELLS, SPELL_TIERS } from '../../data/spells.js';
+import { SPELLS, SPELL_TIERS, spellIconPath } from '../../data/spells.js';
 import { UNITS } from '../../data/units.js';
 import { LITANIES } from '../../data/litanies.js';
 import { getCalling, callingsForFaction } from '../../data/callings.js';
@@ -1031,7 +1031,7 @@ export function renderSpellTome(root, { player }) {
   }
 
   function spellIconUrl(spell) {
-    return assetUrl(`/assets/icons/spells/${spell.id}.png`);
+    return assetUrl(spellIconPath(spell));
   }
 
   // Same shape the castle hands the shared bar: resource keys to amounts.

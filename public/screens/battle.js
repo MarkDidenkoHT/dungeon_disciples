@@ -9,7 +9,7 @@ import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone }
 import { initSfx, playAbilitySound } from '../sfx.js';
 import { createBattleRealtimeController } from '../battle-realtime.js';
 import { assetUrl } from '../asset_base.js';
-import { SPELLS, POWER_MAX, POWER_NAMES, spellParamsAtPower } from '../../data/spells.js';
+import { SPELLS, POWER_MAX, POWER_NAMES, spellParamsAtPower, spellIconPath } from '../../data/spells.js';
 import { QUESTS_BY_ID } from '../../data/quests.js';
 // Named so the result screen can say which phase the attempt reached, in the
 // player's own language.
@@ -1955,10 +1955,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // Spell art. `icon` on the definition, falling back to the id's base name, so
   // a spell without its own file still lines up with the ability icons rather
   // than leaving a hole.
-  // Spell art is keyed by the spell's ID and lives in /assets/icons/spells as a
-  // PNG. The portrait badge is a different picture entirely — see effect_icon.
+  // Spell art is shared across factions (spellIconPath) and lives in
+  // /assets/icons/spells as a PNG. The portrait badge is a different picture entirely — see effect_icon.
   function spellIconHtml(spell, cls = 'spell-cast-icon') {
-    return `<img class="${cls}" src="${assetUrl(`/assets/icons/spells/${spell.id}.png`)}"
+    return `<img class="${cls}" src="${assetUrl(spellIconPath(spell))}"
                  alt="${spell.name}" onerror="this.style.visibility='hidden'">`;
   }
 

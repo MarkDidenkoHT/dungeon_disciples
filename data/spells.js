@@ -31,8 +31,10 @@
 //   Holy Aegis at 5 power -> +35 armor, 3 rounds
 //
 // ── Two kinds of art ───────────────────────────────────────────────────────
-// The spell's own picture is keyed by ID: /assets/icons/spells/<id>.png. It is
-// not a field here because it never differs from the id.
+// The spell's own picture is shared across factions: every faction's spell N
+// (e_spell_N / d_spell_N / g_spell_N) uses /assets/icons/spells/spell_N.png —
+// see spellIconPath(). Spells without a numbered id (boss spells) fall back to
+// /assets/icons/spells/<id>.png.
 //
 // `effect_icon` is a DIFFERENT thing: the badge drawn on a unit's portrait
 // while the spell's effect is on it, taken from /assets/icons/abilities/. A
@@ -952,5 +954,12 @@ function spellParamsAtPower(spell, power) {
   return out;
 }
 
-export { SPELLS, SPELL_CATEGORIES, SPELL_TIERS, POWER_MAX, POWER_PER_HERO_ACTION, POWER_NAMES, spellParamsAtPower };
-if (typeof module !== 'undefined') module.exports = { SPELLS, SPELL_CATEGORIES, SPELL_TIERS, POWER_MAX, POWER_PER_HERO_ACTION, POWER_NAMES, spellParamsAtPower };
+// Faction spells share one icon set: '<x>_spell_N' -> spell_N.png.
+function spellIconPath(spell) {
+  const id = String(spell?.id ?? spell ?? '');
+  const m = id.match(/_spell_(\d+)$/);
+  return `/assets/icons/spells/${m ? `spell_${m[1]}` : id}.png`;
+}
+
+export { SPELLS, SPELL_CATEGORIES, SPELL_TIERS, POWER_MAX, POWER_PER_HERO_ACTION, POWER_NAMES, spellParamsAtPower, spellIconPath };
+if (typeof module !== 'undefined') module.exports = { SPELLS, SPELL_CATEGORIES, SPELL_TIERS, POWER_MAX, POWER_PER_HERO_ACTION, POWER_NAMES, spellParamsAtPower, spellIconPath };
