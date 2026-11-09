@@ -452,6 +452,12 @@ function dispatchPassive(trigger, owner, def, ctx) {
     target == null && rawParams.adjacent_physical_dmg_reduction_pct != null);
   const abilityKey = def.id ?? def.name ?? null;
   const applyDispel = (targetUnit, polarity) => {
+    if (ctx._actionId != null) {
+      if (ctx._actionTargetIds?.size && !ctx._actionTargetIds.has(targetUnit.id)) return;
+      const useKey = `${ctx._actionId}:${owner.id}:${targetUnit.id}`;
+      if (engine._actionDispelUses?.has(useKey)) return;
+      engine._actionDispelUses?.add(useKey);
+    }
     // A passive Dispel rank removes points from one effect, not whole effect
     // records. Stacked pools such as Bleed live in a single registry entry, so
     // dispelEffects(count) would erase every stack when it selected that entry.

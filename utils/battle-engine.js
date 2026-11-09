@@ -192,6 +192,9 @@ class BattleEngine {
     this.activeLitanies = { ...(state?.activeLitanies || {}) };
     this.litanyBonusMultipliers = {};
     this._applyLitanyBonusesOnSetup = true;
+    this._actionSequence = 0;
+    this._activeAction = null;
+    this._actionDispelUses = new Set();
     if (state) {
       this.combatants = state.combatants;
       this.round      = state.round;
@@ -563,7 +566,15 @@ class BattleEngine {
     return combatant;
   }
   fireTrigger(trigger, ctx) {
-    runTrigger(trigger, { engine: this, UNIT_ABILITIES: this.ABILITIES, ...ctx });
+    runTrigger(trigger, {
+      engine: this,
+      UNIT_ABILITIES: this.ABILITIES,
+      ...ctx,
+      ...(this._activeAction ? {
+        _actionId: this._activeAction.id,
+        _actionTargetIds: this._activeAction.targetIds,
+      } : {}),
+    });
   }
   getFootprint(unit) {
     const size = unit.size ?? 'tile';
@@ -1358,6 +1369,11 @@ class BattleEngine {
   // its turn-start passives do not fire, and it earns no power for the lent hit.
   // afterAction restores its prior acted state.
   executeAction(actor, target = null, actionType = 'attack', opts = {}) {
+    this._activeAction = {
+      id: ++this._actionSequence,
+      targetIds: new Set(target ? [target.id] : []),
+    };
+    this._actionDispelUses.clear();
     if (opts.consumesTurn === false) {
       actor._borrowed_turn = { acted: actor.acted_this_round };
       actor._skip_power_gain = true;
@@ -1388,7 +1404,11 @@ class BattleEngine {
     if (actionType === 'defend')  return this.doDefend(actor);
     if (actionType === 'ability') return this.doAbility(actor, target);
     if (actionType === 'sacrifice') return this.doSacrifice(actor, target);
-    if (!target) return false;
+    if (!target) {
+      this._activeAction = null;
+      this._actionDispelUses.clear();
+      return false;
+    }
 
     // ── Decay / Shield as ACTIONS ─────────────────────────────────────────
     // A unit whose turn IS the debuff or the ward, rather than a passive that
@@ -1405,6 +1425,7 @@ class BattleEngine {
       const power     = Math.ceil(basePower + (Number(actor._empower_bonus_flat) || 0));
       const maxHits = Math.max(1, Number(actor.unit_data?.targets ?? 1));
       const list    = maxHits > 1 ? this.getValidTargets(actor).slice(0, maxHits) : [target];
+      this._activeAction.targetIds = new Set(list.map(t => t.id));
       const label   = { name: poolAction === 'shield' ? 'Shield' : 'Decay', dispellable: true };
       for (const t of list) {
         if (!actor.alive) break;
@@ -1464,6 +1485,7 @@ class BattleEngine {
       const maxHealTargets = dualActionHeal ? 1 : Math.max(1, Number(actor.unit_data?.targets ?? 1));
       if (maxHealTargets > 1) {
         const list = this.getValidTargets(actor).slice(0, maxHealTargets);
+        this._activeAction.targetIds = new Set(list.map(t => t.id));
         for (const tgt of list) {
           if (!actor.alive) break;
           if (tgt.alive) this.healTarget(actor, tgt);
@@ -1483,6 +1505,7 @@ class BattleEngine {
       if (maxTargets > 1) {
         actor._empower_used_this_action = (actor._empower_bonus_flat ?? 0) > 0;
         const list = this.getValidTargets(actor).slice(0, maxTargets);
+        this._activeAction.targetIds = new Set(list.map(t => t.id));
         // A full-field sweep used to drink a full drain off every unit it
         // touched: Lifesteal, Communion and Leech are per-hit, so a targets:6
         // attacker healed six times from one swing. The sweep now pays in full
@@ -1501,6 +1524,7 @@ class BattleEngine {
       }
 
       target = this.resolveProtectorIntercept(actor, target);
+      this._activeAction.targetIds = new Set(target ? [target.id] : []);
 
       const actorRange = actor.unit_data?.range ?? 1;
       if (actorRange <= 1 && target._parry_available) {
@@ -2404,6 +2428,8 @@ class BattleEngine {
     return this.afterAction(actor);
   }
   afterAction(actor) {
+    this._activeAction = null;
+    this._actionDispelUses.clear();
     if (actor?._empower_used_this_action) {
       this.clearEmpower(actor);
       actor._empower_used_this_action = false;
