@@ -1826,6 +1826,13 @@ function calcDamageWithPassives(actor, target, UNIT_ABILITIES, engine) {
   }
   const ward = wardReductionFor(actor, target, damageSource, UNIT_ABILITIES, engine);
   if (ward.pct) dmg = Math.floor(dmg * (1 - ward.pct / 100));
+  // Weight of Steel: flat bonus equal to a share of the target's armor, added
+  // AFTER mitigation so the stated number is what lands (30 armor at 50% is
+  // +15 damage). Reads effective armor, so a staggered target (armor 0) gives
+  // nothing and a Defending one gives more.
+  if (p.armor_bonus_dmg_pct != null) {
+    dmg += Math.floor(effectiveArmor(target) * p.armor_bonus_dmg_pct / 100);
+  }
   return { dmg: Math.max(1, dmg), rawDmg };
 }
 function getAbilityTargets(actor, combatants, UNIT_ABILITIES) {
