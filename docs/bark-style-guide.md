@@ -3,8 +3,7 @@
 Status: **draft for agreement.** Last updated 2026-09-17.
 This doc is what the lines say; `data/litanies.js` and `data/combat_barks.js` are how they are chosen.
 
-A bark is a sentence shouted across a battle line by someone who is busy. Everything
-below follows from that.
+A bark is one brief utterance in a fight. Everything below follows from that.
 
 ## System shape
 
@@ -12,13 +11,14 @@ New rules use the event keys `on_hit`, `on_kill`, `on_death`, `on_buff` and
 `on_healed`. Group related unit-definition IDs explicitly in
 `BARK_UNIT_GROUPS` in `data/combat_barks.js`, then select those groups in a bark's
 `actor` and `target` filters. Groups do not infer descendants, so branch membership
-stays deliberate. Exact `id`/`ids` selectors are also available. Use tag filters for
-intentionally broad fallback lines, not as a substitute for branch identity.
+stays deliberate. Exact `id`/`ids` selectors are also available. Tags, factions and
+names are not bark selectors.
 
 A bark rule can have `dialogue` instead of `lines` to make a short exchange. Each
 exchange has an `actor` and `target` object with localized `text` and `text_ru`;
 both units get their own bark log entries, in that order. Old `attack`, `kill`,
-`death` and `heal_low_hp` rules remain supported as the existing content is migrated.
+`death` and `heal_low_hp` keys are retired. Tag, faction and name selectors are not
+supported; an unwritten unit group is silent until it receives its own voice.
 
 ---
 
@@ -32,8 +32,8 @@ both units get their own bark log entries, in that order. Old `attack`, `kill`,
 3. **One thought.** One sentence, or two very short ones. No setup-and-punchline.
 4. **Understate.** Nobody in this game narrates their own heroism. Weight comes from
    what is left out.
-5. **Silence beats filler.** An empty key falls back to something broader. An unwritten
-   key is never an error; a generic line in a specific key is.
+5. **Silence beats filler.** An unwritten event is silent. Do not add a generic fallback
+   merely to make every unit speak on every event.
 
 ---
 
@@ -69,22 +69,15 @@ is a chanted cry and is allowed one.
 
 | Key | The speaker is… | Good bark does | Avoid |
 |---|---|---|---|
-| `on_action_enemy` | mid-fight, target alive | intent, effort, a promise to the target | announcing victory early |
+| `on_hit` | striking a living target | effort, warning, or the thing the strike costs | declaring victory |
 | `on_kill` | standing over a body | verdict, dismissal, or a rite | cheering |
-| `on_kill_<tag>` | over *that kind* of body | what this faction believes about that creature | generic kill lines with a tag word swapped in |
 | `on_death` | dying | last words: duty, faith, grief, an unfinished thought | long speeches; revenge threats |
-| `on_death_<tag>` | dying *to that* | what it means to fall to that enemy | |
-| `on_action_ally` | helping someone | the relationship to that ally | bedside manner — they are soldiers |
-| `on_heal_low` | pulling someone back | urgency without panic | "you'll be fine" |
-| `on_ability` | using their signature | the thing itself — its name in-world, its purpose | describing the visual effect |
-| `on_low_hp` | badly hurt | refusal, faith, grim humour at most | whimpering (Empire); bravado (Grail) |
-| `on_ally_death` | watching a comrade fall | one beat of the faction's grief register | vowing vengeance in paragraph form |
-| `on_last_standing` | alone | the whole faction's creed in one line | |
-| `on_battle_start` | lining up | ritual, not smack talk | taunts |
-| `synergy_ally_*` | reacting to a comrade | continue their thought, don't comment on it | "Nice one" in any costume |
+| `on_buff` | strengthening an ally | the relationship between these branches | generic praise |
+| `on_healed` | restoring an ally | urgency or relief in this speaker's voice | "you'll be fine" |
+| `on_battle_start` | entering the battle prep litany toast | this hero's branch and purpose | faction-wide filler |
 
-**Tag qualifiers must carry belief, not vocabulary.** `on_kill_zombie` for a Templar
-is not "Die, zombie." It is what a Mithrail zealot believes a walking corpse *is*.
+When the target matters, select a specific group or exact IDs. A Templar's response to a
+Risen should express what that branch believes the dead to be, not merely name the target.
 
 ---
 
@@ -101,7 +94,8 @@ boast. Everything outside the Empire is presumed unclean until proven otherwise.
 
 **Stoic in speech, xenophobic in belief.** Both are true at once, at different volumes:
 the voice stays level, but what it assumes about the enemy is absolute. Templars and
-Inquisitors sit at the loud end; Engineers and the Bound at the quiet end.
+Inquisitors sit at the loud end; Engineers and the Bound at the quiet end. Do not make
+every Empire bark about holding a line; let a unit's weapon, rite, or duty lead instead.
 
 - An Empire unit never concedes that faith was insufficient. That is heresy in its own
   mouth. Faith is needed *elsewhere*, or needed *whole*.
@@ -178,8 +172,8 @@ journey intact. They remember being alive well enough for it to hurt.
 - **Knights, casters and higher tiers** (Grail Warden, Plague Knight, Grail Seraph,
   Grail Angel, all Menders) speak in **whole sentences**. The body failed; the mind
   did not.
-- **Grail Seraph and Grail Angel** have no voice of their own: they follow the general
-  tag rules — Risen voice, with `Holy` affecting only how *others* react to them.
+- **Grail Seraph and Grail Angel** have no voice of their own: their branch bark group
+  uses the Risen voice. Their sacred nature shapes how other branches address them.
 - They are **sorry**, not hungry. A Risen does not want your flesh; it wants to rest,
   and it cannot.
 - Their grief is physical: cold, weight, the ground, the smell, the slowness.
@@ -198,7 +192,7 @@ journey intact. They remember being alive well enough for it to hurt.
 2. **Artificer, Grand Machinist, Armsmaster** are people in machine harnesses — Workshops.
 3. **The Magi** are just another branch of the Empire — Empire voice.
 4. **The Pale Sisters** — confirmed as written.
-5. **Grail Seraph, Grail Angel** follow the general tag rules — Risen voice.
+5. **Grail Seraph, Grail Angel** use the Risen voice.
 
 6. **Adept (`gs3`)** has **its own bark set and its own voice** — not Envious, not a
    Mender. It is the tier-1 root of Blood Adept (vampire) and Necromancer / Plague
@@ -334,7 +328,7 @@ is replaced wholesale by the v2 file.
 
 Before a set is merged:
 
-- [ ] Every key parses and the validator passes.
+- [ ] Every event and group parses; localized pairs are complete.
 - [ ] Cover the key: can a reader guess the trigger from the line?
 - [ ] Swap test: would this line work unchanged in another branch's set? If yes, rewrite.
 - [ ] No banned words (§2), no exclamation marks outside litanies.

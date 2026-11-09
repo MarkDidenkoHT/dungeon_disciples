@@ -1,1092 +1,673 @@
-// Cosmetic combat barks - zero mechanical effect, purely flavor text shown as a
-// toast next to the unit that speaks. Nothing here is ever read by game logic.
+// Cosmetic combat barks. Selectors use exact unit IDs or explicit groups so
+// neighboring branches never inherit one another's voice by sharing tags.
+// Each group lists its complete membership; descendants are never inferred.
 //
-// A bark is a RULE: an event, optional actor and target selectors, and lines.
-// Prefer explicit unit groups/IDs; tags remain useful for broad fallback rules.
-// The engine keeps only the most specific matching rules and picks at random.
-// See BattleEngine.checkBark() in utils/battle-engine.js.
-//
-// Filters:
-//   name: 'Paladin'        matches unit_name exactly (all tiers share a name)
-//   tag:  'Demon'          matches if the unit carries that tag
-//   tags: ['Holy','Court'] matches if the unit carries ALL of them
-//   not:  'Skeleton' | []  excludes units carrying any of these tags
-//   id:   'e211'           matches one exact unit definition ID
-//   ids:  ['e211','e2111'] matches any listed unit definition ID
-//   group: 'templar'       matches IDs listed in BARK_UNIT_GROUPS.templar
-//   omit the filter entirely to match anything
-//
-// Specificity (higher wins, ties are pooled together): +300 exact ID, +100
-// group/name, +3 faction, +2 per tag, +0 per `not` (a gate only), on actor
-// and target. Explicit groups therefore beat broad tag rules.
-//
-// The ONLY tags any unit in data/units.js carries are:
-//   Archer, Beast, Caster, Construct, Court, Demon, Engineer, Holy, Knight,
-//   Skeleton, Spirit, Vampire, Warrior, Zombie
-// A filter naming anything else silently never matches - check units.js before
-// inventing one. There is no Choir or Ghost tag.
-//
-// TWO LINES PER RULE. Not three, not five. A bark is a shout across a battle
-// line, and a rule with five lines is four of them padding out the two that
-// were any good. Write the two, delete the rest.
-//
-// VOICE - three factions, three registers. Keep new lines inside them:
-//   Empire (Knight / Holy / Engineer / Construct / Archer / Caster / Spirit) -
-//     militant and stoic, persevering. Duty, discipline, the line holding.
-//     Understatement; never triumphant. Their god is MITHRAIL.
-//   Grail of Sorrow (Vampire / Zombie / Spirit / Skeleton / Holy / Knight /
-//     Caster) - mourning and melancholic. Grief carried rather than performed.
-//     Vampires are formal and tired, never flippant or arch. Their god is
-//     ASTALOTH, the Mother: she watches, keeps and mourns - she never takes.
-//     THEIR HISTORY: always their own faction, always Astaloth's, never the
-//     Empire's and never abandoned by anyone. They mistranslated a time spell
-//     they were building for the war, and it moved them through time - bodies
-//     rotted and collapsed on the way, and very little of them arrived. The
-//     grief is for what the spell cost them, THEIR OWN mistake. Never write
-//     them as forgotten, cast out, or waiting on the Empire's god.
-//   Choir of the Cursed (Demon / Court / Warrior / Knight / Caster /
-//     Construct / Beast) - born out of song and hungry with it. Voices,
-//     verses, the First Song, appetite. Their god is AGGRAIL, and they lapse
-//     into a tongue nobody else speaks, transliterated the same way in both
-//     languages.
-//
-// NO COMMERCE. Nothing in this file is a price, a debt, a share, a contract, a
-// loan or a payment - not for the Choir, not for anyone. The Choir is greedy
-// the way a mouth is greedy, not the way a bank is.
-// No quips, no exclamation-mark comedy, no modern idiom.
-//
-// Localization: each rule carries `lines` (English) and a parallel `lines_ru`
-// of the SAME length and order. The engine picks one index and logs both the
-// English and Russian line; the client shows the one for the viewer's language
-// (no English fallback). Keep lines and lines_ru index-aligned when editing.
-//
-// Events:
-//   on_hit       actor lands a damaging hit that does NOT kill
-//   on_kill      actor's hit kills the target
-//   on_death     the dying unit's own last words (target filter = the killer)
-//   on_buff      actor grants a real buff to an ally
-//   on_healed    actor restores an ally's HP
-// Older attack/kill/death/heal_low_hp rules remain supported while content is
-// gradually moved to explicit groups.
-//
-// Speak chance decays per unit, per trigger, per battle - see BARK_CHANCES.
-// Attack barks are the noisiest trigger, so they are tuned lower.
+// Rules use on_hit, on_kill, on_death, on_buff, on_healed, and
+// on_battle_start (the latter is used by the litany preview in battle prep).
+// Dialogue rules emit one bark per speaker, actor first and target second.
+// Keep English and Russian arrays aligned; paired dialogue stores each
+// speaker's localized text together.
 
 const BARK_CHANCES = {
-  on_hit:    [0.30, 0.12], // 1st bark 30%, 2nd 12%, then silent for the battle
+  on_hit:    [0.30, 0.12],
   on_kill:   [0.55, 0.30],
-  on_death:  [0.60, 0.00], // you only die once, but revives exist
+  on_death:  [0.60, 0.00],
   on_buff:   [0.35, 0.15],
   on_healed: [0.50, 0.25],
 };
 
-// Keep related branches together by definition ID, not overlapping tags.
-// Add IDs here when a branch changes; no implicit descendants are included.
 const BARK_UNIT_GROUPS = {
-  bound_sentinels: ['e3', 'e31', 'e311', 'e3111'],
+  // Empire: ordinary soldiers and specialists.
+  empire_infantry: ['e1', 'e11', 'e112', 'e113', 'e1121', 'e1131'],
+  empire_crossbows: ['e111', 'e1111'],
+  empire_cavalry: ['e12', 'e121', 'e1211'],
+  empire_standards: ['e13', 'e131', 'e1311'],
+  empire_templars: ['e21', 'e211', 'e2111', 'e212', 'e2121'],
+  empire_priests: ['e2', 'e22', 'e221', 'e2211'],
   empire_sisters: ['e8', 'e81', 'e811', 'e8111', 'e82', 'e821', 'e8211'],
-  templar_champions: ['e211', 'e2111'],
+  empire_bound_sentinels: ['e3', 'e31', 'e311', 'e3111'],
+  empire_bound_siege: ['e32', 'e321', 'e3211'],
+  empire_smiths: ['e6', 'e61', 'e611', 'e6111', 'e6112'],
+  empire_riflemen: ['e62', 'e621', 'e6211'],
+  empire_flamers: ['e622', 'e6221'],
+  empire_hallowed_dead: ['e7', 'e71', 'e711', 'e7111', 'e222', 'e2221'],
+  empire_red_magi: ['e4', 'e41', 'e411', 'e4111'],
+  empire_cinder_blades: ['e412', 'e4121'],
+  empire_frost_magi: ['e42', 'e421', 'e4211'],
+  empire_ward_magi: ['e43', 'e431', 'e4311', 'e432', 'e4321'],
+
+  // Grail of Sorrow: each family carries a distinct part of the spell's cost.
+  grail_risen: ['gs1', 'gs11'],
+  grail_plague_knights: ['gs111', 'gs1111'],
+  grail_ghouls: ['gs12', 'gs121', 'gs1211'],
+  grail_menders: ['gs13', 'gs131', 'gs1311', 'gs32', 'gs321', 'gs3211', 'gs33', 'gs331', 'gs3311'],
+  grail_blood_adepts: ['gs31'],
+  grail_blood_knights: ['gs311', 'gs3111'],
+  grail_blood_magi: ['gs312', 'gs3121'],
+  grail_adept: ['gs3'],
+  grail_communicants: ['gs2', 'gs21', 'gs211', 'gs2111', 'gs2112'],
+  grail_colossus: ['gs4'],
+  grail_seraphs: ['gs41', 'gs411', 'gs4111'],
+  grail_sorrow_vessels: ['gs42', 'gs421', 'gs4211'],
+  grail_acolytes: ['gs5', 'gs51', 'gs511', 'gs5111', 'gs52', 'gs521', 'gs5211'],
+  grail_ghosts: ['gs6', 'gs61', 'gs611', 'gs6111', 'gs62', 'gs621', 'gs6211'],
+  grail_pale_sisters: ['gs7', 'gs71', 'gs711', 'gs7111', 'gs72', 'gs721', 'gs7211', 'gs73', 'gs731', 'gs7311'],
+  grail_mothers: ['gs8', 'gs81', 'gs811', 'gs8111', 'gs82', 'gs821', 'gs8211', 'gs83', 'gs831', 'gs8311'],
+
+  // Choir of the Cursed: appetite, court, and the First Song's many forms.
+  choir_imps: ['d1', 'd11', 'd111', 'd1111', 'd1112'],
+  choir_choristers: ['d12', 'd121', 'd1211', 'd1212'],
+  choir_ash_priests: ['d2', 'd21', 'd211', 'd2111', 'd2112'],
+  choir_gargoyles: ['d3', 'd31', 'd311', 'd3111', 'd32', 'd321', 'd3211', 'd3212', 'd33', 'd331', 'd3311'],
+  choir_heretics: ['d4', 'd41', 'd411', 'd4111', 'd412', 'd4121'],
+  choir_court: ['d6', 'd61', 'd611', 'd6111', 'd62', 'd621', 'd6211', 'd6212'],
+  choir_fire: ['d7', 'd71', 'd711', 'd7111', 'd72', 'd721', 'd7211'],
+  choir_followers: ['d5', 'd51', 'd511', 'd5111'],
+  choir_cantors: ['d52', 'd521', 'd5211'],
+
+  // Hero branches used by the battle-prep litany toast.
+  empire_hero_infantry: ['h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112', 'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212'],
+  empire_hero_templar: ['h_e_2', 'h_e_2_a2', 'h_e_2_a3', 'h_e_2_a41', 'h_e_2_a42', 'h_e_2_b2', 'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42'],
+  empire_hero_bound: ['h_e_3', 'h_e_3_a2', 'h_e_3_a3', 'h_e_3_a41', 'h_e_3_a42', 'h_e_3_b2', 'h_e_3_b3', 'h_e_3_b41', 'h_e_3_b42'],
+  grail_hero_one: ['h_g_1', 'h_g_1_a2', 'h_g_1_a3', 'h_g_1_a41', 'h_g_1_a42', 'h_g_1_b2', 'h_g_1_b3', 'h_g_1_b41', 'h_g_1_b42'],
+  grail_hero_two: ['h_g_2', 'h_g_2_a2', 'h_g_2_a3', 'h_g_2_a41', 'h_g_2_a42', 'h_g_2_b2', 'h_g_2_b3', 'h_g_2_b41', 'h_g_2_b42'],
+  grail_hero_three: ['h_g_3', 'h_g_3_a2', 'h_g_3_a3', 'h_g_3_a41', 'h_g_3_a42', 'h_g_3_b2', 'h_g_3_b3', 'h_g_3_b41', 'h_g_3_b42'],
+  choir_hero_one: ['h_d_1', 'h_d_1_a2', 'h_d_1_a3', 'h_d_1_a41', 'h_d_1_a42', 'h_d_1_b2', 'h_d_1_b3', 'h_d_1_b41', 'h_d_1_b42'],
+  choir_hero_two: ['h_d_2', 'h_d_2_a2', 'h_d_2_a3', 'h_d_2_a41', 'h_d_2_a42', 'h_d_2_b2', 'h_d_2_b3', 'h_d_2_b41', 'h_d_2_b42'],
+  choir_hero_three: ['h_d_3', 'h_d_3_a2', 'h_d_3_a3', 'h_d_3_a41', 'h_d_3_a42', 'h_d_3_b2', 'h_d_3_b3', 'h_d_3_b41', 'h_d_3_b42'],
 };
 
-// Only considered for the heal_low_hp trigger: the ally must have been below
-// this % of max HP *before* the heal landed.
-const HEAL_BARK_THRESHOLD_PCT = 25;
-
 const COMBAT_BARKS = [
-  // ===========================================================================
-  // GRAIL OF SORROW - VAMPIRES
-  // NOT old blood. They are barely a decade dead - collateral of a time spell
-  // that went wrong - and they remember being alive well enough for it to hurt.
-  // They kill the way a physician works: precisely, and without appetite for it.
-  // ===========================================================================
+  // Empire: discipline without turning every voice into the same battle cry.
   {
-    trigger: 'attack', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Demon' },
-    lines: [
-      'There is nothing in you to mourn.',
-      'You chose to become this. We were not asked.',
-    ],
-    lines_ru: [
-      'В тебе не о чем горевать.',
-      'Ты сам таким стал. А нас не спрашивали.',
-    ],
+    trigger: 'on_hit', actor: { group: 'empire_infantry' },
+    lines: ['That shield came up late.', 'You gave ground. Keep it.'],
+    lines_ru: ['Щит поднят поздно.', 'Ты отступил. Так и стой.'],
   },
   {
-    trigger: 'attack', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Knight' },
-    lines: [
-      'Iron does not answer for the man inside it.',
-      'I have buried braver men. I remember each of them.',
-    ],
-    lines_ru: [
-      'Железо не отвечает за того, кто внутри.',
-      'Я хоронил и храбрее. Я помню каждого.',
-    ],
+    trigger: 'on_kill', actor: { group: 'empire_infantry' },
+    lines: ['He will trouble no one again.', 'Mark the place. We move on.'],
+    lines_ru: ['Он больше никому не повредит.', 'Запомни место. Идём дальше.'],
   },
   {
-    trigger: 'attack', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Holy' },
-    lines: [
-      'Keep your god. We have our own.',
-      'Astaloth mourns us. Yours would not bother.',
-    ],
-    lines_ru: [
-      'Оставь себе своего бога. У нас есть своя.',
-      'Асталот о нас скорбит. Твой бы и не стал.',
-    ],
+    trigger: 'on_death', actor: { group: 'empire_infantry' },
+    lines: ['Tell my mother I kept my word.', 'I can hear the chapel bells.'],
+    lines_ru: ['Скажи матери: я сдержал слово.', 'Я слышу колокола часовни.'],
   },
   {
-    trigger: 'attack', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Zombie' },
-    lines: [
-      'Rest. You have carried this long enough.',
-      'We were one house once. Astaloth remembers us both.',
-    ],
-    lines_ru: [
-      'Отдохни. Ты нёс это достаточно долго.',
-      'Когда-то мы были одним домом. Асталот помнит нас обоих.',
-    ],
+    trigger: 'on_hit', actor: { group: 'empire_crossbows' },
+    lines: ['You looked the wrong way.', 'The next bolt will find the gap.'],
+    lines_ru: ['Ты смотрел не туда.', 'Следующий болт найдёт брешь.'],
   },
   {
-    trigger: 'attack', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Construct' },
-    lines: [
-      'Nothing in you to grieve. It makes the work quicker.',
-      'No blood, no name, no rest to give you.',
-    ],
-    lines_ru: [
-      'В тебе не о чем горевать. Так даже быстрее.',
-      'Ни крови, ни имени. И покоя тебе не нужно.',
-    ],
+    trigger: 'on_kill', actor: { group: 'empire_crossbows' },
+    lines: ['The distance is settled.', 'One mark removed. Reload.'],
+    lines_ru: ['Дистанция больше не важна.', 'Цель снята. Перезаряжаю.'],
   },
   {
-    trigger: 'kill', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Holy' },
-    lines: [
-      'I will steal your life!',
-      'Say the rites yourselves. I no longer remember them.',
-    ],
-    lines_ru: [
-      'Я украду твою жизнь!',
-      'Прочтите обряд сами. Я его больше не помню.',
-    ],
+    trigger: 'on_hit', actor: { group: 'empire_cavalry' },
+    lines: ['The earth gave way beneath you.', 'Our horses have not slowed.'],
+    lines_ru: ['Земля ушла у тебя из-под ног.', 'Кони даже не замедлили шаг.'],
   },
   {
-    trigger: 'kill', actor: { tag: 'Vampire', faction: ['g', 'dm'] }, target: { tag: 'Demon' },
-    lines: [
-      'No burial for you!',
-      'Whatever made you is next!',
-    ],
-    lines_ru: [
-      'Даже хоронить нечего!',
-      'Кто бы тебя ни призвал — следующий!',
-    ],
+    trigger: 'on_kill', actor: { group: 'empire_cavalry' },
+    lines: ['The road is open again.', 'Leave the fallen. We ride.'],
+    lines_ru: ['Дорога снова свободна.', 'Оставь павших. Мы едем дальше.'],
   },
   {
-    trigger: 'kill', actor: { tag: 'Vampire', faction: ['g', 'dm'] },
-    lines: [
-      'Forgive me Astaloth, i must.',
-      'He is quiet now.',
-    ],
-    lines_ru: [
-      'Просмти меня Асталот, я должен.',
-      'Теперь он стих.',
-    ],
+    trigger: 'on_hit', actor: { group: 'empire_standards' },
+    lines: ['Look up. You know where to gather.', 'The colors are still visible.'],
+    lines_ru: ['Смотри выше. Ты знаешь, куда идти.', 'Знамёна всё ещё видны.'],
   },
   {
-    trigger: 'death', actor: { tag: 'Vampire', faction: ['g', 'dm'] },
-    lines: [
-      'At last. Carry me home.',
-      'Bury me properly this time. Please.',
-    ],
-    lines_ru: [
-      'Наконец-то. Отнесите меня домой.',
-      'В этот раз похороните как надо. Прошу.',
-    ],
+    trigger: 'on_death', actor: { group: 'empire_standards' },
+    lines: ['Do not let them take the colors.', 'Keep the banner from the mud.'],
+    lines_ru: ['Не дай им захватить знамёна.', 'Не дай знамени упасть в грязь.'],
   },
-
-  // ===========================================================================
-  // GRAIL OF SORROW - THE RISEN (Zombie)
-  // Slow, patient, sorry. They remember being people, and it does not help.
-  // ===========================================================================
   {
-    trigger: 'attack', actor: { tag: 'Zombie', faction: ['g', 'dm'] }, target: { tag: 'Holy' },
-    lines: [
-      'Buried... us... here...',
-      'Prayers... did not... hold...',
-    ],
-    lines_ru: [
-      'Зарыли... нас... тут...',
-      'Молитвы... не... держат...',
-    ],
+    trigger: 'on_hit', actor: { group: 'empire_templars' },
+    lines: ['The unclean have no claim here.', 'Mithrail sees what you are.'],
+    lines_ru: ['Нечисти здесь не место.', 'Митраил видит, кто ты.'],
   },
   {
-    trigger: 'attack', actor: { tag: 'Zombie', faction: ['g', 'dm'] },
-    lines: [
-      'Never... tired...',
-      'Move... aside...',
-    ],
-    lines_ru: [
-      'Не... устаём...',
-      'Уйди... с дороги...',
-    ],
+    trigger: 'on_kill', actor: { group: 'empire_templars' },
+    lines: ['Judgment needs no witness.', 'Let the ash speak for us.'],
+    lines_ru: ['Приговору не нужны свидетели.', 'Пусть пепел скажет за нас.'],
   },
   {
-    trigger: 'kill', actor: { tag: 'Zombie', faction: ['g', 'dm'] },
-    lines: [
-      'Down... stay... down...',
-      'Ground... takes... him...',
-    ],
-    lines_ru: [
-      'Лежи... лежи...',
-      'Земля... заберёт...',
-    ],
+    trigger: 'on_hit', actor: { group: 'empire_templars' }, target: { group: 'grail_risen' },
+    lines: ['The grave called. You refused its peace.', 'Your borrowed time ends here.'],
+    lines_ru: ['Могила звала. Ты отверг покой.', 'Твоё чужое время кончается здесь.'],
   },
   {
-    trigger: 'death', actor: { tag: 'Zombie', faction: ['g', 'dm'] },
-    lines: [
-      'Let... me... rest...',
-      'Mother... no... more...',
-    ],
-    lines_ru: [
-      'Дайте... от...дохнуть...',
-      'Мать... больше... не надо...',
-    ],
+    trigger: 'on_kill', actor: { group: 'empire_templars' }, target: { group: 'grail_risen' },
+    lines: ['The grave has claimed what is its own.', 'No more blasphemy in this place.'],
+    lines_ru: ['Могила забрала то, что ей принадлежит.', 'Здесь больше нет кощунства.'],
   },
-
-  // ===========================================================================
-  // GRAIL OF SORROW - THE BONE ORDER (Skeleton)
-  // What is left once the grief has worn even the flesh off. Dry and formal.
-  // ===========================================================================
   {
-    trigger: 'attack', actor: { tag: 'Skeleton', faction: ['g', 'dm'] },
-    lines: [
-      'The oath is all that is left.',
-      'Nothing left in me to break.',
-    ],
-    lines_ru: [
-      'От меня осталась одна клятва.',
-      'Ломать во мне уже нечего.',
-    ],
+    trigger: 'on_death', actor: { group: 'empire_templars' },
+    lines: ['The oath is not buried with me.', 'His light. My last breath.'],
+    lines_ru: ['Клятву не похоронят со мной.', 'Его свет. Мой последний вздох.'],
   },
   {
-    trigger: 'kill', actor: { tag: 'Skeleton', faction: ['g', 'dm'] },
-    lines: [
-      'Now he waits with us.',
-      'He will learn patience.',
-    ],
-    lines_ru: [
-      'Теперь он ждёт вместе с нами.',
-      'Научится терпению.',
-    ],
-  },
-
-  // ===========================================================================
-  // GRAIL OF SORROW - THE MOURNING DEAD (Spirit without Holy)
-  // Empire spirits are Spirit+Holy and speak in the Empire section below; these
-  // are the Grail's ghosts - unfinished, quiet, sorry to be here at all.
-  // ===========================================================================
-  {
-    trigger: 'attack', actor: { tag: 'Spirit', faction: ['g', 'dm'], not: ['Holy'] },
-    lines: [
-      'I do not want this. I cannot stop either.',
-      'I barely remember my name. I will not learn yours.',
-    ],
-    lines_ru: [
-      'Я этого не хочу. И остановиться не могу.',
-      'Я едва помню своё имя. Твоего и не запомню.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Spirit', faction: ['g', 'dm'], not: ['Holy'] }, target: { tag: 'Holy' },
-    lines: [
-      'Your light passes through me. Everything does.',
-      'I was consecrated too. Look at me now.',
-    ],
-    lines_ru: [
-      'Твой свет проходит сквозь меня. Как и всё остальное.',
-      'Меня тоже освящали. Погляди на меня теперь.',
-    ],
-  },
-  {
-    trigger: 'death', actor: { tag: 'Spirit', faction: ['g', 'dm'], not: ['Holy'] },
-    lines: [
-      'Oh. It was this simple all along.',
-      'Let me go quiet this time.',
-    ],
-    lines_ru: [
-      'Надо же. А всё было так просто.',
-      'Дайте мне уйти тихо на этот раз.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tags: ['Knight', 'Zombie'] },
-    lines: [
-      'The oath outlived the man. Only the oath is still standing.',
-      'My lord released me. I did not go.',
-    ],
-    lines_ru: [
-      'Человек умер, клятва — нет. Она и держит строй.',
-      'Господин освободил меня. Я не ушёл.',
-    ],
-  },
-
-  // ===========================================================================
-  // EMPIRE - THE FAITHFUL (Holy)
-  // Militant, stoic, unhurried. Nothing here is triumphant; it is work.
-  // ===========================================================================
-  {
-    trigger: 'attack', actor: { tag: 'Holy', faction: ['e'] }, target: { tag: 'Demon' },
-    lines: [
-      'Burn in holy fire!',
-      'Back where you came from!',
-    ],
-    lines_ru: [
-      'Гори праведным огнем!',
-      'Убирайся откуда пришёл!',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Vampire' },
-    lines: [
-      'Your grief is not our concern, your teeth are!',
-      'Sorrow is no defence. Step back or fall!',
-    ],
-    lines_ru: [
-      'Наша забота не твоя скорбь, а твои клыки!',
-      'Скорбь — не оправдание. Отступи или пади!',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Skeleton' },
-    lines: [
-      'Oathbreaker!',
-      'Rest. That is an order.',
-    ],
-    lines_ru: [
-      'Клятвопреступник!',
-      'Покойся. Это приказ.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Zombie' },
-    lines: [
-      'Mockery of life!',
-      'Burn it. Burn all of it!',
-    ],
-    lines_ru: [
-      'Жалкое подобие жизни!',
-      'Сжечь. Сжечь до тла!',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Spirit' },
-    lines: [
-      'Whatever holds you here I will burn!',
-      'The war is over for you.',
-    ],
-    lines_ru: [
-      'Что бы тебя тут ни держало я это испепелю!',
-      'Для тебя война окончена.',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Demon' },
-    lines: [
-      'One more sent back!',
-      'It ends as it began - uninvited.',
-    ],
-    lines_ru: [
-      'Еще один отправлен назад!',
-      'Пришёл незваным — таким и уйдешь!',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { tag: 'Holy', faction: ['e', 'opb'] }, target: { tag: 'Skeleton' },
-    lines: [
-      'Rest, your watch is relieved.',
-      'Buried.',
-    ],
-    lines_ru: [
-      'Покойся, твой караул снят.',
-      'Погребён.',
-    ],
-  },
-  {
-    trigger: 'death', actor: { tag: 'Holy', faction: ['e', 'opb'] },
-    lines: [
-      'Hold the line!',
-      'Tell them the line held...',
-    ],
-    lines_ru: [
-      'Держите строй!',
-      'Скажите им: строй устоял...',
-    ],
-  },
-
-  // Empire-only, so MITHRAIL is never put in the mouth of the Aggrail cult that
-  // shares the Holy tag ('opb'). Same score as the shared rules above, so for an
-  // Empire unit these simply pool together and the god turns up some of the time
-  // rather than every line.
-  {
-    trigger: 'attack', actor: { tag: 'Holy', faction: 'e' },
-    lines: [
-      'Mithrail guide my hand!',
-      'By his light, and by my hand.',
-    ],
-    lines_ru: [
-      'Митраил направь мою руку!',
-      'Его светом и моей рукой.',
-    ],
-  },
-  {
-    trigger: 'death', actor: { tag: 'Holy', faction: 'e' },
-    lines: [
-      'My light fades...',
-      'Avenge me...',
-    ],
-    lines_ru: [
-      'Мой свет угас...',
-      'Отомстите...',
-    ],
-  },
-
-  // ===========================================================================
-  // GRAIL OF SORROW - THE FAITHFUL (Holy)
-  // The same office as the Empire's priesthood and none of its certainty. They
-  // tend Astaloth's children knowing they ARE her children. The Mother grieves
-  // for what was done TO them, so she watches and keeps - never takes.
-  // ===========================================================================
-  {
-    trigger: 'attack', actor: { tag: 'Holy', faction: 'g' }, target: { tag: 'Holy' },
-    lines: [
-      'A spell did this to us, not your god.',
-      'Astaloth grieves for us. Who grieves for you?',
-    ],
-    lines_ru: [
-      'Это сделало заклинание, а не ваш бог.',
-      'Асталот о нас скорбит. Кто скорбит по тебе?',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Holy', faction: 'g' },
-    lines: [
-      'Mother sees this. She does not look away.',
-      'Forgive me. I was taught to mend, not to do this.',
-    ],
-    lines_ru: [
-      'Мать это видит. Она не отводит глаз.',
-      'Простите меня. Меня учили исцелять, а не этому.',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { tag: 'Holy', faction: 'g' },
-    lines: [
-      'Rest. That is more than we were given.',
-      'Astaloth keeps him now. She keeps everyone.',
-    ],
-    lines_ru: [
-      'Покойся. Нам и того не досталось.',
-      'Теперь его хранит Асталот. Она хранит всех.',
-    ],
-  },
-  {
-    trigger: 'death', actor: { tag: 'Holy', faction: 'g' },
-    lines: [
-      'Mother... I am coming...',
-      'Do not mourn...',
-    ],
-    lines_ru: [
-      'Мать... я возвращаюсь...',
-      'Не скорбите...',
-    ],
-  },
-  {
-    trigger: 'heal_low_hp', actor: { tag: 'Holy', faction: 'g' },
-    lines: [
-      'Stay. I have lost enough of us.',
-      'Astaloth is not finished with you.',
-    ],
-    lines_ru: [
-      'Останься. Я потерял слишком многих.',
-      'Асталот с тобой ещё не закончила.',
-    ],
-  },
-
-  // ===========================================================================
-  // EMPIRE - THE ORDERS (Knight)
-  // The `not` gate keeps Grail and Choir knights out of the Empire's voice.
-  // ===========================================================================
-  {
-    trigger: 'attack', actor: { tag: 'Knight', faction: 'e', not: ['Skeleton', 'Zombie', 'Demon', 'Vampire'] },
-    lines: [
-      'Burn!',
-      'The line is where I am standing.',
-    ],
-    lines_ru: [
-      'Гори!',
-      'Строй — там, где стою я.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Knight', faction: 'e', not: ['Skeleton', 'Zombie', 'Demon', 'Vampire'] }, target: { tag: 'Demon' },
-    lines: [
-      'Shields up!',
-      'You are not the first thing to come out of that hole.',
-    ],
-    lines_ru: [
-      'Щиты выше!',
-      'Ты не первое, что вылезло из той дыры.',
-    ],
-  },
-  {
-    trigger: 'death', actor: { tag: 'Knight', faction: 'e', not: ['Skeleton', 'Zombie'] },
-    lines: [
-      'Do not carry me. Carry the line.',
-      'Finish it. I will wait here.',
-    ],
-    lines_ru: [
-      'Не несите меня. Несите строй.',
-      'Заканчивайте. Я подожду здесь.',
-    ],
-  },
-
-  // ===========================================================================
-  // EMPIRE - THE HALLOWED DEAD (Spirit + Holy: Mithrails, Blessed Soul)
-  // Empire soldiers who kept serving after death. Same discipline, less voice.
-  // ===========================================================================
-  {
-    trigger: 'attack', actor: { tags: ['Spirit', 'Holy'] },
-    lines: [
-      'I was relieved of my body, not of my oath.',
-      'Aurex stands!',
-    ],
-    lines_ru: [
-      'Меня освободили от тела а не от клятвы.',
-      'Аурекс выстоит!',
-    ],
-  },
-  {
-    trigger: 'death', actor: { tags: ['Spirit', 'Holy'] },
-    lines: [
-      'Second time. Still facing the right way.',
-      'Strike my name properly this time.',
-    ],
-    lines_ru: [
-      'Второй раз. И снова лицом к врагу.',
-      'На этот раз вычеркните имя как следует.',
-    ],
-  },
-
-  // ===========================================================================
-  // EMPIRE - THE WORKSHOPS (Engineer)
-  // Tradesmen at war. Dry, procedural, quietly proud of the equipment.
-  // ===========================================================================
-  {
-    trigger: 'attack', actor: { tag: 'Engineer', faction: 'e' },
-    lines: [
-      'Ranged, sighted, done. Next.',
-      'It is not brave. It is accurate.',
-    ],
-    lines_ru: [
-      'Дистанция, прицел, готово. Следующий.',
-      'Это не храбро. Это точно.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Engineer', faction: 'e' }, target: { tag: 'Construct' },
-    lines: [
-      'Poor work. Whoever built you cut the joints.',
-      'Every machine has a seam. There it is.',
-    ],
-    lines_ru: [
-      'Скверная работа. На сочленениях сэкономили.',
-      'У всякой машины есть шов. Вот он.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Engineer', faction: 'e' }, target: { tag: 'Demon' },
-    lines: [
-      'You are not unnatural. You are poorly contained.',
-      'Fire I understand. Stand still.',
-    ],
-    lines_ru: [
-      'Ты не исчадие. Ты просто плохо изолирован.',
-      'Огонь я понимаю. Стой смирно.',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { tag: 'Engineer', faction: 'e' },
-    lines: [
-      'Down. Log it.',
-      'The instrument performed as intended.',
-    ],
-    lines_ru: [
-      'Готов. Занесите в журнал.',
-      'Изделие сработало как задумано.',
-    ],
-  },
-  {
-    trigger: 'death', actor: { tag: 'Engineer', faction: 'e' },
-    lines: [
-      'Do not let them take the gun.',
-      'Tell the shop it was not the mechanism.',
-    ],
-    lines_ru: [
-      'Не отдавайте им орудие.',
-      'Передайте в мастерскую: дело было не в механизме.',
-    ],
-  },
-
-  // ===========================================================================
-  // EMPIRE - THE ENGINES (Construct without Demon)
-  // Imperial machines. Flat and procedural; they claim no personality.
-  // ===========================================================================
-  {
-    trigger: 'attack', actor: { tag: 'Construct', faction: ['e', 'mv'], not: ['Demon'] },
-    lines: [
-      'Target acknowledged. Proceeding.',
-      'No fatigue. No fear. Continue.',
-    ],
-    lines_ru: [
-      'Цель принята. Выполняю.',
-      'Усталости нет. Страха нет. Продолжаю.',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { tag: 'Construct', faction: ['e', 'mv'], not: ['Demon'] },
-    lines: [
-      'Target ended. Awaiting next.',
-      'One removed from the count.',
-    ],
-    lines_ru: [
-      'Цель уничтожена. Жду следующую.',
-      'Одним в списке меньше.',
-    ],
-  },
-  {
-    trigger: 'death', actor: { tag: 'Construct', faction: ['e', 'mv'], not: ['Demon'] },
-    lines: [
-      'Frame failing. Salvage the core.',
-      'This unit is spent. Others remain.',
-    ],
-    lines_ru: [
-      'Каркас отказывает. Снимите сердечник.',
-      'Механизм выработан. Остальные — на ходу.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Archer', faction: 'e' },
-    lines: [
-      'Ranged and marked.',
-      'The wind is steady. So am I.',
-    ],
-    lines_ru: [
-      'Дистанция взята, цель отмечена.',
-      'Ветер ровный. Я тоже.',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { tag: 'Archer', faction: 'e' },
-    lines: [
-      'Down at range. Next mark.',
-      'One shaft, one man. As trained.',
-    ],
-    lines_ru: [
-      'Снят на дистанции. Следующая цель.',
-      'Одна стрела, один человек. Как учили.',
-    ],
-  },
-
-  // ===========================================================================
-  // CHOIR OF THE CURSED - DEMONS
-  // Sung into being and hungry ever since. Voices, verses, appetite - AGGRAIL.
-  // ===========================================================================
-  {
-    trigger: 'attack', actor: { tag: 'Demon', faction: 'd' }, target: { tag: 'Holy' },
-    lines: [
-      'Your god has no voice. Aggrail answers every time.',
-      'Pray louder. It only sweetens the note.',
-    ],
-    lines_ru: [
-      'У твоего бога нет голоса. Агграил отвечает всегда.',
-      'Молись громче. От этого нота только слаще.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Demon', faction: 'd' }, target: { tag: 'Knight' },
-    lines: [
-      'All that iron, and I can still hear you breathing.',
-      'Kneel. The First Song carries better from down there.',
-    ],
-    lines_ru: [
-      'Столько железа, а дыхание всё равно слышно.',
-      'На колени. Оттуда Первая Песнь слышнее.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Demon', faction: 'd' }, target: { tag: 'Vampire' },
-    lines: [
-      'All that grief and not one note in it.',
-      'Your mourning is a dull sound. I will end it.',
-    ],
-    lines_ru: [
-      'Столько горя — и ни одной ноты в нём.',
-      'Твоя скорбь звучит глухо. Я её оборву.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Demon', faction: 'd' }, target: { tag: 'Caster' },
-    lines: [
-      'You learned your words. Mine were sung into me.',
-      'Say it again. I want to hear the voice break.',
-    ],
-    lines_ru: [
-      'Ты свои слова выучил. Мои — в меня впеты.',
-      'Повтори. Хочу услышать, как сорвётся голос.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Demon', faction: 'd' }, target: { tag: 'Construct' },
-    lines: [
-      'No voice in it. Nothing worth swallowing.',
-      'Iron does not scream properly. Disappointing.',
-    ],
-    lines_ru: [
-      'Голоса нет. И глотать нечего.',
-      'Железо кричит скверно. Досадно.',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { tag: 'Demon', faction: 'd' }, target: { tag: 'Holy' },
-    lines: [
-      'His god never answered. Mine is still singing.',
-      'Silenced. Aggrail heard that one.',
-    ],
-    lines_ru: [
-      'Его бог так и не ответил. Мой всё ещё поёт.',
-      'Умолк. Этого Агграил услышал.',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { tag: 'Demon', faction: 'd' },
-    lines: [
-      'Aggraa am neee. One more voice in the chord.',
-      'He went quiet beautifully.',
-    ],
-    lines_ru: [
-      'Агграа ам нэээ. Ещё один голос в аккорде.',
-      'Он умолк красиво.',
-    ],
-  },
-  {
-    trigger: 'death', actor: { tag: 'Demon', faction: 'd' },
-    lines: [
-      'Aggrail... sing me back... sing me back!',
-      'This is not how the verse went!',
-    ],
-    lines_ru: [
-      'Агграил... верни меня в песнь... верни!',
-      'В песне было не так!',
-    ],
-  },
-
-  // ===========================================================================
-  // CHOIR OF THE CURSED - THE COURT
-  // The ones who hold the old verses, and expect to be sung to properly.
-  // ===========================================================================
-  {
-    trigger: 'attack', actor: { tag: 'Court', faction: 'd' },
-    lines: [
-      'You are standing where the Court sings. Move, or be sung over.',
-      'Address me properly. The First Song remembers manners.',
-    ],
-    lines_ru: [
-      'Ты стоишь там, где поёт Двор. Уйди, или тебя впишут в песнь.',
-      'Обращайся ко мне как должно. Первая Песнь помнит учтивость.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Court', faction: 'd' }, target: { tag: 'Holy' },
-    lines: [
-      'Your choir chants. Ours devours.',
-      'I have heard your hymns. Thin things.',
-    ],
-    lines_ru: [
-      'Ваш хор поёт. Наш — пожирает.',
-      'Я слышал ваши гимны. Пустые.',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { tag: 'Court', faction: 'd' },
-    lines: [
-      'Added to the chord. He sings for Aggrail now.',
-      'A voice taken. The Court is louder for it.',
-    ],
-    lines_ru: [
-      'Добавлен в аккорд. Теперь он поёт Агграилу.',
-      'Голосом больше. Двор звучит громче.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tags: ['Construct', 'Demon'] },
-    lines: [
-      'I was carved to guard this threshold. You are not part of it.',
-      'Off the stone. It is not yours to stand on.',
-    ],
-    lines_ru: [
-      'Меня высекли стеречь этот порог. Тебя здесь быть не должно.',
-      'Прочь с камня. Не тебе на нём стоять.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { tag: 'Warrior', faction: 'd' },
-    lines: [
-      'I hunt. You simply happened to be here.',
-      'Do not run. It is worse when they run.',
-    ],
-    lines_ru: [
-      'Я охочусь. Ты просто подвернулся.',
-      'Не беги. Тем, кто бежит, хуже.',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { tag: 'Warrior', faction: 'd' },
-    lines: [
-      'Still warm. Good.',
-      'Aggraa am neee. That one was mine.',
-    ],
-    lines_ru: [
-      'Ещё тёплый. Хорошо.',
-      'Агграа ам нэээ. Этот был мой.',
-    ],
-  },
-
-  // ===========================================================================
-  // NAMED UNITS - always outrank any tag rule above.
-  // ===========================================================================
-  {
-    trigger: 'attack', actor: { name: 'Paladin' }, target: { tag: 'Demon' },
-    lines: [
-      'I have held this ground before. I will hold it again.',
-      'You will not pass the shield.',
-    ],
-    lines_ru: [
-      'Я держал эту землю прежде. Удержу и теперь.',
-      'Через щит ты не пройдёшь.',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { name: 'Paladin' }, target: { tag: 'Demon' },
-    lines: [
-      'Closed. Reform on me.',
-      'It is done. Do not stand and look at it.',
-    ],
-    lines_ru: [
-      'Закрыто. Строиться на меня.',
-      'Кончено. Не стойте и не смотрите.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { name: 'Inquisitor' },
-    lines: [
-      'I asked once. That was the courtesy.',
-      'I take no pleasure in this. I take responsibility for it.',
-    ],
-    lines_ru: [
-      'Я спросил один раз. Это и была любезность.',
-      'Мне это не в радость. Но отвечаю за это я.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { name: 'Blood Knight' }, target: { tag: 'Holy' },
-    lines: [
-      'I wore that colour once. It kept no one alive.',
-      'Do not preach. I know the words better than you do.',
-    ],
-    lines_ru: [
-      'Я тоже носил этот цвет. Он никого не уберёг.',
-      'Не проповедуй. Я знаю эти слова лучше тебя.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { name: 'Necromancer' },
-    lines: [
-      'I did not raise them for war. War is simply what was left.',
-      'The spell left them like this. I keep them.',
-    ],
-    lines_ru: [
-      'Я поднял их не для войны. Просто ничего другого не осталось.',
-      'Такими их оставило заклинание. Я их храню.',
-    ],
-  },
-  {
-    trigger: 'kill', actor: { name: 'Necromancer' },
-    lines: [
-      'Do not bury him. He will be needed by morning.',
-      'Another name for the roll. I keep all of them.',
-    ],
-    lines_ru: [
-      'Не хороните его. К утру он понадобится.',
-      'Ещё одно имя в перекличку. Я храню их все.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { name: 'Malgrath the Undying' },
-    lines: [
-      'I have outlasted your gods, your kings, and their heirs.',
-      'Continue. I am curious how you imagine this ends.',
-    ],
-    lines_ru: [
-      'Я пережил ваших богов, ваших королей и их наследников.',
-      'Продолжай. Любопытно, чем ты думаешь это кончить.',
-    ],
-  },
-  {
-    trigger: 'attack', actor: { name: 'Imp' },
-    lines: [
-      'Small teeth. Many bites.',
-      'Do not look up. I am not up there.',
-    ],
-    lines_ru: [
-      'Зубы мелкие. Укусов много.',
-      'Не смотри вверх. Меня там нет.',
-    ],
-  },
-  {
-    trigger: 'death', actor: { name: 'Imp' },
-    lines: [
-      'Aggrail... I was so close...',
-      'That is not how it goes! Not like this!',
-    ],
-    lines_ru: [
-      'Агграил... я был так близко...',
-      'Нечестно! Так нечестно!',
-    ],
-  },
-
-  // ===========================================================================
-  // HEALING - spoken over an ally who was nearly gone.
-  // ===========================================================================
-  {
-    trigger: 'heal_low_hp', actor: { name: 'Acolyte' },
-    lines: [
-      'Stay. I have you.',
-      'Breathe. Slowly. Again.',
-    ],
-    lines_ru: [
-      'Держись. Я рядом.',
-      'Дыши. Медленно. Ещё раз.',
-    ],
-  },
-  {
-    trigger: 'heal_low_hp', actor: { name: 'Priest' },
-    lines: [
-      'You are not finished. Stand.',
-      'The wound is closed. The duty is not.',
-    ],
-    lines_ru: [
-      'Ты ещё не закончил. Встань.',
-      'Рана закрыта. Долг — нет.',
-    ],
-  },
-  {
-    trigger: 'heal_low_hp', actor: { tag: 'Holy', faction: ['e', 'opb'] },
-    lines: [
-      'Hold on. That is an order.',
-      'We do not leave men on the ground.',
-    ],
-    lines_ru: [
-      'Держись. Это приказ.',
-      'Мы не оставляем своих на земле.',
-    ],
-  },
-  {
-    trigger: 'heal_low_hp', actor: { tag: 'Vampire', faction: ['g', 'dm'] },
-    lines: [
-      'Not you. Not while I can prevent it.',
-      'Stay a while longer. Please.',
-    ],
-    lines_ru: [
-      'Только не ты. Не при мне.',
-      'Побудь ещё немного. Прошу.',
-    ],
-  },
-  {
-    trigger: 'heal_low_hp', actor: { tag: 'Demon', faction: 'd' },
-    lines: [
-      'Get up. Your part in the song is not finished.',
-      'Aggrail is not done with you. Stand.',
-    ],
-    lines_ru: [
-      'Вставай. Твоя партия ещё не допета.',
-      'Агграил с тобой ещё не закончил. Встань.',
-    ],
-  },
-  {
-    trigger: 'heal_low_hp', actor: { tag: 'Engineer', faction: 'e' },
-    lines: [
-      'Patched. It will hold if you do not run.',
-      'Good enough for the field. See a surgeon after.',
-    ],
-    lines_ru: [
-      'Заштопано. Продержится, если не побежишь.',
-      'Для поля сойдёт. Потом — к лекарю.',
-    ],
-  },
-  {
-    trigger: 'heal_low_hp', actor: { tag: 'Zombie', faction: ['g', 'dm'] },
-    lines: [
-      'Not... yet... stay...',
-      'Road... can... wait...',
-    ],
-    lines_ru: [
-      'Ещё... не... время...',
-      'Дорога... подождёт...',
-    ],
-  },
-  {
-    trigger: 'on_buff',
-    actor: { group: 'empire_sisters' },
-    target: { group: 'templar_champions' },
+    trigger: 'on_buff', actor: { group: 'empire_sisters' }, target: { group: 'empire_templars' },
     dialogue: [
       {
-        actor: { text: 'What is your duty!', text_ru: 'Каков твой долг!' },
-        target: { text: 'To serve Mithrail’s will!', text_ru: 'Служить воле Митраила!' },
+        actor: { text: 'What is your duty?', text_ru: 'В чём твой долг?' },
+        target: { text: 'To serve Mithrail’s will.', text_ru: 'Служить воле Митраила.' },
       },
     ],
   },
   {
-    trigger: 'on_hit',
-    actor: { group: 'bound_sentinels' },
-    lines: ['The line holds. Advance.', 'I know this weight. I chose it.'],
-    lines_ru: ['Строй держится. Вперёд.', 'Я знаю эту тяжесть. Я сам её выбрал.'],
+    trigger: 'on_hit', actor: { group: 'empire_sisters' },
+    lines: ['Your prayer was heard. Answer it.', 'Courage is not the absence of fear.'],
+    lines_ru: ['Твоя молитва услышана. Ответь на неё.', 'Отвага не в том, чтобы не бояться.'],
   },
   {
-    trigger: 'on_kill',
-    actor: { group: 'bound_sentinels' },
-    lines: ['One less threat to the living.', 'The ranks may pass in safety.'],
-    lines_ru: ['Живым угрожает на одного врага меньше.', 'Теперь строй пройдёт безопасно.'],
+    trigger: 'on_healed', actor: { group: 'empire_sisters' }, target: { group: 'empire_templars' },
+    dialogue: [
+      {
+        actor: { text: 'Your hand is steady again.', text_ru: 'Твоя рука снова тверда.' },
+        target: { text: 'Then I have no excuse.', text_ru: 'Значит, мне не на что жаловаться.' },
+      },
+    ],
   },
   {
-    trigger: 'on_death',
-    actor: { group: 'bound_sentinels' },
-    lines: ['The oath... still holds.', 'I return the vessel. Keep the line.'],
-    lines_ru: ['Клятва... всё ещё крепка.', 'Возвращаю тело. Держите строй.'],
+    trigger: 'on_healed', actor: { group: 'empire_priests' },
+    lines: ['Breathe. The next prayer can wait.', 'There. Your hands are yours again.'],
+    lines_ru: ['Дыши. Следующая молитва подождёт.', 'Вот. Руки снова слушаются.'],
   },
   {
-    trigger: 'on_healed',
-    actor: { group: 'empire_sisters' },
-    lines: ['Back to the line.', 'There is still work to do.'],
-    lines_ru: ['Возвращайся в строй.', 'Работа ещё не окончена.'],
+    trigger: 'on_death', actor: { group: 'empire_priests' },
+    lines: ['I have said the words. Let them stand.', 'Mithrail, receive this servant.'],
+    lines_ru: ['Я произнёс слова. Пусть они останутся.', 'Митраил, прими слугу Твоего.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'empire_bound_sentinels' },
+    lines: ['I remember this weight. It is welcome.', 'Stone and iron. Still, I feel the blow.'],
+    lines_ru: ['Я помню эту тяжесть. Она мне знакома.', 'Камень и железо. И всё же удар чувствую.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'empire_bound_sentinels' },
+    lines: ['The living may pass in peace.', 'This place is guarded.'],
+    lines_ru: ['Живые могут пройти спокойно.', 'Это место под охраной.'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'empire_bound_sentinels' },
+    lines: ['The vessel falls. The oath remains.', 'I have stood watch long enough.'],
+    lines_ru: ['Тело падёт. Клятва останется.', 'Я достаточно долго нёс дозор.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'empire_bound_siege' },
+    lines: ['The ground answers the shot.', 'I was built to outlast the wall.'],
+    lines_ru: ['Земля отозвалась на выстрел.', 'Мне суждено пережить эту стену.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'empire_bound_siege' },
+    lines: ['The breach is wide enough.', 'The road lies open. Take it.'],
+    lines_ru: ['Проход уже достаточно широк.', 'Дорога открыта. Вперёд.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'empire_smiths' },
+    lines: ['That joint will need work.', 'A good edge asks no questions.'],
+    lines_ru: ['Этот шарнир придётся чинить.', 'Хорошему клинку не нужны вопросы.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'empire_smiths' },
+    lines: ['The tool held. So did I.', 'One less repair before dusk.'],
+    lines_ru: ['Оружие выдержало. И я тоже.', 'До сумерек на одну починку меньше.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'empire_riflemen' },
+    lines: ['The sight picture was clean.', 'Keep your head where I can see it.'],
+    lines_ru: ['Прицел был чист.', 'Не прячься от моего взгляда.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'empire_riflemen' },
+    lines: ['That is one less shot to spend.', 'The report will be brief.'],
+    lines_ru: ['Одним выстрелом меньше.', 'Доклад будет коротким.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'empire_flamers' },
+    lines: ['The fire has found its work.', 'Step clear before it spreads.'],
+    lines_ru: ['Огонь нашёл себе дело.', 'Отойди, пока пламя не разошлось.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'empire_flamers' },
+    lines: ['Nothing left to burn here.', 'The smoke will mark the place.'],
+    lines_ru: ['Здесь больше нечего жечь.', 'Дым укажет это место.'],
+  },
+  {
+    trigger: 'on_buff', actor: { group: 'empire_hallowed_dead' },
+    lines: ['Take the strength I no longer need.', 'A borrowed moment. Spend it well.'],
+    lines_ru: ['Возьми силу, которой мне уже не нужно.', 'Мгновение взаймы. Не растрать его.'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'empire_hallowed_dead' },
+    lines: ['The watch passes to another.', 'At last, I may lay down the light.'],
+    lines_ru: ['Дозор принимает другой.', 'Наконец я могу сложить этот свет.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'empire_red_magi' },
+    lines: ['Ash is what the flame leaves behind.', 'The heat has already chosen you.'],
+    lines_ru: ['Пепел — всё, что оставляет пламя.', 'Жар уже выбрал тебя.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'empire_red_magi' },
+    lines: ['The cinders will cool in time.', 'The lesson is written in ash.'],
+    lines_ru: ['Угли со временем остынут.', 'Урок записан пеплом.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'empire_cinder_blades' },
+    lines: ['The blade keeps its own counsel.', 'You cannot hide behind smoke.'],
+    lines_ru: ['Клинок хранит свои мысли.', 'За дымом не укрыться.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'empire_frost_magi' },
+    lines: ['The cold makes no distinction.', 'Your next breath will be harder.'],
+    lines_ru: ['Холоду всё равно, кто перед ним.', 'Следующий вдох дастся труднее.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'empire_frost_magi' },
+    lines: ['The frost keeps what it takes.', 'Let winter finish the silence.'],
+    lines_ru: ['Мороз хранит всё, что забирает.', 'Пусть зима довершит тишину.'],
+  },
+  {
+    trigger: 'on_buff', actor: { group: 'empire_ward_magi' },
+    lines: ['The ward is yours. Do not waste it.', 'Stand within the mark I made.'],
+    lines_ru: ['Защита твоя. Не растрать её.', 'Останься внутри начертанного знака.'],
+  },
+
+  // Grail of Sorrow: grief is for their own mistake; Astaloth shelters, never harms.
+  {
+    trigger: 'on_hit', actor: { group: 'grail_risen' },
+    lines: ['Cold... in the bones...', 'We came... too late...'],
+    lines_ru: ['Холод... в костях...', 'Мы пришли... слишком поздно...'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'grail_risen' },
+    lines: ['Down... stay...', 'The ground... is kind...'],
+    lines_ru: ['Лежи... тихо...', 'Земля... добра...'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'grail_risen' },
+    lines: ['Rest... has found me...', 'Mother... I am tired...'],
+    lines_ru: ['Покой... нашёл меня...', 'Мать... я устал...'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'grail_plague_knights' },
+    lines: ['This body failed. My purpose did not.', 'I remember the oath beneath the rot.'],
+    lines_ru: ['Тело подвело. Моё дело — нет.', 'Под гнилью я помню клятву.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'grail_plague_knights' },
+    lines: ['The wound is closed. Rest now.', 'I know the ground is cold.'],
+    lines_ru: ['Рана закрыта. Теперь покойся.', 'Я знаю, как холодна земля.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'grail_ghouls' },
+    lines: ['I remember having a face.', 'Do not look away. I cannot.'],
+    lines_ru: ['Я помню, что у меня было лицо.', 'Не отворачивайся. Я не могу.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'grail_ghouls' },
+    lines: ['You will not wake in this shape.', 'May your last thought be warm.'],
+    lines_ru: ['Ты не проснёшься в таком теле.', 'Пусть последняя мысль будет тёплой.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'grail_menders' },
+    lines: ['Hold still. I can make this bearable.', 'I know what the spell leaves behind.'],
+    lines_ru: ['Не двигайся. Я облегчу твою участь.', 'Я знаю, что оставляет это заклятие.'],
+  },
+  {
+    trigger: 'on_healed', actor: { group: 'grail_menders' },
+    lines: ['There. You can carry it a little longer.', 'Mother keeps watch while I work.'],
+    lines_ru: ['Вот. Ты продержишься ещё немного.', 'Мать присмотрит, пока я работаю.'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'grail_menders' },
+    lines: ['I could not mend what we broke.', 'Mother, keep them when I cannot.'],
+    lines_ru: ['Я не смог исцелить то, что мы сломали.', 'Мать, храни их, когда я не смогу.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'grail_blood_knights' },
+    lines: ['You still have warmth to lose.', 'I remember the weight of a living heart.'],
+    lines_ru: ['Тебе ещё есть что потерять.', 'Я помню, как билось живое сердце.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'grail_blood_knights' },
+    lines: ['I envy the rest you have found.', 'Forgive me. I remember being you.'],
+    lines_ru: ['Я завидую покою, который ты обрёл.', 'Прости. Я помню, как был таким, как ты.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'grail_blood_adepts' },
+    lines: ['The spell changed me before I could choose.', 'I remember the blood as warmth.'],
+    lines_ru: ['Заклятие изменило меня прежде, чем я выбрал.', 'Я помню кровь тёплой.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'grail_blood_magi' },
+    lines: ['The spell is still unfinished in me.', 'I can feel the years slipping past.'],
+    lines_ru: ['Заклятие во мне всё ещё не завершено.', 'Я чувствую, как уходят годы.'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'grail_blood_magi' },
+    lines: ['I know where the translation failed.', 'Mother, let the others remember.'],
+    lines_ru: ['Я знаю, где ошибся перевод.', 'Мать, пусть остальные помнят.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'grail_adept' },
+    lines: ['I remember the spell before the error.', 'The others chose what to become.'],
+    lines_ru: ['Я помню заклятие до ошибки.', 'Остальные сами выбрали свой путь.'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'grail_adept' },
+    lines: ['I was only the beginning.', 'The spell is still waiting to be understood.'],
+    lines_ru: ['Я был лишь началом.', 'Заклятие всё ещё ждёт, чтобы его поняли.'],
+  },
+  {
+    trigger: 'on_healed', actor: { group: 'grail_communicants' },
+    lines: ['Stay. I cannot lose another name.', 'Mother has not turned from us.'],
+    lines_ru: ['Останься. Я не вынесу ещё одной утраты.', 'Мать не отвернулась от нас.'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'grail_communicants' },
+    lines: ['Mother, I have carried them far enough.', 'Tell them I still remember home.'],
+    lines_ru: ['Мать, я нёс их достаточно долго.', 'Скажи им, что я всё ещё помню дом.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'grail_colossus' },
+    lines: ['The earth remembers our passing.', 'Slowly... the years still turn...'],
+    lines_ru: ['Земля помнит наш путь.', 'Медленно... годы всё ещё идут...'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'grail_colossus' },
+    lines: ['The long road... ends here...', 'Let the weight... be still...'],
+    lines_ru: ['Долгая дорога... кончается здесь...', 'Пусть тяжесть... утихнет...'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'grail_seraphs' },
+    lines: ['The body failed. The mind remembers.', 'I am sorry. I cannot stop.'],
+    lines_ru: ['Тело подвело. Разум помнит.', 'Прости. Я не могу остановиться.'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'grail_seraphs' },
+    lines: ['Mother, I have carried this long enough.', 'At last, I can be still.'],
+    lines_ru: ['Мать, я достаточно долго нёс это.', 'Наконец я могу успокоиться.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'grail_sorrow_vessels' },
+    lines: ['The spell left its mark on every one of us.', 'I carry what did not arrive whole.'],
+    lines_ru: ['Заклятие оставило след на каждом из нас.', 'Я несу то, что прибыло не целым.'],
+  },
+  {
+    trigger: 'on_buff', actor: { group: 'grail_acolytes' },
+    lines: ['Mother keeps you. I only tend the wound.', 'Borrow my hands until yours return.'],
+    lines_ru: ['Мать хранит тебя. Я лишь перевязываю рану.', 'Пользуйся моими руками, пока твои не окрепнут.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'grail_ghosts' },
+    lines: ['I had a name. It began with—', 'Your blade passed through. I did not.'],
+    lines_ru: ['У меня было имя. Оно начиналось на…', 'Твой клинок прошёл насквозь. А я — нет.'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'grail_ghosts' },
+    lines: ['I think I can stop remembering now.', 'Was that my name? It was close.'],
+    lines_ru: ['Кажется, теперь можно перестать вспоминать.', 'Это было моё имя? Почти.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'grail_pale_sisters' },
+    lines: ['I keep the vigil. You may pass.', 'This rite has no words for you.'],
+    lines_ru: ['Я несу дозор. Ты можешь пройти.', 'Для тебя в этом обряде нет слов.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'grail_pale_sisters' },
+    lines: ['I will speak your name before the Mother.', 'Rest. The vigil is over.'],
+    lines_ru: ['Я назову тебя перед Матерью.', 'Покойся. Твой дозор окончен.'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'grail_pale_sisters' },
+    lines: ['Mother, receive the vow with me.', 'The vigil passes to my sister.'],
+    lines_ru: ['Мать, прими мою клятву вместе со мной.', 'Дозор принимает моя сестра.'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'grail_pale_sisters' }, target: { group: 'choir_court' },
+    lines: ['I kept my vow. You will not name it yours.', 'The Mother knows who I was.'],
+    lines_ru: ['Я сдержала клятву. Тебе её не присвоить.', 'Мать знает, кем я была.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'grail_mothers' },
+    lines: ['This wound remembers what we lost.', 'Mother watches. I will not look away.'],
+    lines_ru: ['Эта рана помнит нашу утрату.', 'Мать смотрит. Я не отвернусь.'],
+  },
+  {
+    trigger: 'on_buff', actor: { group: 'grail_mothers' },
+    lines: ['Her shelter reaches even here.', 'Take what strength remains in me.'],
+    lines_ru: ['Её защита достаёт и сюда.', 'Возьми силу, что ещё во мне осталась.'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'grail_mothers' },
+    lines: ['Mother, keep what I could not.', 'I remember the spell. I remember.'],
+    lines_ru: ['Мать, сохрани то, что не сберёг я.', 'Я помню заклятие. Помню.'],
+  },
+
+  // Choir of the Cursed: cunning, predatory, and hungry for power.
+  {
+    trigger: 'on_hit', actor: { group: 'choir_imps' },
+    lines: ['Your fear has a pleasing pitch.', 'Aggrail gave me teeth for this.'],
+    lines_ru: ['Твой страх звучит сладко.', 'Агграил дал мне зубы для этого.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'choir_imps' },
+    lines: ['One voice silenced. The song grows sharper.', 'Aggraa am neee.'],
+    lines_ru: ['Один голос смолк. Песнь стала острее.', 'Агграа ам нэээ.'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'choir_imps' },
+    lines: ['Aggrail, sing me back into being.', 'No. The verse promised more.'],
+    lines_ru: ['Агграил, воспой меня снова.', 'Нет. В куплете обещали больше.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'choir_choristers' },
+    lines: ['Hold the note until it breaks.', 'The verse is older than your fear.'],
+    lines_ru: ['Держи ноту, пока она не сорвётся.', 'Куплет старше твоего страха.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'choir_choristers' },
+    lines: ['A pause. The song continues.', 'That silence belongs to Aggrail.'],
+    lines_ru: ['Пауза. Песнь продолжается.', 'Эта тишина принадлежит Агграилу.'],
+  },
+  {
+    trigger: 'on_buff', actor: { group: 'choir_ash_priests' },
+    lines: ['Take the cinders. Leave me the flame.', 'I will make you useful yet.'],
+    lines_ru: ['Забери угли. Пламя оставь мне.', 'Я ещё сделаю тебя полезным.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'choir_ash_priests' },
+    lines: ['Weakness is fuel. Let it burn.', 'I know what the fire asks.'],
+    lines_ru: ['Слабость — топливо. Пусть горит.', 'Я знаю, чего требует огонь.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'choir_ash_priests' },
+    lines: ['The cinders belong to Aggrail.', 'Even ash can feed the song.'],
+    lines_ru: ['Пепел принадлежит Агграилу.', 'Даже пепел питает песнь.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'choir_gargoyles' },
+    lines: ['I was carved to bar this way.', 'The stone remembers every trespass.'],
+    lines_ru: ['Меня изваяли, чтобы преградить путь.', 'Камень помнит каждое вторжение.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'choir_gargoyles' },
+    lines: ['Back to the stone with you.', 'The threshold is quiet again.'],
+    lines_ru: ['Возвращайся в камень.', 'У порога снова тихо.'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'choir_gargoyles' },
+    lines: ['Stone... takes me back...', 'The song... leaves the stone...'],
+    lines_ru: ['Камень... принимает меня...', 'Песнь... покидает камень...'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'choir_heretics' },
+    lines: ['I mistook the song for mercy.', 'Listen. It promised me power.'],
+    lines_ru: ['Я принял песнь за милость.', 'Слушай. Она обещала мне силу.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'choir_heretics' },
+    lines: ['See? The song chose me.', 'I am more than I was.'],
+    lines_ru: ['Видишь? Песнь избрала меня.', 'Теперь я больше, чем прежде.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'choir_heretics' }, target: { group: 'empire_priests' },
+    lines: ['Your prayers called me lost. The song did not.', 'I have found the power you denied me.'],
+    lines_ru: ['Твои молитвы сочли меня пропащим. Песнь — нет.', 'Я обрёл силу, в которой ты мне отказал.'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'choir_heretics' },
+    lines: ['Was this what the song meant?', 'I wanted to be chosen.'],
+    lines_ru: ['Песнь это имела в виду?', 'Я хотел, чтобы меня избрали.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'choir_court' },
+    lines: ['The Court will remember this insult.', 'You stand beneath a stolen title.'],
+    lines_ru: ['Двор запомнит это оскорбление.', 'Ты стоишь под чужим титулом.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'choir_court' },
+    lines: ['The Court has heard its answer.', 'Your place is beneath the dais.'],
+    lines_ru: ['Двор услышал ответ.', 'Твоё место — под помостом.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'choir_court' }, target: { group: 'empire_standards' },
+    lines: ['Your colors fall like every borrowed crown.', 'No banner can command the First Song.'],
+    lines_ru: ['Твои цвета падут, как всякая чужая корона.', 'Ни одно знамя не повелевает Первой Песнью.'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'choir_court' },
+    lines: ['Tell the Court I kept my name.', 'I was a peer before the song.'],
+    lines_ru: ['Скажи Двору: я сохранил своё имя.', 'До песен я был пэром.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'choir_fire' },
+    lines: ['The flame wants more than you.', 'Your scream will feed the next verse.'],
+    lines_ru: ['Пламени нужно больше, чем ты.', 'Твой крик накормит следующий куплет.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'choir_fire' },
+    lines: ['The fire has swallowed its measure.', 'Still hungry. Always hungry.'],
+    lines_ru: ['Огонь поглотил свою меру.', 'Всё ещё голоден. Всегда голоден.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'choir_followers' },
+    lines: ['We heard the First Song before you.', 'The old court kneels to a new voice.'],
+    lines_ru: ['Мы услышали Первую Песнь раньше тебя.', 'Старый двор склоняется новому голосу.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'choir_followers' },
+    lines: ['The First Song takes another voice.', 'Hear how the chorus opens.'],
+    lines_ru: ['Первая Песнь принимает ещё один голос.', 'Слышишь, как раскрывается хор?'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'choir_followers' },
+    lines: ['I gave it everything. It wanted more.', 'Aggrail, hear what remains of me.'],
+    lines_ru: ['Я отдал всё. Ей было мало.', 'Агграил, услышь то, что от меня осталось.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'choir_cantors' },
+    lines: ['I keep the note until it cuts.', 'The verse was old before you feared it.'],
+    lines_ru: ['Я держу ноту, пока она не режет.', 'Куплет был стар до того, как ты испугался.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'choir_cantors' },
+    lines: ['The silence belongs to Aggrail.', 'A pause. The song goes on.'],
+    lines_ru: ['Тишина принадлежит Агграилу.', 'Пауза. Песнь идёт дальше.'],
+  },
+
+  // Hero voice for the prep-screen litany toast; these are branch-specific.
+  {
+    trigger: 'on_battle_start', actor: { group: 'empire_hero_infantry' },
+    lines: ['Keep your shield near mine.', 'We have come too far to scatter.'],
+    lines_ru: ['Держи щит рядом с моим.', 'Мы слишком далеко зашли, чтобы отступить.'],
+  },
+  {
+    trigger: 'on_battle_start', actor: { group: 'empire_hero_templar' },
+    lines: ['The unclean will not leave this field.', 'Mithrail, witness what we do.'],
+    lines_ru: ['Нечисть не уйдёт отсюда.', 'Митраил, будь свидетелем наших дел.'],
+  },
+  {
+    trigger: 'on_battle_start', actor: { group: 'empire_hero_bound' },
+    lines: ['I have worn another body. I remember.', 'Let the weight fall where it must.'],
+    lines_ru: ['Я носил другое тело. Я помню.', 'Пусть тяжесть ляжет на меня.'],
+  },
+  {
+    trigger: 'on_battle_start', actor: { group: 'grail_hero_one' },
+    lines: ['We know what the spell cost.', 'Mother, keep our names.'],
+    lines_ru: ['Мы знаем цену заклятия.', 'Мать, сохрани наши имена.'],
+  },
+  {
+    trigger: 'on_battle_start', actor: { group: 'grail_hero_two' },
+    lines: ['We will not forget the error.', 'There is still time to protect them.'],
+    lines_ru: ['Мы не забудем нашу ошибку.', 'Ещё есть время защитить их.'],
+  },
+  {
+    trigger: 'on_battle_start', actor: { group: 'grail_hero_three' },
+    lines: ['I remember warmth. I remember enough.', 'Mother walks beside us.'],
+    lines_ru: ['Я помню тепло. Этого достаточно.', 'Мать идёт рядом с нами.'],
+  },
+  {
+    trigger: 'on_battle_start', actor: { group: 'choir_hero_one' },
+    lines: ['Let the First Song hear us arrive.', 'Power belongs to the voice that takes it.'],
+    lines_ru: ['Пусть Первая Песнь услышит наше приближение.', 'Сила достаётся тому, кто её забирает.'],
+  },
+  {
+    trigger: 'on_battle_start', actor: { group: 'choir_hero_two' },
+    lines: ['I have chosen the verse. You are in it.', 'Aggrail, sharpen every note.'],
+    lines_ru: ['Я выбрал куплет. Ты в нём.', 'Агграил, отточи каждую ноту.'],
+  },
+  {
+    trigger: 'on_battle_start', actor: { group: 'choir_hero_three' },
+    lines: ["Let them hear the court's true voice.", 'The chorus will not wait for them.'],
+    lines_ru: ['Пусть услышат истинный голос Двора.', 'Хор не станет их ждать.'],
   },
 ];
 
+const validTriggers = new Set([
+  'on_hit', 'on_kill', 'on_death', 'on_buff', 'on_healed', 'on_battle_start',
+]);
 for (const [group, ids] of Object.entries(BARK_UNIT_GROUPS)) {
   if (!Array.isArray(ids) || !ids.length || ids.some(id => typeof id !== 'string')) {
     throw new Error(`Invalid combat bark unit group: ${group}`);
   }
 }
 for (const rule of COMBAT_BARKS) {
+  if (!validTriggers.has(rule.trigger)) throw new Error(`Unknown combat bark event: ${rule.trigger}`);
+  if (!rule.actor) throw new Error(`Combat bark ${rule.trigger} is missing an actor selector`);
   for (const [role, selector] of Object.entries({ actor: rule.actor, target: rule.target })) {
-    if (selector?.group && !Object.prototype.hasOwnProperty.call(BARK_UNIT_GROUPS, selector.group)) {
+    if (!selector) continue;
+    if (Object.keys(selector).some(key => !['id', 'ids', 'group'].includes(key))) {
+      throw new Error(`Unsupported combat bark selector in ${rule.trigger} ${role}`);
+    }
+    if (selector.group && !Object.prototype.hasOwnProperty.call(BARK_UNIT_GROUPS, selector.group)) {
       throw new Error(`Unknown combat bark unit group "${selector.group}" in ${rule.trigger} ${role}`);
     }
   }
+  if (rule.dialogue) {
+    if (rule.lines || rule.lines_ru || !rule.dialogue.length) {
+      throw new Error(`Invalid dialogue shape in ${rule.trigger} combat bark`);
+    }
+    for (const exchange of rule.dialogue) {
+      for (const speaker of ['actor', 'target']) {
+        if (!exchange[speaker]?.text || !exchange[speaker]?.text_ru ||
+            exchange[speaker].text.length > 60 || exchange[speaker].text_ru.length > 65) {
+          throw new Error(`Incomplete ${speaker} text in ${rule.trigger} dialogue`);
+        }
+      }
+    }
+  } else if (!Array.isArray(rule.lines) || !rule.lines.length ||
+             rule.lines.length !== rule.lines_ru?.length ||
+             rule.lines.some((line, index) =>
+               !line || !rule.lines_ru[index] || line.length > 60 || rule.lines_ru[index].length > 65)) {
+    throw new Error(`Unpaired localized lines in ${rule.trigger} combat bark`);
+  }
 }
 
-export { COMBAT_BARKS, BARK_CHANCES, BARK_UNIT_GROUPS, HEAL_BARK_THRESHOLD_PCT };
+export { COMBAT_BARKS, BARK_CHANCES, BARK_UNIT_GROUPS };

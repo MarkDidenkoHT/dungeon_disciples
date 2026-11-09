@@ -1893,14 +1893,12 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
       const factor = 1 - Math.min(100, (target._infect_stacks ?? 0) * 10) / 100;
       const heal   = Math.max(0, Math.min(engine.absorbWithDecay(target, Math.floor(raw * factor * engine.fatigueHealMult())),
                                           target.max_hp - target.battle_hp));
-      const preHealRatio = target.max_hp > 0 ? target.battle_hp / target.max_hp : 1;
       target.battle_hp += heal;
       engine.fireTrigger('on_heal',   { actor, target, dmg: heal, dying: null });
       engine.fireTrigger('on_healed', { actor, target, dmg: heal, dying: null });
       engine.pushLog({ type: 'ability', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
         targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id,
         value: heal, heal: true, message: `${def.name} — mended ${target.unit_name} for ${heal}` });
-      engine.checkBark('heal_low_hp', actor, { target, preHealRatio });
     } else {
       const school   = p.radiant_surge_source || 'life';
       const resist   = (target.unit_data?.resistances || {})[school] ?? 0;

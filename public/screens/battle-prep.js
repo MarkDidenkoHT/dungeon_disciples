@@ -16,7 +16,7 @@ import { ruleName, TOURNEY_MODE } from '../../data/tourney.js';
 import { syncFormationSynergies } from '../formation-synergy-view.js';
 import { resolveSynergies } from '../../data/formation_synergies.js';
 import { matchAvailableLitany } from '../../data/litanies.js';
-import { COMBAT_BARKS } from '../../data/combat_barks.js';
+import { COMBAT_BARKS, BARK_UNIT_GROUPS } from '../../data/combat_barks.js';
 
 // The ability/item inspect handler has to be on `document`, because these icons
 // also appear inside the body-level modal sheet, which is outside the screen
@@ -1103,9 +1103,16 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
     announcedLitanyKey = key;
     if (player?.settings?.barks_enabled === false || !match.lead) return;
 
-    // Use the hero's existing attack bark and the battle screen's bark toast.
-    // The litany adds no new dialogue or announcement panel.
-    const rule = COMBAT_BARKS.find(entry => entry.trigger === 'attack' && entry.actor?.name === match.lead.unit_name);
+    // Use the lead hero's branch-specific entrance bark and the existing toast.
+    // The litany adds no separate dialogue panel.
+    const leadId = String(match.lead.unitId ?? '');
+    const rule = COMBAT_BARKS.find(entry => {
+      if (entry.trigger !== 'on_battle_start') return false;
+      const actor = entry.actor;
+      return actor?.id === leadId ||
+        actor?.ids?.includes(leadId) ||
+        BARK_UNIT_GROUPS[actor?.group]?.includes(leadId);
+    });
     if (!rule?.lines?.length) return;
     const anchor = Object.entries(occupied).find(([cellIndex, occ]) =>
       occ && String(occ.unitId) === String(match.lead.id) && Number(cellIndex) === Number(occ.anchor)

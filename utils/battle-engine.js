@@ -5,7 +5,7 @@ const { filterByTagRules } = require('./tag-rules.js');
 const { columnAdjacentCells } = require('../data/formation_synergies.js');
 const { SPELLS } = require('../data/spells');
 const { aiDoctrineFor } = require('../data/ai_profiles.js');
-const { COMBAT_BARKS, BARK_CHANCES, BARK_UNIT_GROUPS, HEAL_BARK_THRESHOLD_PCT } = require('../data/combat_barks');
+const { COMBAT_BARKS, BARK_CHANCES, BARK_UNIT_GROUPS } = require('../data/combat_barks');
 const { matchAvailableLitany } = require('../data/litanies');
 const { callingIdOf } = require('../data/callings');
 
@@ -579,6 +579,8 @@ class BattleEngine {
       this.checkBark('on_hit', ctx.actor, { target: ctx.target });
     } else if (trigger === 'on_kill' && ctx?.actor && ctx?.target) {
       this.checkBark('on_kill', ctx.actor, { target: ctx.target });
+    } else if (trigger === 'on_healed' && ctx?.actor && ctx?.target && ctx.dmg > 0) {
+      this.checkBark('on_healed', ctx.actor, { target: ctx.target });
     }
   }
   getFootprint(unit) {
@@ -1645,9 +1647,8 @@ class BattleEngine {
     const scaled = Math.floor(raw * factor * this.fatigueHealMult());
     const afterDecay = this.absorbWithDecay(target, scaled);
     const heal   = Math.max(0, Math.min(afterDecay, target.max_hp - target.battle_hp));
-    const preHealRatio = target.max_hp > 0 ? target.battle_hp / target.max_hp : 1;
     target.battle_hp += heal;
-    this.fireHealTriggers(actor, target, heal, preHealRatio);
+    this.fireHealTriggers(actor, target, heal);
     this.pushLog({ type: 'action', actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex, targetName: target.unit_name, targetCell: target.cellIndex, targetId: target.id, value: heal, heal: true });
     return heal;
   }
@@ -2318,11 +2319,10 @@ class BattleEngine {
   }
   // Every heal that lands goes through here, which is why the deed credit
   // sits here rather than at each caller.
-  fireHealTriggers(healer, target, amount, preHealRatio = null) {
+  fireHealTriggers(healer, target, amount) {
     this.creditDeed(healer, amount);
     this.fireTrigger('on_heal', { actor: healer, target, dmg: amount, dying: null });
     this.fireTrigger('on_healed', { actor: healer, target, dmg: amount, dying: null });
-    if (amount > 0) this.checkBark('on_healed', healer, { target, preHealRatio });
   }
   // A hero spending its turn on a spell. Returns { ok } or { error } — the
   // caller (the /battle/cast route, or the AI) decides what to do with a
@@ -4868,28 +4868,12 @@ class BattleEngine {
     this.log.push(entry);
   }
 
-  // Cosmetic combat barks - see data/combat_barks.js for groups and rules.
-  // Purely flavor text; never affects gameplay state beyond the log.
-  barkTags(unit) {
-    if (!unit) return [];
-    const tags = unit.unit_data?.tags ?? unit.tags ?? [];
-    return Array.isArray(tags) ? tags.filter(Boolean) : [];
-  }
-
-  // The unit definition's faction code: 'e' Empire, 'g' Grail, 'd' Choir, plus
-  // the enemy pools ('dm' bone knights, 'mv' frost things, 'opb' heralds).
-  // Rides on unit_data for the same reason tags do — routes/index.js spreads the
-  // whole def into unit_data before the row ever reaches the engine.
-  barkFaction(unit) {
-    return unit?.unit_data?.f ?? unit?.f ?? null;
-  }
-
+  // Cosmetic combat barks use explicit definition IDs and groups only.
   barkUnitId(unit) {
     return unit?.unit_data?.unit_id ?? unit?.unit_data?.id ?? unit?.unit_id ?? null;
   }
 
-  // Returns the filter's specificity score, or -1 if the unit does not match.
-  // An absent filter matches anything at score 0.
+  // Returns the selector specificity, or -1 when the unit does not match.
   barkFilterScore(filter, unit) {
     if (!filter) return 0;
     if (!unit) return -1;
@@ -4908,33 +4892,6 @@ class BattleEngine {
       const ids = BARK_UNIT_GROUPS[filter.group];
       if (!ids || !ids.includes(unitId)) return -1;
       score += 100;
-    }
-    if (filter.name != null) {
-      if (unit.unit_name !== filter.name) return -1;
-      score += 100; // a named rule must always beat any tag combination
-    }
-    // Faction outranks any single tag (+3 vs +2) because it is the thing that
-    // decides the VOICE: Knight, Holy, Spirit, Zombie and Construct all span
-    // several factions, and an Empire zealot and a Grail mourner cannot share
-    // lines. A unit whose def carries no faction fails every faction rule and
-    // falls through to the neutral tag rule instead of borrowing a voice.
-    if (filter.faction != null) {
-      const want = Array.isArray(filter.faction) ? filter.faction : [filter.faction];
-      const own  = this.barkFaction(unit);
-      if (!own || !want.includes(own)) return -1;
-      score += 3;
-    }
-    const tags = this.barkTags(unit);
-    const wanted = filter.tags ?? (filter.tag != null ? [filter.tag] : []);
-    for (const t of wanted) {
-      if (!tags.includes(t)) return -1;
-      score += 2;
-    }
-    // `not` is a pure gate and scores nothing: a rule must not out-rank a more
-    // specific one just by listing more exclusions.
-    const banned = filter.not == null ? [] : (Array.isArray(filter.not) ? filter.not : [filter.not]);
-    for (const t of banned) {
-      if (tags.includes(t)) return -1;
     }
     return score;
   }
@@ -5028,16 +4985,8 @@ class BattleEngine {
     let pool = [];    // English lines
     let poolRu = [];  // Russian lines, kept index-aligned with pool
     let dialoguePool = [];
-    const legacyTrigger = {
-      on_hit: 'attack',
-      on_kill: 'kill',
-      on_death: 'death',
-      on_healed: 'heal_low_hp',
-    }[triggerKey];
     for (const rule of COMBAT_BARKS) {
-      if (rule.trigger !== triggerKey && rule.trigger !== legacyTrigger) continue;
-      if (rule.trigger === 'heal_low_hp' &&
-          (ctx.preHealRatio == null || ctx.preHealRatio >= HEAL_BARK_THRESHOLD_PCT / 100)) continue;
+      if (rule.trigger !== triggerKey) continue;
       const aScore = this.barkFilterScore(rule.actor, owner);
       if (aScore < 0) continue;
       const tScore = this.barkFilterScore(rule.target, ctx.target);
