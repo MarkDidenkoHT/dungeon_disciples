@@ -740,17 +740,8 @@ class BattleEngine {
     // Fanatic banked power off a buff nobody received.
     this.fireAllyBuffTriggers(source, gained);
   }
-  // NET buff strength for a side: what its own beacons add, minus what the
-  // OPPOSING side's Beacon of Despair takes away.
-  //
-  // One signed number rather than two systems: a positive result grants extra
-  // buff exactly as before, a negative one shrinks the buff being granted, and
-  // both travel the same `applyStatBuff` path so both revert correctly when the
-  // granting unit dies.
-  //
-  // Clamped at -100: the most Despair can do is cancel a buff outright. Past
-  // that it would silently invert into a debuff, which is a different mechanic
-  // and not one anything here declares.
+  // Net buff strength for a side: its own beacons add, while enemy Despair
+  // reduces the effect of buffs received by this side.
   buffAmpPctFor(side) {
     const other = side === 'player' ? 'enemy' : 'player';
     let pct = 0;
@@ -767,7 +758,6 @@ class BattleEngine {
             pct += p.buff_effect_bonus_pct;
           }
         } else {
-          // Despair is carried by the ENEMY and counts ITS tags, not ours.
           if (p.enemy_buff_effect_reduction_pct_per_tag != null) {
             pct -= p.enemy_buff_effect_reduction_pct_per_tag * this.tagCountFor(other, p.tag_required);
           } else if (p.enemy_buff_effect_reduction_pct != null) {
@@ -777,6 +767,21 @@ class BattleEngine {
       }
     }
     return Math.max(-100, pct);
+  }
+  debuffAmpPctFor(side) {
+    let pct = 0;
+    for (const c of this.combatants) {
+      if (!c.alive || c.side !== side) continue;
+      for (const def of this.resolveAllPassiveDefs(c)) {
+        const p = def.params || {};
+        if (p.debuff_effect_bonus_pct_per_tag != null) {
+          pct += p.debuff_effect_bonus_pct_per_tag * this.tagCountFor(side, p.tag_required);
+        } else if (p.debuff_effect_bonus_pct != null) {
+          pct += p.debuff_effect_bonus_pct;
+        }
+      }
+    }
+    return pct;
   }
   // Adds `amount` of one buff type to a unit, in the same shape the granting
   // sites use — so the beacon bonus lands exactly where the base buff did.
@@ -1260,6 +1265,9 @@ class BattleEngine {
 
   applyDecay(target, amount, def, source = null) {
     if (!target || !target.alive || !(amount > 0)) return 0;
+    if (source && source.side !== target.side) {
+      amount *= 1 + this.debuffAmpPctFor(source.side) / 100;
+    }
     const cap    = this.decayCap(target);
     const before = target._decay ?? 0;
     const added  = Math.min(cap, before + amount) - before;

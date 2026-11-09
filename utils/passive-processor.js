@@ -75,6 +75,25 @@ function pctFor(p, engine, side, flatKey, perTagKey) {
   return p[flatKey] ?? 0;
 }
 
+const DEBUFF_MAGNITUDE_PARAMS = [
+  'dot_dmg_pct', 'bleed_dmg_pct', 'chill_dmg_pct',
+  'burn_per_tag', 'bleed_per_tag', 'poison_per_tag',
+  'armor_shred', 'initiative_shred', 'dissipate_resistance_pct',
+  'adjacent_physical_dmg_reduction_pct', 'physical_dmg_reduction_pct',
+  'stun_initiative_reduction_pct',
+];
+
+function amplifyDebuffParams(params, source, target, engine, untargetedEnemy = false) {
+  if (!source || (target ? target.side === source.side : !untargetedEnemy)) return params;
+  const pct = engine.debuffAmpPctFor(source.side);
+  if (!(pct > 0)) return params;
+  const amplified = { ...params };
+  for (const key of DEBUFF_MAGNITUDE_PARAMS) {
+    if (amplified[key] != null) amplified[key] *= 1 + pct / 100;
+  }
+  return amplified;
+}
+
 // Eternal Hunger on a drinker: percentage points added to the drain's own rate,
 // so Lifesteal 2 drinks 45% + 10 = 55%. `_drain_amp_pct` is set once at battle
 // start by the aura and never revoked, so reading it here costs nothing and a
@@ -428,7 +447,9 @@ function formGuardianBond(owner, def, synergyId, engine) {
 
 function dispatchPassive(trigger, owner, def, ctx) {
   const { engine, actor, target, dmg, dying } = ctx;
-  const p = def.params || {};
+  const rawParams = def.params || {};
+  const p = amplifyDebuffParams(rawParams, owner, target, engine,
+    target == null && rawParams.adjacent_physical_dmg_reduction_pct != null);
   const abilityKey = def.id ?? def.name ?? null;
   const applyDispel = (targetUnit, polarity) => {
     // A passive Dispel rank removes points from one effect, not whole effect
@@ -1842,7 +1863,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   if (!abilityKey || !UNIT_ABILITIES) return false;
   const def = UNIT_ABILITIES[abilityKey];
   if (!def) return false;
-  const p = def.params || {};
+  const p = amplifyDebuffParams(def.params || {}, actor, target, engine, def.target === 'enemy');
   if (p.libation_sacrifice_pct != null && target && def.target === 'enemy') {
     const cost = Math.floor(actor.max_hp * p.libation_sacrifice_pct / 100);
     if (actor.battle_hp <= cost + 1) {
