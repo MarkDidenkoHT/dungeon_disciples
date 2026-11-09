@@ -918,11 +918,20 @@ export function renderUnitProgressRow(progress, opts = {}) {
         </div>
       </div>`);
   } else if (xp && xp.cur != null) {
-    // Top tier: there is nothing left to advance into, so a bar would be a lie.
-    rows.push(`
-      <div class="levelup-row unit-progress-row">
-        <span class="levelup-xp-label">${xp.cur}${xp.maxed ? ` · ${uiText('Max tier', 'Макс. уровень')}` : ''}</span>
-      </div>`);
+    if (xp.maxed) {
+      rows.push(`
+        <div class="levelup-row unit-progress-row">
+          <div class="levelup-xp-bar">
+            <div class="levelup-xp-fill" style="width:100%"></div>
+            <span class="levelup-xp-label">${xp.cur}/${xp.cur}</span>
+          </div>
+        </div>`);
+    } else {
+      rows.push(`
+        <div class="levelup-row unit-progress-row">
+          <span class="levelup-xp-label">${xp.cur}</span>
+        </div>`);
+    }
   }
 
   if (!rows.length) return '';
