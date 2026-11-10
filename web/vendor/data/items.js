@@ -41,6 +41,8 @@
 // declares a trigger that requires attacking (on_hit / on_kill /
 // preemptive_strike) or healing (on_heal) is ALREADY refused automatically on a
 // unit that cannot do that — no authoring required.
+import { UNIT_ABILITIES } from './unit_abilities.js';
+
 const ITEM_DEFS = {
 
   // The counterpart to every `adds_tag` item in this file. Wearing it makes the
@@ -508,6 +510,21 @@ const ITEM_DEFS = {
     cost: { Gold: 200, Crystals_Death: 30, Crystals_Frost: 20, Crystals_Nature: 30, grave_dust: 1 },
     item_cost:    { mothers_gift: 1},
     requires:     { region: 'any', level: 1 },
+  },
+  darkness: {
+    key:          'darkness',
+    name:         'Darkness',
+    name_ru:      'Тьма',
+    faction:      null,
+    tag_required: 'Caster',
+    adds_tag:     'Knight',
+    stat_mods:    null,
+    passive:      'lancing_steel 2',
+    icon:         'darkness',
+    rarity:       'rare',
+    unique:       true,
+    cost: { Gold: 100, Crystals_Death: 25, Crystals_Air: 15, grave_dust: 2 },
+    requires:     { region: 'any', level: 2 },
   },
   // The first item whose penalty is the point. Blood Bolt scales off the Vampire
   // count, so Envy wants a wide Vampire line — and it buys that reach by making
@@ -1658,6 +1675,14 @@ function applyItemModifiers(unitData, itemStats) {
       const resType = resistMatch[1];
       resistances[resType] = (resistances[resType] || 0) + val;
     }
+  }
+
+  const itemPassives = Array.isArray(itemStats.passive)
+    ? itemStats.passive
+    : itemStats.passive ? [itemStats.passive] : [];
+  for (const key of itemPassives) {
+    const armorPct = Number(UNIT_ABILITIES[key]?.params?.armor_to_action_power_pct);
+    if (armorPct > 0) action_power += Math.floor(armor * armorPct / 100);
   }
 
   // The unit's OWN passives, before the item's is folded in. A unit can carry up

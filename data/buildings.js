@@ -1939,7 +1939,8 @@ const MERCENARY_BUILDINGS = {
     { id: 'cu_death_knight', label: 'Death Knight', label_ru: 'Рыцарь смерти', region: 'chamber_of_unrest', unit_id: 'dm_e111', tier: 3, upgrades: [],                   cost: { grave_dust: 15, rusted_shackle: 15 } },
     // Bone Knight's caster branch.
     { id: 'cu_adept_of_metallon', label: 'Adept of Metallon', label_ru: 'Адепт Металлона', region: 'chamber_of_unrest', unit_id: 'dm_e12',  tier: 2, upgrades: ['cu_metallon_invoker'], cost: { grave_dust: 10, rusted_shackle: 10 } },
-    { id: 'cu_metallon_invoker', label: 'Metallon Invoker', label_ru: 'Призыватель Металлона', region: 'chamber_of_unrest', unit_id: 'dm_e121', tier: 3, upgrades: [], cost: { grave_dust: 15, rusted_shackle: 15 } },
+    { id: 'cu_metallon_invoker', label: 'Metallon Invoker', label_ru: 'Призыватель Металлона', region: 'chamber_of_unrest', unit_id: 'dm_e121', tier: 3, upgrades: ['cu_knight_of_darkness'], cost: { grave_dust: 15, rusted_shackle: 15 } },
+    { id: 'cu_knight_of_darkness', label: 'Knight of Darkness', label_ru: 'Рыцарь Тьмы', region: 'chamber_of_unrest', unit_id: 'dm_e1211', tier: 4, upgrades: [], cost: { grave_dust: 20, rusted_shackle: 20 } },
     // Oathbound Martyr line.
     { id: 'cu_oathbound_martyr', label: 'Oathbound Martyr', label_ru: 'Мученик клятвы', region: 'chamber_of_unrest', unit_id: 'dm_2',   tier: 1, upgrades: ['cu_oathsworn_martyr'], cost: { grave_dust: 5, rusted_shackle: 5 } },
     { id: 'cu_oathsworn_martyr', label: 'Oathsworn Martyr', label_ru: 'Присягнувший мученик', region: 'chamber_of_unrest', unit_id: 'dm_21',  tier: 2, upgrades: ['cu_martyr_of_the_vow'], cost: { grave_dust: 10, rusted_shackle: 10 } },

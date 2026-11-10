@@ -6936,6 +6936,14 @@
           "label_ru": "Призыватель Металлона"
         }
       ],
+      "dm_e121": [
+        {
+          "unit_id": "dm_e1211",
+          "building_id": "cu_knight_of_darkness",
+          "label": "Knight of Darkness",
+          "label_ru": "Рыцарь Тьмы"
+        }
+      ],
       "dm_2": [
         {
           "unit_id": "dm_21",
