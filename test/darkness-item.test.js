@@ -40,13 +40,15 @@ test('Darkness requires a Caster, adds Knight, and grants Lancing Steel 2', () =
   assert.equal(item.requires.level, 2);
 });
 
-test('dm_e1211 is available as the level-four Metallon Invoker upgrade', () => {
+test('Metallon Shadowforger is available as the level-four Metallon Invoker upgrade', () => {
   const unit = findUnit(UNITS, 'dm_e1211');
   const invoker = findBuilding(MERCENARY_BUILDINGS, building => building.id === 'cu_metallon_invoker');
-  const knight = findBuilding(MERCENARY_BUILDINGS, building => building.unit_id === 'dm_e1211');
+  const shadowforger = findBuilding(MERCENARY_BUILDINGS, building => building.unit_id === 'dm_e1211');
 
   assert.ok(unit);
+  assert.equal(unit.name, 'Metallon Shadowforger');
   assert.equal(unit.t, 4);
-  assert.ok(invoker.upgrades.includes(knight.id));
-  assert.equal(knight.tier, 4);
+  assert.ok(invoker.upgrades.includes(shadowforger.id));
+  assert.equal(shadowforger.tier, 4);
+  assert.equal(shadowforger.label, unit.name);
 });

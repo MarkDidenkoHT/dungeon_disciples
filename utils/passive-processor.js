@@ -1357,7 +1357,8 @@ function dispatchPassive(trigger, owner, def, ctx) {
       const shuffled = enemies.sort(() => Math.random() - 0.5);
       for (let i = 0; i < count; i++) {
         const chainTarget = shuffled[i];
-        const chainDmg = Math.max(1, Math.floor(dmg * (1 - p.chain_damage_reduction_pct / 100)));
+        const chainDamagePct = p.chain_damage_pct?.[i] ?? (100 - p.chain_damage_reduction_pct);
+        const chainDmg = Math.max(1, Math.floor(dmg * chainDamagePct / 100));
         hurt(chainTarget, chainDmg, engine, owner.unit_data?.damage_source);
         // sourceId is the unit the hop LEAPT FROM (the one the attack struck), so
         // the client can draw the arc between the two victims rather than from

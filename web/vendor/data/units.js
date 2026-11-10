@@ -4748,12 +4748,12 @@ const UNITS = {
         damage_source: 'air', action_power: 16, action_icon: 'mystic_bolt.jpg', action_animation: 'lightning_bolt', action_sfx: 'shock',
         xp: 1015, passive: ['weight_of_steel 2', 'bone_armor 1', 'chain 1'], ability: 'chain_lightning 2',
       },
-      knight_of_darkness: {
-        flavor_en: "Steel bends to the Knight of Darkness, becoming an extension of its will. Every plate of armor it commands lends greater force to its next strike.",
-        flavor_ru: "Сталь покоряется Рыцарю Тьмы и становится продолжением его воли. Каждая подвластная ему пластина доспеха усиливает следующий удар.",
+      metallon_shadowforger: {
+        flavor_en: "A devoted follower of Metallon, this dark mage draws metal from the shadows and bends it into armor and weapons. With every plate reforged around its bones, it turns Metallon's power into strength.",
+        flavor_ru: "Преданный последователь Металлона, этот тёмный маг извлекает металл из теней и превращает его в доспехи и оружие. С каждой пластиной, выкованной вокруг его костей, сила Металлона становится его собственной.",
         id: 'dm_e1211', f: 'dm', t: 4,
-        name: 'Knight of Darkness',
-        name_ru: 'Рыцарь Тьмы',
+        name: 'Metallon Shadowforger',
+        name_ru: 'Тенекузнец Металлона',
         tags: ['Skeleton', 'Caster'],
         pref_position: 'back',
         size: 'tile',

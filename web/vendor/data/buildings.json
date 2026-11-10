@@ -6939,9 +6939,9 @@
       "dm_e121": [
         {
           "unit_id": "dm_e1211",
-          "building_id": "cu_knight_of_darkness",
-          "label": "Knight of Darkness",
-          "label_ru": "Рыцарь Тьмы"
+          "building_id": "cu_metallon_shadowforger",
+          "label": "Metallon Shadowforger",
+          "label_ru": "Тенекузнец Металлона"
         }
       ],
       "dm_2": [

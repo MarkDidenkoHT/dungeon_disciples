@@ -286,7 +286,7 @@ const BOT_TEMPLATES = [
       // reaches rank 3: the rank that adds power, and the reason the Custodian's
       // Knight is worth more than it looks.
       band_500: [
-        { unit: 'gs3111',    cell: 0, calling: 'acceptance', item_id: 'codex_aeternum' },
+        { unit: 'gs3111',    cell: 0, calling: 'acceptance', item_id: 'caster_hat' },
         { unit: 'h_g_1_b41', cell: 2, item_id: 'gift_of_eternity', hero: true,
           spells: [{ spell_id: 'g_spell_10', power: 3 }, { spell_id: 'g_spell_9', power: 5 }] },
         { unit: 'gs3111',    cell: 4, item_id: 'might_of_the_pure' },

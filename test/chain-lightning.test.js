@@ -5,14 +5,14 @@ const { BattleEngine } = require('../utils/battle-engine.js');
 
 // A Metallon caster (air attack, Chain passive, Chain Lightning) against four
 // enemies with no air resistance, so the arithmetic is the raw share of power.
-function setup(abilityKey) {
+function setup(abilityKey, chainPassive = 'chain 1') {
   const engine = new BattleEngine(null);
   engine.ABILITIES = UNIT_ABILITIES;
   const caster = engine.createCombatant({
     id: 'caster', name: 'Metallon Invoker',
     action: 'attack', target_type: 'enemy', targets: 1, range: 3,
     damage_source: 'air', action_power: 20,
-    passive: ['chain 1'], ability: abilityKey,
+    passive: [chainPassive], ability: abilityKey,
     hp: 50, resistances: { air: 0 },
   }, 'player', 0);
   const foes = [0, 1, 2, 3].map(i => engine.createCombatant({
@@ -68,4 +68,20 @@ test('A basic attack still chains, and the hop names the unit it leapt from', ()
   assert.equal(hops.length, 1);
   assert.equal(hops[0].sourceId, foes[0].id);
   assert.notEqual(hops[0].targetId, foes[0].id);
+});
+
+test('Chain ranks apply their damage percentage to each successive hop', () => {
+  for (const [rank, percentages] of [
+    [1, [40]],
+    [2, [40, 30]],
+    [3, [40, 30, 20]],
+  ]) {
+    const { engine, caster, foes } = setup('chain_lightning 1', `chain ${rank}`);
+    const start = engine.log.length;
+    engine.executeAction(caster, foes[0], 'attack', { turnStart: false });
+
+    const hops = newLog(engine, start).filter(e => e.type === 'passive' && e.passive === 'Chain');
+    assert.equal(hops.length, percentages.length, `rank ${rank} hop count`);
+    assert.deepEqual(hops.map(hop => hop.value), percentages.map(pct => Math.floor(20 * pct / 100)));
+  }
 });
