@@ -4730,8 +4730,8 @@ const UNITS = {
         hp: 45, armor: 10, initiative: 15,
         resistances: { air: 10, fire: 0, life: 0, death: 40, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'air', action_power: 12, action_icon: 'mystic_bolt.jpg', action_animation: 'arcane_bolt', action_sfx: 'dark_spell',
-        xp: 375, passive: ['weight_of_steel 1', 'bone_armor 1', 'chain 1'], ability: null,
+        damage_source: 'air', action_power: 12, action_icon: 'mystic_bolt.jpg', action_animation: 'lightning_bolt', action_sfx: 'shock',
+        xp: 375, passive: ['weight_of_steel 1', 'bone_armor 1', 'chain 1'], ability: 'chain_lightning 1',
       },
       metallon_invoker: {
         flavor_en: "The Metallon Invoker no longer needs to touch steel to command it. The heavier a foe's armor, the harder that armor crushes the one who wears it.",
@@ -4745,8 +4745,8 @@ const UNITS = {
         hp: 50, armor: 15, initiative: 15,
         resistances: { air: 20, fire: 0, life: 0, death: 40, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
-        damage_source: 'air', action_power: 16, action_icon: 'mystic_bolt.jpg', action_animation: 'arcane_bolt', action_sfx: 'dark_spell',
-        xp: 1015, passive: ['weight_of_steel 2', 'bone_armor 1', 'chain 1'], ability: null,
+        damage_source: 'air', action_power: 16, action_icon: 'mystic_bolt.jpg', action_animation: 'lightning_bolt', action_sfx: 'shock',
+        xp: 1015, passive: ['weight_of_steel 2', 'bone_armor 1', 'chain 1'], ability: 'chain_lightning 2',
       },
       oathbound_martyr: {
         flavor_en: "The Oathbound Martyr rose when a wave of magic passed through the soldiers' resting chamber. It instinctively takes the wounds meant for its companions, as it may have done in life.",

@@ -2455,6 +2455,179 @@ export async function arcane_bolt(cellEl, opts = {}) {
   console.log('[battle-fx] arcane_bolt END', dataId);
 }
 
+// ── lightning_bolt — a forked arc of lightning thrown caster -> target ────────
+// Not a strike from the sky: the bolt leaves the caster's hands and crawls
+// SIDEWAYS across the board to the target, flickering (its jagged path is
+// re-rolled every few frames), then snaps out with a flash and a spray of
+// sparks on the victim.
+//
+// The same picture draws a Chain hop: battle.js hands it the unit the attack
+// struck as the source cell (opts.hop), so the arc visibly leaps on from one
+// victim to the next. A hop skips the charge on the source — the energy is
+// already there.
+const LIGHTNING = { core: 0xffffff, mid: 0xaee6ff, deep: 0x3b7cff };
+
+// A jagged path from (sx,sy) to (dx,dy) by midpoint displacement: each pass
+// halves every segment and nudges the new midpoint sideways, by less each time,
+// so the bolt is crooked at every scale like the real thing.
+function lightningPath(sx, sy, dx, dy, spread, depth = 5) {
+  let pts = [[sx, sy], [dx, dy]];
+  let amp = spread;
+  for (let d = 0; d < depth; d++) {
+    const next = [pts[0]];
+    for (let i = 1; i < pts.length; i++) {
+      const [ax, ay] = pts[i - 1], [bx, by] = pts[i];
+      const len = Math.hypot(bx - ax, by - ay) || 1;
+      const nx = -(by - ay) / len, ny = (bx - ax) / len;
+      const off = (Math.random() * 2 - 1) * amp;
+      next.push([(ax + bx) / 2 + nx * off, (ay + by) / 2 + ny * off], pts[i]);
+    }
+    pts = next;
+    amp *= 0.55;
+  }
+  return pts;
+}
+
+// Draws the first `reach` (0..1) of a path as three passes — a wide dim halo,
+// a coloured body and a thin white core — so it reads as light, not a line.
+function strokeLightning(g, pts, reach, alpha, width = 1) {
+  if (alpha <= 0 || reach <= 0) return;
+  const n = Math.max(1, Math.round((pts.length - 1) * Math.min(1, reach)));
+  const passes = [[9 * width, LIGHTNING.deep, 0.30], [4 * width, LIGHTNING.mid, 0.75], [1.6 * width, LIGHTNING.core, 1]];
+  for (const [w, color, a] of passes) {
+    g.lineStyle(w, color, a * alpha);
+    g.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i <= n; i++) g.lineTo(pts[i][0], pts[i][1]);
+  }
+}
+
+async function lightningStrike(srcId, dstId, opts = {}) {
+  const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+  const ADD = PIXI.BLEND_MODES.ADD;
+  const TAU = Math.PI * 2;
+  const hop = opts.hop === true;
+
+  const sparks = Array.from({ length: 12 }, () => ({
+    ang: Math.random() * TAU, speed: 0.5 + Math.random() * 0.8, len: 0.10 + Math.random() * 0.14,
+  }));
+
+  const layer     = new PIXI.Container();
+  const glowLayer = new PIXI.Container();
+  glowLayer.filters = [new PIXI.BlurFilter(6)];
+  const glowG = new PIXI.Graphics(); glowG.blendMode = ADD;
+  const boltG = new PIXI.Graphics(); boltG.blendMode = ADD;
+  const fxG   = new PIXI.Graphics(); fxG.blendMode   = ADD;
+  glowLayer.addChild(glowG);
+  layer.addChild(glowLayer, boltG, fxG);
+  app.stage.addChild(layer);
+
+  // The path is cached and re-rolled on a clock rather than every frame, so the
+  // bolt flickers between shapes instead of boiling.
+  let path = null, forks = [], rolledAt = -1;
+  const DURATION = opts.duration ?? (hop ? 520 : 640);
+  const CHARGE   = hop ? 0 : 0.18;   // share of the run spent gathering on the source
+
+  await animate(DURATION, t => {
+    const s = cellBoundsFor(srcId);
+    if (!s) { layer.visible = false; return; }
+    const d = dstId ? cellBoundsFor(dstId) : null;
+    layer.visible = true;
+
+    const sx = s.x + s.width / 2, sy = s.y + s.height / 2;
+    const dx = d ? d.x + d.width / 2 : sx + (opts.isEnemy ? -1 : 1) * s.width * 1.5;
+    const dy = d ? d.y + d.height / 2 : sy;
+    const R  = Math.min(s.width, s.height);
+    const dist = Math.hypot(dx - sx, dy - sy) || 1;
+
+    const charge = CHARGE > 0 ? clamp01(t / CHARGE) : 1;
+    const grow   = clamp01((t - CHARGE) / 0.12);            // the bolt racing across
+    const fade   = clamp01((t - 0.62) / 0.38);              // the snap-out
+    const impact = clamp01((t - CHARGE - 0.10) / 0.55);     // flash + sparks on the target
+
+    const tick = Math.floor(t * DURATION / 55);
+    if (grow > 0 && tick !== rolledAt) {
+      rolledAt = tick;
+      path  = lightningPath(sx, sy, dx, dy, Math.min(dist * 0.18, R * 0.55));
+      // One or two short forks peeling off the main channel.
+      forks = [];
+      const nForks = 1 + (Math.random() < 0.5 ? 1 : 0);
+      for (let k = 0; k < nForks; k++) {
+        const at = path[Math.floor(path.length * (0.3 + Math.random() * 0.45))];
+        const ang = Math.atan2(dy - sy, dx - sx) + (Math.random() < 0.5 ? -1 : 1) * (0.5 + Math.random() * 0.6);
+        const fl  = dist * (0.12 + Math.random() * 0.14);
+        forks.push(lightningPath(at[0], at[1], at[0] + Math.cos(ang) * fl, at[1] + Math.sin(ang) * fl, fl * 0.3, 3));
+      }
+    }
+
+    glowG.clear(); boltG.clear(); fxG.clear();
+
+    // Charge: crackling light gathering in the caster's hands.
+    if (!hop && grow < 1) {
+      const a = charge * (1 - grow);
+      softGlow(glowG, sx, sy, R * 0.32 * charge, LIGHTNING.mid, a * 0.8);
+      softGlow(fxG, sx, sy, R * 0.12 * charge, LIGHTNING.core, a * 0.9);
+      for (let k = 0; k < 3; k++) {
+        const ang = Math.random() * TAU;
+        const p = lightningPath(sx, sy, sx + Math.cos(ang) * R * 0.3 * charge, sy + Math.sin(ang) * R * 0.3 * charge, R * 0.05, 2);
+        strokeLightning(boltG, p, 1, a * 0.7, 0.4);
+      }
+    }
+
+    // The bolt itself — with a brief re-strike flare mid-hold.
+    if (path && grow > 0) {
+      const flare = (t > 0.42 && t < 0.48) ? 1.35 : 1;
+      const a = (1 - fade) * flare;
+      strokeLightning(boltG, path, grow, Math.min(1, a));
+      for (const f of forks) strokeLightning(boltG, f, grow, Math.min(1, a) * 0.6, 0.55);
+      if (grow >= 1) {
+        softGlow(glowG, (sx + dx) / 2, (sy + dy) / 2, dist * 0.35, LIGHTNING.deep, a * 0.18);
+        softGlow(glowG, sx, sy, R * 0.22, LIGHTNING.mid, a * 0.5);
+      }
+    }
+
+    // Impact on the target.
+    if (impact > 0 && impact < 1) {
+      const flash = impact < 0.25 ? impact / 0.25 : (1 - impact) / 0.75;
+      softGlow(glowG, dx, dy, R * (0.35 + impact * 0.45), LIGHTNING.mid, flash * 0.8);
+      softGlow(fxG,   dx, dy, R * 0.18, LIGHTNING.core, flash * 0.9);
+      for (const sp of sparks) {
+        const r0 = R * 0.12 + R * 0.75 * impact * sp.speed;
+        const r1 = r0 + R * sp.len * (1 - impact);
+        fxG.lineStyle(1.6, LIGHTNING.mid, (1 - impact) * 0.9);
+        fxG.moveTo(dx + Math.cos(sp.ang) * r0, dy + Math.sin(sp.ang) * r0);
+        fxG.lineTo(dx + Math.cos(sp.ang) * r1, dy + Math.sin(sp.ang) * r1);
+      }
+    }
+  });
+
+  layer.destroy({ children: true });
+}
+
+export async function lightning_bolt(cellEl, opts = {}) {
+  if (!cellEl || !app || !window.PIXI) return;
+  await lightningStrike(cellEl.dataset.id, opts.targetCell?.dataset?.id || null, opts);
+}
+
+// ── chain_lightning — the active: one bolt, then a leap per hop ──────────────
+// Handed the caster and the victims IN THE ORDER THEY WERE STRUCK (see the
+// FAN_OUT_FX note in battle.js), and walks that path: caster -> first victim,
+// first -> second, and so on. Each hop starts before the last has faded, so it
+// reads as a single crackling chain rather than separate casts.
+export async function chain_lightning(cellEl, opts = {}) {
+  if (!cellEl || !app || !window.PIXI) return;
+  const ids = [cellEl.dataset.id, ...(opts.targetCells || []).map(c => c?.dataset?.id).filter(Boolean)];
+  if (ids.length < 2) return;
+  const speed = (typeof window !== 'undefined' && Number(window.__FX_SPEED__)) || 1;
+  const STAGGER = 260 / speed;
+  const runs = [];
+  for (let i = 1; i < ids.length; i++) {
+    const delay = i === 1 ? 0 : (i - 1) * STAGGER + 115 / speed;
+    runs.push(new Promise(r => setTimeout(r, delay))
+      .then(() => lightningStrike(ids[i - 1], ids[i], { hop: i > 1, duration: i > 1 ? 480 : 640 })));
+  }
+  await Promise.all(runs);
+}
+
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -7556,6 +7729,8 @@ export const EFFECTS = {
   rite_of_reclamation,
   shield_bash,
   arcane_bolt,
+  lightning_bolt,
+  chain_lightning,
   poison_dart,
   claw_strike,
   frost_claw,

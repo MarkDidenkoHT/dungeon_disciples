@@ -1359,7 +1359,10 @@ function dispatchPassive(trigger, owner, def, ctx) {
         const chainTarget = shuffled[i];
         const chainDmg = Math.max(1, Math.floor(dmg * (1 - p.chain_damage_reduction_pct / 100)));
         hurt(chainTarget, chainDmg, engine, owner.unit_data?.damage_source);
-        engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: chainTarget.unit_name, targetCell: chainTarget.cellIndex, value: chainDmg, heal: false });
+        // sourceId is the unit the hop LEAPT FROM (the one the attack struck), so
+        // the client can draw the arc between the two victims rather than from
+        // the attacker (see the chain-hop branch in public/screens/battle.js).
+        engine.pushLog({ type: 'passive', passive: def.name, actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex, sourceId: target.id, targetId: chainTarget.id, targetName: chainTarget.unit_name, targetCell: chainTarget.cellIndex, value: chainDmg, heal: false });
         if (chainTarget.battle_hp <= 0) {
           chainTarget.alive = false;
           engine.applyOnDeathPassives(chainTarget);
@@ -2484,6 +2487,47 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
         value: dmg, heal: false, killed: dead,
         message: `${def.name} — ${target.unit_name} takes ${dmg}${shut.length ? ', ' + shut.join(' and ') : ''}`,
       });
+    }
+  }
+
+  // ── Chain Lightning ───────────────────────────────────────────────────────
+  // The first bolt lands on the chosen enemy for a share of LIVE power; every
+  // hop then leaps from the unit just struck to a random enemy not yet struck,
+  // each for its own share. Air, so resistance mitigates it and armor does not.
+  //
+  // Damage is dealt straight through hurt() and NO on_hit is fired, so the
+  // Chain passive the Metallon casters also carry cannot fire off these bolts.
+  // One log entry per bolt, in order, each naming the unit it leapt from
+  // (sourceId); the client draws them as one path (chain_lightning is in
+  // FAN_OUT_FX in public/screens/battle.js).
+  if (p.chain_lightning_power_pct != null && target && def.target === 'enemy' && target.side !== actor.side) {
+    const power  = actor.unit_data?.action_power ?? actor.unit_data?.action?.value ?? 0;
+    const school = 'air';
+    const struck = new Set();
+    const bolt = (victim, from, pct) => {
+      const resist = effectiveResist(victim, school);
+      const dmg    = Math.max(1, Math.floor(power * pct / 100 * (1 - resist / 100)));
+      const dealt  = hurt(victim, dmg, engine, school);
+      const dead   = victim.battle_hp <= 0;
+      if (dead) { victim.alive = false; engine.applyOnDeathPassives(victim); }
+      struck.add(victim.id);
+      engine.pushLog({
+        type: 'ability', ability: abilityKey,
+        actorId: actor.id, actorName: actor.unit_name, actorCell: actor.cellIndex,
+        sourceId: from ? from.id : actor.id,
+        targetId: victim.id, targetName: victim.unit_name, targetCell: victim.cellIndex,
+        value: dealt, heal: false, killed: dead,
+        message: `${def.name} — ${victim.unit_name} takes ${dealt}`,
+      });
+    };
+    bolt(target, null, p.chain_lightning_power_pct);
+    let from = target;
+    for (const pct of (p.chain_lightning_hops || [])) {
+      const pool = combatants.filter(c => c.side !== actor.side && c.alive && !c._untargetable && !c._invulnerable && !struck.has(c.id));
+      if (!pool.length) break;
+      const next = pool[Math.floor(Math.random() * pool.length)];
+      bolt(next, from, pct);
+      from = next;
     }
   }
 

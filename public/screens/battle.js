@@ -73,7 +73,18 @@ const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_bl
   // Cinder Cascade borrows Fellfire (see the alias block in battle-fx.js), so it
   // needs Fellfire's placement: one picture fanning from the caster to everyone
   // the cast named.
-  'cinder_cascade']);
+  'cinder_cascade',
+  // Chain Lightning logs one entry per bolt, in the order they leapt, so the
+  // cells handed over ARE the path: caster -> first victim -> each hop.
+  'chain_lightning']);
+
+// Attack animations that can also draw a Chain passive's hop. The hop is logged
+// as a passive entry naming the unit it leapt FROM (sourceId); for these the
+// actor's own attack picture is replayed between the two victims, so a bolt
+// that chains visibly jumps from one enemy to the next. A unit whose attack is
+// a claw or a sword is not in here: its hop has no sensible picture, and it
+// keeps drawing nothing, as before.
+const CHAIN_HOP_FX = new Set(['lightning_bolt']);
 
 // Effects on the actor's whole side whose log names nobody (Lion's Roar logs
 // "all allies" with no ids), so the cells are read off the board instead —
@@ -516,6 +527,12 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // never looked up — soundForEntry already treated the two the same.
     if ((entry.type === 'passive' || entry.type === 'intercept' || entry.type === 'status') && entry.passive) {
       const def = Object.values(UNIT_ABILITIES).find(d => d?.name === entry.passive);
+      // A Chain hop borrows the attacker's own picture where it has one that can
+      // travel between two victims (see CHAIN_HOP_FX).
+      if (def?.effect_name === 'chain' && entry.sourceId != null) {
+        const own = actorCombatant?.unit_data?.action_animation;
+        if (own && CHAIN_HOP_FX.has(own)) return own;
+      }
       if (def?.effect_name) return def.effect_name;
     }
     if (entry.type === 'action' && actorCombatant) {
@@ -542,6 +559,15 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if ((entry.type === 'passive' || entry.type === 'status') && entry.passive) {
       const def = Object.values(UNIT_ABILITIES).find(d => d?.name === entry.passive);
       return def?.animation_sound || null;
+    }
+    // Active abilities: the def's animation_sound, looked up by the key the
+    // entry carries. Several actives declared one (Volley, Prayer of Healing)
+    // and nothing ever read it for an 'ability' entry, so they played silent.
+    if (entry.type === 'ability') {
+      const key = entry.ability
+        || actorCombatant?.unit_data?.ability
+        || actorCombatant?.unit_data?.active_ability;
+      return (key && UNIT_ABILITIES[key]?.animation_sound) || null;
     }
     if (entry.type === 'action' && actorCombatant) {
       const raw = actorCombatant.unit_data?.action_sfx;
@@ -678,6 +704,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       return {
         key: `${id(actorCell)}>${id(targetCell)}`,
         run: () => fn(actorCell, { isEnemy, targetCell }),
+      };
+    }
+    // A Chain hop: the attacker's picture, leaping from the unit the attack
+    // struck to the one the hop reached.
+    if (entry.type === 'passive' && CHAIN_HOP_FX.has(effectName) && sourceCell && targetCell) {
+      return {
+        key: `${id(sourceCell)}>${id(targetCell)}`,
+        run: () => fn(sourceCell, { isEnemy, targetCell, hop: true }),
       };
     }
     // Passives and everything else are drawn on whoever they happened to.
