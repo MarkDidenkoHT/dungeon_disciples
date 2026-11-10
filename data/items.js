@@ -518,18 +518,14 @@ const ITEM_DEFS = {
     faction:      null,
     tag_required: 'Caster',
     adds_tag:     'Knight',
-    stat_mods:    null,
+    stat_mods:    { hp: 5, armor: 5 },
     passive:      'lancing_steel 2',
     icon:         'darkness',
-    rarity:       'rare',
+    rarity:       'mythic',
     unique:       true,
-    cost: { Gold: 100, Crystals_Death: 25, Crystals_Air: 15, grave_dust: 2 },
+    cost: { Gold: 500, Crystals_Death: 25, Crystals_Air: 15, grave_dust: 15 },
     requires:     { region: 'any', level: 2 },
   },
-  // The first item whose penalty is the point. Blood Bolt scales off the Vampire
-  // count, so Envy wants a wide Vampire line — and it buys that reach by making
-  // the wearer act last, which is where a splash that reads every enemy's Bleed
-  // wants to be anyway: after the bleeders have had their turn to apply it.
   envy: {
     key:          'envy',
     name:         'Envy',

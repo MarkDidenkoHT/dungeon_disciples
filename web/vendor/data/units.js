@@ -4758,7 +4758,7 @@ const UNITS = {
         pref_position: 'back',
         size: 'tile',
         hp: 55, armor: 20, initiative: 20,
-        resistances: { air: 20, fire: 0, life: 0, death: 40, cold: 0, nature: 0 },
+        resistances: { air: 30, fire: 0, life: 0, death: 40, cold: 0, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'air', action_power: 20, action_icon: 'mystic_bolt.jpg', action_animation: 'lightning_bolt', action_sfx: 'shock',
         xp: 3095, passive: ['weight_of_steel 3', 'bone_armor 1', 'chain 1'], ability: 'chain_lightning 3',
