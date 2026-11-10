@@ -1999,7 +1999,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 16px;
+  /* padding: 16px; */
   color: var(--text);
   line-height: 1.5;
 }
@@ -10468,6 +10468,11 @@ body[data-faction="grail_of_sorrow"] .castle-layer-arrow--live,
 body[data-faction="grail_of_sorrow"] .utree-cell--current,
 body[data-faction="grail_of_sorrow"] .tutorial-ring {
   border-color: transparent;
+}
+body[data-faction="grail_of_sorrow"] .tutorial-ring {
+  --accent-ring-w: 2.4px;
+  box-shadow: none;
+  animation: none;
 }
 @keyframes accent-ring-spin {
   to { --accent-spin: 360deg; }

@@ -2184,11 +2184,13 @@ export function renderCastle(root, params = {}) {
       id: 'build_pick_unit',
       ready:  () => needsFirstRecruit() && recruitChoiceCount() > 1,
       open:   ensureBuildSheet,
-      target: () => getSheetBody()?.querySelector('#branch-track'),
-      // The ring is around the STRIP, so only a tap that lands on a portrait
-      // counts. A tap on the gap between two of them used to advance the chain
-      // with nothing chosen — and the next step's blockers then sealed the
-      // player's selection at whatever the sheet happened to open on.
+      // Spotlight the scroll viewport, not the max-content track inside it:
+      // the track moves and can be wider than the screen while swiping.
+      target: () => getSheetBody()?.querySelector('.branch-track-wrap'),
+      // Only a tap that lands on a portrait counts. A tap on the gap between
+      // two of them used to advance the chain with nothing chosen — and the
+      // next step's blockers then sealed the player's selection at whatever
+      // the sheet happened to open on.
       tapWithin: '.portrait-card',
       // NOT a Continue step. An informational spotlight makes its ring swallow
       // taps (see showTutorialSpotlight), so a bubble that says "tap a portrait"
