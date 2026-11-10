@@ -2339,7 +2339,8 @@ class BattleEngine {
       return { error: 'That spell cannot be cast in battle' };
     }
     const min   = spellDef.power_cost ?? 1;
-    const spend = Math.max(min, Math.min(POWER_MAX, Number(power) || min));
+    const max   = Math.min(POWER_MAX, spellDef.max_power ?? POWER_MAX);
+    const spend = Math.max(min, Math.min(max, Number(power) || min));
     const have  = this.powerFor(actor.side);
     if (have < spend) return { error: `Not enough power (need ${spend}, have ${have})` };
     // A NAMED target has to be a legal one. getSpellTargets now filters out a unit
@@ -2425,7 +2426,9 @@ class BattleEngine {
       });
       return this.afterAction(actor);
     }
-    executeActiveAbility(actor, target, this.combatants, this.ABILITIES, this);
+    if (executeActiveAbility(actor, target, this.combatants, this.ABILITIES, this)) {
+      this.fireTrigger('on_ability_used', { actor, target, dmg: 0, dying: null });
+    }
     return this.afterAction(actor);
   }
   skipTurn(actor) {
@@ -3472,7 +3475,9 @@ class BattleEngine {
   // scales the effect by the difference, so an encounter can buy a bigger version
   // of the same spell.
   spellEntryCost(def, entry) {
-    return Math.max(def.power_cost ?? 1, Number(entry?.power) || def.power_cost || 1);
+    const min = def.power_cost ?? 1;
+    const max = Math.min(POWER_MAX, def.max_power ?? POWER_MAX);
+    return Math.max(min, Math.min(max, Number(entry?.power) || min));
   }
 
   // Would casting this actually do anything? An active is a turn and a bankful of
@@ -4543,6 +4548,25 @@ class BattleEngine {
       // Undo ledger for this unit, filled in as timed params are applied.
       const revert = {};
 
+      const hasActiveAbility = !c._is_hero &&
+        (c.unit_data?.ability || c.unit_data?.active_ability);
+      if (hasActiveAbility && params.reset_active_abilities === true && c.used_active) {
+        c.used_active = false;
+        this.pushLog({
+          type: 'spell', spell: params._spell_name,
+          targetId: c.id, targetName: c.unit_name, targetCell: c.cellIndex,
+          message: `${params._spell_name} — ${c.unit_name}'s ability is ready again`,
+        });
+      }
+      if (hasActiveAbility && params.cooldown_active_abilities === true && !c.used_active) {
+        c.used_active = true;
+        this.pushLog({
+          type: 'spell', spell: params._spell_name,
+          targetId: c.id, targetName: c.unit_name, targetCell: c.cellIndex,
+          message: `${params._spell_name} — ${c.unit_name}'s ability is on cooldown`,
+        });
+      }
+
       // Raising the fallen — the boss resurrect. Has to run before anything
       // else touches HP, and it is the one spell param that acts on a corpse.
       if (params.resurrect_hp_pct && !c.alive) {
@@ -4924,51 +4948,55 @@ class BattleEngine {
     if (this._litanyBonusesApplied) return;
     this._litanyBonusesApplied = true;
     for (const side of ['player', 'enemy']) {
-      const match = this.litanyFormationForSide(side);
-      if (!match) continue;
-      this.activeLitanies[side] = match.def.id;
-      const allies = this.combatants.filter(c => c.side === side && c.alive);
-      const bonus = match.def.bonus || {};
-      const multiplier = this.litanyBonusMultipliers?.[side] ?? 1;
-      const bonusAmount = amount => (Number(amount) || 0) * multiplier;
+      this.applyLitanyBonus(side, this.litanyBonusMultipliers?.[side] ?? 1, true);
+    }
+  }
 
-      if (bonusAmount(bonus.hp_flat) > 0) {
-        const amount = bonusAmount(bonus.hp_flat);
-        for (const c of allies) {
-          c.max_hp += amount;
-          c.battle_hp = Math.min(c.max_hp, c.battle_hp + amount);
-          c._base_max_hp = (c._base_max_hp ?? c.max_hp - amount) + amount;
-        }
-        const litanyName = match.def.name;
-        const affected = allies.length;
-        this.pushLog({
-          type: 'notice',
-          litany: match.def.id,
-          side,
-          message: `${litanyName} — all ${affected} allies gain ${amount} max HP.`,
-          message_ru: `${litanyName} — все союзники (${affected}) получают ${amount} к максимальному здоровью.`,
-        });
+  applyLitanyBonus(side, multiplier = 1, atStart = false) {
+    const match = this.litanyFormationForSide(side);
+    if (!match) return false;
+    this.activeLitanies[side] = match.def.id;
+    const allies = this.combatants.filter(c => c.side === side && c.alive);
+    const bonus = match.def.bonus || {};
+    const bonusAmount = amount => (Number(amount) || 0) * multiplier;
+
+    if (bonusAmount(bonus.hp_flat) > 0) {
+      const amount = bonusAmount(bonus.hp_flat);
+      for (const c of allies) {
+        c.max_hp += amount;
+        c.battle_hp = Math.min(c.max_hp, c.battle_hp + amount);
+        c._base_max_hp = (c._base_max_hp ?? c.max_hp - amount) + amount;
       }
-      const armor = bonusAmount(bonus.armor_flat);
-      if (armor > 0) for (const c of allies) addArmor(c, armor);
-      const power = bonusAmount(bonus.power_flat);
-      if (power > 0) {
-        for (const c of allies) {
-          c.unit_data.action_power = (Number(c.unit_data.action_power ?? c.unit_data.action?.value) || 0) + power;
-        }
-      }
-      for (const [school, amount] of Object.entries(bonus.resist_flat || {})) {
-        const scaledAmount = bonusAmount(amount);
-        if (scaledAmount > 0) for (const c of allies) addResist(c, school, scaledAmount);
-      }
-      const shield = bonusAmount(bonus.shield_flat);
-      if (shield > 0) {
-        for (const c of allies) {
-          this.grantShield(c, shield,
-            { name: match.def.name, dispellable: false }, match.lead, { atStart: true });
-        }
+      const litanyName = match.def.name;
+      const affected = allies.length;
+      this.pushLog({
+        type: 'notice',
+        litany: match.def.id,
+        side,
+        message: `${litanyName} — all ${affected} allies gain ${amount} max HP.`,
+        message_ru: `${litanyName} — все союзники (${affected}) получают ${amount} к максимальному здоровью.`,
+      });
+    }
+    const armor = bonusAmount(bonus.armor_flat);
+    if (armor > 0) for (const c of allies) addArmor(c, armor);
+    const power = bonusAmount(bonus.power_flat);
+    if (power > 0) {
+      for (const c of allies) {
+        c.unit_data.action_power = (Number(c.unit_data.action_power ?? c.unit_data.action?.value) || 0) + power;
       }
     }
+    for (const [school, amount] of Object.entries(bonus.resist_flat || {})) {
+      const scaledAmount = bonusAmount(amount);
+      if (scaledAmount > 0) for (const c of allies) addResist(c, school, scaledAmount);
+    }
+    const shield = bonusAmount(bonus.shield_flat);
+    if (shield > 0) {
+      for (const c of allies) {
+        this.grantShield(c, shield,
+          { name: match.def.name, dispellable: false }, match.lead, { atStart });
+      }
+    }
+    return true;
   }
   checkBark(triggerKey, owner, ctx = {}) {
     if (!owner) return;

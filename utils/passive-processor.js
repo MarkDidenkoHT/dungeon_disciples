@@ -330,6 +330,7 @@ function runTrigger(trigger, ctx) {
     on_hit_received:       () => engine.combatants.filter(c => c.side === ctx.target?.side),
     on_death:              () => engine.combatants.filter(c => c.side === (ctx.dying ?? ctx.actor)?.side),
     on_battle_start:       () => engine.combatants,
+    on_ability_used:       () => [ctx.actor],
     on_turn_start:         () => [ctx.actor],
     on_pool:               () => [ctx.actor],
     on_heal:               () => engine.combatants.filter(c => c.side === ctx.actor?.side),
@@ -487,6 +488,16 @@ function dispatchPassive(trigger, owner, def, ctx) {
       message: `${def.name} — ${reduced.name} ${polarity === 'negative' ? 'cleansed' : 'stripped'} (${reduced.from} → ${reduced.to})`,
     });
   };
+  if (trigger === 'on_ability_used' && p.litany_bonus_multiplier != null &&
+      owner.id === actor?.id && engine.applyLitanyBonus(owner.side, 1)) {
+    engine.pushLog({
+      type: 'passive', passive: def.name,
+      actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
+      targetName: 'all allies',
+      message: `${def.name} — the litany is invoked again for all allies`,
+      message_ru: `${def.name} — литания повторно действует на всех союзников`,
+    });
+  }
   if (trigger === 'on_battle_start') {
     if (p.litany_bonus_multiplier != null && owner.alive) {
       const currentMultiplier = engine.litanyBonusMultipliers[owner.side] ?? 1;
@@ -1352,7 +1363,7 @@ function dispatchPassive(trigger, owner, def, ctx) {
       engine.grantShield(p.shield_target === 'self' ? owner : target, p.shield_amount, def, owner);
     }
     if (p.chain_targets != null && !ctx._is_chain_hit) {
-      const enemies = engine.combatants.filter(c => c.side !== owner.side && c.alive && !c._untargetable && c.id !== target.id);
+      const enemies = engine.combatants.filter(c => c.side !== owner.side && c.alive && !c._untargetable && !c._invulnerable && c.id !== target.id);
       const count = Math.min(p.chain_targets, enemies.length);
       const shuffled = enemies.sort(() => Math.random() - 0.5);
       for (let i = 0; i < count; i++) {

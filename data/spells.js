@@ -22,8 +22,9 @@
 //
 // ── Scaling ────────────────────────────────────────────────────────────────
 // A combat spell has `power_cost` (the minimum, always 1) and scales with every
-// point spent above it. `scaling` names the params that grow and by how much
-// per extra point; `max_power_bonus` is what changes only at a full 5-power
+// point spent above it. `max_power`, when set, caps spend for fixed-cost spells.
+// `scaling` names the params that grow and by how much per extra point;
+// `max_power_bonus` is what changes only at a full 5-power
 // cast, which is how a duration step is expressed. So one spell covers what
 // used to be three tiered near-duplicates:
 //
@@ -117,22 +118,21 @@ const SPELLS = {
     },
     {
       id: 'e_spell_8',
-      effect_name: 'blessing_of_protection',
-      name: 'Vow of Protection',
-      name_ru: 'Обет защиты',
+      name: 'Second Wind',
+      name_ru: 'Второе дыхание',
       category: 'buff',
       tier: 2,
       type: 'combat',
-      effect_icon: 'protector',
-      description: 'One ally guards the line: 25% chance to intercept blows aimed at its row, +5% per extra power, and +10 armor. 2 rounds.',
-      description_ru: 'Союзник прикрывает строй: 25% шанс перехватить удар по своему ряду, +5% за доп. силу, и +10 брони. 2 раунда.',
+      effect_icon: 'inspiration_initiative',
+      description: 'Restore every ally unit’s spent ability, letting it be used again this battle. Costs 3 power.',
+      description_ru: 'Восстанавливает использованные способности всех союзников, позволяя применить их снова в этом бою. Стоит 3 силы.',
       cost: { crystals: { Crystals_Life: 15, Crystals_Fire: 5 } },
-      power_cost: 1,
-      scaling: { intercept_chance_pct: 5 },
+      power_cost: 3,
+      max_power: 3,
       effect_type: 'buff',
       class: 'boon',
-      target_scope: 'single_ally',
-      params: { intercept_chance_pct: 25, armor_boost: 10, duration_rounds: 2 },
+      target_scope: 'all_allies',
+      params: { reset_active_abilities: true },
     },
     {
       id: 'e_spell_9',
@@ -370,6 +370,24 @@ const SPELLS = {
       params: { damage_dealt_reduction_pct: 10, duration_rounds: 1 },
     },
     {
+      id: 'd_spell_8',
+      name: 'Unbroken Refrain',
+      name_ru: 'Нескончаемый рефрен',
+      category: 'debuff',
+      tier: 2,
+      type: 'combat',
+      effect_icon: 'dissipate',
+      description: 'Put every enemy unit’s active ability on cooldown for the rest of the battle. Costs 3 power.',
+      description_ru: 'Отправляет способности всех врагов на перезарядку до конца боя. Стоит 3 силы.',
+      cost: { crystals: { Crystals_Fire: 20 } },
+      power_cost: 3,
+      max_power: 3,
+      effect_type: 'debuff',
+      class: 'enemy',
+      target_scope: 'all_enemies',
+      params: { cooldown_active_abilities: true },
+    },
+    {
       id: 'd_spell_10',
       effect_name: 'pyre_requiem',
       name: 'Pyre Requiem',
@@ -570,6 +588,24 @@ const SPELLS = {
       class: 'enemy',
       target_scope: 'all_enemies',
       params: { resist_reduction: { death: 10 }, duration_rounds: 2 },
+    },
+    {
+      id: 'g_spell_8',
+      name: 'The Final Silence',
+      name_ru: 'Последняя тишина',
+      category: 'debuff',
+      tier: 2,
+      type: 'combat',
+      effect_icon: 'death_mark',
+      description: 'Put every enemy unit’s active ability on cooldown for the rest of the battle. Costs 3 power.',
+      description_ru: 'Отправляет способности всех врагов на перезарядку до конца боя. Стоит 3 силы.',
+      cost: { crystals: { Crystals_Death: 15, Crystals_Life: 5 } },
+      power_cost: 3,
+      max_power: 3,
+      effect_type: 'debuff',
+      class: 'enemy',
+      target_scope: 'all_enemies',
+      params: { cooldown_active_abilities: true },
     },
     {
       id: 'g_spell_9',

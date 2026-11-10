@@ -70,6 +70,19 @@ test('A basic attack still chains, and the hop names the unit it leapt from', ()
   assert.notEqual(hops[0].targetId, foes[0].id);
 });
 
+test('Chain skips invulnerable enemies and still reaches vulnerable enemies', () => {
+  const { engine, caster, foes } = setup('chain_lightning 1', 'chain 2');
+  foes[1]._invulnerable = true;
+  foes[3].alive = false;
+  const start = engine.log.length;
+  engine.executeAction(caster, foes[0], 'attack', { turnStart: false });
+
+  const hops = newLog(engine, start).filter(e => e.type === 'passive' && e.passive === 'Chain');
+  assert.equal(hops.length, 1);
+  assert.equal(hops[0].targetId, foes[2].id);
+  assert.ok(foes[2].battle_hp < foes[2].max_hp);
+});
+
 test('Chain ranks apply their damage percentage to each successive hop', () => {
   for (const [rank, percentages] of [
     [1, [40]],

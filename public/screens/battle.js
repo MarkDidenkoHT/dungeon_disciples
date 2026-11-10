@@ -2064,7 +2064,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const power = chosenPower[spell.id] ?? min;
       const desc = BL === 'ru' ? (spell.description_ru || spell.description) : spell.description;
       const opts = [];
-      for (let p = min; p <= Math.min(POWER_MAX, have); p++) {
+      for (let p = min; p <= Math.min(spell.max_power ?? POWER_MAX, POWER_MAX, have); p++) {
         opts.push(`<button class="spell-power-opt${p === power ? ' spell-power-opt--on' : ''}"
                            data-spell="${spell.id}" data-power="${p}">${p}</button>`);
       }
