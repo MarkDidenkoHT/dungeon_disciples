@@ -817,10 +817,19 @@ function applyExpiredTurns(record, engine) {
 // acting player's own arrival replaces it with a clean full turn.
 //
 // Returns new battle_data when something changed, else null.
-function stampFirstDeadline(record, engine, chat_id) {
+//
+// `watching` is the acting player's client saying it has the board but is still
+// PLAYING the opening — every enemy that out-rolled the party, which can be ten
+// or more seconds of animation. Such an arrival is treated like the other
+// player's: a provisional deadline, so a no-show still loses the turn, but not
+// the clean one. That used to be stamped as the state was fetched, so the whole
+// opening came out of the player's thirty seconds and a fast enemy column could
+// leave them two. The client's first read after the opening has played comes
+// without the flag and is what starts the real turn.
+function stampFirstDeadline(record, engine, chat_id, { watching = false } = {}) {
   if (!isClockedRecord(record) || engine.done) return null;
   const bd = record.battle_data || {};
-  const mine = engine.currentActor()?.side === battleSideFor(record, chat_id);
+  const mine = !watching && engine.currentActor()?.side === battleSideFor(record, chat_id);
 
   if (!bd.turn_deadline) {
     return mine
@@ -4892,6 +4901,7 @@ router.get('/battle/tip', requireAuth, async (req, res) => {
       done:   bd.done ?? false,
       kind:   isClockedRecord(record) ? 'pvp' : 'pve',
       turn_deadline: bd.turn_deadline ?? null,
+      turn_provisional: !!bd.turn_provisional,
       // Mirroring does not come into it: `current_side` is a stored absolute
       // side and this is the same boolean from either chair, exactly as in
       // /battle/action and /battle/state.
@@ -4938,7 +4948,9 @@ router.get('/battle/state', requireAuth, async (req, res) => {
         engine = record._engine || engine;
       } else {
         // Nothing moved, but this may be the arrival that starts the clock.
-        const stamped = stampFirstDeadline(record, engine, chat_id);
+        const stamped = stampFirstDeadline(record, engine, chat_id, {
+          watching: req.query.watching === '1',
+        });
         if (stamped) {
           await updateBattleState(battle_id, stamped);
           record = { ...record, battle_data: stamped };
@@ -4973,6 +4985,7 @@ router.get('/battle/state', requireAuth, async (req, res) => {
       // your_turn in POST /battle/action for why this is a boolean.
       your_turn:     !bd.done && engine.currentActor()?.side === battleSideFor(record, chat_id),
       turn_deadline: bd.turn_deadline ?? null,
+      turn_provisional: !!bd.turn_provisional,
     });
   } catch (err) {
     serverError(res, err);
@@ -5342,6 +5355,7 @@ router.post('/battle/cast', requireAuth, async (req, res) => {
       // client starts counting from the same instant the server does.
       kind:          isClockedRecord(record) ? 'pvp' : 'pve',
       turn_deadline: battle_data.turn_deadline ?? null,
+      turn_provisional: !!battle_data.turn_provisional,
       // A BOOLEAN, not a side. Sides are absolute in storage and mirrored in the
       // opponent's view, so handing the client either frame's label invites it to
       // compare the wrong two things; whether it is your move is the same answer
@@ -5461,6 +5475,7 @@ router.post('/battle/action', requireAuth, async (req, res) => {
       // client starts counting from the same instant the server does.
       kind:          isClockedRecord(record) ? 'pvp' : 'pve',
       turn_deadline: battle_data.turn_deadline ?? null,
+      turn_provisional: !!battle_data.turn_provisional,
       // A BOOLEAN, not a side. Sides are absolute in storage and mirrored in the
       // opponent's view, so handing the client either frame's label invites it to
       // compare the wrong two things; whether it is your move is the same answer

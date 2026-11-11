@@ -3285,6 +3285,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   // the function for what it parks and why.
   let pendingTurnMeta = null;
   let yourTurn     = false;
+  // The server's first deadline is provisional until the acting player has
+  // actually got the board (see stampFirstDeadline). A provisional deadline on
+  // the player's OWN turn is a placeholder about to be replaced by the real
+  // thirty seconds, so it is never counted down on screen.
+  let turnProvisional = false;
   let turnTicker   = null;
   let expiryNudge  = 0;
 
@@ -3312,6 +3317,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (data.kind === 'pvp' && !isPvpBattle) { isPvpBattle = true; labelLeaveBtn(); }
     if (data.turn_deadline !== undefined) turnDeadline = data.turn_deadline;
     if (data.your_turn     !== undefined) yourTurn     = !!data.your_turn;
+    if (data.turn_provisional !== undefined) turnProvisional = !!data.turn_provisional;
   }
 
   // Called by every playback caller once the board has caught up and
@@ -3336,7 +3342,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // below must not fire — it asks the server to spend the turn, which while
     // the enemy's own turns are still animating is the client asking for the
     // player's turn to be thrown away.
-    if (processing) {
+    if (processing || (turnProvisional && yourTurn)) {
       box.classList.add('turn-timer--held');
       return;
     }
@@ -4038,7 +4044,16 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // first. The flag is what tells render() that whose turn it is has not been
     // settled yet.
     const hasOpeningPlayback = !reconnect && Array.isArray(logs) && logs.length > 0;
-    if (hasOpeningPlayback) processing = true;
+    if (hasOpeningPlayback) {
+      processing = true;
+      // The board arrives AFTER the opening, so every enemy that out-rolled the
+      // player is already flagged acted_this_round, and syncActedFromState()
+      // seeded them all as gone. Playback then drew the strip as [the one enemy
+      // swinging][the player's units], swapping that single portrait per enemy
+      // turn. Nobody has acted when round 1 opens — the playback walks the set
+      // forward from empty, one unit per turn, as it does mid-battle.
+      actedSoFar.clear();
+    }
     render();
     // A freshly created battle already contains round 1's opening enemy turns:
     // POST /battle/create runs engine.runAiTurns() before responding, so every
@@ -4051,7 +4066,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       if (ui?.battleLog) ui.battleLog.innerHTML = '';
       playbackSequence(logs, { leadIn: true })
         .catch(err => console.error('Initial playback failed:', err))
-        .finally(() => { processing = false; applyPendingTurnMeta(); render(); });
+        .finally(() => {
+          processing = false; applyPendingTurnMeta(); render();
+          // The opening is over and the board is the player's to read: THIS is
+          // when their first turn starts. Until now every read went out marked
+          // `watching`, which keeps the server's first clock provisional — the
+          // read below is the one that stamps the clean, full turn.
+          realtimeController?.refresh();
+        });
     }
   }
 
@@ -4150,6 +4172,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       // otherwise sit unseen behind a stream that died quietly. A solo battle
       // resolves the enemy inside the player's own request and needs no poll.
       heartbeatMs: isPvpBattle ? 2500 : 0,
+      // A read made while a batch is still animating must not start the
+      // player's first clock — see stampFirstDeadline in routes/index.js.
+      isWatching: () => processing,
     });
     if (lastLogId != null) realtimeController.setLastLogId(lastLogId);
     realtimeController.start();

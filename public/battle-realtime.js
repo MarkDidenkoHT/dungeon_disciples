@@ -9,7 +9,7 @@ import { api, getSessionToken } from './api.js';
 // The event is only a nudge. All state still comes from /battle/state, which
 // returns exactly the log entries this client has not seen — one source of truth.
 
-export function createBattleRealtimeController({ battleId, playerId, onStateChange, onError, heartbeatMs = 0 }) {
+export function createBattleRealtimeController({ battleId, playerId, onStateChange, onError, heartbeatMs = 0, isWatching = null }) {
   let es = null;
   let stopped = false;
   let lastLogId = null;
@@ -32,9 +32,11 @@ export function createBattleRealtimeController({ battleId, playerId, onStateChan
     if (!battleId || stopped) return inFlight || Promise.resolve();
     if (inFlight) return inFlight;
 
-    const url = lastLogId
-      ? `/battle/state?battle_id=${encodeURIComponent(battleId)}&chat_id=${encodeURIComponent(playerId)}&last_log_id=${lastLogId}`
-      : `/battle/state?battle_id=${encodeURIComponent(battleId)}&chat_id=${encodeURIComponent(playerId)}`;
+    // `watching`: the screen is still animating a batch, so this read must not
+    // be the arrival that starts the player's first clock (stampFirstDeadline).
+    const url = `/battle/state?battle_id=${encodeURIComponent(battleId)}&chat_id=${encodeURIComponent(playerId)}`
+              + (lastLogId ? `&last_log_id=${lastLogId}` : '')
+              + (isWatching?.() ? '&watching=1' : '');
 
     // The cursor moves only once the screen says it CONSUMED the entries.
     //
@@ -98,6 +100,7 @@ export function createBattleRealtimeController({ battleId, playerId, onStateChan
     // between full reads.
     onStateChange?.({
       kind: tip.kind, turn_deadline: tip.turn_deadline, your_turn: tip.your_turn,
+      turn_provisional: tip.turn_provisional,
     });
     const moved = tip.last_log_id != null && (lastLogId == null || tip.last_log_id > lastLogId);
     if (tip.stale || tip.done || moved) return refreshFromServer();
