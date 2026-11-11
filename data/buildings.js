@@ -340,16 +340,13 @@ function supplyLabel(faction, lang) {
 }
 
 // ── Unit tier ceiling ───────────────────────────────────────────────────────
-// Units stop at tier 2 until the Proving Grounds is raised: level 1 opens
-// tier 3, level 2 opens tier 4. A cap, not a path — which branch a unit takes is
-// still the building it stands in.
+// Units stop at tier 2 until the Proving Grounds is raised: each level opens
+// the next tier, through tier 5 at level 3. A cap, not a path — which branch a
+// unit takes is still the building it stands in.
 const BASE_MAX_UNIT_TIER = 2;
 
-// Tier 4 is the last tier that EXISTS (see data/units.js — nothing is authored
-// above t: 4). The Proving Grounds used to max at 2 and so could never overshoot
-// it; its third level pays in litanies rather than tiers, so the ceiling is now
-// clamped here instead of being read straight off the building's level.
-const MAX_UNIT_TIER = 4;
+// Keep the cap at the highest authored unit tier so it cannot overshoot content.
+const MAX_UNIT_TIER = 5;
 
 function maxUnitTier(buildingsData) {
   return Math.min(
@@ -451,7 +448,8 @@ const BUILDING_POOLS = {
       { id: 'sun_temple',          label: 'Sun Temple', label_ru: 'Храм Солнца',          category: 'barracks', tier: 2, unit_id: 'e21',  upgrades: ['mithrails_champion_keep', 'mithrails_warden_keep'], cost: { gold: 100 } },
       { id: 'mithrails_warden_keep', label: 'Mithrails Warden Keep', label_ru: 'Твердыня хранителей Митраила', category: 'barracks', tier: 3, unit_id: 'e212', upgrades: ['mithrails_paragon_keep'], cost: { gold: 200 } },
       { id: 'mithrails_paragon_keep', label: 'Mithrails Paragon Keep', label_ru: 'Твердыня идеалов Митраила', category: 'barracks', tier: 4, unit_id: 'e2121', upgrades: [], cost: { gold: 400 } },
-      { id: 'mithrails_exemplar_keep', label: 'Mithrails Exemplar Keep', label_ru: 'Твердыня экземпларов Митраила', category: 'barracks', tier: 4, unit_id: 'e2111', upgrades: [], cost: { gold: 400 } },
+      { id: 'mithrails_exemplar_keep', label: 'Mithrails Exemplar Keep', label_ru: 'Твердыня экземпларов Митраила', category: 'barracks', tier: 4, unit_id: 'e2111', upgrades: ['mithrails_ascended_exemplar_keep'], cost: { gold: 400 } },
+      { id: 'mithrails_ascended_exemplar_keep', label: 'Ascended Exemplar Keep', label_ru: 'Твердыня вознесённых экземпларов', category: 'barracks', tier: 5, unit_id: 'e21111', upgrades: [], cost: { gold: 800 } },
       { id: 'mithrails_champion_keep', label: 'Mithrails Champion Keep', label_ru: 'Твердыня поборников Митраила', category: 'barracks', tier: 3, unit_id: 'e211', upgrades: ['mithrails_exemplar_keep'], cost: { gold: 200 } },
       { id: 'priest_shrine',       label: 'Priest Shrine', label_ru: 'Святилище жрецов',       category: 'barracks', tier: 2, unit_id: 'e22',  upgrades: ['ardent_shrine', 'seraphic_shrine'], cost: { gold: 100 } },
       { id: 'ardent_shrine',       label: 'Ardent Shrine', label_ru: 'Ревностное святилище',       category: 'barracks', tier: 3, unit_id: 'e221', upgrades: ['high_priest_shrine'],     cost: { gold: 200 } },
@@ -553,8 +551,8 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 320, Crystals_Life: 110 }, 3: { gold: 560, Crystals_Life: 190 } } },
       { id: 'proving_grounds', label: 'Proving Grounds', label_ru: 'Ристалище', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         art: 'proving_grounds',
-        desc: 'Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4. Level 3 teaches the litanies.',
-        desc_ru: 'Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4. 3 уровень обучает литаниям.',
+        desc: 'Raises the tier your units may reach: level 1 allows tier 3, level 2 tier 4, and level 3 tier 5 and the litanies.',
+        desc_ru: 'Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4, 3 уровень — ранг 5 и литании.',
         cost: { gold: 200, Crystals_Life: 60 },
         upgrade_costs: { 2: { gold: 500, Crystals_Life: 160 }, 3: { gold: 900, Crystals_Life: 290 } } },
       { id: 'training_grounds', label: 'Training Grounds', label_ru: 'Тренировочный двор', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
@@ -737,8 +735,8 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 320, Crystals_Fire: 110 }, 3: { gold: 560, Crystals_Fire: 190 } } },
       { id: 'proving_grounds', label: 'Proving Grounds', label_ru: 'Ристалище', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         art: 'proving_grounds',
-        desc: 'Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4. Level 3 teaches the chants.',
-        desc_ru: 'Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4. 3 уровень обучает распевам.',
+        desc: 'Raises the tier your units may reach: level 1 allows tier 3, level 2 tier 4, and level 3 tier 5 and the chants.',
+        desc_ru: 'Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4, 3 уровень — ранг 5 и распевы.',
         cost: { gold: 200, Crystals_Fire: 60 },
         upgrade_costs: { 2: { gold: 500, Crystals_Fire: 160 }, 3: { gold: 900, Crystals_Fire: 290 } } },
       { id: 'training_grounds', label: 'Training Grounds', label_ru: 'Тренировочный двор', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
@@ -938,8 +936,8 @@ const BUILDING_POOLS = {
         upgrade_costs: { 2: { gold: 320, Crystals_Death: 110 }, 3: { gold: 560, Crystals_Death: 190 } } },
       { id: 'proving_grounds', label: 'Proving Grounds', label_ru: 'Ристалище', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
         art: 'proving_grounds',
-        desc: 'Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4. Level 3 teaches the dirges.',
-        desc_ru: 'Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4. 3 уровень обучает панихидам.',
+        desc: 'Raises the tier your units may reach: level 1 allows tier 3, level 2 tier 4, and level 3 tier 5 and the dirges.',
+        desc_ru: 'Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4, 3 уровень — ранг 5 и панихиды.',
         cost: { gold: 200, Crystals_Death: 60 },
         upgrade_costs: { 2: { gold: 500, Crystals_Death: 160 }, 3: { gold: 900, Crystals_Death: 290 } } },
       { id: 'training_grounds', label: 'Training Grounds', label_ru: 'Тренировочный двор', category: 'barracks_up', unit_id: null, tier: 1, upgrades: [],
@@ -1006,6 +1004,7 @@ const UNIT_UPGRADE_PATHS = {
            { unit_id: 'e212', building_id: 'mithrails_warden_keep',   label: 'Mithrails Warden Keep', label_ru: 'Твердыня хранителей Митраила' }],
     e212: [{ unit_id: 'e2121', building_id: 'mithrails_paragon_keep', label: 'Mithrails Paragon Keep', label_ru: 'Твердыня идеалов Митраила' }],
     e211: [{ unit_id: 'e2111', building_id: 'mithrails_exemplar_keep', label: 'Mithrails Exemplar Keep', label_ru: 'Твердыня экземпларов Митраила' }],
+    e2111: [{ unit_id: 'e21111', building_id: 'mithrails_ascended_exemplar_keep', label: 'Ascended Exemplar Keep', label_ru: 'Твердыня вознесённых экземпларов' }],
     e22:  [{ unit_id: 'e221', building_id: 'ardent_shrine',     label: 'Ardent Shrine', label_ru: 'Ревностное святилище' },
            { unit_id: 'e222', building_id: 'seraphic_shrine',   label: 'Seraphic Shrine', label_ru: 'Серафическое святилище' }],
     e221: [{ unit_id: 'e2211', building_id: 'high_priest_shrine', label: 'High Priest Shrine', label_ru: 'Святилище верховных жрецов' }],
@@ -1397,6 +1396,7 @@ const BUILDING_COSTS = {
   mithrails_warden_keep:         { gold: 96, Crystals_Life: 48, Crystals_Air: 12, Crystals_Frost: 12 },
   mithrails_paragon_keep:        { gold: 160, Crystals_Life: 80, Crystals_Air: 20, Crystals_Frost: 20 },
   mithrails_exemplar_keep:       { gold: 160, Crystals_Life: 80, Crystals_Air: 20, Crystals_Fire: 20 },
+  mithrails_ascended_exemplar_keep: { gold: 320, Crystals_Life: 160, Crystals_Air: 40, Crystals_Fire: 40 },
   priest_shrine:                 { gold: 60, Crystals_Life: 30, Crystals_Nature: 8 },
   ardent_shrine:                 { gold: 96, Crystals_Life: 48, Crystals_Fire: 12, Crystals_Nature: 12 },
   high_priest_shrine:            { gold: 160, Crystals_Life: 80, Crystals_Fire: 20, Crystals_Nature: 20 },

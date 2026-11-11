@@ -22,7 +22,7 @@ const BARK_UNIT_GROUPS = {
   empire_crossbows: ['e111', 'e1111'],
   empire_cavalry: ['e12', 'e121', 'e1211'],
   empire_standards: ['e13', 'e131', 'e1311'],
-  empire_templars: ['e21', 'e211', 'e2111', 'e212', 'e2121'],
+  empire_templars: ['e21', 'e211', 'e2111', 'e21111', 'e212', 'e2121'],
   empire_priests: ['e2', 'e22', 'e221', 'e2211'],
   empire_sisters: ['e8', 'e81', 'e811', 'e8111', 'e82', 'e821', 'e8211'],
   empire_bound_sentinels: ['e3', 'e31', 'e311', 'e3111'],

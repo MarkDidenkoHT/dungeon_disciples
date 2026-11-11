@@ -728,7 +728,7 @@ const BOT_TEMPLATES = [
     name: 'Demon Warriors',
     bands: {
       band_500: [
-        { unit: 'd1111',     cell: 0, item_id: 'crystal_shield' },
+        { unit: 'd1111',     cell: 0, item_id: 'aldras_devotion' },
         { unit: 'h_d_1_a41', cell: 4, item_id: 'burning_fury', hero: true,
           spells: [{ spell_id: 'd_spell_3', power: 3 }, { spell_id: 'd_spell_9', power: 5 }] },
         // The Archchanter was a COLUMN on cells 1 and 3. Two Court tiles stand
@@ -737,11 +737,11 @@ const BOT_TEMPLATES = [
         // body instead of one tall one — which is a second target to kill and a
         // second resist aura (death from the Peer, life from the Herald).
         { unit: 'd6212',     cell: 1, item_id: 'ember_mantle' },
-        { unit: 'd6211',     cell: 3 },
+        { unit: 'd6211',     cell: 3, item_id: 'aldras_patience' },
         { unit: 'd2111',     cell: 5, item_id: 'caster_hat' },
       ],
       band_300: [
-        { unit: 'd111',     cell: 0, item_id: 'crystal_shield' },
+        { unit: 'd111',     cell: 0, item_id: 'aldras_devotion' },
         { unit: 'h_d_1_a3', cell: 4, item_id: 'burning_fury', hero: true,
           spells: [{ spell_id: 'd_spell_3', power: 2 }, { spell_id: 'd_spell_9', power: 4 }] },
         // Was the Chanter, a COLUMN. Praetor's column is 2 Loyalty and the

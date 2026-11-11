@@ -173,14 +173,6 @@ const ITEM_DEFS = {
     tag_required: 'Knight',
     adds_tag:     null,
     stat_mods:    { hp: 5, fire_resist: 5, death_resist: 5 },
-    // Was `radiance 3` and locked to two unit ids by `allowed_unit_ids`. The
-    // lock is gone — `tag_required: 'Knight'` is the gate that was doing the
-    // real work — so any Knight may carry it now.
-    //
-    // Separately and NOT fixed by that: data/embark.js hands this to
-    // crimson_basilica's Exalted Herald, which is Demon/Holy. It failed the
-    // allowlist before and it fails the Knight gate now, so that encounter slot
-    // is still pairing an item with a body that cannot legally wear it.
     passive:      'radiance 2',
     icon:         'aegis_of_the_first_ward',
     rarity:       'mythic',
@@ -398,14 +390,6 @@ const ITEM_DEFS = {
     cost:         { vial_of_pure_blood: 1, Gold: 50 },
     item_cost:    { life_charm: 2},
   },
-  // The defensive half of the Choir pair — see emberchoir_pauldrons.
-  //
-  // tag_required 'Warrior' where the plate has none, and for the opposite
-  // reason: warding counts the carrier's WARRIOR allies, so on a back-line
-  // Caster it would still pay out in full while the unit wearing it is not the
-  // one being hit. Putting it on a Warrior puts it where the physical blows
-  // land, which is the whole point of a ward. Stats follow that too — armor and
-  // HP, not power.
   infernal_bulwark: {
     key:          'infernal_bulwark',
     name:         'Infernal Bulwark',
@@ -578,7 +562,6 @@ const ITEM_DEFS = {
     name_ru:      'Сфера Света',
     faction:      null,
     tag_required: 'Holy',
-    requires_action: 'damage',
     adds_tag:     null,
     stat_mods:    { hp: 2 },
     passive:      'stoicism 1',
@@ -599,14 +582,6 @@ const ITEM_DEFS = {
     passive:      null,
     icon:         'padded_armor',
     rarity:       'common',
-    // THE ONLY MATERIAL-FREE BLUEPRINT, and deliberately so: this is the item
-    // onboarding forges (TUTORIAL_CRAFT_KEY in public/screens/items.js). It
-    // used to cost a crystal_dust, which drops in glittering_abyss and nowhere
-    // else — while the tutorial sends the player to crimson_basilica level 1,
-    // whose rewards contain none. The Craft button stayed disabled, the
-    // craft_item spotlight silently never appeared, and the four equip steps
-    // behind it (all gated on heroNeedsArmour) never ran. Gold only, so the
-    // step can be reached from the path the tutorial actually walks.
     cost:         { Gold: 50 },
   },
   iron_armor: {
@@ -716,16 +691,6 @@ const ITEM_DEFS = {
     cost: { Gold: 350, aggrails_signet: 2, grave_dust: 2 },
     item_cost:    { fire_staff: 1, orb_of_fire: 1, dragon_scale: 1 },
   },
-  // The Choir's front line is Demon AND Warrior to a unit (Black Castellan,
-  // Imp, Tormentor, Praetor...), which is what makes this and infernal_bulwark
-  // a pair: choir 2 scales off the Demon half, warding 2 off the Warrior half,
-  // and one body counts for both.
-  //
-  // Priced as an epic because it is dark_determination — same { hp 2,
-  // initiative 2 } — carrying a RANK 2 muster instead of a rank 1, plus the
-  // fire resist. No tag_required: choir 2 already pays nothing to a unit with
-  // no Demon allies, so the item gates itself on whether the army is a Choir
-  // army rather than on what the wearer is.
   emberchoir_pauldrons: {
     key:          'emberchoir_pauldrons',
     name:         'Emberchoir Pauldrons',
@@ -1181,9 +1146,6 @@ const ITEM_DEFS = {
     name_ru:      'Костяной Барьер',
     faction:      null,
     tag_required: 'Skeleton',
-    // A Skeleton reading its own bones. The Barrier is the one piece of armour
-    // that TEACHES — which is what puts a Death Knight in a college lineup
-    // without changing a thing about the Death Knight.
     adds_tag:     'Caster',
     stat_mods:    { hp: 3, armor: 5 },
     passive:      'bone_armor 1',
