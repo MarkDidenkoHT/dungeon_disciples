@@ -5872,6 +5872,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .battle-grid--bark { z-index: 20; }
 
 .bark-toast {
+  --bark-faction-accent: #e0bb62;
+  --bark-glow: rgba(224, 187, 98, 0.35);
   position: absolute;
   inset: 4px;
   box-sizing: border-box;
@@ -5899,10 +5901,38 @@ button.cost-bar-item:active { transform: scale(0.9); }
   text-wrap: balance;
   overflow-wrap: anywhere;
   text-shadow: 0 0 8px rgba(224, 187, 98, 0.45);
-  box-shadow: 0 0 14px rgba(224, 187, 98, 0.35), 0 3px 10px rgba(0,0,0,0.65);
+  box-shadow: inset 3px 0 0 var(--bark-faction-accent), 0 0 14px var(--bark-glow), 0 3px 10px rgba(0,0,0,0.65);
   pointer-events: none;
   z-index: 12;
   animation: bark-toast-in-square 0.18s ease-out;
+}
+
+.bark-toast[data-faction="empire"] { --bark-faction-accent: #e8d8a4; }
+.bark-toast[data-faction="grail_of_sorrow"] { --bark-faction-accent: #d34b55; }
+.bark-toast[data-faction="choir_of_the_cursed"] { --bark-faction-accent: #79c65a; }
+
+.bark-toast[data-region="crimson_basilica"] {
+  --bark-glow: rgba(220, 48, 62, 0.5);
+  background: rgba(76, 8, 17, 0.97);
+  border-color: #d7444f;
+  color: #fff4f1;
+  text-shadow: 0 0 8px rgba(255, 95, 105, 0.55);
+}
+
+.bark-toast[data-region="chamber_of_unrest"] {
+  --bark-glow: rgba(83, 190, 75, 0.42);
+  background: rgba(7, 18, 10, 0.97);
+  border-color: #48a84c;
+  color: #c9f2c5;
+  text-shadow: 0 0 8px rgba(94, 210, 89, 0.5);
+}
+
+.bark-toast[data-region="glittering_abyss"] {
+  --bark-glow: rgba(74, 164, 235, 0.48);
+  background: rgba(8, 26, 55, 0.97);
+  border-color: #63baf2;
+  color: #e0f3ff;
+  text-shadow: 0 0 8px rgba(99, 186, 242, 0.5);
 }
 
 .prep-bark-toast--ok {

@@ -475,6 +475,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     if (!text) return;
     const cell = root.querySelector(`.battle-cell[data-id="${actorId}"]`);
     if (!cell) return;
+    const speaker = state.combatants.find(c => String(c.id) === String(actorId));
     cell.classList.add('battle-cell--bark-active');
     // The grid has to come above its own frame art for the toast to be visible
     // at all — see .battle-grid--bark in style.css.
@@ -482,6 +483,14 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     grid?.classList.add('battle-grid--bark');
     const toast = document.createElement('div');
     toast.className = opts.litany ? 'bark-toast bark-toast--litany' : 'bark-toast';
+    toast.dataset.region = region_id || '';
+    const factionCode = speaker?.unit_data?.f;
+    const faction = {
+      e: 'empire',
+      g: 'grail_of_sorrow',
+      d: 'choir_of_the_cursed',
+    }[factionCode] || (speaker?.side === 'player' ? player?.faction : null);
+    if (faction) toast.dataset.faction = faction;
     toast.textContent = text;
     cell.appendChild(toast);
 

@@ -1086,6 +1086,7 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
       return [{
         id,
         unitId: def?.id ?? unit.unit_data?.unit_id ?? unit.unit_data?.id,
+        factionCode: def?.f,
         unit_name: unitName(unit),
         calling: unitCallingId(unit),
         alive: unit.unit_data?.alive !== false && hp > 0,
@@ -1128,6 +1129,13 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
     grid?.classList.add('battle-grid--bark');
     const toast = document.createElement('div');
     toast.className = 'bark-toast prep-bark-toast';
+    toast.dataset.region = region_id || '';
+    const faction = {
+      e: 'empire',
+      g: 'grail_of_sorrow',
+      d: 'choir_of_the_cursed',
+    }[match.lead.factionCode] || player?.faction;
+    if (faction) toast.dataset.faction = faction;
     toast.textContent = line;
     cell.appendChild(toast);
     setTimeout(() => {
