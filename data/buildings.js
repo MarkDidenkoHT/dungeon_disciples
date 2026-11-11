@@ -82,7 +82,7 @@ const BUILDING_MAX_LEVELS = {
   blacksmith:       2,
   infirmary:        3,
   crystal_mine:     2,
-  mage_guild:       3,   // one level per spell tier (SPELL_TIERS in data/spells.js)
+  mage_guild:       3,
   messenger_post:   4,
   mercenary_hall:   3,
   supply_depot:     3,
