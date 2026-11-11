@@ -723,6 +723,39 @@ const BOT_TEMPLATES = [
     },
   },
   {
+    id: 'empire_metallon_forge',
+    faction: 'empire',
+    name: 'Metallon Forge',
+    bands: {
+      band_500: [
+        { unit: 'dm_e111',   cell: 0, item_id: 'bone_barrier' },
+        { unit: 'dm_e1211',  cell: 1, item_id: 'gift_of_eternity' },
+        { unit: 'e4321',     cell: 2, item_id: 'malgraths_sigil' },
+        { unit: 'e6111',     cell: 3, item_id: 'codex_aeternum' },
+        // The six requested bodies need a third front-liner, so the armoured
+        // Artificer takes that slot beside its two guards.
+        { unit: 'h_e_3_a41', cell: 4, item_id: 'knights_oath', hero: true,
+          spells: [{ spell_id: 'e_spell_3', power: 3 }, { spell_id: 'e_spell_9', power: 5 }] },
+        { unit: 'dm_e1211',  cell: 5, item_id: 'darkness' },
+      ],
+    },
+  },
+  {
+    id: 'empire_executioners',
+    faction: 'empire',
+    name: 'Executioners',
+    bands: {
+      band_500: [
+        { unit: 'e1211',     cell: 0, item_id: 'knights_oath' },
+        { unit: 'e1131',     cell: 2, item_id: 'sanctified_bulwark' },
+        { unit: 'h_e_2_b41', cell: 3, item_id: 'darkness', hero: true,
+          spells: [{ spell_id: 'e_spell_10', power: 3 }, { spell_id: 'e_spell_9', power: 5 }] },
+        { unit: 'e1131',     cell: 4, item_id: 'might_of_the_pure' },
+        { unit: 'e8111',     cell: 5, item_id: 'champions_belt' },
+      ],
+    },
+  },
+  {
     id: 'choir_demon_warriors',
     faction: 'choir_of_the_cursed',
     name: 'Demon Warriors',

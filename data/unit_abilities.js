@@ -3136,10 +3136,6 @@ const UNIT_ABILITIES = {
     params: { shared_pool_stat: 'damage', shared_pool_value: 6, tag_required: 'Holy' },
     effect_name: 'divided_flame',
   },
-  // The Holy arm of the shared-damage pool. Rank 2 doubles the pot exactly as
-  // its siblings do — divided_flame goes 6 -> 12 for Demons and rite_of_battle
-  // 6 -> 12 for Warriors — so the three tag variants stay one ability with
-  // three audiences rather than three balance curves.
   'inner_fire 2': {
     id: 'inner_fire 2',
     name: 'Divided Flame',

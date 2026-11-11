@@ -304,8 +304,8 @@ const BT = {
   // pool now stands, which is the number the player is deciding against.
   logShieldOn:   { en: (a, t, v, tot) => `${a} shields ${t} for <span class="log-val-shield">${v}</span> (${tot} total)`,
                    ru: (a, t, v, tot) => `${a} даёт ${t} щит на <span class="log-val-shield">${v}</span> (всего ${tot})` },
-  logDecayOn:    { en: (a, t, v, tot) => `${a} decays ${t} by <span class="log-val">${v}</span> (${tot} total)`,
-                   ru: (a, t, v, tot) => `${a} насылает на ${t} тлен <span class="log-val">${v}</span> (всего ${tot})` },
+  logDecayOn:    { en: (a, t, v, tot) => `${a} decays ${t} by <span class="log-val">${Math.round(v)}</span> (${Math.round(tot)} total)`,
+                   ru: (a, t, v, tot) => `${a} насылает на ${t} тлен <span class="log-val">${Math.round(v)}</span> (всего ${Math.round(tot)})` },
   logStatus:     { en: (a, p, t, v) => `${a} applied <span class="log-passive">${p}</span> to ${t} <span class="log-dot">(${v}/turn)</span>`,
                    ru: (a, p, t, v) => `${a} наложил <span class="log-passive">${p}</span> на ${t} <span class="log-dot">(${v}/ход)</span>` },
   logDotResisted:{ en: (a, p, t) => `${t} resisted <span class="log-passive">${p}</span> from ${a}`,
