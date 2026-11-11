@@ -65,6 +65,21 @@ const BARK_UNIT_GROUPS = {
   choir_followers: ['d5', 'd51', 'd511', 'd5111'],
   choir_cantors: ['d52', 'd521', 'd5211'],
 
+  // Embark encounters use separate definition IDs from player rosters.
+  basilica_enemies: [
+    'opb_e1', 'opb_e2', 'opb_e3', 'opb_e21', 'opb_e5', 'opb_e11',
+    'opb_e41', 'opb_e31', 'opb_e51', 'opb_e311', 'opb_e411', 'opb_e111',
+    'opb_e211', 'opb_e212', 'opb_e3112', 'opb_e511',
+  ],
+  abyss_enemies: [
+    'mv_e3', 'mv_e2', 'mv_e1', 'mv_e4', 'mv_e21', 'mv_e31',
+    'mv_e11', 'mv_e41', 'mv_e311', 'mv_e211', 'mv_e111', 'mv_e411',
+  ],
+  chamber_enemies: [
+    'dm_e1', 'dm_2', 'dm_e3', 'dm_e4', 'dm_e11', 'dm_e111',
+    'dm_21', 'dm_e31', 'dm_e41', 'dm_211', 'dm_e311', 'dm_e411',
+  ],
+
   // Hero branches used by the battle-prep litany toast.
   empire_hero_infantry: ['h_e_1', 'h_e_11', 'h_e_111', 'h_e_1111', 'h_e_1112', 'h_e_12', 'h_e_121', 'h_e_1211', 'h_e_1212'],
   empire_hero_templar: ['h_e_2', 'h_e_2_a2', 'h_e_2_a3', 'h_e_2_a41', 'h_e_2_a42', 'h_e_2_b2', 'h_e_2_b3', 'h_e_2_b41', 'h_e_2_b42'],
@@ -580,6 +595,83 @@ const COMBAT_BARKS = [
     trigger: 'on_kill', actor: { group: 'choir_cantors' },
     lines: ['The silence belongs to Aggrail.', 'A pause. The song goes on.'],
     lines_ru: ['Тишина принадлежит Агграилу.', 'Пауза. Песнь идёт дальше.'],
+  },
+
+  // Embark enemies speak in the language of their region.
+  {
+    trigger: 'on_hit', actor: { group: 'basilica_enemies' },
+    lines: ['Aggrail sees your weakness.', 'Bleed. The Basilica is watching.'],
+    lines_ru: ['Агграил видит твою слабость.', 'Кровоточишь. Базилика наблюдает.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'basilica_enemies' },
+    lines: ['Another soul for the altar.', 'Your blood joins the holy tide.'],
+    lines_ru: ['Ещё одна душа для алтаря.', 'Твоя кровь влилась в святой поток.'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'basilica_enemies' },
+    lines: ['Aggrail, take what remains.', 'My blood was always yours.'],
+    lines_ru: ['Агграил, забери остатки.', 'Моя кровь всегда принадлежала тебе.'],
+  },
+  {
+    trigger: 'on_buff', actor: { group: 'basilica_enemies' },
+    lines: ['The blood oath binds us.', 'Stand fast. Aggrail grants us strength.'],
+    lines_ru: ['Кровавая клятва связывает нас.', 'Держись. Агграил дарует нам силу.'],
+  },
+  {
+    trigger: 'on_healed', actor: { group: 'basilica_enemies' },
+    lines: ['The blood returns to its vessel.', 'Aggrail has not finished with me.'],
+    lines_ru: ['Кровь возвращается в сосуд.', 'Агграил ещё не окончил со мной.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'abyss_enemies' },
+    lines: ['The cold has claimed warmer hearts.', 'Your flame gutters in the deep.'],
+    lines_ru: ['Холод погасил сердца горячее.', 'Твой огонь меркнет в глубине.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'abyss_enemies' },
+    lines: ['The deep keeps what it takes.', 'One more glint beneath the ice.'],
+    lines_ru: ['Бездна хранит добытое.', 'Ещё один отблеск подо льдом.'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'abyss_enemies' },
+    lines: ['Let the crystal keep my shape.', 'I return to the frozen dark.'],
+    lines_ru: ['Пусть кристалл сохранит мой облик.', 'Я возвращаюсь в ледяную тьму.'],
+  },
+  {
+    trigger: 'on_buff', actor: { group: 'abyss_enemies' },
+    lines: ['The crystal answers our call.', 'Hold fast. The frost will shield you.'],
+    lines_ru: ['Кристалл отвечает на зов.', 'Держись. Иней защитит тебя.'],
+  },
+  {
+    trigger: 'on_healed', actor: { group: 'abyss_enemies' },
+    lines: ['The crystal knits what was broken.', 'Cold gathers. I endure.'],
+    lines_ru: ['Кристалл сращивает осколки.', 'Холод крепнет. Я держусь.'],
+  },
+  {
+    trigger: 'on_hit', actor: { group: 'chamber_enemies' },
+    lines: ['The grave has room for you.', 'Your living breath offends the dead.'],
+    lines_ru: ['В могиле найдётся место и тебе.', 'Твоё дыхание оскорбляет мёртвых.'],
+  },
+  {
+    trigger: 'on_kill', actor: { group: 'chamber_enemies' },
+    lines: ['Be still among the restless.', 'The Chamber welcomes its own.'],
+    lines_ru: ['Упокойся среди неупокоенных.', 'Чертог принимает своих.'],
+  },
+  {
+    trigger: 'on_death', actor: { group: 'chamber_enemies' },
+    lines: ['The vow outlives this husk.', 'Back to the dark between bells.'],
+    lines_ru: ['Клятва переживёт эту оболочку.', 'Назад во тьму меж колоколов.'],
+  },
+  {
+    trigger: 'on_buff', actor: { group: 'chamber_enemies' },
+    lines: ['The oath binds bone to bone.', 'Rise. The vow is not yet paid.'],
+    lines_ru: ['Клятва сковывает кость с костью.', 'Восстань. Долг ещё не уплачен.'],
+  },
+  {
+    trigger: 'on_healed', actor: { group: 'chamber_enemies' },
+    lines: ['The grave rejects me once more.', 'Death must wait at the threshold.'],
+    lines_ru: ['Могила вновь отвергает меня.', 'Смерти придётся ждать у порога.'],
   },
 
   // Hero voice for the prep-screen litany toast; these are branch-specific.
