@@ -5907,19 +5907,44 @@ button.cost-bar-item:active { transform: scale(0.9); }
   animation: bark-toast-in-square 0.18s ease-out;
 }
 
-.bark-toast[data-faction="empire"] { --bark-faction-accent: #e8d8a4; }
-.bark-toast[data-faction="grail_of_sorrow"] { --bark-faction-accent: #d34b55; }
-.bark-toast[data-faction="choir_of_the_cursed"] { --bark-faction-accent: #79c65a; }
+.bark-toast[data-faction="empire"] {
+  --bark-faction-accent: #d9a341;
+  --bark-glow: rgba(217, 163, 65, 0.42);
+  background: rgba(48, 36, 14, 0.97);
+  border-color: #d9a341;
+  color: #fff5d4;
+  text-shadow: 0 0 8px rgba(255, 231, 160, 0.5);
+}
 
-.bark-toast[data-region="crimson_basilica"] {
+.bark-toast[data-faction="grail_of_sorrow"] {
+  --bark-faction-accent: #7fb03a;
+  --bark-glow: rgba(197, 47, 58, 0.42);
+  background: rgba(35, 14, 20, 0.97);
+  border-color: #b8202e;
+  color: #e4efc6;
+  text-shadow: 0 0 8px rgba(127, 176, 58, 0.45);
+}
+
+.bark-toast[data-faction="choir_of_the_cursed"] {
+  --bark-faction-accent: #e0761f;
+  --bark-glow: rgba(224, 118, 31, 0.42);
+  background: rgba(35, 20, 31, 0.97);
+  border-color: #e0761f;
+  color: #ffe0bb;
+  text-shadow: 0 0 8px rgba(120, 98, 127, 0.55);
+}
+
+.bark-toast[data-speaker="enemy"][data-region="crimson_basilica"] {
+  --bark-faction-accent: #fff4f1;
   --bark-glow: rgba(220, 48, 62, 0.5);
   background: rgba(76, 8, 17, 0.97);
-  border-color: #d7444f;
+  border-color: #fff4f1;
   color: #fff4f1;
   text-shadow: 0 0 8px rgba(255, 95, 105, 0.55);
 }
 
-.bark-toast[data-region="chamber_of_unrest"] {
+.bark-toast[data-speaker="enemy"][data-region="chamber_of_unrest"] {
+  --bark-faction-accent: #48a84c;
   --bark-glow: rgba(83, 190, 75, 0.42);
   background: rgba(7, 18, 10, 0.97);
   border-color: #48a84c;
@@ -5927,7 +5952,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
   text-shadow: 0 0 8px rgba(94, 210, 89, 0.5);
 }
 
-.bark-toast[data-region="glittering_abyss"] {
+.bark-toast[data-speaker="enemy"][data-region="glittering_abyss"] {
+  --bark-faction-accent: #63baf2;
   --bark-glow: rgba(74, 164, 235, 0.48);
   background: rgba(8, 26, 55, 0.97);
   border-color: #63baf2;

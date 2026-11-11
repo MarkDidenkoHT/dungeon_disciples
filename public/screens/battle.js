@@ -483,14 +483,19 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     grid?.classList.add('battle-grid--bark');
     const toast = document.createElement('div');
     toast.className = opts.litany ? 'bark-toast bark-toast--litany' : 'bark-toast';
-    toast.dataset.region = region_id || '';
     const factionCode = speaker?.unit_data?.f;
     const faction = {
       e: 'empire',
       g: 'grail_of_sorrow',
       d: 'choir_of_the_cursed',
-    }[factionCode] || (speaker?.side === 'player' ? player?.faction : null);
-    if (faction) toast.dataset.faction = faction;
+    }[factionCode];
+    if (speaker?.side === 'enemy' && region_id) {
+      toast.dataset.speaker = 'enemy';
+      toast.dataset.region = region_id;
+    } else {
+      const barkFaction = speaker?.side === 'player' ? player?.faction : faction;
+      if (barkFaction) toast.dataset.faction = barkFaction;
+    }
     toast.textContent = text;
     cell.appendChild(toast);
 
