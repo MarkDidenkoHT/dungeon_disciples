@@ -188,7 +188,7 @@ const ITEM_DEFS = {
     tag_required: 'Engineer',
     adds_tag:     'Construct',
     stat_mods:    { hp: 4, armor: 5 },
-    passive:      'sole_artificer 1',
+    passive:      'lancing_steel 2',
     icon:         'clockwork_plate',
     rarity:       'mythic',
     unique:       true,
@@ -300,10 +300,6 @@ const ITEM_DEFS = {
     rarity:       'rare',
     cost:         { aggrails_signet: 2, Gold: 90, Crystals_Life: 25 },
   },
-  // Fear is positional: it only reaches the enemies ADJACENT to the bearer
-  // (range 1), so this is a front-line shield and the armor says so. Open to
-  // every faction — nothing in fear 2 counts allies or tags, so there is no
-  // roster it reads differently on.
   face_of_dread: {
     key:          'face_of_dread',
     name:         'Face of Dread',

@@ -3636,7 +3636,7 @@ const UNIT_ABILITIES = {
   'weight_of_steel 1': {
     id: 'weight_of_steel 1',
     name: 'Weight of Steel',
-    name_ru: "Тяжесть стали",
+    name_ru: "Тяжесть Стали",
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
@@ -3647,7 +3647,7 @@ const UNIT_ABILITIES = {
   'weight_of_steel 2': {
     id: 'weight_of_steel 2',
     name: 'Weight of Steel',
-    name_ru: "Тяжесть стали",
+    name_ru: "Тяжесть Стали",
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
@@ -3658,7 +3658,7 @@ const UNIT_ABILITIES = {
   'weight_of_steel 3': {
     id: 'weight_of_steel 3',
     name: 'Weight of Steel',
-    name_ru: "Тяжесть стали",
+    name_ru: "Тяжесть Стали",
     rank: 3,
     type: 'passive',
     trigger: 'on_hit',
@@ -3669,7 +3669,7 @@ const UNIT_ABILITIES = {
   'lancing_steel 1': {
     id: 'lancing_steel 1',
     name: 'Lancing Steel',
-    name_ru: 'Пронзающая сталь',
+    name_ru: 'Пронзающая Сталь',
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -3680,7 +3680,7 @@ const UNIT_ABILITIES = {
   'lancing_steel 2': {
     id: 'lancing_steel 2',
     name: 'Lancing Steel',
-    name_ru: 'Пронзающая сталь',
+    name_ru: 'Пронзающая Сталь',
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -3691,7 +3691,7 @@ const UNIT_ABILITIES = {
   'lancing_steel 3': {
     id: 'lancing_steel 3',
     name: 'Lancing Steel',
-    name_ru: 'Пронзающая сталь',
+    name_ru: 'Пронзающая Сталь',
     rank: 3,
     type: 'passive',
     trigger: 'on_battle_start',
