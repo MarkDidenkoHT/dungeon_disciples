@@ -631,6 +631,7 @@ function concedeBotIfOutmatched(engine) {
   engine.opponentConceded = true;
   engine.pushLog({
     type: 'notice',
+    concession: true,
     message: 'The bot concedes — its remaining fighters cannot turn the battle.',
     message_ru: 'Противник сдаётся — оставшиеся бойцы уже не могут переломить ход битвы.',
   });

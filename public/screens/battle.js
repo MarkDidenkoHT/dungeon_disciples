@@ -3832,8 +3832,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // The outcome is a single word at the head of the rewards panel - the old
     // 3rem emoji banner is gone. Every branch below prefixes it, including the
     // failure paths, so the player is always told how the battle ended.
+    const opponentConceded = state.opponent_conceded || (state.log || []).some(entry =>
+      entry.concession === true
+      || (entry.type === 'notice' && /the bot concedes/i.test(entry.message || '')));
     const outcomeHtml =
-      `<div class="result-outcome ${won ? 'result-outcome--win' : 'result-outcome--loss'}">${won ? BTx('victory') : BTx('defeat')}${state.opponent_conceded ? `<div class="result-concession">${BTx('enemyConceded')}</div>` : ''}</div>`;
+      `<div class="result-outcome ${won ? 'result-outcome--win' : 'result-outcome--loss'}">${won ? BTx('victory') : BTx('defeat')}${opponentConceded ? `<div class="result-concession">${BTx('enemyConceded')}</div>` : ''}</div>`;
 
     // What the battle moved on the quest board. The bars are drawn at where each
     // quest WAS and slide to where it is now once they are on screen, so the
