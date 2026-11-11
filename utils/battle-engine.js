@@ -195,6 +195,7 @@ class BattleEngine {
     this._actionSequence = 0;
     this._activeAction = null;
     this._actionDispelUses = new Set();
+    this.opponentConceded = state?.opponent_conceded === true;
     if (state) {
       this.combatants = state.combatants;
       this.round      = state.round;
@@ -4108,6 +4109,7 @@ class BattleEngine {
       log:        this.log,
       done:       this.done,
       winner:     this.winner,
+      opponent_conceded: this.opponentConceded,
       // The client draws a power strip per side and gates the spell list on it.
       power:      this.power,
     };
@@ -4117,6 +4119,7 @@ class BattleEngine {
       round:  this.round,
       done:   this.done,
       winner: this.winner,
+      opponent_conceded: this.opponentConceded,
       pendingRoundEffects: this.pendingRoundEffects,
       // Per-battle, never carried between fights — but it must survive a reload
       // mid-fight or a hero would bank its power twice.
@@ -4425,6 +4428,7 @@ class BattleEngine {
     engine.round  = battleData.round;
     engine.done   = battleData.done;
     engine.winner = battleData.winner;
+    engine.opponentConceded = battleData.opponent_conceded === true;
     engine.pendingRoundEffects   = battleData.pendingRoundEffects || [];
     engine.log    = [];
     return engine;

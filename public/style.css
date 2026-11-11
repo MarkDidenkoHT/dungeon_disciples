@@ -4825,6 +4825,16 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .result-outcome--win  { color: var(--accent); }
 .result-outcome--loss { color: var(--danger); }
 
+.result-concession {
+  padding-top: 5px;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: none;
+}
+
 .result-body {
   display: flex;
   flex-direction: column;

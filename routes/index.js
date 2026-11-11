@@ -628,6 +628,7 @@ function concedeBotIfOutmatched(engine) {
 
   engine.done = true;
   engine.winner = 'player';
+  engine.opponentConceded = true;
   engine.pushLog({
     type: 'notice',
     message: 'The bot concedes — its remaining fighters cannot turn the battle.',
@@ -4952,7 +4953,14 @@ router.get('/battle/state', requireAuth, async (req, res) => {
       winner: bd.winner ?? null,
     });
     res.json({
-      state:     view.state,
+      state:     {
+        ...view.state,
+        opponent_conceded: !!bd.opponent_conceded || (
+          isPvpRecord(record)
+          && bd.abandoned_by != null
+          && String(bd.abandoned_by) !== String(chat_id)
+        ),
+      },
       logs:      view.logs,
       done:      bd.done ?? false,
       winner:    view.winner,

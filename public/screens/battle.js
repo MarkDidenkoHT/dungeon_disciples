@@ -207,6 +207,7 @@ const BT = {
   infoFatigue:  { en: n => `Battle fatigue: healing at ${n}%`, ru: n => `Усталость боя: лечение на ${n}%` },
   victory:      { en: 'Victory',            ru: 'Победа' },
   defeat:       { en: 'Defeat',             ru: 'Поражение' },
+  enemyConceded: { en: 'Enemy conceded',     ru: 'Противник сдался' },
   returnCastle: { en: 'Return to Castle',   ru: 'Вернуться в замок' },
   calculating:  { en: 'Calculating rewards…', ru: 'Подсчёт наград…' },
   noRewards:    { en: 'No rewards on defeat.', ru: 'При поражении наград нет.' },
@@ -3794,7 +3795,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // 3rem emoji banner is gone. Every branch below prefixes it, including the
     // failure paths, so the player is always told how the battle ended.
     const outcomeHtml =
-      `<div class="result-outcome ${won ? 'result-outcome--win' : 'result-outcome--loss'}">${won ? BTx('victory') : BTx('defeat')}</div>`;
+      `<div class="result-outcome ${won ? 'result-outcome--win' : 'result-outcome--loss'}">${won ? BTx('victory') : BTx('defeat')}${state.opponent_conceded ? `<div class="result-concession">${BTx('enemyConceded')}</div>` : ''}</div>`;
 
     // What the battle moved on the quest board. The bars are drawn at where each
     // quest WAS and slide to where it is now once they are on screen, so the
