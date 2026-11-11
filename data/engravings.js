@@ -22,7 +22,7 @@ const ENGRAVING_TOKEN = 'engraving_token';
 const ENGRAVING_TIERS = [
   { id: 'uncommon', name: 'Uncommon', name_ru: 'Необычная', steps: 1, cost: 250,  tokens: 3 },
   { id: 'rare',     name: 'Rare',     name_ru: 'Редкая',    steps: 2, cost: 750,  tokens: 6 },
-  { id: 'epic',     name: 'Epic',     name_ru: 'Эпическая', steps: 3, cost: 2000, tokens: 10 },
+  { id: 'epic',     name: 'Epic',     name_ru: 'Эпическая', steps: 3, cost: 1500, tokens: 10 },
 ];
 
 function getEngravingTier(id) {

@@ -153,8 +153,8 @@ const COMBAT_BARKS = [
     trigger: 'on_buff', actor: { group: 'empire_sisters' }, target: { group: 'empire_templars' },
     dialogue: [
       {
-        actor: { text: 'What is your duty?', text_ru: 'В чём твой долг?' },
-        target: { text: 'To serve Mithrail’s will.', text_ru: 'Служить воле Митраила.' },
+        actor: { text: 'What is your duty!', text_ru: 'Каков твой долг!' },
+        target: { text: 'To serve Mithrail’s will!', text_ru: 'Служить воле Митраила!' },
       },
     ],
   },

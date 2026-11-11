@@ -601,7 +601,7 @@ const UNIT_ABILITIES = {
     trigger: 'on_hit',
     description: 'After dealing damage, heals the lowest HP ally for 4% of the damage per Holy ally on the field.',
     description_ru: "После нанесения урона исцеляет союзника с наименьшим HP на 4% урона за каждого святого союзника.",
-    params: { lowest_ally_heal_pct_per_tag: 5, tag_required: 'Holy' },
+    params: { lowest_ally_heal_pct_per_tag: 4, tag_required: 'Holy' },
   },
   'mithrails_light 2': {
     id: 'mithrails_light 2',
@@ -613,7 +613,7 @@ const UNIT_ABILITIES = {
     trigger: 'on_hit',
     description: 'After dealing damage, heals the lowest HP ally for 5% of the damage per Holy ally on the field.',
     description_ru: "После нанесения урона исцеляет союзника с наименьшим HP на 5% урона за каждого святого союзника.",
-    params: { lowest_ally_heal_pct_per_tag: 8, tag_required: 'Holy' },
+    params: { lowest_ally_heal_pct_per_tag: 5, tag_required: 'Holy' },
   },
   'last_verse 1': {
     id: 'last_verse 1',
