@@ -2038,19 +2038,21 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       return;
     }
 
-    // A TRACK of spell art with one detail panel under it, rather than a stack
-    // of full-height rows. Six spells as rows meant scrolling a sheet to
-    // compare them, on the screen where the player is mid-turn; as icons they
-    // are all visible at once and the panel answers for whichever is selected.
+    // Keep spell choices together in a grid beside one fixed detail panel.
+    // This uses the sheet's available space without resizing it as descriptions
+    // change, and makes comparing spells faster than scrolling full-height rows.
     const track = affordable.map((s, i) => `
       <button class="spell-pick ${i === 0 ? 'spell-pick--on' : ''}" data-pick="${s.id}"
+              aria-pressed="${i === 0}"
               title="${BL === 'ru' ? (s.name_ru || s.name) : s.name}">
         ${spellIconHtml(s, 'spell-pick-img')}
       </button>`).join('');
 
     const body = `
-      <div class="spell-track">${track}</div>
-      <div class="spell-detail" id="spell-detail"></div>`;
+      <div class="spell-cast-picker">
+        <div class="spell-cast-grid">${track}</div>
+        <div class="spell-detail" id="spell-detail"></div>
+      </div>`;
 
     openSheet(`${powerLabel()} ${have}/${POWER_MAX}`,
       affordable.length ? body : `<p class="modal-empty">${BTx('noPower')}</p>`);
@@ -2103,7 +2105,11 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         btn.addEventListener('click', () => {
           const spell = affordable.find(s => s.id === btn.dataset.pick);
           if (!spell) return;
-          sheet.querySelectorAll('.spell-pick').forEach(b => b.classList.toggle('spell-pick--on', b === btn));
+          sheet.querySelectorAll('.spell-pick').forEach(b => {
+            const selected = b === btn;
+            b.classList.toggle('spell-pick--on', selected);
+            b.setAttribute('aria-pressed', String(selected));
+          });
           renderDetail(spell);
         });
       });
@@ -2119,6 +2125,17 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     selectingTarget = currentActor();
     pendingAction   = 'spell';
     render();
+  }
+
+  function getSpellTargetIds(spell) {
+    if (!state || !spell) return new Set();
+    const targetSide = spell.target_scope === 'single_ally' ? 'player'
+      : spell.target_scope === 'single_enemy' ? 'enemy'
+      : null;
+    if (!targetSide) return new Set();
+    return new Set(state.combatants
+      .filter(c => c.side === targetSide && c.alive && !c._untargetable)
+      .map(c => c.id));
   }
 
   // A write whose answer never arrived leaves the client not knowing whether the
@@ -3005,8 +3022,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     const aegisLevel = aegisLevelFor(occ);
 
     let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''} ${aegisLevel ? 'battle-cell--aegis' : ''}`;
-    if (isActor)               cls += isEnemyActor ? ' battle-cell--acting battle-cell--acting--enemy' : ' battle-cell--acting';
-    else if (isTarget)         cls += ' battle-cell--targetable';
+    if (isActor) {
+      cls += isEnemyActor ? ' battle-cell--acting battle-cell--acting--enemy' : ' battle-cell--acting';
+      if (isTarget) cls += ' battle-cell--targetable';
+    } else if (isTarget)       cls += ' battle-cell--targetable';
     else if (selectedCombatant?.id === occ.id) cls += ' battle-cell--selected';
     else if (occ.side === 'player') cls += ' battle-cell--placed';
     else                       cls += ' battle-cell--enemy';
@@ -3092,8 +3111,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
         // encounter's own troops, which adds no class and draws nothing.
         const callId = unitCallingId(occ);
         let cls = `battle-cell ${!occ.alive ? 'battle-cell--dead' : ''} ${aegisLevel ? 'battle-cell--aegis' : ''}${callId ? ' battle-cell--calling' : ''}`;
-        if (isActor)              cls += isEnemyActor ? ' battle-cell--acting battle-cell--acting--enemy' : ' battle-cell--acting';
-        else if (isTarget)        cls += ' battle-cell--targetable';
+        if (isActor) {
+          cls += isEnemyActor ? ' battle-cell--acting battle-cell--acting--enemy' : ' battle-cell--acting';
+          if (isTarget) cls += ' battle-cell--targetable';
+        } else if (isTarget)      cls += ' battle-cell--targetable';
         else if (isSelected)      cls += ' battle-cell--selected';
         else if (side === 'player') cls += ' battle-cell--placed';
         else                      cls += ' battle-cell--enemy';
@@ -3378,7 +3399,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     }
 
     const validTargetKeys = new Set();
-    if (selectingTarget && pendingAction) {
+    if (castChoice && pendingAction === 'spell') {
+      getSpellTargetIds(castChoice.spell).forEach(id => validTargetKeys.add(id));
+    } else if (selectingTarget && pendingAction) {
       getValidTargetIds(selectingTarget, pendingAction === 'ability').forEach(id => validTargetKeys.add(id));
     }
 
@@ -3695,9 +3718,10 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       // spell wants any living ally and a single_enemy one any living enemy —
       // melee reach has nothing to do with it.
       if (castChoice && pendingAction === 'spell') {
-        const wantAlly = castChoice.spell.target_scope === 'single_ally';
-        const ok = combatant.alive && (wantAlly ? combatant.side === 'player' : combatant.side === 'enemy');
-        if (ok) { sendCast(castChoice.spell.id, castChoice.power, combatant.id); return; }
+        if (getSpellTargetIds(castChoice.spell).has(combatant.id)) {
+          sendCast(castChoice.spell.id, castChoice.power, combatant.id);
+          return;
+        }
         return;
       }
 
