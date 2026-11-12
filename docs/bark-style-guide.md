@@ -246,7 +246,7 @@ Never:    Doubt. Mercy offered to the unclean.
 ```
 
 **One set for the whole branch for now** (ruled 2026-09-16). The Champion/Exemplar
-(holy_shock, purge) and Warden/Paragon (mace, sanctuary) may split into the burner and
+(holy_shock) and Warden/Paragon (mace, sanctuary) may split into the burner and
 the shield later; until then, tier overrides carry the difference where it matters.
 
 Any Templar-branch unit can take either chorus cell in `profane_chorus`; the verses are

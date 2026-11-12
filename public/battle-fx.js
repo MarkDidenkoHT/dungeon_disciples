@@ -2608,28 +2608,6 @@ export async function lightning_bolt(cellEl, opts = {}) {
   await lightningStrike(cellEl.dataset.id, opts.targetCell?.dataset?.id || null, opts);
 }
 
-// ── chain_lightning — the active: one bolt, then a leap per hop ──────────────
-// Handed the caster and the victims IN THE ORDER THEY WERE STRUCK (see the
-// FAN_OUT_FX note in battle.js), and walks that path: caster -> first victim,
-// first -> second, and so on. Each hop starts before the last has faded, so it
-// reads as a single crackling chain rather than separate casts.
-export async function chain_lightning(cellEl, opts = {}) {
-  if (!cellEl || !app || !window.PIXI) return;
-  const ids = [cellEl.dataset.id, ...(opts.targetCells || []).map(c => c?.dataset?.id).filter(Boolean)];
-  if (ids.length < 2) return;
-  const speed = (typeof window !== 'undefined' && Number(window.__FX_SPEED__)) || 1;
-  const STAGGER = 260 / speed;
-  const runs = [];
-  for (let i = 1; i < ids.length; i++) {
-    const delay = i === 1 ? 0 : (i - 1) * STAGGER + 115 / speed;
-    runs.push(new Promise(r => setTimeout(r, delay))
-      .then(() => lightningStrike(ids[i - 1], ids[i], { hop: i > 1, duration: i > 1 ? 480 : 640 })));
-  }
-  await Promise.all(runs);
-}
-
-
-
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── mend_flesh — the Grail's green counterpart to holy_heal ───────────────────
@@ -7730,7 +7708,6 @@ export const EFFECTS = {
   shield_bash,
   arcane_bolt,
   lightning_bolt,
-  chain_lightning,
   poison_dart,
   claw_strike,
   frost_claw,

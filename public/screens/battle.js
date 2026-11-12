@@ -74,9 +74,7 @@ const FAN_OUT_FX = new Set(['fellfire', 'light_of_dawn', 'radiance', 'mothers_bl
   // needs Fellfire's placement: one picture fanning from the caster to everyone
   // the cast named.
   'cinder_cascade',
-  // Chain Lightning logs one entry per bolt, in the order they leapt, so the
-  // cells handed over ARE the path: caster -> first victim -> each hop.
-  'chain_lightning']);
+]);
 
 // Attack animations that can also draw a Chain passive's hop. The hop is logged
 // as a passive entry naming the unit it leapt FROM (sourceId); for these the
@@ -2862,9 +2860,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     // lose before any reaches its HP.
     { key: 'decay',   icon: 'decay.jpg', en: 'Decay',      ru: 'Тлен',           n: c => num(c, '_decay'),  unit: 'heal' },
     // Headshot / Skullcrack silence the passives; Shield Bash takes the active.
-    // Borrowed art: dissipate for the silence, purge for the disarm.
+    // Borrowed art: dissipate for the silence, shield bash for the disarm.
     { key: 'silenced', icon: 'dissipate.jpg', en: 'Passives disabled', ru: 'Пассивные отключены', n: c => num(c, '_passives_locked_rounds'), unit: 'rounds' },
-    { key: 'disarmed', icon: 'purge.jpg',     en: 'Ability disabled',  ru: 'Способность отключена', n: c => num(c, '_actives_locked_rounds'),  unit: 'rounds' },
+    { key: 'disarmed', icon: 'shield_bash.jpg', en: 'Ability disabled', ru: 'Способность отключена', n: c => num(c, '_actives_locked_rounds'), unit: 'rounds' },
     // See the note on `empowered` in BUFF_DEFS — same field, other direction.
     { key: 'weakened', icon: 'find_weakness.jpg', en: 'Weakened', ru: 'Ослабление', n: c => dmgMultPct(c, 'down'), unit: 'pct' },
   ];

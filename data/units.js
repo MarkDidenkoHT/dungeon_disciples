@@ -582,7 +582,7 @@ const UNITS = {
       resistances: { air: 0, fire: 35, life: 0, death: 15, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 6, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash', action_sfx: 'last_verse',
-      xp: 75, passive: ['unending_servitude 1', 'shield 1'], ability: 'purge 1',
+      xp: 75, passive: ['unending_servitude 1', 'shield 1'], ability: null
     },
     emberkeeper: {
       flavor_en: "The Emberkeeper tends a coal that will not die, feeding it verses stolen from the palace's last living choir. Its warmth shields the faithful; the keeper asks no one whether they wish to be saved.",
@@ -597,7 +597,7 @@ const UNITS = {
       resistances: { air: 0, fire: 35, life: 0, death: 15, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 8, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash', action_sfx: 'last_verse',
-      xp: 400, passive: ['unending_servitude 1', 'shield 2'], ability: 'purge 1',
+      xp: 400, passive: ['unending_servitude 1', 'shield 2'], ability: null,
     },
     pyre_warden: {
       flavor_en: "The Pyre Warden tends the Choir's fire and sings courage into those who must approach it. The song lends them speed, not hope; Aggrail has no use for hope.",
@@ -612,7 +612,7 @@ const UNITS = {
       resistances: { air: 0, fire: 35, life: 0, death: 15, cold: 0, nature: 0 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 10, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash', action_sfx: 'last_verse',
-      xp: 1850, passive: ['inspiration_initiative 1', 'shield 2'], ability: 'purge 1',
+      xp: 1850, passive: ['inspiration_initiative 1', 'shield 2'], ability: null,
     },
     ashen_warden: {
       flavor_en: "The Ashen Warden stands watch where the dead rise to answer Aggrail's call. Its ash-veiled hymn keeps their chill from the living; the Choir needs its servants intact until the work is done.",
@@ -627,7 +627,7 @@ const UNITS = {
       resistances: { air: 0, fire: 35, life: 0, death: 15, cold: 0, nature: 5 },
       action: 'song_of_ash', target_type: 'ally', targets: 1, range: 3,
       damage_source: null, action_power: 12, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash', action_sfx: 'last_verse',
-      xp: 3350, passive: ['inspiration_initiative 1', 'shield 2', 'resist_aura_death 1'], ability: 'purge 1',
+      xp: 3350, passive: ['inspiration_initiative 1', 'shield 2', 'resist_aura_death 1'], ability: null,
     },
     pyre_choir: {
       flavor_en: "The Pyre Choir sings over the roots and burrows of the transformed capital, where even nature has learned to burn. Its chorus hardens the faithful against the wild; nothing beyond the spiral is meant to survive.",
@@ -642,7 +642,7 @@ const UNITS = {
       resistances: { air: 0, fire: 40, life: 0, death: 10, cold: 0, nature: 10 },
       action: 'song_of_ash', target_type: 'ally', targets: 6, range: 3,
       damage_source: null, action_power: 8, action_icon: 'flame_wave.jpg', action_animation: 'song_of_ash', action_sfx: 'last_verse',
-      xp: 3150, passive: ['inspiration_initiative 1', 'shield 2', 'resist_aura_nature 1' ], ability: 'purge 1',
+      xp: 3150, passive: ['inspiration_initiative 1', 'shield 2', 'resist_aura_nature 1' ], ability: null,
     },
     clay_gargoyle: {
       flavor_en: "The Clay Gargoyle was a court ornament before Aggrail's song taught stone to hunger. It now leaves its pedestal to crush intruders, returning to stillness only when the court commands it.",
@@ -2052,7 +2052,7 @@ const UNITS = {
       resistances: { air: 0, fire: 10, life: 40, death: 0, cold: 0, nature: 10 },
       action: 'attack', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'physical', action_power: 20, action_icon: 'sword.jpg', action_animation: 'sword_swing', action_sfx: 'sword_slash',
-      xp: 1690, passive: ['unbreakable 2', 'find_weakness 2'], ability: 'purge 1',
+      xp: 1690, passive: ['unbreakable 2', 'find_weakness 2'], ability: null,
     },
     rifleman: {
       flavor_en: "The Rifleman fires by the drill’s count, not anger. A measured volley breaks the foe and leaves the company ready for orders.",
@@ -2337,7 +2337,7 @@ const UNITS = {
       resistances: { air: 10, fire: 10, life: 40, death: 10, cold: 10, nature: 10 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 14, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
-      xp: 1560, passive: ['fanaticism 1', 'iron_will 1', 'dissipate 1'], ability: 'purge 1',
+      xp: 1560, passive: ['fanaticism 1', 'iron_will 1', 'dissipate 1'], ability: null,
     },
     mithrails_exemplar: {
       flavor_en: "The Exemplar makes the order’s faith visible. Advance through fire, stand together, leave the alien no refuge.",
@@ -2352,7 +2352,7 @@ const UNITS = {
       resistances: { air: 15, fire: 15, life: 40, death: 15, cold: 15, nature: 15 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 1,
       damage_source: 'life', action_power: 18, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
-      xp: 4005, passive: ['fanaticism 1', 'iron_will 2', 'dissipate 1'], ability: 'purge 1',
+      xp: 4005, passive: ['fanaticism 1', 'iron_will 2', 'dissipate 1'], ability: null,
     },
     mithrails_ascended_exemplar: {
       flavor_en: "The Ascended Exemplar carries Mithrail’s light across the battlefield. No ally is beyond its aid, and no foe beyond its reach.",
@@ -2367,7 +2367,7 @@ const UNITS = {
       resistances: { air: 15, fire: 20, life: 40, death: 20, cold: 20, nature: 15 },
       action: 'holy_shock', target_type: 'enemy', targets: 1, range: 3,
       damage_source: 'life', action_power: 22, action_icon: 'holy_shock.jpg', action_animation: 'holy_shock', action_sfx: 'divine_spell',
-      xp: 10000, passive: ['fanaticism 1', 'iron_will 2', 'dissipate 2'], ability: 'purge 1',
+      xp: 10000, passive: ['fanaticism 1', 'iron_will 2', 'dissipate 2'], ability: null,
     },
     mithrails_warden: {
       flavor_en: "The Warden holds a consecrated boundary no foreign power may cross. Its ward turns shared discipline into a bulwark.",
@@ -4746,7 +4746,7 @@ const UNITS = {
         resistances: { air: 10, fire: 0, life: 0, death: 40, cold: 5, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'air', action_power: 14, action_icon: 'mystic_bolt.jpg', action_animation: 'lightning_bolt', action_sfx: 'shock',
-        xp: 375, passive: ['weight_of_steel 1', 'bone_armor 1', 'chain 1'], ability: 'chain_lightning 1',
+        xp: 375, passive: ['weight_of_steel 1', 'bone_armor 1', 'chain 1'], ability: null,
       },
       metallon_invoker: {
         flavor_en: "The Metallon Invoker no longer needs to touch steel to command it. The heavier a foe's armor, the harder that armor crushes the one who wears it.",
@@ -4761,7 +4761,7 @@ const UNITS = {
         resistances: { air: 20, fire: 0, life: 0, death: 40, cold: 50, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'air', action_power: 18, action_icon: 'mystic_bolt.jpg', action_animation: 'lightning_bolt', action_sfx: 'shock',
-        xp: 1415, passive: ['weight_of_steel 2', 'bone_armor 1', 'chain 1'], ability: 'chain_lightning 2',
+        xp: 1415, passive: ['weight_of_steel 2', 'bone_armor 1', 'chain 1'], ability: null,
       },
       metallon_shadowforger: {
         flavor_en: "A devoted follower of Metallon, this dark mage draws metal from the shadows and bends it into armor and weapons. With every plate reforged around its bones, it turns Metallon's power into strength.",
@@ -4776,7 +4776,7 @@ const UNITS = {
         resistances: { air: 30, fire: 0, life: 5, death: 40, cold: 5, nature: 0 },
         action: 'attack', target_type: 'enemy', targets: 1, range: 3,
         damage_source: 'air', action_power: 22, action_icon: 'mystic_bolt.jpg', action_animation: 'lightning_bolt', action_sfx: 'shock',
-        xp: 3095, passive: ['weight_of_steel 3', 'bone_armor 1', 'chain 1'], ability: 'chain_lightning 3',
+        xp: 3095, passive: ['weight_of_steel 3', 'bone_armor 1', 'chain 1'], ability: null,
       },
       oathbound_martyr: {
         flavor_en: "The Oathbound Martyr rose when a wave of magic passed through the soldiers' resting chamber. It instinctively takes the wounds meant for its companions, as it may have done in life.",

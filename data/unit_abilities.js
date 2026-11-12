@@ -1,16 +1,4 @@
 const UNIT_ABILITIES = {
-  'purge 1': {
-    id: 'purge 1',
-    name: 'Purge',
-    name_ru: "Изгнание",
-    rank: 1,
-    type: 'active',
-    target: 'enemy',
-    description: 'Strips all positive effects (buffs) from an enemy.',
-    description_ru: "Снимает с врага все положительные эффекты (усиления).",
-    params: { dispel_positive: true },
-    effect_name: 'dispel',
-  },
   'dispel 1': {
     id: 'dispel 1',
     name: 'Dispel',
@@ -1527,48 +1515,6 @@ const UNIT_ABILITIES = {
     params: { chain_targets: 3, chain_damage_pct: [40, 30, 20] },
     effect_name: 'chain',
   },
-  'chain_lightning 1': {
-    id: 'chain_lightning 1',
-    name: 'Chain Lightning',
-    name_ru: "Цепная Молния",
-    rank: 1,
-    type: 'active',
-    target: 'enemy',
-    range: 3,
-    description: "Strikes an enemy with air for this unit's power, then leaps to 1 more enemy for 50%.",
-    description_ru: "Бьёт врага воздухом с силой этого юнита, затем перескакивает ещё на 1 врага с 50%.",
-    params: { chain_lightning_power_pct: 100, chain_lightning_hops: [50] },
-    effect_name: 'chain_lightning',
-    animation_sound: 'shock',
-  },
-  'chain_lightning 2': {
-    id: 'chain_lightning 2',
-    name: 'Chain Lightning',
-    name_ru: "Цепная Молния",
-    rank: 2,
-    type: 'active',
-    target: 'enemy',
-    range: 3,
-    description: "Strikes an enemy with air for this unit's power, then leaps to 2 more enemies for 50% and 40%.",
-    description_ru: "Бьёт врага воздухом с силой этого юнита, затем перескакивает ещё на 2 врагов с 50% и 40%.",
-    params: { chain_lightning_power_pct: 100, chain_lightning_hops: [50, 40] },
-    effect_name: 'chain_lightning',
-    animation_sound: 'shock',
-  },
-  'chain_lightning 3': {
-    id: 'chain_lightning 3',
-    name: 'Chain Lightning',
-    name_ru: "Цепная Молния",
-    rank: 3,
-    type: 'active',
-    target: 'enemy',
-    range: 3,
-    description: "Strikes an enemy with air for this unit's power, then leaps to 3 more enemies for 50%, 40% and 30%.",
-    description_ru: "Бьёт врага воздухом с силой этого юнита, затем перескакивает ещё на 3 врагов с 50%, 40% и 30%.",
-    params: { chain_lightning_power_pct: 100, chain_lightning_hops: [50, 40, 30] },
-    effect_name: 'chain_lightning',
-    animation_sound: 'shock',
-  },
   'dissipate 1': {
     id: 'dissipate 1',
     name: 'Dissipate',
@@ -2679,11 +2625,6 @@ const UNIT_ABILITIES = {
     description_ru: "Атаки этого юнита также наносят 30% своего урона каждому врагу с ознобом.",
     params: { fellfire_pct: 30, fellfire_dot: 'chill' },
   },
-  // Fellfire's opposite number, for the Vampires: same shape, same family of
-  // params, reading Bleed instead of Burn. Gated on Vampire rather than Caster
-  // so a Grail caster line scales it off the bodies it already fields, and the
-  // trigger is on_hit — item_rules refuses it on anything that does not attack,
-  // which is why Mother's Chalice line (action 'none') cannot wear Envy.
   'blood_bolt 1': {
     id: 'blood_bolt 1',
     name: 'Blood Bolt',
@@ -3526,7 +3467,6 @@ const UNIT_ABILITIES = {
     description_ru: "Окутывается углями: +45 к сопротивлению огню на 2 раунда и восстанавливает 50% максимального здоровья.",
     params: { ember_shroud_resist: 45, ember_shroud_resist_type: 'fire', ember_shroud_heal_pct: 50, duration_rounds: 2 },
   },
-
   'dragons_breath 1': {
     id: 'dragons_breath 1',
     name: "Dragon's Breath",

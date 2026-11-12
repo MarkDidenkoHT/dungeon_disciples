@@ -180,7 +180,7 @@ const SPELLS = {
       category: 'debuff',
       tier: 3,
       type: 'combat',
-      effect_icon: 'purge',
+      effect_icon: 'dispel',
       // One blessing per point of power, on ONE enemy. Stripping the whole line
       // was the strongest effect in the game for a single cast.
       description: 'Tear the blessings off one enemy: 1 buff removed per power spent.',
@@ -443,7 +443,7 @@ const SPELLS = {
       category: 'debuff',
       tier: 3,
       type: 'combat',
-      effect_icon: 'purge',
+      effect_icon: 'dispel',
       description: 'Strip 1 positive effect from every enemy per power spent.',
       description_ru: 'Снимает по 1 положительному эффекту со всех врагов за каждую потраченную силу.',
       cost: { crystals: { Crystals_Fire: 20, Crystals_Nature: 5 } },
@@ -656,7 +656,7 @@ const SPELLS = {
       category: 'debuff',
       tier: 3,
       type: 'combat',
-      effect_icon: 'purge',
+      effect_icon: 'dispel',
       description: 'Strip 1 positive effect from every enemy per power spent.',
       description_ru: 'Снимает по 1 положительному эффекту со всех врагов за каждую потраченную силу.',
       cost: { crystals: { Crystals_Death: 20, Crystals_Life: 5 } },
