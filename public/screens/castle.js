@@ -15,6 +15,7 @@ import {
   blockFor, blockName, blockShort, devotionState, previousUnfinished,
 } from '../../data/callings.js';
 import { DEATH_ENABLED }    from '../../data/game_flags.js';
+import { applyEngraving }  from '../../data/engravings.js';
 // Which regions drop a material — the castle's cost bar uses it to answer
 // "where do I get this?" for a cost the player cannot meet.
 import { REGIONS, getRegionsForMaterial, eventRegionsForMaterial } from '../../data/embark.js';
@@ -3066,7 +3067,10 @@ export function renderCastle(root, params = {}) {
     // slot with no occupant yet (building raised, unit not spawned) still shows
     // the blueprint so the sheet is never empty.
     const baseUnit = rosterUnit ? resolveUnitDef(rosterUnit) : getUnitByUnitId(def.unit_id);
-    const liveUnit = baseUnit && item ? withEquippedItem(baseUnit, item) : baseUnit;
+    const withItem = baseUnit && item ? withEquippedItem(baseUnit, item) : baseUnit;
+    const liveUnit = withItem && rosterUnit
+      ? applyEngraving(withItem, rosterUnit.engraving)
+      : withItem;
 
     // The card was showing the BLUEPRINT's numbers: full HP whatever state the
     // unit was really in, and `XP 720` — which is the XP this tier COSTS, not
