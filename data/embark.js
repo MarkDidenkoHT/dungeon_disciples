@@ -424,6 +424,79 @@ const REGION_ENCOUNTERS = {
         trophies:        { shard_of_might: 3, grave_dust: 1, rusted_shackle: 1 },
       },
     },
+    level_11: {
+      enemies: [
+        { key: 'chamber_of_unrest.death_knight',      cell: 0 },
+        { key: 'chamber_of_unrest.metallon_invoker',  cell: 1 },
+        { key: 'chamber_of_unrest.metallon_invoker',  cell: 5 },
+        { key: 'chamber_of_unrest.death_knight',      cell: 4 },
+      ],
+      rewards: {
+        gold: 175, xp: 375,
+        crystals:        [{ type: 'Crystals_Death', amount: 24 }, { type: 'Crystals_Nature', amount: 24 }],
+        trophies:        { grave_dust: 2, rusted_shackle: 2 },
+      },
+    },
+    level_12: {
+      enemies: [
+        { key: 'chamber_of_unrest.death_knight',      cell: 0 },
+        { key: 'chamber_of_unrest.metallon_invoker',  cell: 1 },
+        { key: 'chamber_of_unrest.metallon',          cell: 2 },
+        { key: 'chamber_of_unrest.metallon_invoker',  cell: 5 },
+        { key: 'chamber_of_unrest.death_knight',      cell: 4 },
+      ],
+      rewards: {
+        gold: 200, xp: 425,
+        crystals:        [{ type: 'Crystals_Death', amount: 26 }, { type: 'Crystals_Nature', amount: 26 }],
+        trophies:        { shard_of_might: 2, darksteel: 1 },
+      },
+    },
+    level_13: {
+      enemies: [
+        { key: 'chamber_of_unrest.death_knight',      cell: 0 },
+        { key: 'chamber_of_unrest.metallon_invoker',  cell: 1 },
+        { key: 'chamber_of_unrest.soul_harvester',    cell: 3 },
+        { key: 'chamber_of_unrest.revenant',          cell: 4 },
+        { key: 'chamber_of_unrest.metallon_invoker',  cell: 5 },
+      ],
+      rewards: {
+        gold: 225, xp: 475,
+        crystals:        [{ type: 'Crystals_Death', amount: 28 }, { type: 'Crystals_Nature', amount: 28 }],
+        trophies:        { grave_dust: 2, rusted_shackle: 2, shard_of_might: 1 },
+      },
+    },
+    level_14: {
+      enemies: [
+        { key: 'chamber_of_unrest.death_knight',      cell: 0 },
+        { key: 'chamber_of_unrest.metallon_invoker',  cell: 1 },
+        { key: 'chamber_of_unrest.soul_harvester',    cell: 2 },
+        { key: 'chamber_of_unrest.oathsworn_martyr',  cell: 3 },
+        { key: 'chamber_of_unrest.metallon_invoker',  cell: 5 },
+        { key: 'chamber_of_unrest.death_knight',      cell: 4 },
+      ],
+      rewards: {
+        gold: 250, xp: 525,
+        crystals:        [{ type: 'Crystals_Death', amount: 30 }, { type: 'Crystals_Nature', amount: 30 }],
+        trophies:        { grave_dust: 2, rusted_shackle: 2, shard_of_might: 2 },
+      },
+    },
+    level_15: {
+      enemies: [
+        { key: 'chamber_of_unrest.death_knight',       cell: 0 },
+        { key: 'chamber_of_unrest.metallon_invoker',   cell: 1 },
+        { key: 'chamber_of_unrest.metallon',           cell: 2 },
+        { key: 'chamber_of_unrest.malgrath_the_undying_3', cell: 3, item_id: 'might_of_the_pure',
+          spells: [{ spell_id: 'boss_grave_rot', power: 4 },
+                   { spell_id: 'boss_deaths_verdict', power: 5 }] },
+        { key: 'chamber_of_unrest.metallon_invoker',   cell: 5 },
+        { key: 'chamber_of_unrest.death_knight',       cell: 4 },
+      ],
+      rewards: {
+        gold: 300, xp: 600,
+        crystals:        [{ type: 'Crystals_Death', amount: 32 }, { type: 'Crystals_Nature', amount: 32 }],
+        trophies:        { shard_of_might: 4, darksteel: 2, grave_dust: 2, rusted_shackle: 2 },
+      },
+    },
   },
 };
 
@@ -551,7 +624,7 @@ const FACTION_CRYSTAL_FOR_REGION = {
 // data/buildings.js). The payout site translates it — the key here cannot name
 // the row, because the row's name depends on who is claiming it.
 //
-// Supply, at three regions of ten levels:
+// Supply across the three ten-level regions and the fifteen-level Chamber:
 //   Crossroad Sigil   6  (levels 3 and 7 of each region) + 1 at registration
 //   Tome of Knowledge 9  (levels 4, 6 and 9 of each region)
 //   Health Potion     6  (levels 1 and 5 of each region)

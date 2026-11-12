@@ -1930,17 +1930,17 @@ const MERCENARY_BUILDINGS = {
     },
   ],
 
-  // Restless dead of the Chamber of Unrest. Costs use its trophies (grave_dust /
-  // rusted_shackle). Malgrath the Undying (dm_e4/dm_e41) is a boss — not here.
+  // Restless dead of the Chamber of Unrest. The Metallon caster branch also
+  // costs darksteel; Metallon and Malgrath are bosses, not recruitable units.
   chamber_of_unrest: [
     // Bone Knight line.
     { id: 'cu_bone_knight',  label: 'Bone Knight', label_ru: 'Костяной рыцарь',  region: 'chamber_of_unrest', unit_id: 'dm_e1',   tier: 1, upgrades: ['cu_dread_knight', 'cu_adept_of_metallon'], cost: { grave_dust: 5, rusted_shackle: 5 } },
     { id: 'cu_dread_knight', label: 'Dread Knight', label_ru: 'Рыцарь ужаса', region: 'chamber_of_unrest', unit_id: 'dm_e11',  tier: 2, upgrades: ['cu_death_knight'], cost: { grave_dust: 10, rusted_shackle: 10 } },
     { id: 'cu_death_knight', label: 'Death Knight', label_ru: 'Рыцарь смерти', region: 'chamber_of_unrest', unit_id: 'dm_e111', tier: 3, upgrades: [],                   cost: { grave_dust: 15, rusted_shackle: 15 } },
     // Bone Knight's caster branch.
-    { id: 'cu_adept_of_metallon', label: 'Adept of Metallon', label_ru: 'Адепт Металлона', region: 'chamber_of_unrest', unit_id: 'dm_e12',  tier: 2, upgrades: ['cu_metallon_invoker'], cost: { grave_dust: 10, rusted_shackle: 10 } },
-    { id: 'cu_metallon_invoker', label: 'Metallon Invoker', label_ru: 'Призыватель Металлона', region: 'chamber_of_unrest', unit_id: 'dm_e121', tier: 3, upgrades: ['cu_metallon_shadowforger'], cost: { grave_dust: 15, rusted_shackle: 15 } },
-    { id: 'cu_metallon_shadowforger', label: 'Metallon Shadowforger', label_ru: 'Тенекузнец Металлона', region: 'chamber_of_unrest', unit_id: 'dm_e1211', tier: 4, upgrades: [], cost: { grave_dust: 20, rusted_shackle: 20 } },
+    { id: 'cu_adept_of_metallon', label: 'Adept of Metallon', label_ru: 'Адепт Металлона', region: 'chamber_of_unrest', unit_id: 'dm_e12',  tier: 2, upgrades: ['cu_metallon_invoker'], cost: { grave_dust: 10, rusted_shackle: 10, darksteel: 1 } },
+    { id: 'cu_metallon_invoker', label: 'Metallon Invoker', label_ru: 'Призыватель Металлона', region: 'chamber_of_unrest', unit_id: 'dm_e121', tier: 3, upgrades: ['cu_metallon_shadowforger'], cost: { grave_dust: 15, rusted_shackle: 15, darksteel: 2 } },
+    { id: 'cu_metallon_shadowforger', label: 'Metallon Shadowforger', label_ru: 'Тенекузнец Металлона', region: 'chamber_of_unrest', unit_id: 'dm_e1211', tier: 4, upgrades: [], cost: { grave_dust: 20, rusted_shackle: 20, darksteel: 3 } },
     // Oathbound Martyr line.
     { id: 'cu_oathbound_martyr', label: 'Oathbound Martyr', label_ru: 'Мученик клятвы', region: 'chamber_of_unrest', unit_id: 'dm_2',   tier: 1, upgrades: ['cu_oathsworn_martyr'], cost: { grave_dust: 5, rusted_shackle: 5 } },
     { id: 'cu_oathsworn_martyr', label: 'Oathsworn Martyr', label_ru: 'Присягнувший мученик', region: 'chamber_of_unrest', unit_id: 'dm_21',  tier: 2, upgrades: ['cu_martyr_of_the_vow'], cost: { grave_dust: 10, rusted_shackle: 10 } },

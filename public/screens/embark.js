@@ -89,7 +89,7 @@ const UI_TEXT = {
 };
 
 // Levels that end in a boss fight — highlighted red on the level row.
-const BOSS_LEVELS = [3, 6, 9, 10];
+const BOSS_LEVELS = [3, 6, 9, 10, 12, 15];
 
 // Each region card uses /assets/embark/<id>.jpg as its full background image.
 // Descriptions and the guaranteed crystal match the
@@ -120,8 +120,8 @@ export const REGIONS = [
     label: 'Chamber Of Unrest',
     label_ru: 'Чертог беспокойства',
     icon: '💀',
-    description: 'Sunken crypts of the restless dead — cursed knights, shambling horrors, and Malgrath the Undying, who has already died once.',
-    description_ru: 'Затопленные склепы неупокоенных мёртвых — проклятые рыцари, бредущие ужасы и Малграт Неумирающий, что уже умирал однажды.',
+    description: 'Sunken crypts of the restless dead — cursed knights, Metallon the Iron Master, and Malgrath the Undying.',
+    description_ru: 'Затопленные склепы неупокоенных мёртвых — проклятые рыцари, Металлон, повелитель железа, и Малграт Неумирающий.',
     crystal: 'Death & Nature',
     crystal_ru: 'Смерти и Природы',
   },

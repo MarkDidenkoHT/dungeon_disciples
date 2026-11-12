@@ -503,7 +503,7 @@ const ITEM_DEFS = {
     icon:         'darkness',
     rarity:       'mythic',
     unique:       true,
-    cost: { Gold: 500, Crystals_Death: 25, Crystals_Air: 15, grave_dust: 15 },
+    cost: { Gold: 500, Crystals_Death: 25, Crystals_Air: 15, grave_dust: 15, darksteel: 3 },
     requires:     { region: 'any', level: 2 },
   },
   envy: {
