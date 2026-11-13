@@ -396,7 +396,7 @@ const REGION_ENCOUNTERS = {
           spells: [{ spell_id: 'boss_grave_rot', power: 3 },
                    { spell_id: 'boss_deaths_verdict', power: 4 }] },
         { key: 'chamber_of_unrest.death_knight',           cell: 0, item_id: 'bone_barrier' },
-        { key: 'chamber_of_unrest.dread_knight',           cell: 4 },
+        { key: 'chamber_of_unrest.dread_knight',           cell: 4, item_id: 'caster_hat' },
         { key: 'chamber_of_unrest.martyr_of_the_vow',      cell: 1 },
         { key: 'chamber_of_unrest.soul_harvester',         cell: 3 },
         { key: 'chamber_of_unrest.revenant',               cell: 5 },
@@ -444,7 +444,7 @@ const REGION_ENCOUNTERS = {
         { key: 'chamber_of_unrest.metallon_invoker',       cell: 1, item_id: 'knights_oath' },
         { key: 'chamber_of_unrest.metallon',               cell: 3 },
         { key: 'chamber_of_unrest.metallon_shadowforger',  cell: 5, item_id: 'malgraths_sigil' },
-        { key: 'chamber_of_unrest.death_knight',           cell: 4 },
+        { key: 'chamber_of_unrest.death_knight',           cell: 4, item_id: 'caster_hat' },
       ],
       rewards: {
         gold: 200, xp: 425,
@@ -456,7 +456,7 @@ const REGION_ENCOUNTERS = {
       enemies: [
         { key: 'chamber_of_unrest.death_knight',           cell: 0, item_id: 'bone_barrier' },
         { key: 'chamber_of_unrest.metallon_invoker',       cell: 1, item_id: 'knights_oath' },
-        { key: 'chamber_of_unrest.death_knight',           cell: 2 },
+        { key: 'chamber_of_unrest.death_knight',           cell: 2, item_id: 'caster_hat' },
         { key: 'chamber_of_unrest.soul_harvester',         cell: 3, item_id: 'veil_of_discord' },
         { key: 'chamber_of_unrest.revenant',               cell: 4 },
         { key: 'chamber_of_unrest.metallon_shadowforger',  cell: 5, item_id: 'malgraths_sigil' },
@@ -469,12 +469,12 @@ const REGION_ENCOUNTERS = {
     },
     level_14: {
       enemies: [
-        { key: 'chamber_of_unrest.death_knight',      cell: 0 },
-        { key: 'chamber_of_unrest.metallon_invoker',  cell: 1 },
-        { key: 'chamber_of_unrest.soul_harvester',    cell: 2 },
-        { key: 'chamber_of_unrest.oathsworn_martyr',  cell: 3 },
-        { key: 'chamber_of_unrest.metallon_invoker',  cell: 5 },
-        { key: 'chamber_of_unrest.death_knight',      cell: 4 },
+        { key: 'chamber_of_unrest.death_knight',      cell: 0, item_id: 'bone_barrier' },
+        { key: 'chamber_of_unrest.metallon_invoker',  cell: 1, item_id: 'knights_oath' },
+        { key: 'chamber_of_unrest.soul_harvester',    cell: 2, item_id: 'malgraths_sigil' },
+        { key: 'chamber_of_unrest.oathsworn_martyr',  cell: 3, item_id: 'frost_cloak' },
+        { key: 'chamber_of_unrest.metallon_invoker',  cell: 5, item_id: 'veil_of_discord' },
+        { key: 'chamber_of_unrest.death_knight',      cell: 4, item_id: 'caster_hat' },
       ],
       rewards: {
         gold: 250, xp: 525,
@@ -484,14 +484,14 @@ const REGION_ENCOUNTERS = {
     },
     level_15: {
       enemies: [
-        { key: 'chamber_of_unrest.death_knight',            cell: 0 },
-        { key: 'chamber_of_unrest.metallon_shadowforger',   cell: 1 },
+        { key: 'chamber_of_unrest.death_knight',            cell: 0, item_id: 'bone_barrier' },
+        { key: 'chamber_of_unrest.metallon_shadowforger',   cell: 1, item_id: 'knights_oath' },
         { key: 'chamber_of_unrest.metallon',                cell: 3, item_id: 'darkness'},
         { key: 'chamber_of_unrest.malgrath_the_undying_3',  cell: 2, item_id: 'might_of_the_pure',
           spells: [{ spell_id: 'boss_grave_rot', power: 4 },
                    { spell_id: 'boss_deaths_verdict', power: 5 }] },
-        { key: 'chamber_of_unrest.metallon_shadowforger',   cell: 5 },
-        { key: 'chamber_of_unrest.death_knight',            cell: 4 },
+        { key: 'chamber_of_unrest.metallon_shadowforger',   cell: 5, item_id: 'veil_of_discord' },
+        { key: 'chamber_of_unrest.death_knight',            cell: 4, item_id: 'caster_hat' },
       ],
       rewards: {
         gold: 300, xp: 600,
