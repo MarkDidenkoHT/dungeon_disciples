@@ -426,11 +426,11 @@ const REGION_ENCOUNTERS = {
     },
     level_11: {
       enemies: [
-        { key: 'chamber_of_unrest.death_knight',      cell: 0, item_id: 'bone_barrier'},
-        { key: 'chamber_of_unrest.metallon_invoker',  cell: 1, item_id: 'knights_oath' },
-        { key: 'chamber_of_unrest.martyr_of_the_vow',  cell: 3, item_id: 'nature_resistance_potion' },
+        { key: 'chamber_of_unrest.death_knight',           cell: 0, item_id: 'bone_barrier'},
+        { key: 'chamber_of_unrest.metallon_invoker',       cell: 1, item_id: 'knights_oath' },
+        { key: 'chamber_of_unrest.martyr_of_the_vow',      cell: 3, item_id: 'nature_resistance_potion' },
         { key: 'chamber_of_unrest.metallon_shadowforger',  cell: 5, item_id: 'malgraths_sigil' },
-        { key: 'chamber_of_unrest.death_knight',      cell: 4 },
+        { key: 'chamber_of_unrest.death_knight',           cell: 4 },
       ],
       rewards: {
         gold: 175, xp: 375,
@@ -440,11 +440,11 @@ const REGION_ENCOUNTERS = {
     },
     level_12: {
       enemies: [
-        { key: 'chamber_of_unrest.death_knight',      cell: 0, item_id: 'bone_barrier' },
-        { key: 'chamber_of_unrest.metallon_invoker',  cell: 1, item_id: 'knights_oath' },
-        { key: 'chamber_of_unrest.metallon',          cell: 3 },
+        { key: 'chamber_of_unrest.death_knight',           cell: 0, item_id: 'bone_barrier' },
+        { key: 'chamber_of_unrest.metallon_invoker',       cell: 1, item_id: 'knights_oath' },
+        { key: 'chamber_of_unrest.metallon',               cell: 3 },
         { key: 'chamber_of_unrest.metallon_shadowforger',  cell: 5, item_id: 'malgraths_sigil' },
-        { key: 'chamber_of_unrest.death_knight',      cell: 4 },
+        { key: 'chamber_of_unrest.death_knight',           cell: 4 },
       ],
       rewards: {
         gold: 200, xp: 425,
@@ -454,11 +454,11 @@ const REGION_ENCOUNTERS = {
     },
     level_13: {
       enemies: [
-        { key: 'chamber_of_unrest.death_knight',      cell: 0, item_id: 'bone_barrier' },
-        { key: 'chamber_of_unrest.metallon_invoker',  cell: 1, item_id: 'knights_oath' },
-        { key: 'chamber_of_unrest.death_knight',      cell: 2 },
-        { key: 'chamber_of_unrest.soul_harvester',    cell: 3, item_id: 'veil_of_discord' },
-        { key: 'chamber_of_unrest.revenant',          cell: 4 },
+        { key: 'chamber_of_unrest.death_knight',           cell: 0, item_id: 'bone_barrier' },
+        { key: 'chamber_of_unrest.metallon_invoker',       cell: 1, item_id: 'knights_oath' },
+        { key: 'chamber_of_unrest.death_knight',           cell: 2 },
+        { key: 'chamber_of_unrest.soul_harvester',         cell: 3, item_id: 'veil_of_discord' },
+        { key: 'chamber_of_unrest.revenant',               cell: 4 },
         { key: 'chamber_of_unrest.metallon_shadowforger',  cell: 5, item_id: 'malgraths_sigil' },
       ],
       rewards: {
@@ -484,14 +484,14 @@ const REGION_ENCOUNTERS = {
     },
     level_15: {
       enemies: [
-        { key: 'chamber_of_unrest.death_knight',       cell: 0 },
+        { key: 'chamber_of_unrest.death_knight',            cell: 0 },
         { key: 'chamber_of_unrest.metallon_shadowforger',   cell: 1 },
-        { key: 'chamber_of_unrest.metallon',           cell: 3, item_id: 'darkness'},
-        { key: 'chamber_of_unrest.malgrath_the_undying_3', cell: 2, item_id: 'might_of_the_pure',
+        { key: 'chamber_of_unrest.metallon',                cell: 3, item_id: 'darkness'},
+        { key: 'chamber_of_unrest.malgrath_the_undying_3',  cell: 2, item_id: 'might_of_the_pure',
           spells: [{ spell_id: 'boss_grave_rot', power: 4 },
                    { spell_id: 'boss_deaths_verdict', power: 5 }] },
         { key: 'chamber_of_unrest.metallon_shadowforger',   cell: 5 },
-        { key: 'chamber_of_unrest.death_knight',       cell: 4 },
+        { key: 'chamber_of_unrest.death_knight',            cell: 4 },
       ],
       rewards: {
         gold: 300, xp: 600,
