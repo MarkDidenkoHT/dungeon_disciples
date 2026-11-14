@@ -401,17 +401,16 @@ function settleWonFight(data, { fallenIds = [] } = {}) {
 
 // What the client is allowed to see. Unrevealed cells carry no type, and fight
 // contents are never sent here (the route adds the lineup of a pending fight).
-function clientView(run, { dev = false, revealAll = false } = {}) {
+function clientView(run) {
   const data = run.data;
   const { map } = data;
   const visited  = new Set(data.visited);
   const revealed = new Set(data.revealed);
   const cleared  = new Set(data.cleared);
-  const showAll  = revealAll || !!data.dev_reveal;
 
   const cells = map.cells.map(c => {
     const k = keyOf(c);
-    const known = showAll || revealed.has(k) || visited.has(k);
+    const known = revealed.has(k) || visited.has(k);
     return {
       x: c.x, y: c.y,
       known,
@@ -421,9 +420,7 @@ function clientView(run, { dev = false, revealAll = false } = {}) {
     };
   });
   // Walls are seen from inside a room: those on the edges of visited cells.
-  const walls = showAll
-    ? map.walls.slice()
-    : map.walls.filter(w => w.split('|').some(k => visited.has(k)));
+  const walls = map.walls.filter(w => w.split('|').some(k => visited.has(k)));
 
   const here = cellAt(map, data.pos.x, data.pos.y);
   return {
@@ -446,8 +443,6 @@ function clientView(run, { dev = false, revealAll = false } = {}) {
     squad:     { roster_ids: (data.squad?.playerUnitIds || []).map(u => String(u._rosterId || u.id)), fallen: data.fallen || [] },
     steps:     data.steps,
     fights:    data.fights,
-    dev:       dev || undefined,
-    seed:      dev ? data.seed : undefined,
   };
 }
 

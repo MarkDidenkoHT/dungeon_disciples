@@ -308,8 +308,8 @@ Still open:
 - **Quest counters** (damage, kills by tag) already count per battle and need no change.
 - **Every new string ships in English and Russian.**
 - **The web demo** (`web/demos/embark.js`) stays the old embark for Milestone 1.
-- **Dev tools for the pilot:** generate a map from a seed, show the full map without fog,
-  force-end a run, teleport to a cell.
+- **No dev tools in the game.** Seeds, full reveal and teleporting were tried and removed
+  (2026-11-14); runs are tested through the server tests instead.
 - **Run telemetry:** every run logs its outcome (goal / exit / abandon / wipe), steps
   taken and fights fought.
 
@@ -391,12 +391,10 @@ every new player gets the same teachable map?
   "no run", so the rest of the game keeps working.
 - **Files:** `data/expedition.js` (modes, pools, Basilica secondary templates,
   loot), `utils/expedition-map.js` (generator, movement, fog; pure),
-  `routes/index.js` (§ Expeditions: start / move / fight / leave / dev, plus hooks
+  `routes/index.js` (§ Expeditions: start / move / fight / leave, plus hooks
   in `/battle/reward` and `/battle/end`), `public/screens/expedition.js` (map screen).
 - **Shared payout:** the win payout of `/battle/reward` is now `payRegionRewards`,
   used by both single-fight embarks and expedition runs.
-- **Dev tools:** enabled for the account whose chat id equals the `ADMIN_CHAT_ID`
-  env var (reveal map, teleport, end run, seed shown; `/expedition/start` accepts `seed`).
 - **Telemetry:** every finished run keeps its row (`outcome`, `steps`, `fights`) and
   logs one `[expedition] {...}` line.
 - **Deployed squad:** heal / potion / resurrect / tome / level-up / engrave /
@@ -405,3 +403,7 @@ every new player gets the same teachable map?
 - **Known gap:** the passive 10%-per-5-minutes HP recovery is not in this server
   (it runs in the database). Until that job skips squad units of active
   expeditions, a squad recovers between rooms if the player waits.
+- **Room fights between turns:** the engine is rebuilt from the battle record on every
+  turn. `battle_data.expedition.template` names the room's lineup so the rebuild uses it
+  (`expeditionBattleEnemies`); without it every room turned into the goal fight after
+  the first turn.

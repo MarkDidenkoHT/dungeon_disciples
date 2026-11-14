@@ -42,23 +42,17 @@ const T = {
     exit:      { en: 'You left through the exit', ru: 'Вы вышли через выход' },
     abandoned: { en: 'Expedition abandoned',     ru: 'Поход брошен' },
     wiped:     { en: 'The expedition is lost',   ru: 'Поход провален' },
-    dev_ended: { en: 'Expedition ended (dev)',   ru: 'Поход завершён (dev)' },
   },
   outcomeNote: {
     goal:      { en: 'The haul and the level reward are yours.', ru: 'Добыча и награда уровня — ваши.' },
     exit:      { en: 'The whole haul came home.', ru: 'Вся добыча доставлена домой.' },
     abandoned: { en: 'Half the haul came home, and the squad is at 1 HP.', ru: 'Домой вернулась половина добычи, а отряд — с 1 HP.' },
     wiped:     { en: 'Nothing was brought back.', ru: 'Ничего не удалось вынести.' },
-    dev_ended: { en: 'Nothing was paid.',          ru: 'Ничего не выплачено.' },
   },
   unlocked:     { en: n => `Level ${n} unlocked`, ru: n => `Открыт уровень ${n}` },
   xpEach:       { en: 'XP each',                 ru: 'опыта каждому' },
   conflict:     { en: 'The expedition changed elsewhere — refreshed.', ru: 'Поход изменился на другом устройстве — обновлено.' },
   failed:       { en: 'Something went wrong. Try again.', ru: 'Что-то пошло не так. Попробуйте ещё раз.' },
-  dev:          { en: 'Dev', ru: 'Dev' },
-  devReveal:    { en: 'Reveal map', ru: 'Открыть карту' },
-  devTeleport:  { en: 'Teleport', ru: 'Телепорт' },
-  devEnd:       { en: 'End run', ru: 'Завершить' },
 };
 
 // Placeholder glyphs until cells have art.
@@ -91,7 +85,6 @@ export function renderExpedition(root, { player, summary = null } = {}) {
 
   let run = null;         // the client view from the server
   let busy = false;
-  let teleportMode = false;
   let destroyed = false;
 
   root.innerHTML = `<div class="screen screen-expedition"><div class="expd" id="expd"></div></div>`;
@@ -158,7 +151,6 @@ export function renderExpedition(root, { player, summary = null } = {}) {
         if (c.cleared) cls.push('expd-cell--cleared');
         if (here) cls.push('expd-cell--here');
         if (canMove) cls.push('expd-cell--move');
-        if (teleportMode) cls.push('expd-cell--teleport');
         if (x < size - 1 && wallOn(c, { x: x + 1, y })) cls.push('expd-wall-r');
         if (y < size - 1 && wallOn(c, { x, y: y + 1 })) cls.push('expd-wall-b');
         if (x > 0 && wallOn(c, { x: x - 1, y })) cls.push('expd-wall-l');
@@ -167,7 +159,7 @@ export function renderExpedition(root, { player, summary = null } = {}) {
         const label = c.known ? t(TYPE_LABEL[c.type] || {}) : '';
         cells.push(`
           <button class="${cls.join(' ')}" type="button" data-x="${x}" data-y="${y}"
-                  ${canMove || teleportMode ? '' : 'tabindex="-1"'} aria-label="${label || '?'}">
+                  ${canMove ? '' : 'tabindex="-1"'} aria-label="${label || '?'}">
             <span class="expd-cell-glyph">${glyph}</span>
             ${here ? '<span class="expd-cell-you" aria-hidden="true"></span>' : ''}
           </button>`);
@@ -200,17 +192,6 @@ export function renderExpedition(root, { player, summary = null } = {}) {
       </div>`;
   }
 
-  function devHtml() {
-    if (!run.dev) return '';
-    return `
-      <div class="expd-dev">
-        <span class="expd-dev-tag">${t(T.dev)} · seed ${run.seed ?? '?'}</span>
-        <button type="button" data-dev="reveal">${t(T.devReveal)}</button>
-        <button type="button" data-dev="teleport" class="${teleportMode ? 'is-on' : ''}">${t(T.devTeleport)}</button>
-        <button type="button" data-dev="end">${t(T.devEnd)}</button>
-      </div>`;
-  }
-
   async function draw() {
     if (destroyed) return;
     if (!run) {
@@ -236,8 +217,7 @@ export function renderExpedition(root, { player, summary = null } = {}) {
           <button class="action-btn expd-exit-btn" id="expd-exit" type="button">${t(T.exitHere)}</button>
           <div class="expd-muted">${t(T.exitNote)}</div>` : ''}
         <button class="expd-abandon" id="expd-abandon" type="button">${t(T.abandon)}</button>
-      </div>
-      ${devHtml()}`;
+      </div>`;
 
     squadHtml().then(html => {
       const el = root.querySelector('#expd-squad');
@@ -251,7 +231,6 @@ export function renderExpedition(root, { player, summary = null } = {}) {
     host().querySelector('#expd-step-back')?.addEventListener('click', () => run.prev && onCell(run.prev.x, run.prev.y));
     host().querySelector('#expd-exit')?.addEventListener('click', () => onLeave(true));
     host().querySelector('#expd-abandon')?.addEventListener('click', () => onLeave(false));
-    host().querySelectorAll('[data-dev]').forEach(b => b.addEventListener('click', () => onDev(b.dataset.dev)));
 
     runTutorial();
   }
@@ -295,14 +274,6 @@ export function renderExpedition(root, { player, summary = null } = {}) {
   }
 
   function onCell(x, y) {
-    if (teleportMode) {
-      teleportMode = false;
-      return guarded(async () => {
-        const r = await api('/expedition/dev', { chat_id: player.chat_id, run_id: run.id, action: 'teleport', x, y });
-        run = r.run;
-        draw();
-      });
-    }
     if (!(run.moves || []).some(m => m.x === x && m.y === y)) return;
     return guarded(async () => {
       const r = await api('/expedition/move', { chat_id: player.chat_id, run_id: run.id, x, y });
@@ -331,25 +302,6 @@ export function renderExpedition(root, { player, summary = null } = {}) {
       bootstrapCache.invalidate();
       run = null;
       drawSummary(r);
-    });
-  }
-
-  function onDev(action) {
-    if (action === 'teleport') {
-      teleportMode = !teleportMode;
-      draw();
-      return;
-    }
-    return guarded(async () => {
-      const r = await api('/expedition/dev', { chat_id: player.chat_id, run_id: run.id, action });
-      if (r.ended) {
-        bootstrapCache.invalidate();
-        run = null;
-        drawSummary(r);
-        return;
-      }
-      run = r.run;
-      draw();
     });
   }
 
@@ -401,7 +353,6 @@ export function renderExpedition(root, { player, summary = null } = {}) {
   }
 
   function show(params = {}) {
-    teleportMode = false;
     if (params.summary) {
       run = null;
       drawSummary(params.summary);

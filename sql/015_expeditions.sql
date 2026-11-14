@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS public.expeditions (
   level       integer     NOT NULL,
   status      text        NOT NULL DEFAULT 'active'
               CHECK (status IN ('active', 'ended')),
-  -- How it ended: 'goal' | 'exit' | 'abandoned' | 'wiped' | 'dev_ended'.
+  -- How it ended: 'goal' | 'exit' | 'abandoned' | 'wiped'.
   outcome     text,
   version     integer     NOT NULL DEFAULT 0,
   data        jsonb       NOT NULL,

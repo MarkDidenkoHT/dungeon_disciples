@@ -983,8 +983,12 @@ async function rehydrateEngine(record) {
       playerUnits: await buildArmyFor(chat_id, playerUnitIds),
       // A bot's army is the one it was built with, stored on the record, so a
       // template edited mid-battle does not change the fight.
+      // An expedition room is rebuilt from ITS lineup. The level's encounter is
+      // only the goal room; reading it for every room swapped each fight's
+      // enemies for the goal's after the first turn.
       enemies:     isBotRecord(record)      ? (bd.bot?.army || [])
                  : isColossusRecord(record) ? [bd.colossus?.boss].filter(Boolean)
+                 : bd.expedition            ? expeditionBattleEnemies(bd)
                  : getEncounter(bd.region_id, bd.level),
     });
   }
@@ -5026,12 +5030,6 @@ function isExpeditionRegion(region_id) {
   return REGIONS.find(r => r.id === region_id)?.mode === 'expedition';
 }
 
-// Dev tools (design doc §10.1) are for the admin account only.
-function isExpeditionAdmin(chat_id) {
-  const admin = process.env.ADMIN_CHAT_ID;
-  return !!admin && String(admin) === String(chat_id);
-}
-
 async function getActiveExpedition(chat_id) {
   const rows = await supabase(`/expeditions?chat_id=eq.${encodeURIComponent(chat_id)}&status=eq.active&order=created_at.desc&limit=1`);
   return rows[0] || null;
@@ -5111,9 +5109,18 @@ function expeditionEnemies(run, cell) {
   return resolveEnemySlots(expeditionSlots(run, cell));
 }
 
+// The same lineup, read back off a battle record when the engine is rebuilt
+// between turns (rehydrateEngine). `battle_data.expedition.template` names the
+// room's template; the goal room has none and is the level's encounter.
+function expeditionBattleEnemies(bd) {
+  const exp = bd.expedition || {};
+  if (exp.goal || !exp.template) return getEncounter(bd.region_id, bd.level);
+  return resolveEnemySlots(EXP_DATA.getSecondaryTemplate(bd.region_id, exp.template)?.enemies);
+}
+
 function expeditionView(run, chat_id) {
   if (!run) return null;
-  const view = EXPMAP.clientView(run, { dev: isExpeditionAdmin(chat_id) });
+  const view = EXPMAP.clientView(run);
   if (run.status === 'active' && run.data?.pending) {
     const cell = EXPMAP.cellAt(run.data.map, run.data.pending.x, run.data.pending.y);
     view.pending.enemies = expeditionSlots(run, cell).map(s => ({
@@ -5280,7 +5287,7 @@ router.get('/expedition/active', requireAuth, async (req, res) => {
 // checks as /battle/create (level unlocked, squad valid, supply charged last),
 // then a fresh map. The squad and its placement are fixed for the whole run.
 router.post('/expedition/start', requireAuth, async (req, res) => {
-  const { chat_id, region_id, level, playerUnitIds, placement, seed } = req.body;
+  const { chat_id, region_id, level, playerUnitIds, placement } = req.body;
   if (!chat_id || !region_id || level === undefined || !Array.isArray(playerUnitIds) || !placement || typeof placement !== 'object') {
     return res.status(400).json({ error: 'chat_id, region_id, level, playerUnitIds and placement required' });
   }
@@ -5339,10 +5346,8 @@ router.post('/expedition/start', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid placement', code: 'invalid_placement' });
     }
 
-    // A seed from the request is a dev tool; everyone else gets a random map.
-    const useSeed = seed != null && isExpeditionAdmin(chat_id) && Number.isFinite(Number(seed));
     const map = EXPMAP.generateMap({
-      seed:         useSeed ? Number(seed) : crypto.randomInt(0, 2 ** 31),
+      seed:         crypto.randomInt(0, 2 ** 31),
       region_id,
       level:        lvl,
       levelRewards: getLevelRewards(region_id, lvl),
@@ -5443,7 +5448,10 @@ router.post('/expedition/fight', requireAuth, async (req, res) => {
     const battle_data = buildBattleData(engine, {
       region_id: run.region_id, level: run.level, selected_spells: [],
       setup: { playerUnitIds: playerUnits.map(u => ({ id: u.id, _rosterId: u._rosterId })), placement },
-      expedition: { run_id: run.id, x: cell.x, y: cell.y, goal: cell.type === 'goal' },
+      expedition: {
+        run_id: run.id, x: cell.x, y: cell.y, goal: cell.type === 'goal',
+        template: cell.type === 'fight' ? cell.template : null,
+      },
     });
 
     // The run is marked BEFORE the battle exists, under its version lock, so a
@@ -5500,45 +5508,6 @@ router.post('/expedition/leave', requireAuth, async (req, res) => {
     if (!atExit) await woundExpeditionSquad(chat_id, data);
     const payout = await payExpedition(chat_id, ended, data, { share: atExit ? 1 : EXP_DATA.ABANDON_SHARE });
     res.json({ ended: true, outcome, payout, run: expeditionView(ended, chat_id) });
-  } catch (err) {
-    serverError(res, err);
-  }
-});
-
-// POST /expedition/dev — pilot tools, admin only: reveal the whole map, teleport
-// to any cell, or end the run without paying it. A map from a chosen seed is
-// started through /expedition/start's `seed`.
-router.post('/expedition/dev', requireAuth, async (req, res) => {
-  const { chat_id, run_id, action, x, y } = req.body;
-  if (!isExpeditionAdmin(chat_id)) return res.status(403).json({ error: 'Forbidden' });
-  try {
-    const run = await getActiveExpedition(chat_id);
-    if (!run || run.id !== run_id) return res.status(404).json({ error: 'No expedition in progress', code: 'expedition_none' });
-    const data = JSON.parse(JSON.stringify(run.data));
-    if (data.battle_id) return res.status(400).json({ error: 'Finish the fight first', code: 'expedition_in_battle' });
-
-    if (action === 'end') {
-      const ended = await endExpedition(run, data, 'dev_ended');
-      return res.json({ ended: !!ended, outcome: 'dev_ended', run: expeditionView(ended, chat_id) });
-    }
-    if (action === 'reveal') {
-      data.dev_reveal = !data.dev_reveal;
-    } else if (action === 'teleport') {
-      const to = { x: Number(x), y: Number(y) };
-      if (!EXPMAP.cellAt(data.map, to.x, to.y)) return res.status(400).json({ error: 'No such cell' });
-      data.prev = { ...data.pos };
-      data.pos = to;
-      data.pending = null;
-      const k = EXPMAP.keyOf(to);
-      if (!data.visited.includes(k)) data.visited.push(k);
-      EXPMAP.revealAround(data);
-      if (EXPMAP.isLiveFight(data, EXPMAP.cellAt(data.map, to.x, to.y))) data.pending = to;
-    } else {
-      return res.status(400).json({ error: 'Unknown action' });
-    }
-    const saved = await writeExpedition(run, data);
-    if (!saved) return res.status(409).json({ error: 'The expedition changed, try again', code: 'expedition_conflict' });
-    res.json({ run: expeditionView(saved, chat_id) });
   } catch (err) {
     serverError(res, err);
   }

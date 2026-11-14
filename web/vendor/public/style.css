@@ -12383,7 +12383,6 @@ html[lang="ru"] .upgrade-unit-label {
   box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.75) inset;
   animation: expd-pulse 1.6s ease-in-out infinite;
 }
-.expd-cell--teleport { cursor: crosshair; }
 .expd-cell--here { box-shadow: 0 0 0 2px var(--accent-bright) inset; }
 .expd-cell-you {
   position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
@@ -12420,17 +12419,6 @@ html[lang="ru"] .upgrade-unit-label {
   background: none; border: none; color: var(--danger);
   font-size: 0.78rem; text-decoration: underline; padding: 6px; cursor: pointer;
 }
-
-.expd-dev {
-  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
-  padding: 8px; border: 1px dashed var(--muted); border-radius: 8px; font-size: 0.72rem;
-}
-.expd-dev-tag { color: var(--muted); margin-right: auto; }
-.expd-dev button {
-  background: var(--surface); color: var(--text); border: 1px solid var(--border);
-  border-radius: 6px; padding: 4px 8px; font-size: 0.72rem; cursor: pointer;
-}
-.expd-dev button.is-on { border-color: var(--accent); color: var(--accent-bright); }
 
 .expd-empty, .expd-summary {
   margin-top: 24px; padding: 18px; border-radius: 12px;
