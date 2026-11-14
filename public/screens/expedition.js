@@ -10,7 +10,6 @@
 import { api, navigate, bootstrapCache } from '../api.js';
 import { assetUrl } from '../asset_base.js';
 import { lang } from './settings.js';
-import { REGIONS as REGION_CARDS } from './embark.js';
 import { UNITS } from '../../data/units.js';
 import { CRYSTAL_ICONS, GOLD_ICON, resolveUnitDef, unitName, gameConfirm, gameAlert, cellFootprint } from '../utils.js';
 import { BOONS, CURSES, EVENTS, CAMP } from '../../data/expedition.js';
@@ -18,13 +17,11 @@ import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone }
 
 const T = {
   title:        { en: 'Expedition',              ru: 'Поход' },
-  level:        { en: 'Level',                   ru: 'Уровень' },
   haul:         { en: 'Haul',                    ru: 'Добыча' },
   haulEmpty:    { en: 'Nothing yet',             ru: 'Пока пусто' },
   squad:        { en: 'Squad',                   ru: 'Отряд' },
   fallen:       { en: 'Fallen',                  ru: 'Пал' },
   steps:        { en: 'Steps',                   ru: 'Шаги' },
-  tapToMove:    { en: 'Tap a lit cell — up, down, left or right — to move.', ru: 'Коснитесь подсвеченной клетки — вверх, вниз, влево или вправо, — чтобы идти.' },
   fightTitle:   { en: 'Enemies ahead',           ru: 'Впереди враги' },
   goalTitle:    { en: 'The goal of this expedition', ru: 'Цель похода' },
   fight:        { en: 'Fight',                   ru: 'В бой' },
@@ -79,7 +76,6 @@ const T = {
   noticeRest:   { en: 'The squad rests.',        ru: 'Отряд отдыхает.' },
   noticeLoot:   { en: 'Added to the haul',       ru: 'Добавлено в добычу' },
   eliteNote:    { en: 'Elite — stronger enemies, double loot', ru: 'Элита — враги сильнее, двойная добыча' },
-  goalDone:     { en: 'Goal defeated — explore on, or head home.', ru: 'Цель повержена — исследуйте дальше или возвращайтесь.' },
   goHome:       { en: 'Return home',              ru: 'Вернуться домой' },
   goHomeNote:   { en: 'The level is cleared: the whole haul comes home from anywhere.', ru: 'Уровень пройден: вся добыча вернётся домой из любой клетки.' },
 };
@@ -138,11 +134,6 @@ export function renderExpedition(root, { player, summary = null } = {}) {
     else if (act === 'slot') onSlot(Number(el.dataset.cell));
   });
 
-  function regionLabel(id) {
-    const r = REGION_CARDS.find(x => x.id === id);
-    return r ? ((L === 'ru' && r.label_ru) || r.label) : id;
-  }
-
   function chips({ gold = 0, xp = 0, crystals = {}, trophies = {} } = {}, { xpLabel = '' } = {}) {
     const chip = (icon, amt, title = '') =>
       `<span class="expd-chip"${title ? ` title="${title}"` : ''}><span class="expd-chip-icon">${icon}</span>${amt}</span>`;
@@ -188,11 +179,20 @@ export function renderExpedition(root, { player, summary = null } = {}) {
           <button class="${cls.join(' ')}" type="button" data-x="${x}" data-y="${y}"
                   ${canMove ? '' : 'tabindex="-1"'} aria-label="${label || '?'}">
             <span class="expd-cell-glyph">${glyph}</span>
-            ${here ? '<span class="expd-cell-you" aria-hidden="true"></span>' : ''}
+            ${here ? youMarker() : ''}
           </button>`);
       }
     }
     return `<div class="expd-grid expd-grid--${size}" style="--expd-size:${size}">${cells.join('')}</div>`;
+  }
+
+  // The squad's position: the hero's portrait once the roster is known, a dot
+  // until then (or if the hero is not on this run).
+  let heroImg = null;
+  function youMarker() {
+    return heroImg
+      ? `<img class="expd-cell-you expd-cell-you--hero" src="${heroImg}" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'">`
+      : '<span class="expd-cell-you" aria-hidden="true"></span>';
   }
 
   // Only shown when a step into a fight room could not open the battle (a
@@ -354,7 +354,6 @@ export function renderExpedition(root, { player, summary = null } = {}) {
   function mountFrame() {
     host().innerHTML = `
       <header class="expd-head">
-        <div class="expd-title" id="expd-title"></div>
         <div class="expd-haul"><span class="expd-label">${t(T.haul)}</span><span id="expd-haul-chips"></span></div>
         <div class="expd-torch" id="expd-torch"></div>
         <div class="expd-effects" id="expd-effects"></div>
@@ -362,7 +361,6 @@ export function renderExpedition(root, { player, summary = null } = {}) {
       <div class="expd-squad" id="expd-squad"></div>
       <div class="expd-notice" id="expd-notice"></div>
       <div class="expd-board" id="expd-board"></div>
-      <p class="expd-hint" id="expd-hint"></p>
       <div id="expd-pending"></div>
       <div class="expd-footer" id="expd-footer"></div>`;
     for (const k of Object.keys(last)) delete last[k];
@@ -390,10 +388,8 @@ export function renderExpedition(root, { player, summary = null } = {}) {
     }
     if (mountedRunId !== run.id || !root.querySelector('#expd-board')) mountFrame();
 
-    setHtml('#expd-title', `${regionLabel(run.region_id)} · ${t(T.level)} ${run.level}`);
     setHtml('#expd-haul-chips', chips(run.bank), JSON.stringify(run.bank));
     setHtml('#expd-board', gridHtml());
-    setHtml('#expd-hint', run.pending ? '' : run.goal_cleared ? t(T.goalDone) : t(T.tapToMove));
     setHtml('#expd-torch', torchHtml());
     setHtml('#expd-effects', effectsHtml());
     setHtml('#expd-notice', noticeHtml());
@@ -416,8 +412,14 @@ export function renderExpedition(root, { player, summary = null } = {}) {
     const fallen = new Set(run.squad?.fallen || []);
     const ids = (run.squad?.roster_ids || []).map(String);
     squadRoster = roster.filter(r => ids.includes(String(r.id)));
-    // The camp grid draws portraits from this; redraw it once they are known.
+    // The camp grid and the board's position marker draw portraits from this;
+    // redraw once they are known (setHtml skips the parts that did not change).
+    const hero = squadRoster.find(r => r.is_hero === true);
+    const nextHeroImg = hero ? portraitUrl(resolveUnitDef(hero)) : null;
+    const heroChanged = nextHeroImg !== heroImg;
+    heroImg = nextHeroImg;
     if (run.offer?.kind === 'camp') { delete last['#expd-pending']; draw(); }
+    else if (heroChanged) draw();
     if (!squadEls || squadEls.ids.join(',') !== ids.join(',')) {
       strip.innerHTML = ids.map(id => {
         const row = roster.find(r => String(r.id) === id);

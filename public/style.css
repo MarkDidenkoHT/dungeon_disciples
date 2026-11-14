@@ -12327,7 +12327,6 @@ html[lang="ru"] .upgrade-unit-label {
 }
 .expd { display: flex; flex-direction: column; gap: 0.625rem; width: 100%; max-width: min(30rem, 96vw); margin: 0 auto; }
 .expd-head { display: flex; flex-direction: column; gap: 0.375rem; }
-.expd-title { font-size: 1rem; font-weight: 700; color: var(--accent-bright); letter-spacing: 0.02em; }
 .expd-haul { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem; font-size: 0.78rem; }
 .expd-label { color: var(--muted); text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.08em; margin-right: 0.125rem; }
 .expd-muted { color: var(--muted); font-size: 0.75rem; }
@@ -12340,7 +12339,7 @@ html[lang="ru"] .upgrade-unit-label {
 .expd-chip-icon { display: inline-flex; width: 1rem; height: 1rem; align-items: center; justify-content: center; }
 .expd-chip-icon .res-icon-img, .expd-chip-img { width: 1rem; height: 1rem; object-fit: contain; }
 
-.expd-squad { display: flex; gap: 0.375rem; flex-wrap: wrap; min-height: 3.625rem; }
+.expd-squad { display: flex; justify-content: center; gap: 0.375rem; flex-wrap: wrap; min-height: 3.625rem; }
 .expd-unit { width: 3rem; display: flex; flex-direction: column; align-items: center; gap: 0.125rem; }
 .expd-unit-img { width: 2.5rem; height: 2.5rem; border-radius: 0.375rem; object-fit: cover; background: var(--surface); border: 1px solid var(--border); }
 .expd-unit-hp { width: 2.5rem; height: 0.25rem; border-radius: 0.125rem; background: rgba(255,255,255,0.08); overflow: hidden; }
@@ -12365,6 +12364,7 @@ html[lang="ru"] .upgrade-unit-label {
   aspect-ratio: 1;
   border-radius: 0.375rem;
   border: 0.125rem solid transparent;
+  padding: 0;
   background: var(--surface);
   color: var(--text);
   font-size: 1.3rem;
@@ -12396,11 +12396,23 @@ html[lang="ru"] .upgrade-unit-label {
 .expd-wall-l { border-left: 0.1875rem solid #dcc08a; }
 .expd-wall-b { border-bottom: 0.1875rem solid #dcc08a; }
 .expd-wall-t { border-top: 0.1875rem solid #dcc08a; }
+/* The hero's portrait marks where the squad stands; the room glyph shrinks to
+   a corner badge under it. */
+.expd-cell-you--hero {
+  bottom: auto; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 72%; height: 72%; aspect-ratio: auto;
+  border-radius: 50%; object-fit: cover;
+  background: var(--surface);
+  border: 0.125rem solid var(--accent-bright);
+  box-shadow: 0 0 0.5rem rgba(var(--accent-rgb), 0.7);
+}
+.expd-cell--here:has(.expd-cell-you--hero) .expd-cell-glyph {
+  position: absolute; top: 4%; right: 6%; font-size: 0.55em; z-index: 1;
+}
 @keyframes expd-pulse {
   0%, 100% { box-shadow: 0 0 0 0.125rem rgba(var(--accent-rgb), 0.45) inset; }
   50%      { box-shadow: 0 0 0 0.125rem rgba(var(--accent-rgb), 0.95) inset; }
 }
-.expd-hint { text-align: center; color: var(--muted); font-size: 0.75rem; min-height: 1em; }
 
 .expd-pending {
   padding: 0.75rem; border-radius: 0.625rem;
