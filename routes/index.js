@@ -6,7 +6,9 @@ const fs     = require('fs');
 const path   = require('path');
 
 const { UNITS } = require('../data/units');
-const { REGIONS, getEncounter, getLevelRewards, getFirstClearTokens, TOME_XP, QUICK_BATTLE_SUPPLY_COST, QUICK_BATTLE_POWER_MARGIN } = require('../data/embark');
+const { REGIONS, REGION_ENCOUNTERS, getEncounter, resolveEnemySlots, getLevelRewards, getFirstClearTokens, TOME_XP, QUICK_BATTLE_SUPPLY_COST, QUICK_BATTLE_POWER_MARGIN } = require('../data/embark');
+const EXP_DATA = require('../data/expedition');
+const EXPMAP   = require('../utils/expedition-map');
 const { getActiveEvent, eventDropsFor, eventBonusFor, eventPayload } = require('../utils/events');
 const { getEquipBlock } = require('../data/item_rules');
 const { getRespecOptions, getCrossBranchRespecOptions, FACTION_CRYSTAL } = require('../data/buildings');
@@ -1027,6 +1029,10 @@ function buildBattleData(engine, bd) {
     // however the evening actually went.
     ...(bd.tourney_id ? { tourney_id: bd.tourney_id } : {}),
     ...(bd.tourney_settled ? { tourney_settled: bd.tourney_settled } : {}),
+    // A fight inside an expedition run: which run, which cell, and whether it is
+    // the goal. Carried on every write for the tourney's reason above — the
+    // payout and the abandon path both need it after the last turn.
+    ...(bd.expedition ? { expedition: bd.expedition } : {}),
   };
 }
 
@@ -1923,7 +1929,7 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
     // them, and fetching them here costs one extra parallel query instead of a
     // separate round-trip per screen.
     const player = await getPlayerByChatId(chat_id);
-    const [resources, trophies, tokens, supplyRows, structRows, roster, items] = await Promise.all([
+    const [resources, trophies, tokens, supplyRows, structRows, roster, items, openRun] = await Promise.all([
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item_type=eq.resource`),
       supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}&item_type=eq.trophy`),
       // Tokens are their own item_type rather than a resource, because they must
@@ -1940,6 +1946,9 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       player
         ? fetchItems(`/items?player_id=eq.${player.id}&select=id,item_name,item_stats,equipped_by`)
         : Promise.resolve([]),
+      // The open expedition, if any: the embark screen sends the player back to
+      // its map, and the roster marks its squad as away. Never throws.
+      findActiveExpedition(chat_id),
     ]);
     // Everything the embark screen needs to draw the gate and the countdown,
     // resolved here because data/buildings.js is CommonJS and the client cannot
@@ -1975,6 +1984,13 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
       // Embark progress rides along so the roster's craft catalog can gate
       // blueprints (data/items.js `requires`) without a second round-trip.
       progress: player?.progress || {},
+      // The open expedition in summary; the map itself is GET /expedition/active.
+      expedition: openRun ? {
+        id:         openRun.id,
+        region_id:  openRun.region_id,
+        level:      openRun.level,
+        roster_ids: expeditionSquadIds(openRun.data),
+      } : null,
       // Which gear loadout is live and how many the Training Grounds has
       // opened. The castle's Set row draws straight off this: the items above
       // already hold the live set, so the row needs only the label state.
@@ -2180,7 +2196,7 @@ router.get('/roster', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/roster/resurrect', requireAuth, async (req, res) => {
+router.post('/roster/resurrect', requireAuth, blockIfDeployed, async (req, res) => {
   const { chat_id, roster_id, spell_id } = req.body;
   if (!chat_id || !roster_id || !spell_id) return res.status(400).json({ error: 'chat_id, roster_id and spell_id required' });
 
@@ -2223,7 +2239,7 @@ router.post('/roster/resurrect', requireAuth, async (req, res) => {
 
 // Out-of-combat heal (roster only): restores a living but damaged unit by the
 // spell's heal_pct of its max HP. Counterpart to /roster/resurrect for the dead.
-router.post('/roster/heal', requireAuth, async (req, res) => {
+router.post('/roster/heal', requireAuth, blockIfDeployed, async (req, res) => {
   const { chat_id, roster_id, spell_id } = req.body;
   if (!chat_id || !roster_id || !spell_id) return res.status(400).json({ error: 'chat_id, roster_id and spell_id required' });
 
@@ -2290,7 +2306,7 @@ router.post('/roster/heal', requireAuth, async (req, res) => {
 //
 // The penalty is checked against the unit AS WORN. Stats floor at zero, so
 // -10 fire resist on a unit holding none of it would be two free bonuses.
-router.post('/roster/engrave', requireAuth, async (req, res) => {
+router.post('/roster/engrave', requireAuth, blockIfDeployed, async (req, res) => {
   const { chat_id, roster_id, combo, minus, plus, tier, up, down } = req.body;
   if (!chat_id || !roster_id || !combo || !tier) {
     return res.status(400).json({ error: 'chat_id, roster_id, combo and tier required' });
@@ -2378,7 +2394,7 @@ router.post('/roster/engrave', requireAuth, async (req, res) => {
 // Nothing is reset here. The rungs the design doc has a change wiping do not
 // exist yet, and a reset that clears nothing is a line of code that will be
 // wrong the day they land - it belongs with them.
-router.post('/roster/calling', requireAuth, async (req, res) => {
+router.post('/roster/calling', requireAuth, blockIfDeployed, async (req, res) => {
   const { chat_id, roster_id, calling } = req.body;
   if (!chat_id || !roster_id || !calling) {
     return res.status(400).json({ error: 'chat_id, roster_id and calling required' });
@@ -2442,7 +2458,7 @@ router.post('/roster/calling', requireAuth, async (req, res) => {
 // a permanent stat, then resets its accumulated XP to zero.
 //
 // The escalating gold price is calculated from the oath count at purchase time.
-router.post('/roster/oath', requireAuth, async (req, res) => {
+router.post('/roster/oath', requireAuth, blockIfDeployed, async (req, res) => {
   const { chat_id, roster_id } = req.body;
   if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });
 
@@ -2554,7 +2570,7 @@ router.post('/roster/oath', requireAuth, async (req, res) => {
 // it — and half a restore, silently charged, is worse than a refusal. The
 // crystal bill is therefore computed for the WHOLE set and debited once, before
 // any roster row is touched.
-router.post('/roster/restore', requireAuth, async (req, res) => {
+router.post('/roster/restore', requireAuth, blockIfOnExpedition, async (req, res) => {
   const { chat_id, mode } = req.body;
   if (!chat_id || !['resurrect', 'resurrect_heal', 'heal', 'heal_potions'].includes(mode)) {
     return res.status(400).json({ error: 'chat_id and a valid mode required' });
@@ -3537,7 +3553,7 @@ router.get('/errands', requireAuth, async (req, res) => {
 // POST /errands/start — send a unit on the standing offer. The offer is read
 // back from its row; the request only says WHO goes and for HOW LONG, and both
 // are validated. Nothing about the errand or its reward comes from the client.
-router.post('/errands/start', requireAuth, serializeErrandStart, async (req, res) => {
+router.post('/errands/start', requireAuth, blockIfDeployed, serializeErrandStart, async (req, res) => {
   const { chat_id, roster_id, hours, offer_row_id } = req.body;
   if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });
   try {
@@ -4153,7 +4169,7 @@ router.post('/errands/reroll/claim', requireAuth, async (req, res) => {
 //
 // Deliberately NOT gated on the unit being new or low-level: the player decides
 // what needs catching up. The gate is supply — six tomes exist, all first-clear.
-router.post('/roster/tome', requireAuth, async (req, res) => {
+router.post('/roster/tome', requireAuth, blockIfDeployed, async (req, res) => {
   const { chat_id, roster_id } = req.body;
   if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });
   try {
@@ -4209,7 +4225,7 @@ router.post('/roster/tome', requireAuth, async (req, res) => {
 // Health Potion: the crystal Heal spell's effect (see /roster/heal) paid for with
 // a token instead of crystals — and to FULL health rather than heal_pct. Same
 // rules otherwise: not on a fallen unit, not on one already at full.
-router.post('/roster/potion', requireAuth, async (req, res) => {
+router.post('/roster/potion', requireAuth, blockIfDeployed, async (req, res) => {
   const { chat_id, roster_id } = req.body;
   if (!chat_id || !roster_id) return res.status(400).json({ error: 'chat_id and roster_id required' });
   try {
@@ -4357,7 +4373,7 @@ router.post('/transmute/claim', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/roster/levelup', requireAuth, async (req, res) => {
+router.post('/roster/levelup', requireAuth, blockIfDeployed, async (req, res) => {
   // target_unit_id is optional: only sent to break a tie between branches that
   // are all consistent with the building standing in the slot.
   const { chat_id, roster_id, target_unit_id } = req.body;
@@ -4993,6 +5009,541 @@ router.get('/battle/state', requireAuth, async (req, res) => {
 });
 
 
+// ── Expeditions ─────────────────────────────────────────────────────────────
+// An embark into an expedition-mode region is a run across a small map of rooms
+// (docs/embark-expedition-design.md). The map and every pure rule — movement,
+// fog, banking — are in utils/expedition-map.js; this section is the stored run
+// (public.expeditions, sql/015_expeditions.sql) and its routes.
+//
+// Fights inside a run are ordinary PvE battles: created here, played through
+// /battle/action, and settled by /battle/reward or /battle/end, which hand any
+// battle carrying `battle_data.expedition` to settleExpeditionBattle below.
+//
+// Every write to a run is version-locked (writeExpedition), so a double tap or a
+// second device can never apply the same step, fight or payout twice.
+
+function isExpeditionRegion(region_id) {
+  return REGIONS.find(r => r.id === region_id)?.mode === 'expedition';
+}
+
+// Dev tools (design doc §10.1) are for the admin account only.
+function isExpeditionAdmin(chat_id) {
+  const admin = process.env.ADMIN_CHAT_ID;
+  return !!admin && String(admin) === String(chat_id);
+}
+
+async function getActiveExpedition(chat_id) {
+  const rows = await supabase(`/expeditions?chat_id=eq.${encodeURIComponent(chat_id)}&status=eq.active&order=created_at.desc&limit=1`);
+  return rows[0] || null;
+}
+
+// For the guards and /bootstrap. A lookup that fails — most likely the table
+// not created yet — must not take the rest of the game down with it, so it
+// reads as "no run" and is logged.
+async function findActiveExpedition(chat_id) {
+  try {
+    return await getActiveExpedition(chat_id);
+  } catch (err) {
+    console.error('[expedition] active lookup failed:', err?.message || err);
+    return null;
+  }
+}
+
+async function getExpeditionById(id, chat_id) {
+  const rows = await supabase(`/expeditions?id=eq.${encodeURIComponent(id)}&chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
+  return rows[0] || null;
+}
+
+// Version-locked write. Returns the updated row, or null when another request
+// got there first (the caller refuses or reloads).
+async function writeExpedition(run, data, extra = {}) {
+  const rows = await supabase(`/expeditions?id=eq.${encodeURIComponent(run.id)}&version=eq.${Number(run.version) || 0}&status=eq.active`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      data,
+      version:    (Number(run.version) || 0) + 1,
+      steps:      data.steps || 0,
+      fights:     data.fights || 0,
+      updated_at: new Date().toISOString(),
+      ...extra,
+    }),
+  });
+  return rows[0] || null;
+}
+
+// Ends the run. The write is the claim: whoever ends it is the one who pays it,
+// so payout always comes AFTER this returns a row. Logged as the pilot's
+// telemetry line; the row itself keeps outcome, steps and fights.
+async function endExpedition(run, data, outcome) {
+  const ended = await writeExpedition(run, data, {
+    status: 'ended', outcome, ended_at: new Date().toISOString(),
+  });
+  if (ended) {
+    console.log('[expedition]', JSON.stringify({
+      id: run.id, chat_id: run.chat_id, region_id: run.region_id, level: run.level,
+      outcome, steps: data.steps || 0, fights: data.fights || 0,
+      fallen: (data.fallen || []).length,
+    }));
+  }
+  return ended;
+}
+
+function expeditionSquadIds(data) {
+  return (data.squad?.playerUnitIds || []).map(e => String(e._rosterId || e.id));
+}
+
+function livingSquadEntries(data) {
+  const fallen = new Set((data.fallen || []).map(String));
+  return (data.squad?.playerUnitIds || []).filter(e => !fallen.has(String(e._rosterId || e.id)));
+}
+
+// The raw slots of a cell's fight, for the preview. Never sent for a cell the
+// player is not standing on.
+function expeditionSlots(run, cell) {
+  if (!cell) return [];
+  if (cell.type === 'goal') return REGION_ENCOUNTERS[run.region_id]?.[`level_${run.level}`]?.enemies || [];
+  if (cell.type === 'fight') return EXP_DATA.getSecondaryTemplate(run.region_id, cell.template)?.enemies || [];
+  return [];
+}
+
+function expeditionEnemies(run, cell) {
+  if (cell?.type === 'goal') return getEncounter(run.region_id, run.level);
+  return resolveEnemySlots(expeditionSlots(run, cell));
+}
+
+function expeditionView(run, chat_id) {
+  if (!run) return null;
+  const view = EXPMAP.clientView(run, { dev: isExpeditionAdmin(chat_id) });
+  if (run.status === 'active' && run.data?.pending) {
+    const cell = EXPMAP.cellAt(run.data.map, run.data.pending.x, run.data.pending.y);
+    view.pending.enemies = expeditionSlots(run, cell).map(s => ({
+      key: s.key, cell: s.cell, item_id: s.item_id || null,
+    }));
+  }
+  return view;
+}
+
+// Leaving early: every living squad unit drops to 1 HP, the same penalty as
+// abandoning a battle (persistBattleRosterState with `abandoned`).
+async function woundExpeditionSquad(chat_id, data) {
+  const ids = livingSquadEntries(data).map(e => String(e._rosterId || e.id));
+  if (!ids.length) return;
+  const rows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&id=in.(${ids.join(',')})&select=id,unit_data`);
+  await Promise.all(rows.map(row => {
+    const ud = row.unit_data || {};
+    if (ud.alive === false) return null;
+    const maxHp = Number(ud.max_hp ?? 0);
+    return supabase(`/roster?id=eq.${encodeURIComponent(row.id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ unit_data: { ...ud, current_hp: Math.min(1, maxHp || 1) } }),
+    });
+  }));
+}
+
+// Pays a finished run: the bank (scaled by `share` for an early exit), plus the
+// level's own reward, event drops, progress and first-clear tokens on a goal
+// kill. Everything goes through payRegionRewards, so unit passives, buildings
+// and events apply exactly as they do to a single-fight embark — once, to the
+// whole payout.
+async function payExpedition(chat_id, run, data, { share = 1, goal = false } = {}) {
+  const region = REGIONS.find(r => r.id === run.region_id);
+  const bank   = share === 1 ? data.bank : EXPMAP.scaleBank(data.bank, share);
+  let gold = Number(bank.gold) || 0;
+  let xp   = Number(bank.xp) || 0;
+  const crystals = { ...(bank.crystals || {}) };
+  const trophies = { ...(bank.trophies || {}) };
+  if (goal) {
+    const lvl = getLevelRewards(run.region_id, run.level);
+    gold += lvl.gold || 0;
+    xp   += lvl.xp || 0;
+    for (const { type, amount } of lvl.crystals) if (type && amount) crystals[type] = (crystals[type] || 0) + amount;
+    for (const [id, amount] of Object.entries(lvl.trophies)) if (amount) trophies[id] = (trophies[id] || 0) + amount;
+  }
+  const participantIds = expeditionSquadIds(data);
+  const fallen = new Set((data.fallen || []).map(String));
+  const payout = await payRegionRewards(chat_id, {
+    region_id: run.region_id, level: run.level, region,
+    tuned: {
+      gold,
+      crystals: Object.entries(crystals).filter(([, a]) => a > 0).map(([type, amount]) => ({ type, amount })),
+      trophies: Object.fromEntries(Object.entries(trophies).filter(([, a]) => a > 0)),
+    },
+    xp,
+    participantIds,
+    survivorIds:     participantIds.filter(id => !fallen.has(id)),
+    withEventDrops:  goal,
+    advanceProgress: goal,
+    regen:           share === 1,
+  });
+  return { ...payout, share, goal };
+}
+
+// A fight inside a run has finished (claimed by /battle/reward, or closed by
+// /battle/end). Moves the run on: a won fight clears its cell and banks its
+// loot, a won goal ends the run and pays it, a lost fight ends it with nothing,
+// and an abandoned one ends it at half.
+//
+// The caller has already claimed the battle, so this runs once per battle.
+async function settleExpeditionBattle(chat_id, record, { abandoned = false } = {}) {
+  const exp = record.battle_data?.expedition;
+  if (!exp?.run_id) return null;
+  const run = await getExpeditionById(exp.run_id, chat_id);
+  if (!run || run.status !== 'active' || run.data?.battle_id !== record.battle_id) {
+    return { ended: !run || run.status !== 'active', stale: true, run: expeditionView(run, chat_id) };
+  }
+
+  const data = JSON.parse(JSON.stringify(run.data));
+  const fallenIds = (record.battle_data.units || [])
+    .filter(u => u.side === 'player' && u._rosterId != null && u.alive === false)
+    .map(u => String(u._rosterId));
+  const won = !abandoned && record.battle_data.winner === 'player';
+
+  if (!won) {
+    data.battle_id = null;
+    data.fights   += 1;
+    data.fallen    = [...new Set([...(data.fallen || []), ...fallenIds])];
+    const outcome  = abandoned ? 'abandoned' : 'wiped';
+    const ended    = await endExpedition(run, data, outcome);
+    if (!ended) return { ended: false, conflict: true };
+    // A lost fight pays nothing (design doc §10.1); walking out of one pays half.
+    const payout = abandoned ? await payExpedition(chat_id, ended, data, { share: EXP_DATA.ABANDON_SHARE }) : null;
+    return { ended: true, outcome, payout, run: expeditionView(ended, chat_id) };
+  }
+
+  const cell = EXPMAP.settleWonFight(data, { fallenIds });
+  if (cell?.type === 'goal') {
+    const ended = await endExpedition(run, data, 'goal');
+    if (!ended) return { ended: false, conflict: true };
+    const payout = await payExpedition(chat_id, ended, data, { share: 1, goal: true });
+    return { ended: true, outcome: 'goal', payout, run: expeditionView(ended, chat_id) };
+  }
+
+  const saved = await writeExpedition(run, data);
+  if (!saved) return { ended: false, conflict: true };
+  return { ended: false, loot: cell?.loot || null, bank: data.bank, run: expeditionView(saved, chat_id) };
+}
+
+// ── Deployed units ──────────────────────────────────────────────────────────
+// A squad on an open run is away from the castle (design doc §10.1): its units
+// cannot be healed, levelled, re-equipped or sent on errands until the run ends,
+// and — because every squad holds the one hero — no other battle can start.
+const expeditionRefusal = res => res.status(400).json({
+  error: 'Your squad is on an expedition', code: 'expedition_active',
+});
+
+async function blockIfOnExpedition(req, res, next) {
+  const chat_id = (req.body && req.body.chat_id) || req.query.chat_id;
+  if (await findActiveExpedition(chat_id)) return expeditionRefusal(res);
+  next();
+}
+
+async function blockIfDeployed(req, res, next) {
+  const chat_id = (req.body && req.body.chat_id) || req.query.chat_id;
+  const rosterId = req.body?.roster_id;
+  const run = rosterId != null ? await findActiveExpedition(chat_id) : null;
+  if (run && expeditionSquadIds(run.data).includes(String(rosterId))) {
+    return res.status(400).json({ error: 'That unit is on an expedition', code: 'unit_on_expedition' });
+  }
+  next();
+}
+
+async function blockIfItemDeployed(req, res, next) {
+  const chat_id = (req.body && req.body.chat_id) || req.query.chat_id;
+  const run = req.body?.item_id != null ? await findActiveExpedition(chat_id) : null;
+  if (run) {
+    try {
+      const rows = await supabase(`/items?id=eq.${encodeURIComponent(req.body.item_id)}&select=equipped_by&limit=1`);
+      const holder = rows[0]?.equipped_by;
+      if (holder != null && expeditionSquadIds(run.data).includes(String(holder))) {
+        return res.status(400).json({ error: 'That unit is on an expedition', code: 'unit_on_expedition' });
+      }
+    } catch (err) {
+      return serverError(res, err);
+    }
+  }
+  next();
+}
+
+// GET /expedition/active — the open run as the client may see it, or null.
+router.get('/expedition/active', requireAuth, async (req, res) => {
+  const { chat_id } = req.query;
+  if (!chat_id) return res.status(400).json({ error: 'chat_id required' });
+  try {
+    const run = await getActiveExpedition(chat_id);
+    res.json({ run: expeditionView(run, chat_id) });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// POST /expedition/start — the embark gate for an expedition region. Same
+// checks as /battle/create (level unlocked, squad valid, supply charged last),
+// then a fresh map. The squad and its placement are fixed for the whole run.
+router.post('/expedition/start', requireAuth, async (req, res) => {
+  const { chat_id, region_id, level, playerUnitIds, placement, seed } = req.body;
+  if (!chat_id || !region_id || level === undefined || !Array.isArray(playerUnitIds) || !placement || typeof placement !== 'object') {
+    return res.status(400).json({ error: 'chat_id, region_id, level, playerUnitIds and placement required' });
+  }
+  if (!playerUnitIds.length || playerUnitIds.length > 6) {
+    return res.status(400).json({ error: 'playerUnitIds must be a non-empty array of up to 6 entries' });
+  }
+  const lvl = Number(level);
+  const region = REGIONS.find(r => r.id === region_id);
+  if (!region) return res.status(400).json({ error: 'Invalid region_id' });
+  if (!isExpeditionRegion(region_id)) return res.status(400).json({ error: 'Not an expedition region', code: 'not_expedition_region' });
+  if (!Number.isInteger(lvl) || !region.difficulties?.[`level_${lvl}`]) return res.status(400).json({ error: 'Invalid level' });
+
+  try {
+    const [existingBattle, existingRun, player, squad, errandRows] = await Promise.all([
+      getActiveBattle(chat_id),
+      getActiveExpedition(chat_id),
+      getPlayerByChatId(chat_id),
+      loadSquad(chat_id, playerUnitIds),
+      errandRowsFor(chat_id).catch(() => []),
+    ]);
+    if (existingBattle) return res.status(400).json({ error: 'A battle is already in progress', code: 'battle_in_progress' });
+    if (existingRun) return res.status(400).json({ error: 'An expedition is already in progress', code: 'expedition_active', run: expeditionView(existingRun, chat_id) });
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+
+    const unlocked = Number(player.progress?.[region_id] ?? 1);
+    if (lvl > unlocked) return res.status(400).json({ error: 'That level is not unlocked yet', code: 'level_locked' });
+    if (squad.error) return res.status(400).json({ error: squad.error, code: 'invalid_squad' });
+
+    // The squad as stored: ids only. HP, items and level are read from the
+    // roster at every fight, which is what makes damage carry from room to room.
+    const entries = playerUnitIds.map(e => {
+      const id = String(e?._rosterId || e?.id);
+      return { id, _rosterId: id };
+    });
+    const ids = new Set(entries.map(e => e.id));
+    const away = new Set(errandRows.filter(r => r.active).map(r => String(r.errand_data?.roster_id)));
+    if (entries.some(e => away.has(e.id))) {
+      return res.status(400).json({ error: 'That unit is on an errand', code: 'errand_unit_busy' });
+    }
+    if (squad.units.some(u => u.unit_data?.alive === false)) {
+      return res.status(400).json({ error: 'A fallen unit cannot embark', code: 'unit_fallen' });
+    }
+
+    // Every squad unit placed on a real cell, nothing else placed, no cell twice.
+    const cleanPlacement = {};
+    const usedCells = new Set();
+    for (const [id, cell] of Object.entries(placement)) {
+      const c = Number(cell);
+      if (!ids.has(String(id)) || !Number.isInteger(c) || c < 0 || c > 5 || usedCells.has(c)) {
+        return res.status(400).json({ error: 'Invalid placement', code: 'invalid_placement' });
+      }
+      usedCells.add(c);
+      cleanPlacement[String(id)] = c;
+    }
+    if (entries.some(e => cleanPlacement[e.id] === undefined)) {
+      return res.status(400).json({ error: 'Invalid placement', code: 'invalid_placement' });
+    }
+
+    // A seed from the request is a dev tool; everyone else gets a random map.
+    const useSeed = seed != null && isExpeditionAdmin(chat_id) && Number.isFinite(Number(seed));
+    const map = EXPMAP.generateMap({
+      seed:         useSeed ? Number(seed) : crypto.randomInt(0, 2 ** 31),
+      region_id,
+      level:        lvl,
+      levelRewards: getLevelRewards(region_id, lvl),
+    });
+    const data = EXPMAP.newRunData({ map, squad: { playerUnitIds: entries, placement: cleanPlacement } });
+
+    // Charged last, as in /battle/create: one supply buys the whole run.
+    const supplyItem = supplyItemName(player.faction);
+    if (supplyItem) {
+      try {
+        await spendResources(chat_id, { [supplyItem]: EMBARK_SUPPLY_COST });
+      } catch (err) {
+        if (shortfallItem(err)) {
+          return res.status(400).json({ error: `Out of ${supplyItem}`, code: 'no_supplies', item: supplyItem });
+        }
+        throw err;
+      }
+    }
+
+    let run;
+    try {
+      const rows = await supabase('/expeditions', {
+        method: 'POST',
+        body: JSON.stringify({ chat_id: String(chat_id), region_id, level: lvl, data, steps: 0, fights: 0 }),
+      });
+      run = rows[0];
+    } catch (err) {
+      if (supplyItem) {
+        try {
+          await grantResources(chat_id, [{ item: supplyItem, amount: EMBARK_SUPPLY_COST, item_type: SUPPLY_ITEM_TYPE }]);
+        } catch (refundErr) {
+          console.error('Failed to refund supply after expedition start failed:', refundErr);
+        }
+      }
+      // The unique index refused a second open run (another device, same moment).
+      if (/duplicate key|unique/i.test(err?.message || '')) {
+        return res.status(400).json({ error: 'An expedition is already in progress', code: 'expedition_active' });
+      }
+      throw err;
+    }
+    res.json({ run: expeditionView(run, chat_id) });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// POST /expedition/move — one step, up/down/left/right. Stepping onto a fight
+// that has not been won makes it pending: the only moves then are to fight it
+// (/expedition/fight) or to step back the way the player came.
+router.post('/expedition/move', requireAuth, async (req, res) => {
+  const { chat_id, run_id, x, y } = req.body;
+  if (!chat_id || !run_id) return res.status(400).json({ error: 'chat_id and run_id required' });
+  try {
+    const run = await getActiveExpedition(chat_id);
+    if (!run || run.id !== run_id) return res.status(404).json({ error: 'No expedition in progress', code: 'expedition_none' });
+    const data = JSON.parse(JSON.stringify(run.data));
+    const refused = EXPMAP.applyMove(data, { x, y });
+    if (refused) return res.status(400).json(refused);
+    const saved = await writeExpedition(run, data);
+    if (!saved) return res.status(409).json({ error: 'The expedition changed, try again', code: 'expedition_conflict' });
+    res.json({ run: expeditionView(saved, chat_id) });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// POST /expedition/fight — start the pending fight. The squad is the run's
+// squad minus the fallen, in the run's placement, at whatever HP the roster has
+// now. No supply: the run already paid for itself.
+router.post('/expedition/fight', requireAuth, async (req, res) => {
+  const { chat_id, run_id, battle_id } = req.body;
+  if (!chat_id || !run_id || !battle_id) return res.status(400).json({ error: 'chat_id, run_id and battle_id required' });
+  if (typeof battle_id !== 'string' || battle_id.length > 100) return res.status(400).json({ error: 'Invalid battle_id' });
+  try {
+    const [run, existing] = await Promise.all([getActiveExpedition(chat_id), getActiveBattle(chat_id)]);
+    if (!run || run.id !== run_id) return res.status(404).json({ error: 'No expedition in progress', code: 'expedition_none' });
+    if (existing) return res.status(400).json({ error: 'A battle is already in progress', code: 'battle_in_progress' });
+    const data = JSON.parse(JSON.stringify(run.data));
+    if (data.battle_id) return res.status(400).json({ error: 'A fight is already under way', code: 'expedition_in_battle' });
+    if (!data.pending) return res.status(400).json({ error: 'There is nothing to fight here', code: 'expedition_no_fight' });
+
+    const cell = EXPMAP.cellAt(data.map, data.pending.x, data.pending.y);
+    const enemies = expeditionEnemies(run, cell);
+    if (!enemies.length) return res.status(400).json({ error: 'No enemies in this room', code: 'expedition_no_fight' });
+
+    const living = livingSquadEntries(data);
+    if (!living.length) return res.status(400).json({ error: 'No one is left to fight', code: 'expedition_no_squad' });
+    const playerUnits = await buildArmyFor(chat_id, living);
+    const placement = {};
+    for (const e of living) placement[e.id] = data.squad.placement[e.id];
+
+    const engine = await BattleEngine.fromSetup(playerUnits, enemies, placement, {
+      litaniesUnlockedBySide: { player: await litaniesUnlockedFor(chat_id), enemy: true },
+    });
+    engine.firePendingRoundEffects();
+    if (!engine.done) engine.runAiTurns();
+
+    const battle_data = buildBattleData(engine, {
+      region_id: run.region_id, level: run.level, selected_spells: [],
+      setup: { playerUnitIds: playerUnits.map(u => ({ id: u.id, _rosterId: u._rosterId })), placement },
+      expedition: { run_id: run.id, x: cell.x, y: cell.y, goal: cell.type === 'goal' },
+    });
+
+    // The run is marked BEFORE the battle exists, under its version lock, so a
+    // double tap cannot open two battles for one room.
+    data.battle_id = battle_id;
+    const reserved = await writeExpedition(run, data);
+    if (!reserved) return res.status(409).json({ error: 'The expedition changed, try again', code: 'expedition_conflict' });
+
+    let record;
+    try {
+      record = await createBattleState({ chat_id, battle_id, battle_data });
+    } catch (err) {
+      try {
+        await writeExpedition(reserved, { ...data, battle_id: null });
+      } catch (undoErr) {
+        console.error('Failed to release expedition after battle create failed:', undoErr);
+      }
+      throw err;
+    }
+    let initialLogs = [];
+    try {
+      const initialEvents = Array.isArray(engine.log) ? engine.log : [];
+      if (initialEvents.length) {
+        const inserted = await appendBattleLogEntries(battle_id, initialEvents);
+        initialLogs = (inserted || []).map(row => ({ id: row.id, ...row.event }));
+      }
+    } catch (err) {
+      console.error('Failed to persist initial battle log:', err);
+    }
+    res.json({ record, state: engine.getSnapshot(), logs: initialLogs, run: expeditionView(reserved, chat_id) });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// POST /expedition/leave — walk out. On an exit door: everything banked, HP as
+// it is. Anywhere else: half the bank and every living unit at 1 HP, the same
+// as abandoning a fight (design doc §6).
+router.post('/expedition/leave', requireAuth, async (req, res) => {
+  const { chat_id, run_id } = req.body;
+  if (!chat_id || !run_id) return res.status(400).json({ error: 'chat_id and run_id required' });
+  try {
+    const run = await getActiveExpedition(chat_id);
+    if (!run || run.id !== run_id) return res.status(404).json({ error: 'No expedition in progress', code: 'expedition_none' });
+    const data = JSON.parse(JSON.stringify(run.data));
+    if (data.battle_id) return res.status(400).json({ error: 'Finish or abandon the fight first', code: 'expedition_in_battle' });
+
+    const here = EXPMAP.cellAt(data.map, data.pos.x, data.pos.y);
+    const atExit = here?.type === 'exit' && !data.pending;
+    const outcome = atExit ? 'exit' : 'abandoned';
+    const ended = await endExpedition(run, data, outcome);
+    if (!ended) return res.status(409).json({ error: 'The expedition changed, try again', code: 'expedition_conflict' });
+
+    if (!atExit) await woundExpeditionSquad(chat_id, data);
+    const payout = await payExpedition(chat_id, ended, data, { share: atExit ? 1 : EXP_DATA.ABANDON_SHARE });
+    res.json({ ended: true, outcome, payout, run: expeditionView(ended, chat_id) });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// POST /expedition/dev — pilot tools, admin only: reveal the whole map, teleport
+// to any cell, or end the run without paying it. A map from a chosen seed is
+// started through /expedition/start's `seed`.
+router.post('/expedition/dev', requireAuth, async (req, res) => {
+  const { chat_id, run_id, action, x, y } = req.body;
+  if (!isExpeditionAdmin(chat_id)) return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const run = await getActiveExpedition(chat_id);
+    if (!run || run.id !== run_id) return res.status(404).json({ error: 'No expedition in progress', code: 'expedition_none' });
+    const data = JSON.parse(JSON.stringify(run.data));
+    if (data.battle_id) return res.status(400).json({ error: 'Finish the fight first', code: 'expedition_in_battle' });
+
+    if (action === 'end') {
+      const ended = await endExpedition(run, data, 'dev_ended');
+      return res.json({ ended: !!ended, outcome: 'dev_ended', run: expeditionView(ended, chat_id) });
+    }
+    if (action === 'reveal') {
+      data.dev_reveal = !data.dev_reveal;
+    } else if (action === 'teleport') {
+      const to = { x: Number(x), y: Number(y) };
+      if (!EXPMAP.cellAt(data.map, to.x, to.y)) return res.status(400).json({ error: 'No such cell' });
+      data.prev = { ...data.pos };
+      data.pos = to;
+      data.pending = null;
+      const k = EXPMAP.keyOf(to);
+      if (!data.visited.includes(k)) data.visited.push(k);
+      EXPMAP.revealAround(data);
+      if (EXPMAP.isLiveFight(data, EXPMAP.cellAt(data.map, to.x, to.y))) data.pending = to;
+    } else {
+      return res.status(400).json({ error: 'Unknown action' });
+    }
+    const saved = await writeExpedition(run, data);
+    if (!saved) return res.status(409).json({ error: 'The expedition changed, try again', code: 'expedition_conflict' });
+    res.json({ run: expeditionView(saved, chat_id) });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
 router.post('/battle/create', requireAuth, async (req, res) => {
   const { chat_id, battle_id, playerUnitIds, placement, region_id, level, selected_spells } = req.body;
   if (!chat_id || !battle_id || !playerUnitIds || !placement || !region_id || level === undefined) {
@@ -5004,9 +5555,15 @@ router.post('/battle/create', requireAuth, async (req, res) => {
   const region = REGIONS.find(r => r.id === region_id);
   if (!region) return res.status(400).json({ error: 'Invalid region_id' });
   if (!region.difficulties?.[`level_${level}`]) return res.status(400).json({ error: 'Invalid level' });
+  // An expedition region is embarked through /expedition/start; a single fight
+  // here would skip the map and pay the goal for nothing.
+  if (isExpeditionRegion(region_id)) {
+    return res.status(400).json({ error: 'This region is an expedition', code: 'expedition_region' });
+  }
   try {
     const existing = await getActiveBattle(chat_id);
     if (existing) return res.status(400).json({ error: 'A battle is already in progress', code: 'battle_in_progress' });
+    if (await findActiveExpedition(chat_id)) return expeditionRefusal(res);
 
     // The level has to be UNLOCKED, not merely real. The checks above only
     // establish that the region and level exist, so a request naming level 10 on
@@ -5148,7 +5705,7 @@ router.post('/battle/create', requireAuth, async (req, res) => {
 // level; its power number, its idea of "cleared" and its supply count are all
 // recomputed here, because the whole feature is a payout with no battle behind
 // it to prove it was earned.
-router.post('/battle/quick', requireAuth, async (req, res) => {
+router.post('/battle/quick', requireAuth, blockIfOnExpedition, async (req, res) => {
   const { chat_id, playerUnitIds, region_id, level } = req.body;
   if (!chat_id || !playerUnitIds || !region_id || level === undefined) {
     return res.status(400).json({ error: 'chat_id, playerUnitIds, region_id and level required' });
@@ -5858,7 +6415,7 @@ router.post('/colossus/rest/refresh', requireAuth, async (req, res) => {
 });
 
 // POST /colossus/attack — start an attempt with the formation from battle prep.
-router.post('/colossus/attack', requireAuth, async (req, res) => {
+router.post('/colossus/attack', requireAuth, blockIfOnExpedition, async (req, res) => {
   const { chat_id, playerUnitIds, placement } = req.body;
   if (!chat_id || !Array.isArray(playerUnitIds) || !playerUnitIds.length || playerUnitIds.length > 6
       || !placement || typeof placement !== 'object') {
@@ -6597,7 +7154,7 @@ function validPvpFormation(formation) {
 // is re-gated when it is accepted.
 const CHALLENGE_MODES = ['pvp_quick', TOURNEY_MODE];
 
-router.post('/pvp/challenge', requireAuth, async (req, res) => {
+router.post('/pvp/challenge', requireAuth, blockIfOnExpedition, async (req, res) => {
   const { chat_id, formation, mode = 'pvp_quick' } = req.body;
   if (!chat_id || !validPvpFormation(formation)) {
     return res.status(400).json({ error: 'chat_id and a valid formation are required', code: 'invalid_formation' });
@@ -6744,7 +7301,7 @@ router.get('/pvp/challenge/peek', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/pvp/challenge/accept', requireAuth, async (req, res) => {
+router.post('/pvp/challenge/accept', requireAuth, blockIfOnExpedition, async (req, res) => {
   const { chat_id, token, formation } = req.body;
   if (!chat_id || !token || !validPvpFormation(formation)) {
     return res.status(400).json({ error: 'chat_id, token and a valid formation are required', code: 'invalid_request' });
@@ -6886,7 +7443,7 @@ router.post('/pvp/challenge/accept', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/pvp/enqueue', requireAuth, async (req, res) => {
+router.post('/pvp/enqueue', requireAuth, blockIfOnExpedition, async (req, res) => {
   const { chat_id, mode = 'pvp_quick', formation } = req.body;
   if (!chat_id || !formation) return res.status(400).json({ error: 'chat_id and formation required' });
 
@@ -7131,6 +7688,18 @@ router.post('/battle/end', requireAuth, async (req, res) => {
     // Walking out ends the match as surely as claiming it does.
     forgetMatch(chat_id);
 
+    // A fight inside an expedition. Abandoning it ends the run at half the bank
+    // (HP has just been set to 1 above). A finished fight closed here instead of
+    // through /battle/reward still moves the run on, or the run would be stuck
+    // waiting on a battle that no longer exists. The claim keeps it single-shot
+    // against a /battle/reward racing it.
+    if (record.battle_data?.expedition && record.battle_active !== false) {
+      const claimed = await claimBattleState(battle_id);
+      armyCacheDrop(battle_id);
+      const expedition = claimed ? await settleExpeditionBattle(chat_id, record, { abandoned }) : null;
+      return res.json({ success: true, abandoned, expedition });
+    }
+
     // Walking out of a duel is a concession, not a draw: the player still on the
     // field wins it, and is told so through the battle stream they are already
     // holding. The same penalty applies as in a region fight — the dead stay
@@ -7180,6 +7749,243 @@ router.post('/battle/end', requireAuth, async (req, res) => {
     serverError(res, err);
   }
 });
+
+// The payout of a won region fight: gold, crystals and trophies with every
+// percentage bonus (unit passives, castle buildings, the running event), the XP
+// split with its camp regen and auto level-ups, and — when `advanceProgress` —
+// the next level and its first-clear tokens. Shared by /battle/reward (one fight
+// pays its level) and the expedition payout (a run pays its bank, plus the level
+// on a goal kill), so both pay through exactly the same rules.
+//
+// `tuned` is { gold, crystals: [{ type, amount }], trophies: { id: amount } }.
+// Must run AFTER the fight's roster state is persisted: participant rows are
+// read here and must reflect the battle.
+async function payRegionRewards(chat_id, { region_id, level, region, tuned, xp, participantIds, survivorIds, withEventDrops = false, advanceProgress = false, regen = true }) {
+  const result = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false };
+  const inventoryRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
+  // Gold, crystals and trophies are collected here and paid out in ONE
+  // transaction below, rather than a write per line. A victory paying gold,
+  // two crystal types and six trophies was nine sequential round trips on
+  // the screen the player is staring at, and any of them could fail alone.
+  const payouts = [];
+  const updateItem = (itemName, amount) => {
+    // A resource row the player has never held is skipped, not invented:
+    // gold and crystals are seeded at registration, so a missing row means
+    // something is wrong with the account rather than a new currency.
+    if (!inventoryRows.some(r => r.item === itemName)) return;
+    // An expedition that banked nothing pays zero; there is nothing to write.
+    if (!(amount > 0)) return;
+    payouts.push({ item: itemName, amount, item_type: 'resource' });
+  };
+
+  // Expedition passives: everything the party carried into this battle
+  // (units + their equipped items) contributes; same-kind bonuses sum.
+  // Fetched AFTER persistBattleRosterState so unit_data reflects the battle.
+  const participantRows = participantIds.length
+    // is_hero rides along for the post-battle auto level-up, which gates the
+    // hero on the throne's level.
+    ? await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&or=(${participantIds.map(id => `id.eq.${id}`).join(',')})&select=id,unit_data,is_hero,engraving,calling,devotion`)
+    : [];
+  const embarkItems = await getItemsByRosterIds(participantIds);
+  const { totals: embarkBonus, servitudeIds } = collectEmbarkBonuses(participantRows, embarkItems);
+
+  // Castle buildings (Training Grounds today) feed the same gold/xp/crystal
+  // pipeline as the expedition passives — the slot the throne perks used to
+  // occupy.
+  const structForBonuses = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1&select=buildings_data`);
+  const buildingBonus = getEmbarkBuildingBonuses(structForBonuses[0]?.buildings_data);
+  embarkBonus.gold_pct    += buildingBonus.gold_pct;
+  embarkBonus.xp_pct      += buildingBonus.xp_pct;
+  embarkBonus.crystal_pct += buildingBonus.crystal_pct;
+
+  // A timed event is the third feeder into the same pipeline, after the
+  // expedition passives and the castle. Global and per-region bonuses are
+  // both additive, so a 10% global + 10% regional event is +20% there.
+  const activeEvent = await getActiveEvent(supabase);
+  const eventBonus  = eventBonusFor(activeEvent, region_id);
+  embarkBonus.gold_pct    += eventBonus.gold_pct;
+  embarkBonus.xp_pct      += eventBonus.xp_pct;
+  embarkBonus.crystal_pct += eventBonus.crystal_pct;
+
+  // Gold, then the level's guaranteed crystals (exact types and amounts).
+  const goldPayout = Math.round(tuned.gold * (1 + embarkBonus.gold_pct / 100));
+  updateItem('Gold', goldPayout);
+  result.gold = goldPayout;
+  // Reported per type, the way trophies are — a level paying 14 Fire and 14
+  // Life is two different rewards, and collapsing them to "28 💎" hid both
+  // which elements dropped and how much of each.
+  const crystalMult = 1 + embarkBonus.crystal_pct / 100;
+  const crystalsGained = {};
+  let crystalTotal = 0;
+  for (const { type, amount } of tuned.crystals) {
+    if (!type || !amount) continue;
+    const amt = Math.round(amount * crystalMult);
+    updateItem(type, amt);
+    crystalsGained[type] = (crystalsGained[type] || 0) + amt;
+    crystalTotal += amt;
+  }
+  result.crystals_gained = crystalsGained;   // { Crystals_Fire: 14, … }
+  result.crystal         = crystalTotal;     // kept: the summed total
+
+  // Trophies are declared as { id: amount } on the level and always drop on
+  // a win. There used to be a second `spell_trophies` track granted on top
+  // when a trophy_gain spell had been cast — both halves of that are gone:
+  // no spell carries trophy_gain any more, and pre-battle spell selection
+  // was removed, so it could never fire.
+  const granted = {};
+  for (const [id, amount] of Object.entries(tuned.trophies)) {
+    if (id && amount) granted[id] = (granted[id] || 0) + amount;
+  }
+  // Event drops land in the SAME map, so they are written by the same batch
+  // and reported on the victory screen like any other trophy. An event
+  // trophy on a level that already drops one simply adds to it.
+  const eventDrops = withEventDrops ? eventDropsFor(activeEvent, region_id, level) : {};
+  for (const [id, amount] of Object.entries(eventDrops)) {
+    if (id && amount) granted[id] = (granted[id] || 0) + amount;
+  }
+  result.event_trophies = eventDrops;
+  // Trophies join the same bill. A trophy the player has never held is
+  // upserted rather than skipped — unlike gold, a first drop is normal.
+  for (const [id, amount] of Object.entries(granted)) {
+    payouts.push({ item: id, amount, item_type: 'trophy' });
+  }
+
+  // The whole haul, one transaction.
+  if (payouts.length) await grantResources(chat_id, payouts);
+
+  if (Object.keys(granted).length) {
+    result.trophies_gained = granted;             // { trophy_id: amount }
+    result.trophy_gained   = Object.keys(granted)[0]; // legacy single-id field
+  }
+
+  // No finished-item drops by design — equipment comes only from crafting.
+  // The shards above are the crafting inputs.
+
+  const validSurvivorIds = survivorIds.map(String);
+
+  // XP goes to survivors plus any fallen unit with Unending Servitude —
+  // those still take their share of the split. Combat Veteran multiplies
+  // everyone's share.
+  const deadEarnerIds = participantIds.filter(id => !validSurvivorIds.includes(id) && servitudeIds.has(id));
+  const xpRecipients  = [...validSurvivorIds, ...deadEarnerIds];
+
+  // One unit_data patch per unit: XP share and the post-embark camp regen
+  // (Rejuvenating Presence heals every SURVIVOR by the summed percentage).
+  const xpEach = xpRecipients.length > 0
+    ? Math.round(Math.floor((Number(xp) || 0) / xpRecipients.length) * (1 + embarkBonus.xp_pct / 100))
+    : 0;
+  const xpShares = xpSharesWithMaxTierRedirect(participantRows, xpRecipients, xpEach);
+  result.xp_granted = xpEach;
+
+  // Per-unit XP detail for the victory screen. The single xp_granted figure
+  // says how much each recipient got but not WHO got it — and the recipient
+  // list is not obvious (the fallen can earn via Unending Servitude, and the
+  // rest of the party earns nothing). Reporting the actual post-award total
+  // also lets the client draw each unit's progress toward its next tier.
+  const xpAwards = [];
+  // Every participant's FINAL unit_data, fed to the auto level-up pass below.
+  const postXpRows = [];
+
+  await Promise.all(participantRows.map(async (row) => {
+    const rosterId = String(row.id);
+    let unitData  = row.unit_data || {};
+    let changed   = false;
+
+    if (xpRecipients.includes(rosterId)) {
+      const xpGained = xpShares.get(rosterId) ?? xpEach;
+      if (xpGained > 0) {
+        unitData = { ...unitData, current_xp: (unitData.current_xp ?? 0) + xpGained };
+        changed  = true;
+      }
+      xpAwards.push({
+        roster_id:  rosterId,
+        unit_id:    unitData.unit_id,
+        xp_gained:  xpGained,
+        current_xp: unitData.current_xp,
+        alive:      unitData.alive !== false,
+        max_tier:   isMaxTierUnit(unitData.unit_id),
+      });
+    }
+
+    // No camp regen after walking out early: the 1 HP penalty must stand.
+    if (regen && embarkBonus.heal_pct > 0 && unitData.alive !== false) {
+      const maxHp = Number(unitData.max_hp ?? 0);
+      const cur   = Number(unitData.current_hp ?? maxHp);
+      if (maxHp > 0 && cur < maxHp) {
+        const healed = Math.min(maxHp, cur + Math.round(maxHp * embarkBonus.heal_pct / 100));
+        unitData = { ...unitData, current_hp: healed };
+        changed  = true;
+      }
+    }
+
+    // Kept regardless of `changed` — a unit may already have been over the
+    // threshold and merely waiting on a building.
+    // `devotion` rides along so applyAutoLevelUps can reset it — this is the
+    // commonest level-up of all, and without the field the reset is skipped.
+    postXpRows.push({ id: row.id, unit_data: unitData, is_hero: row.is_hero, devotion: row.devotion });
+    if (!changed) return;
+    await supabase(`/roster?id=eq.${encodeURIComponent(rosterId)}`, { method: 'PATCH', body: JSON.stringify({ unit_data: unitData }) });
+  }));
+
+  // Anything the XP award just pushed over its threshold levels up now,
+  // provided its building already supports the upgrade and the branch is
+  // unambiguous. Runs AFTER the XP patches so it sees the new totals.
+  result.auto_level_ups = await applyAutoLevelUps(postXpRows, structForBonuses[0]?.buildings_data);
+
+  // Stable order — Promise.all resolution order is not meaningful, and the
+  // victory list should not reshuffle between runs.
+  result.xp_awards = xpAwards.sort((a, b) => Number(a.roster_id) - Number(b.roster_id));
+  const playerRows = advanceProgress
+    ? await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`)
+    : [];
+  if (playerRows.length) {
+    const progress     = playerRows[0].progress || {};
+    const currentLevel = progress[region_id] ?? 1;
+    const maxLevel     = Object.keys(region.difficulties).length;
+    // `<= maxLevel`, not `<`. Clearing the FINAL level used to advance
+    // nothing, so progress capped at maxLevel and `clearedLevel`
+    // (progress - 1, see data/items.js) capped one below the last level.
+    // With every region holding 6 levels that made the mythic craft gate —
+    // "clear any region level 6" — unreachable for everybody, permanently.
+    // Progress may now read maxLevel + 1, meaning "this region is finished";
+    // the embark screen clamps its level pips to the real level count so it
+    // never draws a pip for a level that does not exist.
+    if (level >= currentLevel && level <= maxLevel) {
+      progress[region_id] = level + 1;
+      await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'PATCH', body: JSON.stringify({ progress }) });
+      result.progress_unlocked = true;
+      result.next_level        = level + 1;
+
+      // Tokens drop HERE and nowhere else — inside the branch that advances
+      // progress, which is the game's own definition of a first clear. A
+      // replay of a level already beaten never reaches this line, so the
+      // drops cannot be farmed. See FIRST_CLEAR_TOKENS in data/embark.js.
+      const tokenDrops = getFirstClearTokens(level);
+      if (tokenDrops) {
+        // `supplies` is not a token. It is paid into the supply pool, whose
+        // row name is per faction (SUPPLY_ITEMS), so the key in the drop
+        // table is a placeholder the faction resolves here. Everything else
+        // is a token and keeps its key as its row name.
+        //
+        // A drop can push the pool ABOVE its ceiling, and is allowed to:
+        // it is three supplies across a whole account, once, and the refill
+        // simply idles until the overflow is spent (see supply-tick).
+        const supplyItem = supplyItemName(playerRows[0].faction);
+        const grants = [];
+        for (const [item, amount] of Object.entries(tokenDrops)) {
+          if (item === 'supplies') {
+            if (supplyItem) grants.push({ item: supplyItem, amount, item_type: SUPPLY_ITEM_TYPE });
+          } else {
+            grants.push({ item, amount, item_type: 'token' });
+          }
+        }
+        if (grants.length) await grantResources(chat_id, grants);
+        result.tokens_gained = tokenDrops;   // { crossroad_sigil: 1 }
+      }
+    }
+  }
+  return result;
+}
 
 // PVP_WIN_XP to every unit of `side` that fought, survivor or not.
 async function grantPvpWinXp(chat_id, battle_data, side) {
@@ -7344,6 +8150,23 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
     // Started now, awaited just before responding: it runs alongside the payout
     // rather than in front of it.
     const questReport = bumpQuestsWithReport(chat_id, battleQuestCounters(record.battle_data, 'player', { battles_won: won ? 1 : 0 }));
+
+    // A fight inside an expedition pays nothing by itself: a secondary room banks
+    // its loot into the run, and only the run's end pays out (the goal room pays
+    // the bank plus the level). The result carries the run so the client can go
+    // back to the map, or show the run's payout when it ended.
+    if (record.battle_data?.expedition) {
+      const expedition = await settleExpeditionBattle(chat_id, record);
+      const base = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false };
+      return res.json({
+        ...base,
+        ...(expedition?.payout || {}),
+        won,
+        expedition,
+        quest_progress: await questReport,
+      });
+    }
+
     const region = REGIONS.find(r => r.id === region_id);
     if (!region) return res.status(404).json({ error: 'Region not found' });
     const levelDef = region.difficulties?.[`level_${level}`];
@@ -7351,229 +8174,20 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
     const rewards = levelDef.rewards;
     const result  = { xp_granted: 0, gold: 0, crystal: 0, crystals_gained: {}, xp_awards: [], progress_unlocked: false };
     if (won) {
-      const inventoryRows = await supabase(`/resources?chat_id=eq.${encodeURIComponent(chat_id)}`);
-      // Gold, crystals and trophies are collected here and paid out in ONE
-      // transaction below, rather than a write per line. A victory paying gold,
-      // two crystal types and six trophies was nine sequential round trips on
-      // the screen the player is staring at, and any of them could fail alone.
-      const payouts = [];
-      const updateItem = (itemName, amount) => {
-        // A resource row the player has never held is skipped, not invented:
-        // gold and crystals are seeded at registration, so a missing row means
-        // something is wrong with the account rather than a new currency.
-        if (!inventoryRows.some(r => r.item === itemName)) return;
-        payouts.push({ item: itemName, amount, item_type: 'resource' });
-      };
       // Per-level payout, declared on the level itself (see getLevelRewards in
       // data/embark.js). No scaling formula — what the level says is what it pays.
-      const tuned = getLevelRewards(region_id, level);
-
-      // Expedition passives: everything the party carried into this battle
-      // (units + their equipped items) contributes; same-kind bonuses sum.
-      // Fetched AFTER persistBattleRosterState so unit_data reflects the battle.
       const participantIds = (record.battle_data.units || [])
         .filter(u => u.side === 'player' && u._rosterId != null)
         .map(u => String(u._rosterId));
-      const participantRows = participantIds.length
-        // is_hero rides along for the post-battle auto level-up, which gates the
-        // hero on the throne's level.
-        ? await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&or=(${participantIds.map(id => `id.eq.${id}`).join(',')})&select=id,unit_data,is_hero,engraving,calling,devotion`)
-        : [];
-      const embarkItems = await getItemsByRosterIds(participantIds);
-      const { totals: embarkBonus, servitudeIds } = collectEmbarkBonuses(participantRows, embarkItems);
-
-      // Castle buildings (Training Grounds today) feed the same gold/xp/crystal
-      // pipeline as the expedition passives — the slot the throne perks used to
-      // occupy.
-      const structForBonuses = await supabase(`/structures?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1&select=buildings_data`);
-      const buildingBonus = getEmbarkBuildingBonuses(structForBonuses[0]?.buildings_data);
-      embarkBonus.gold_pct    += buildingBonus.gold_pct;
-      embarkBonus.xp_pct      += buildingBonus.xp_pct;
-      embarkBonus.crystal_pct += buildingBonus.crystal_pct;
-
-      // A timed event is the third feeder into the same pipeline, after the
-      // expedition passives and the castle. Global and per-region bonuses are
-      // both additive, so a 10% global + 10% regional event is +20% there.
-      const activeEvent = await getActiveEvent(supabase);
-      const eventBonus  = eventBonusFor(activeEvent, region_id);
-      embarkBonus.gold_pct    += eventBonus.gold_pct;
-      embarkBonus.xp_pct      += eventBonus.xp_pct;
-      embarkBonus.crystal_pct += eventBonus.crystal_pct;
-
-      // Gold, then the level's guaranteed crystals (exact types and amounts).
-      const goldPayout = Math.round(tuned.gold * (1 + embarkBonus.gold_pct / 100));
-      updateItem('Gold', goldPayout);
-      result.gold = goldPayout;
-      // Reported per type, the way trophies are — a level paying 14 Fire and 14
-      // Life is two different rewards, and collapsing them to "28 💎" hid both
-      // which elements dropped and how much of each.
-      const crystalMult = 1 + embarkBonus.crystal_pct / 100;
-      const crystalsGained = {};
-      let crystalTotal = 0;
-      for (const { type, amount } of tuned.crystals) {
-        if (!type || !amount) continue;
-        const amt = Math.round(amount * crystalMult);
-        updateItem(type, amt);
-        crystalsGained[type] = (crystalsGained[type] || 0) + amt;
-        crystalTotal += amt;
-      }
-      result.crystals_gained = crystalsGained;   // { Crystals_Fire: 14, … }
-      result.crystal         = crystalTotal;     // kept: the summed total
-
-      // Trophies are declared as { id: amount } on the level and always drop on
-      // a win. There used to be a second `spell_trophies` track granted on top
-      // when a trophy_gain spell had been cast — both halves of that are gone:
-      // no spell carries trophy_gain any more, and pre-battle spell selection
-      // was removed, so it could never fire.
-      const granted = {};
-      for (const [id, amount] of Object.entries(tuned.trophies)) {
-        if (id && amount) granted[id] = (granted[id] || 0) + amount;
-      }
-      // Event drops land in the SAME map, so they are written by the same batch
-      // and reported on the victory screen like any other trophy. An event
-      // trophy on a level that already drops one simply adds to it.
-      const eventDrops = eventDropsFor(activeEvent, region_id, level);
-      for (const [id, amount] of Object.entries(eventDrops)) {
-        if (id && amount) granted[id] = (granted[id] || 0) + amount;
-      }
-      result.event_trophies = eventDrops;
-      // Trophies join the same bill. A trophy the player has never held is
-      // upserted rather than skipped — unlike gold, a first drop is normal.
-      for (const [id, amount] of Object.entries(granted)) {
-        payouts.push({ item: id, amount, item_type: 'trophy' });
-      }
-
-      // The whole haul, one transaction.
-      await grantResources(chat_id, payouts);
-
-      if (Object.keys(granted).length) {
-        result.trophies_gained = granted;             // { trophy_id: amount }
-        result.trophy_gained   = Object.keys(granted)[0]; // legacy single-id field
-      }
-
-      // No finished-item drops by design — equipment comes only from crafting.
-      // The shards above are the crafting inputs.
-
-      const validSurvivorIds = getAlivePlayerRosterIds(record.battle_data);
-
-      // XP goes to survivors plus any fallen unit with Unending Servitude —
-      // those still take their share of the split. Combat Veteran multiplies
-      // everyone's share.
-      const deadEarnerIds = participantIds.filter(id => !validSurvivorIds.includes(id) && servitudeIds.has(id));
-      const xpRecipients  = [...validSurvivorIds, ...deadEarnerIds];
-
-      // One unit_data patch per unit: XP share and the post-embark camp regen
-      // (Rejuvenating Presence heals every SURVIVOR by the summed percentage).
-      const xpEach = xpRecipients.length > 0
-        ? Math.round(Math.floor(rewards.xp / xpRecipients.length) * (1 + embarkBonus.xp_pct / 100))
-        : 0;
-      const xpShares = xpSharesWithMaxTierRedirect(participantRows, xpRecipients, xpEach);
-      result.xp_granted = xpEach;
-
-      // Per-unit XP detail for the victory screen. The single xp_granted figure
-      // says how much each recipient got but not WHO got it — and the recipient
-      // list is not obvious (the fallen can earn via Unending Servitude, and the
-      // rest of the party earns nothing). Reporting the actual post-award total
-      // also lets the client draw each unit's progress toward its next tier.
-      const xpAwards = [];
-      // Every participant's FINAL unit_data, fed to the auto level-up pass below.
-      const postXpRows = [];
-
-      await Promise.all(participantRows.map(async (row) => {
-        const rosterId = String(row.id);
-        let unitData  = row.unit_data || {};
-        let changed   = false;
-
-        if (xpRecipients.includes(rosterId)) {
-          const xpGained = xpShares.get(rosterId) ?? xpEach;
-          if (xpGained > 0) {
-            unitData = { ...unitData, current_xp: (unitData.current_xp ?? 0) + xpGained };
-            changed  = true;
-          }
-          xpAwards.push({
-            roster_id:  rosterId,
-            unit_id:    unitData.unit_id,
-            xp_gained:  xpGained,
-            current_xp: unitData.current_xp,
-            alive:      unitData.alive !== false,
-            max_tier:   isMaxTierUnit(unitData.unit_id),
-          });
-        }
-
-        if (embarkBonus.heal_pct > 0 && unitData.alive !== false) {
-          const maxHp = Number(unitData.max_hp ?? 0);
-          const cur   = Number(unitData.current_hp ?? maxHp);
-          if (maxHp > 0 && cur < maxHp) {
-            const healed = Math.min(maxHp, cur + Math.round(maxHp * embarkBonus.heal_pct / 100));
-            unitData = { ...unitData, current_hp: healed };
-            changed  = true;
-          }
-        }
-
-        // Kept regardless of `changed` — a unit may already have been over the
-        // threshold and merely waiting on a building.
-        // `devotion` rides along so applyAutoLevelUps can reset it — this is the
-        // commonest level-up of all, and without the field the reset is skipped.
-        postXpRows.push({ id: row.id, unit_data: unitData, is_hero: row.is_hero, devotion: row.devotion });
-        if (!changed) return;
-        await supabase(`/roster?id=eq.${encodeURIComponent(rosterId)}`, { method: 'PATCH', body: JSON.stringify({ unit_data: unitData }) });
+      Object.assign(result, await payRegionRewards(chat_id, {
+        region_id, level, region,
+        tuned:           getLevelRewards(region_id, level),
+        xp:              rewards.xp,
+        participantIds,
+        survivorIds:     getAlivePlayerRosterIds(record.battle_data),
+        withEventDrops:  true,
+        advanceProgress: true,
       }));
-
-      // Anything the XP award just pushed over its threshold levels up now,
-      // provided its building already supports the upgrade and the branch is
-      // unambiguous. Runs AFTER the XP patches so it sees the new totals.
-      result.auto_level_ups = await applyAutoLevelUps(postXpRows, structForBonuses[0]?.buildings_data);
-
-      // Stable order — Promise.all resolution order is not meaningful, and the
-      // victory list should not reshuffle between runs.
-      result.xp_awards = xpAwards.sort((a, b) => Number(a.roster_id) - Number(b.roster_id));
-      const playerRows = await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}&limit=1`);
-      if (playerRows.length) {
-        const progress     = playerRows[0].progress || {};
-        const currentLevel = progress[region_id] ?? 1;
-        const maxLevel     = Object.keys(region.difficulties).length;
-        // `<= maxLevel`, not `<`. Clearing the FINAL level used to advance
-        // nothing, so progress capped at maxLevel and `clearedLevel`
-        // (progress - 1, see data/items.js) capped one below the last level.
-        // With every region holding 6 levels that made the mythic craft gate —
-        // "clear any region level 6" — unreachable for everybody, permanently.
-        // Progress may now read maxLevel + 1, meaning "this region is finished";
-        // the embark screen clamps its level pips to the real level count so it
-        // never draws a pip for a level that does not exist.
-        if (level >= currentLevel && level <= maxLevel) {
-          progress[region_id] = level + 1;
-          await supabase(`/players?chat_id=eq.${encodeURIComponent(chat_id)}`, { method: 'PATCH', body: JSON.stringify({ progress }) });
-          result.progress_unlocked = true;
-          result.next_level        = level + 1;
-
-          // Tokens drop HERE and nowhere else — inside the branch that advances
-          // progress, which is the game's own definition of a first clear. A
-          // replay of a level already beaten never reaches this line, so the
-          // drops cannot be farmed. See FIRST_CLEAR_TOKENS in data/embark.js.
-          const tokenDrops = getFirstClearTokens(level);
-          if (tokenDrops) {
-            // `supplies` is not a token. It is paid into the supply pool, whose
-            // row name is per faction (SUPPLY_ITEMS), so the key in the drop
-            // table is a placeholder the faction resolves here. Everything else
-            // is a token and keeps its key as its row name.
-            //
-            // A drop can push the pool ABOVE its ceiling, and is allowed to:
-            // it is three supplies across a whole account, once, and the refill
-            // simply idles until the overflow is spent (see supply-tick).
-            const supplyItem = supplyItemName(playerRows[0].faction);
-            const grants = [];
-            for (const [item, amount] of Object.entries(tokenDrops)) {
-              if (item === 'supplies') {
-                if (supplyItem) grants.push({ item: supplyItem, amount, item_type: SUPPLY_ITEM_TYPE });
-              } else {
-                grants.push({ item, amount, item_type: 'token' });
-              }
-            }
-            if (grants.length) await grantResources(chat_id, grants);
-            result.tokens_gained = tokenDrops;   // { crossroad_sigil: 1 }
-          }
-        }
-      }
     }
 
     // Already closed by the claim above — closing again here would be harmless
@@ -7809,7 +8423,7 @@ router.get('/items', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/items/equip', requireAuth, async (req, res) => {
+router.post('/items/equip', requireAuth, blockIfDeployed, async (req, res) => {
   const { chat_id, roster_id, item_id } = req.body;
   if (!chat_id || !roster_id || !item_id) return res.status(400).json({ error: 'chat_id, roster_id, and item_id required' });
   try {
@@ -7893,7 +8507,7 @@ router.post('/items/equip', requireAuth, async (req, res) => {
   }
 });
 
-router.post('/items/unequip', requireAuth, async (req, res) => {
+router.post('/items/unequip', requireAuth, blockIfItemDeployed, async (req, res) => {
   const { chat_id, item_id } = req.body;
   if (!chat_id || !item_id) return res.status(400).json({ error: 'chat_id and item_id required' });
   try {
@@ -7932,7 +8546,7 @@ router.post('/items/unequip', requireAuth, async (req, res) => {
 // The copy itself is one statement in the database (apply_item_set), so there is
 // no window in which half the roster has switched. The level gate is checked
 // here because the Training Grounds is what opens sets 2 and 3.
-router.post('/items/set', requireAuth, async (req, res) => {
+router.post('/items/set', requireAuth, blockIfOnExpedition, async (req, res) => {
   const { chat_id, set } = req.body;
   if (!chat_id || set == null) return res.status(400).json({ error: 'chat_id and set required' });
   const wanted = Number(set);

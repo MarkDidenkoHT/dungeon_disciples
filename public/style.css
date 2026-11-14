@@ -12315,3 +12315,144 @@ html[lang="ru"] .upgrade-unit-label {
 .embark-modal-overlay *::-webkit-scrollbar {
   display: none;
 }
+
+/* ── Expedition map (screens/expedition.js) ───────────────────────────────
+   Placeholder look: plain tiles and glyphs until the map has art. Walls are
+   drawn as thick borders on the edge they sit on. */
+.screen-expedition {
+  padding: 12px 12px 20px;
+  overflow-y: auto;
+  min-height: 0;
+  height: 100%;
+}
+.expd { display: flex; flex-direction: column; gap: 10px; max-width: 460px; margin: 0 auto; }
+.expd-head { display: flex; flex-direction: column; gap: 6px; }
+.expd-title { font-size: 1rem; font-weight: 700; color: var(--accent-bright); letter-spacing: 0.02em; }
+.expd-haul { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 0.78rem; }
+.expd-label { color: var(--muted); text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.08em; margin-right: 2px; }
+.expd-muted { color: var(--muted); font-size: 0.75rem; }
+.expd-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--border);
+  font-size: 0.78rem; font-variant-numeric: tabular-nums;
+}
+.expd-chip-icon { display: inline-flex; width: 16px; height: 16px; align-items: center; justify-content: center; }
+.expd-chip-icon .res-icon-img, .expd-chip-img { width: 16px; height: 16px; object-fit: contain; }
+
+.expd-squad { display: flex; gap: 6px; flex-wrap: wrap; min-height: 58px; }
+.expd-unit { width: 48px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.expd-unit-img { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; background: var(--surface); border: 1px solid var(--border); }
+.expd-unit-hp { width: 40px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.expd-unit-hp > span { display: block; height: 100%; background: #6fbf5a; }
+.expd-unit-num { font-size: 0.62rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.expd-unit--fallen { opacity: 0.4; filter: grayscale(1); }
+
+.expd-board { display: flex; justify-content: center; }
+.expd-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--expd-size), 1fr);
+  gap: 4px;
+  width: min(100%, calc(var(--expd-size) * 72px));
+  padding: 6px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+}
+.expd-cell {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1.3rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: default;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.expd-cell--unknown { background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.18); font-size: 1rem; }
+.expd-cell--visited { background: #232735; }
+.expd-cell--entrance { color: #9fb6d8; }
+.expd-cell--goal { color: var(--accent-bright); background: rgba(var(--accent-rgb), 0.16); }
+.expd-cell--exit { color: #8fd18a; background: rgba(111, 191, 90, 0.12); }
+.expd-cell--fight { color: #e08a7a; background: rgba(200, 74, 58, 0.14); }
+.expd-cell--cleared { color: var(--muted); background: #232735; }
+.expd-cell--move {
+  cursor: pointer;
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.75) inset;
+  animation: expd-pulse 1.6s ease-in-out infinite;
+}
+.expd-cell--teleport { cursor: crosshair; }
+.expd-cell--here { box-shadow: 0 0 0 2px var(--accent-bright) inset; }
+.expd-cell-you {
+  position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent-bright);
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.9);
+}
+.expd-wall-r { border-right: 3px solid #dcc08a; }
+.expd-wall-l { border-left: 3px solid #dcc08a; }
+.expd-wall-b { border-bottom: 3px solid #dcc08a; }
+.expd-wall-t { border-top: 3px solid #dcc08a; }
+@keyframes expd-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.45) inset; }
+  50%      { box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.95) inset; }
+}
+.expd-hint { text-align: center; color: var(--muted); font-size: 0.75rem; min-height: 1em; }
+
+.expd-pending {
+  padding: 12px; border-radius: 10px;
+  background: var(--surface); border: 1px solid rgba(200, 74, 58, 0.5);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.expd-pending-title { font-weight: 700; color: #e8a090; }
+.expd-pending-body { font-size: 0.78rem; color: var(--muted); }
+.expd-enemies { display: flex; flex-direction: column; gap: 4px; }
+.expd-enemy { display: flex; justify-content: space-between; gap: 8px; font-size: 0.85rem; }
+.expd-enemy-meta { color: var(--muted); font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+.expd-actions { display: flex; gap: 8px; }
+.expd-actions .action-btn { flex: 1; }
+
+.expd-footer { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 4px; }
+.expd-exit-btn { width: 100%; }
+.expd-abandon {
+  background: none; border: none; color: var(--danger);
+  font-size: 0.78rem; text-decoration: underline; padding: 6px; cursor: pointer;
+}
+
+.expd-dev {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  padding: 8px; border: 1px dashed var(--muted); border-radius: 8px; font-size: 0.72rem;
+}
+.expd-dev-tag { color: var(--muted); margin-right: auto; }
+.expd-dev button {
+  background: var(--surface); color: var(--text); border: 1px solid var(--border);
+  border-radius: 6px; padding: 4px 8px; font-size: 0.72rem; cursor: pointer;
+}
+.expd-dev button.is-on { border-color: var(--accent); color: var(--accent-bright); }
+
+.expd-empty, .expd-summary {
+  margin-top: 24px; padding: 18px; border-radius: 12px;
+  background: var(--surface); border: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
+}
+.expd-summary-title { font-size: 1.15rem; font-weight: 700; color: var(--accent-bright); }
+.expd-summary--wiped .expd-summary-title,
+.expd-summary--abandoned .expd-summary-title { color: #e8a090; }
+.expd-summary-note { color: var(--muted); font-size: 0.82rem; }
+.expd-summary-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.expd-loading { min-height: 200px; }
+
+/* The "continue your expedition" banner on the embark screen. */
+.expedition-resume {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%; margin-bottom: 6px; padding: 10px 12px;
+  border-radius: 10px; border: 1px solid var(--accent);
+  background: rgba(var(--accent-rgb), 0.14); color: var(--text);
+  text-align: left; cursor: pointer; flex-shrink: 0;
+}
+.expedition-resume-text { display: flex; flex-direction: column; gap: 2px; }
+.expedition-resume-title { font-weight: 700; color: var(--accent-bright); font-size: 0.86rem; }
+.expedition-resume-body { font-size: 0.74rem; color: var(--muted); }
+.expedition-resume-go { font-weight: 700; color: var(--accent-bright); white-space: nowrap; font-size: 0.82rem; }

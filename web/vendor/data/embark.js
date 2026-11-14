@@ -592,8 +592,12 @@ function buildDifficulties(regionId) {
   return out;
 }
 
+// `mode: 'expedition'` routes the region's embarks through the expedition map
+// (data/expedition.js, docs/embark-expedition-design.md) instead of a single
+// fight. The level's encounter above becomes the map's goal room. Regions
+// without a mode keep the single-fight embark.
 const REGIONS = [
-  { id: 'crimson_basilica',     difficulties: buildDifficulties('crimson_basilica') },
+  { id: 'crimson_basilica', mode: 'expedition', difficulties: buildDifficulties('crimson_basilica') },
   { id: 'glittering_abyss', difficulties: buildDifficulties('glittering_abyss') },
   { id: 'chamber_of_unrest', difficulties: buildDifficulties('chamber_of_unrest') },
 ];
@@ -615,8 +619,14 @@ function resolveUnitKey(key) {
 
 function getEncounter(region_id, level) {
   const levelKey = `level_${level}`;
-  const slots    = REGION_ENCOUNTERS[region_id]?.[levelKey]?.enemies;
-  if (!slots) return [];
+  return resolveEnemySlots(REGION_ENCOUNTERS[region_id]?.[levelKey]?.enemies);
+}
+
+// Enemy slots ({ key, cell, item_id?, spells? }) resolved into engine-ready
+// units. Shared by the level encounters above and the expedition's secondary
+// fights (data/expedition.js), which are written in the same format.
+function resolveEnemySlots(slots) {
+  if (!Array.isArray(slots)) return [];
   return slots
     .map(slot => {
       let unitData = resolveUnitKey(slot.key);
@@ -769,5 +779,5 @@ function getFactionHomeRegion(faction) {
   return regions[0] || REGIONS.find(r => !r.comingSoon)?.id || null;
 }
 
-export { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, eventRegionsForMaterial, getFactionHomeRegion, FIRST_CLEAR_TOKENS, getFirstClearTokens, TOME_XP, TOKEN_DEFS, QUICK_BATTLE_SUPPLY_COST, QUICK_BATTLE_POWER_MARGIN };
-if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, getEncounter, getLevelRewards, getRegionsForMaterial, eventRegionsForMaterial, getFactionHomeRegion, FIRST_CLEAR_TOKENS, getFirstClearTokens, TOME_XP, TOKEN_DEFS, QUICK_BATTLE_SUPPLY_COST, QUICK_BATTLE_POWER_MARGIN };
+export { REGIONS, REGION_ENCOUNTERS, getEncounter, resolveEnemySlots, getLevelRewards, getRegionsForMaterial, eventRegionsForMaterial, getFactionHomeRegion, FIRST_CLEAR_TOKENS, getFirstClearTokens, TOME_XP, TOKEN_DEFS, QUICK_BATTLE_SUPPLY_COST, QUICK_BATTLE_POWER_MARGIN };
+if (typeof module !== 'undefined') module.exports = { REGIONS, REGION_ENCOUNTERS, getEncounter, resolveEnemySlots, getLevelRewards, getRegionsForMaterial, eventRegionsForMaterial, getFactionHomeRegion, FIRST_CLEAR_TOKENS, getFirstClearTokens, TOME_XP, TOKEN_DEFS, QUICK_BATTLE_SUPPLY_COST, QUICK_BATTLE_POWER_MARGIN };

@@ -207,6 +207,14 @@ const BT = {
   defeat:       { en: 'Defeat',             ru: 'Поражение' },
   enemyConceded: { en: 'Enemy conceded',     ru: 'Противник сдался' },
   returnCastle: { en: 'Return to Castle',   ru: 'Вернуться в замок' },
+  // Expedition fights (screens/expedition.js). A secondary room banks its loot
+  // into the run instead of paying it; only the run's end pays out.
+  expRoomCleared: { en: 'Room cleared',       ru: 'Комната зачищена' },
+  expBanked:      { en: 'Added to the expedition haul:', ru: 'Добавлено в добычу похода:' },
+  expBackToMap:   { en: 'Back to the map',    ru: 'Назад к карте' },
+  expComplete:    { en: 'Expedition complete', ru: 'Поход завершён' },
+  expLost:        { en: 'The expedition is lost. Nothing was brought back.', ru: 'Поход провален. Добыча потеряна.' },
+  expToEmbark:    { en: 'Back to Embark',     ru: 'К походам' },
   calculating:  { en: 'Calculating rewards…', ru: 'Подсчёт наград…' },
   noRewards:    { en: 'No rewards on defeat.', ru: 'При поражении наград нет.' },
   colossusSlain: { en: 'Colossus slain',   ru: 'Колосс повержен' },
@@ -394,6 +402,8 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
   let realtimeController = null;
   let battleResolved = false;
   let rewardRequestInFlight = false;
+  // Set by the reward call when this fight was a room of an expedition run.
+  let expeditionResult = null;
   let fxInitialized = false;
 
   // ── Whose turn has already been taken, as the PLAYER has seen it ──────────
@@ -3230,8 +3240,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       const ask = isPvpBattle ? BTx('concedeAsk') : BTx('retreatAsk');
       if (!await askConfirm(ask, leaveLabel(), BTx('concedeNo'))) return;
       btn.disabled = true;
+      let ended = null;
       try {
-        await api('/battle/end', { chat_id: player.chat_id, battle_id });
+        ended = await api('/battle/end', { chat_id: player.chat_id, battle_id });
       } catch (err) {
         console.error('Failed to concede:', err);
         btn.disabled = false;
@@ -3247,6 +3258,13 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       teardownBattle();
       destroyBattleFx();
       // Straight out: the result screen belongs to the player who stayed.
+      // Leaving a fight inside an expedition ends the run; its screen shows
+      // what the half-haul came to.
+      if (ended?.expedition) {
+        bootstrapCache.invalidate();
+        navigate('expedition', { player, summary: ended.expedition });
+        return;
+      }
       navigate('embark', { player });
     });
   }
@@ -3902,7 +3920,27 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
       // have been missing from the pips as well.
       bootstrapCache.invalidate();
       const rewardsEl = root.querySelector('#result-rewards');
-      if (result.colossus) {
+      expeditionResult = result.expedition || null;
+      if (expeditionResult && !expeditionResult.ended) {
+        // A secondary room inside an expedition: nothing is paid yet, the loot
+        // joins the run's haul and the player goes back to the map.
+        const loot = expeditionResult.loot || {};
+        const chip = (iconHtml, amount) =>
+          `<div class="reward-chip"><span class="reward-chip-icon">${iconHtml}</span><span class="reward-chip-amt">+${amount}</span></div>`;
+        const chips = [
+          loot.gold > 0 ? chip(GOLD_ICON, loot.gold) : '',
+          ...Object.entries(loot.crystals || {}).filter(([, a]) => a > 0).map(([t, a]) => chip(CRYSTAL_ICONS[t] || '💎', a)),
+          loot.xp > 0 ? chip('⭐', loot.xp) : '',
+          ...Object.entries(loot.trophies || {}).filter(([, a]) => a > 0).map(([id, a]) =>
+            chip(`<img class="reward-chip-img" src="${assetUrl(`/assets/icons/recources/${id}.png`)}" alt="${id.replace(/_/g, ' ')}">`, a)),
+        ].join('');
+        rewardsEl.innerHTML = `
+          <div class="result-outcome result-outcome--win">${BTx('expRoomCleared')}</div>
+          ${chips ? `<div class="reward-xp-head">${BTx('expBanked')}</div><div class="reward-grid">${chips}</div>` : ''}
+          ${questProgressHtml(result.quest_progress)}`;
+      } else if (expeditionResult?.outcome === 'wiped') {
+        rewardsEl.innerHTML = `${outcomeHtml}<p class="result-pending">${BTx('expLost')}</p>${questProgressHtml(result.quest_progress)}`;
+      } else if (result.colossus) {
         // A Colossus attempt pays in damage, won or lost: what came off the
         // shared pool, where the pool now stands, and any milestone it passed.
         const c   = result.colossus;
@@ -4029,6 +4067,21 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
 
     const btn = root.querySelector('#back-to-castle');
     btn.disabled = false;
+    if (expeditionResult) {
+      // A run that goes on returns to its map; a finished one to the embark
+      // screen (its payout is already on this screen).
+      const goOn = !expeditionResult.ended;
+      if (expeditionResult.outcome === 'goal') {
+        root.querySelector('.result-outcome')?.insertAdjacentHTML('afterend',
+          `<div class="reward-unlock">${BTx('expComplete')}</div>`);
+      }
+      btn.textContent = goOn ? BTx('expBackToMap') : BTx('expToEmbark');
+      btn.addEventListener('click', () => {
+        destroyBattleFx();
+        navigate(goOn ? 'expedition' : 'embark', { player });
+      });
+      return;
+    }
     btn.addEventListener('click', () => { destroyBattleFx(); navigate('castle', { player }); });
   }
 

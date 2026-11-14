@@ -241,6 +241,48 @@ const TUTORIAL_STEPS = {
       text: 'Ваша армия готова. Коснитесь этого региона, чтобы начать первый поход.',
     },
   },
+  // The expedition map (screens/expedition.js), taught on the first 3x3 map.
+  // Every step explains and continues; the board itself is the lesson.
+  expedition_map: {
+    en: {
+      title: 'The Expedition Map',
+      text: 'An embark is now a journey. You start at the entrance ⌂. Somewhere on this map is the goal ♛ — the enemy you came for. Find it and defeat it to clear the level.',
+    },
+    ru: {
+      title: 'Карта похода',
+      text: 'Поход — это теперь путешествие. Вы начинаете у входа ⌂. Где-то на карте — цель ♛, враг, ради которого вы пришли. Найдите и победите его, чтобы пройти уровень.',
+    },
+  },
+  expedition_move: {
+    en: {
+      title: 'Moving',
+      text: 'Tap a lit cell next to you — up, down, left or right, never diagonally. Each step reveals a few cells around you: you see what kind of room it is, but not what waits inside until you step in.',
+    },
+    ru: {
+      title: 'Движение',
+      text: 'Коснитесь подсвеченной соседней клетки — вверх, вниз, влево или вправо, но не по диагонали. Каждый шаг открывает несколько клеток вокруг: видно, что это за комната, но не что ждёт внутри, пока вы не войдёте.',
+    },
+  },
+  expedition_haul: {
+    en: {
+      title: 'Bringing It Home',
+      text: 'Every fight you win adds to your haul, but it is only yours once you leave. An exit door ⇲ takes everything home. Abandoning anywhere else keeps half and leaves the squad at 1 HP — and losing a fight loses it all.',
+    },
+    ru: {
+      title: 'Добыча',
+      text: 'Каждая победа пополняет добычу, но она ваша, только когда вы уйдёте. Выход ⇲ уносит всё. Если бросить поход в другом месте, сохранится половина, а отряд останется с 1 HP. Проигранный бой — и пропадёт всё.',
+    },
+  },
+  expedition_fight: {
+    en: {
+      title: 'Enemies Ahead',
+      text: 'This is who holds the room. Fight them, or step back the way you came. Your squad keeps its wounds from room to room — nobody heals until the expedition is over.',
+    },
+    ru: {
+      title: 'Впереди враги',
+      text: 'Вот кто держит комнату. Сразитесь или отступите туда, откуда пришли. Раны отряда сохраняются от комнаты к комнате — лечения до конца похода не будет.',
+    },
+  },
   battle_prep_start: {
     en: {
       title: 'Prepare for Battle',

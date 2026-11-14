@@ -270,6 +270,10 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
   // The faction Colossus, from its embark page: the enemy is this week's boss at
   // the pool's current HP, and followers that already fought it today sit out.
   const isColossus = mode === 'colossus';
+  // An expedition region (REGIONS[].mode, data/embark.js): Ready starts a run
+  // on the map instead of a single fight; Quick Battle is unchanged.
+  const isExpedition = !isPvp && !isColossus
+    && REGIONS.find(r => r.id === region_id)?.mode === 'expedition';
 
   root.innerHTML = `
     <div class="screen screen-battle-prep">
@@ -2575,6 +2579,17 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
         });
         return;
       }
+      // An expedition region: this squad and formation embark onto the map and
+      // stay fixed for the whole run. The level's encounter shown here is the
+      // map's goal room.
+      if (isExpedition) {
+        await api('/expedition/start', {
+          chat_id: player.chat_id, playerUnitIds, placement, region_id, level: curLevel,
+        });
+        bootstrapCache.invalidate();
+        navigate('expedition', { player });
+        return;
+      }
       const battle_id = `${player.chat_id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
       const result = await api('/battle/create', {
         chat_id: player.chat_id,
@@ -2601,6 +2616,12 @@ export function renderBattlePrep(root, { player, region_id, level, mode = null, 
       // them back to it rather than explaining it a second time here.
       if (err.code === 'no_supplies') {
         navigate('embark', { player });
+        return;
+      }
+      // A run is already open (another device, or a stale screen): its map is
+      // where the squad is.
+      if (err.code === 'expedition_active') {
+        navigate('expedition', { player });
         return;
       }
       // Code, not prose — see the same change in screens/battle.js. The regex

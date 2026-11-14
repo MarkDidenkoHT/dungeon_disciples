@@ -11,6 +11,7 @@ import { renderBattlePrep } from './screens/battle-prep.js';
 import { destroyBattleFx } from './battle-fx.js';
 import { clearFormationSynergies } from './formation-synergy-view.js';
 import { renderBattle }     from './screens/battle.js';
+import { renderExpedition } from './screens/expedition.js';
 import { renderSpellTome }  from './screens/spell_tome.js';
 import { runPreload, saveLanguageCache, startManifestFetch, revealWhenReady, dismissLoadingScreen } from './screens/loading.js';
 import { hideTutorial }     from './tutorial.js';
@@ -192,6 +193,7 @@ const RENDERERS = {
   embark:        renderEmbark,
   'battle-prep': renderBattlePrep,
   battle:        renderBattle,
+  expedition:    renderExpedition,
   spells:        renderSpellTome,
   settings:      renderSettings,
 };
@@ -359,7 +361,8 @@ function navigate(screen, params = {}) {
   }
 
   mountShell(player);
-  setActiveNav(screen);
+  // The expedition map belongs to the Embark tab.
+  setActiveNav(screen === 'expedition' ? 'embark' : screen);
 
   const isBattle = screen === 'battle';
   const navEl    = document.getElementById('bottom-nav');

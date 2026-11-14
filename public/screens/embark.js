@@ -25,6 +25,11 @@ const REGION_GLOW = {
 const DEFAULT_GLOW = '#c8973a';
 
 const UI_TEXT = {
+  // An open expedition (screens/expedition.js). While it runs the squad is on
+  // the map, so every departure from this screen leads back there.
+  expOpenTitle:    { en: 'Expedition in progress', ru: 'Поход в разгаре' },
+  expOpenBody:     { en: 'Your squad is still on the map.', ru: 'Ваш отряд всё ещё на карте.' },
+  expContinue:     { en: 'Continue', ru: 'Продолжить' },
   eventBadge:      { en: 'Event',                ru: 'Событие' },
   eventEnds:       { en: 'Ends in',              ru: 'Осталось' },
   eventDrops:      { en: 'Drops during the event', ru: 'Выпадает во время события' },
@@ -234,6 +239,8 @@ export function renderEmbark(root, params = {}) {
   // picked. Refreshed by every loadRegions, which is what a return from battle
   // goes through.
   let supplies = null;
+  // The open expedition from /bootstrap: { id, region_id, level, roster_ids } or null.
+  let openExpedition = null;
 
   const supplyName = () => (L === 'ru' ? supplies?.label_ru : supplies?.label_en) || supplies?.item || '';
 
@@ -262,6 +269,18 @@ export function renderEmbark(root, params = {}) {
 
   // Drawn above the regions rather than in the resource bar: the bar's seven
   // slots are full, and a supply only means anything on this screen.
+  function expeditionBannerHtml() {
+    if (!openExpedition) return '';
+    return `
+      <button class="expedition-resume" id="expedition-resume" type="button">
+        <span class="expedition-resume-text">
+          <span class="expedition-resume-title">${UI_TEXT.expOpenTitle[L]}</span>
+          <span class="expedition-resume-body">${UI_TEXT.expOpenBody[L]}</span>
+        </span>
+        <span class="expedition-resume-go">${UI_TEXT.expContinue[L]} \u203a</span>
+      </button>`;
+  }
+
   function supplyPillHtml() {
     if (!supplies) return '';
     const full = supplies.amount >= supplies.max;
@@ -916,6 +935,7 @@ export function renderEmbark(root, params = {}) {
       const boot = await bootstrapCache.get(player.chat_id);
       const progress = boot?.progress || {};
       supplies = boot?.supplies || null;
+      openExpedition = boot?.expedition || null;
 
       // Shown only when a caller HANDS us an active battle — today that is
       // battle-prep, bounced back here by /battle/create. This screen does not
@@ -934,7 +954,7 @@ export function renderEmbark(root, params = {}) {
       // Answered. A later visit is not the visit that was bounced back here.
       activeCheck = null;
 
-      root.querySelector('#embark-regions').innerHTML = supplyPillHtml() + REGIONS.map(r => {
+      root.querySelector('#embark-regions').innerHTML = expeditionBannerHtml() + supplyPillHtml() + REGIONS.map(r => {
         if (r.comingSoon) {
           return `
             <div class="embark-region-block embark-region-block--coming-soon">
@@ -1049,6 +1069,11 @@ export function renderEmbark(root, params = {}) {
       // by every honest departure.
       function departTo(regionId, level) {
         if (!regionId || !level) return;
+        // The squad is on an open expedition: that map is the only way out.
+        if (openExpedition) {
+          navigate('expedition', { player });
+          return;
+        }
         // The gate is explained, not hidden. Nothing on this screen is disabled
         // for want of supplies — the same cards sit beside the Arena, the
         // Colossus and the Tourney, none of which cost any, so a dead button
@@ -1065,6 +1090,8 @@ export function renderEmbark(root, params = {}) {
         markTutorialDone(player, 'embark_region');
         navigate('battle-prep', { player, region_id: regionId, level });
       }
+
+      root.querySelector('#expedition-resume')?.addEventListener('click', () => navigate('expedition', { player }));
 
       root.querySelectorAll('.embark-level-pip').forEach(pip => {
         pip.addEventListener('click', () => departTo(pip.dataset.region, parseInt(pip.dataset.level)));
