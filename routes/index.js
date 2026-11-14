@@ -1998,6 +1998,9 @@ router.get('/bootstrap', requireAuth, async (req, res) => {
         region_id:  openRun.region_id,
         level:      openRun.level,
         roster_ids: expeditionSquadIds(openRun.data),
+        // Whether leaving now keeps the whole haul (the open-run prompt says so).
+        at_exit:      EXPMAP.cellAt(openRun.data.map, openRun.data.pos.x, openRun.data.pos.y)?.type === 'exit' && !openRun.data.pending,
+        goal_cleared: !!openRun.data.goal_cleared,
       } : null,
       // Which gear loadout is live and how many the Training Grounds has
       // opened. The castle's Set row draws straight off this: the items above

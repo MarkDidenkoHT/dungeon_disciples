@@ -10,7 +10,7 @@
 import { api, navigate, bootstrapCache } from '../api.js';
 import { assetUrl } from '../asset_base.js';
 import { lang } from './settings.js';
-import { UNITS } from '../../data/units.js';
+import { REGIONS as REGION_CARDS } from './embark.js';
 import { CRYSTAL_ICONS, GOLD_ICON, resolveUnitDef, unitName, gameConfirm, gameAlert, cellFootprint } from '../utils.js';
 import { BOONS, CURSES, EVENTS, CAMP } from '../../data/expedition.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
@@ -22,9 +22,6 @@ const T = {
   squad:        { en: 'Squad',                   ru: 'Отряд' },
   fallen:       { en: 'Fallen',                  ru: 'Пал' },
   steps:        { en: 'Steps',                   ru: 'Шаги' },
-  fightTitle:   { en: 'Enemies ahead',           ru: 'Впереди враги' },
-  goalTitle:    { en: 'The goal of this expedition', ru: 'Цель похода' },
-  fight:        { en: 'Fight',                   ru: 'В бой' },
   exitHere:     { en: 'Leave through the exit',  ru: 'Выйти через выход' },
   exitNote:     { en: 'Keeps the whole haul. No goal reward.', ru: 'Вся добыча сохраняется. Без награды за цель.' },
   abandon:      { en: 'Abandon expedition',      ru: 'Бросить поход' },
@@ -106,9 +103,76 @@ function portraitUrl(def) {
   return assetUrl(`/assets/character_portraits/p_${portraitId}.png`);
 }
 
-function enemyDef(key) {
-  const [region, slug] = String(key || '').split('.');
-  return UNITS.enemies?.[region]?.[slug] || null;
+// ── Open-run prompt ──
+// An open expedition is met the way an open battle is: the reconnect modal,
+// continue or leave — there is no separate resume flow. Shown at boot (main.js)
+// and on the embark screen. `exp` is /bootstrap's summary of the run.
+const PROMPT = {
+  kicker:   { en: 'EXPEDITION IN PROGRESS', ru: 'ПОХОД В РАЗГАРЕ' },
+  title:    { en: 'Expedition',             ru: 'Поход' },
+  level:    { en: 'Level',                  ru: 'Уровень' },
+  body:     { en: 'Your squad is still on the map. Continue where you left off, or leave now.',
+              ru: 'Ваш отряд всё ещё на карте. Продолжите с того места, где остановились, или уйдите сейчас.' },
+  warning:  { en: 'Leaving away from an exit keeps only half the haul, and your whole squad leaves at 1 HP.',
+              ru: 'Уйти не через выход — значит сохранить лишь половину добычи, а весь отряд уйдёт с 1 HP.' },
+  safe:     { en: 'You can leave from here with the whole haul.',
+              ru: 'Отсюда можно уйти со всей добычей.' },
+  leave:    { en: 'Leave',    ru: 'Уйти' },
+  continue: { en: 'Continue', ru: 'Продолжить' },
+};
+
+export function showExpeditionPrompt(player, exp) {
+  if (!exp?.id || document.querySelector('.modal-overlay--expedition')) return;
+  const L = lang(player);
+  const tx = e => e[L] ?? e.en;
+  const region = REGION_CARDS.find(r => r.id === exp.region_id);
+  const name = region ? ((L === 'ru' && region.label_ru) || region.label) : tx(PROMPT.title);
+  const safe = !!(exp.at_exit || exp.goal_cleared);
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay modal-overlay--reconnect modal-overlay--expedition';
+  overlay.innerHTML = `
+    <div class="modal modal--reconnect" role="dialog" aria-modal="true" aria-labelledby="expd-prompt-title">
+      <div class="reconnect-content">
+        <div class="reconnect-art" style="background-image:linear-gradient(180deg,rgba(12,10,9,.04) 20%,rgba(12,10,9,.88) 100%),url('${assetUrl(`/assets/embark/${region?.id || exp.region_id}.jpg`)}')">
+          <span class="reconnect-art-kicker">${tx(PROMPT.kicker)}</span>
+          <h2 id="expd-prompt-title">${name} · ${tx(PROMPT.level)} ${exp.level}</h2>
+        </div>
+        <div class="reconnect-copy">
+          <div class="reconnect-description">${tx(PROMPT.body)}</div>
+          <div class="reconnect-warning">
+            <span class="reconnect-warning-mark" aria-hidden="true">!</span>
+            <span>${tx(safe ? PROMPT.safe : PROMPT.warning)}</span>
+          </div>
+        </div>
+        <div class="reconnect-actions">
+          <button class="action-btn action-btn--cancel" type="button" data-prompt="leave">${tx(PROMPT.leave)}</button>
+          <button class="action-btn reconnect-primary" type="button" data-prompt="continue">${tx(PROMPT.continue)} <span aria-hidden="true">→</span></button>
+        </div>
+      </div>
+    </div>`;
+  (document.getElementById('app') || document.body).appendChild(overlay);
+
+  overlay.querySelector('[data-prompt="continue"]').addEventListener('click', () => {
+    overlay.remove();
+    navigate('expedition', { player });
+  });
+  const leaveBtn = overlay.querySelector('[data-prompt="leave"]');
+  leaveBtn.addEventListener('click', async () => {
+    if (leaveBtn.disabled) return;
+    leaveBtn.disabled = true;
+    try {
+      const r = await api('/expedition/leave', { chat_id: player.chat_id, run_id: exp.id });
+      bootstrapCache.invalidate();
+      overlay.remove();
+      navigate('expedition', { player, summary: r });
+    } catch (err) {
+      bootstrapCache.invalidate();
+      overlay.remove();
+      // Gone already (another device), or mid-fight: the map screen sorts out
+      // which, and a fight in progress goes straight back into its battle.
+      navigate('expedition', { player });
+    }
+  });
 }
 
 export function renderExpedition(root, { player, summary = null } = {}) {
@@ -121,12 +185,11 @@ export function renderExpedition(root, { player, summary = null } = {}) {
 
   root.innerHTML = `<div class="screen screen-expedition"><div class="expd" id="expd"></div></div>`;
   const host = () => root.querySelector('#expd');
-  // Footer and fallback-fight buttons, delegated once for the screen's life.
+  // Footer and room-panel buttons, delegated once for the screen's life.
   host().addEventListener('click', e => {
     const act = e.target.closest('[data-act]')?.dataset.act;
     const el = e.target.closest('[data-act]');
-    if (act === 'fight') onFight();
-    else if (act === 'exit') onLeave(true);
+    if (act === 'exit') onLeave(true);
     else if (act === 'abandon') onLeave(false);
     else if (act === 'rest') onChoose('rest');
     else if (act === 'boon') onChoose(el.dataset.id);
@@ -193,31 +256,6 @@ export function renderExpedition(root, { player, summary = null } = {}) {
     return heroImg
       ? `<img class="expd-cell-you expd-cell-you--hero" src="${heroImg}" alt="" aria-hidden="true" onerror="this.style.visibility='hidden'">`
       : '<span class="expd-cell-you" aria-hidden="true"></span>';
-  }
-
-  // Only shown when a step into a fight room could not open the battle (a
-  // dropped connection, the app closed between the two). Normally a fight
-  // starts the moment the player walks in.
-  function pendingHtml() {
-    const p = run.pending;
-    if (!p) return '';
-    const enemies = (p.enemies || []).map(e => {
-      const def = enemyDef(e.key);
-      const name = def ? ((L === 'ru' && def.name_ru) || def.name || e.key) : e.key;
-      return `
-        <div class="expd-enemy">
-          <span class="expd-enemy-name">${name}</span>
-          <span class="expd-enemy-meta">${def?.t ? `T${def.t}` : ''}${def?.hp ? ` · ${def.hp} HP` : ''}</span>
-        </div>`;
-    }).join('');
-    return `
-      <div class="expd-pending">
-        <div class="expd-pending-title">${p.goal ? t(T.goalTitle) : t(T.fightTitle)}</div>
-        <div class="expd-enemies">${enemies}</div>
-        <div class="expd-actions">
-          <button class="action-btn" type="button" data-act="fight">${t(T.fight)}</button>
-        </div>
-      </div>`;
   }
 
   function torchHtml() {
@@ -393,7 +431,7 @@ export function renderExpedition(root, { player, summary = null } = {}) {
     setHtml('#expd-torch', torchHtml());
     setHtml('#expd-effects', effectsHtml());
     setHtml('#expd-notice', noticeHtml());
-    setHtml('#expd-pending', run.pending ? pendingHtml() : offerHtml());
+    setHtml('#expd-pending', run.pending ? '' : offerHtml());
     setHtml('#expd-footer', footerHtml());
 
     runTutorial();
@@ -556,7 +594,20 @@ export function renderExpedition(root, { player, summary = null } = {}) {
     });
   }
 
-  function onFight() {
+  // A fight room the squad is standing in always means a battle: the one
+  // already under way (rejoined, like any reconnect), or — if the step's own
+  // battle never opened (a dropped connection) — a fresh one, started here.
+  function resumeFight() {
+    if (!run) return;
+    if (run.battle_id) {
+      const battle_id = run.battle_id;
+      return guarded(async () => {
+        const { state, logs } = await api(`/battle/state?battle_id=${encodeURIComponent(battle_id)}&chat_id=${encodeURIComponent(player.chat_id)}`);
+        hideTutorial();
+        navigate('battle', { player, battle_id, reconnect: true, snapshot: state, logs, region_id: run.region_id, level: run.level });
+      });
+    }
+    if (!run.pending) return;
     return guarded(async () => {
       const battle_id = newBattleId();
       const r = await api('/expedition/fight', { chat_id: player.chat_id, run_id: run.id, battle_id });
@@ -626,6 +677,7 @@ export function renderExpedition(root, { player, summary = null } = {}) {
     }
     draw();
     refreshSquad();
+    resumeFight();
   }
 
   function show(params = {}) {

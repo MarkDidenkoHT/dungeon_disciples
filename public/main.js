@@ -11,7 +11,7 @@ import { renderBattlePrep } from './screens/battle-prep.js';
 import { destroyBattleFx } from './battle-fx.js';
 import { clearFormationSynergies } from './formation-synergy-view.js';
 import { renderBattle }     from './screens/battle.js';
-import { renderExpedition } from './screens/expedition.js';
+import { renderExpedition, showExpeditionPrompt } from './screens/expedition.js';
 import { renderSpellTome }  from './screens/spell_tome.js';
 import { runPreload, saveLanguageCache, startManifestFetch, revealWhenReady, dismissLoadingScreen } from './screens/loading.js';
 import { hideTutorial }     from './tutorial.js';
@@ -585,7 +585,12 @@ async function boot() {
       }
       if (isNew || !p.faction || !p.hero) navigate('register', { player: p });
       else if (incomingPvpInvite) navigate('battle-prep', { player: p, mode: 'pvp_invite', inviteToken: incomingPvpInvite });
-      else                                navigate('castle',   { player: p });
+      else {
+        navigate('castle', { player: p });
+        // An open expedition gets the same continue-or-leave modal as an
+        // open battle (a fight inside one is an open battle, handled above).
+        dataReady.then(boot => { if (boot?.expedition) showExpeditionPrompt(p, boot.expedition); });
+      }
     };
 
     // The notice comes before EVERYTHING, including an interrupted battle —
