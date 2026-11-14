@@ -150,6 +150,80 @@ const REGION_ENCOUNTERS = {
         trophies:        { shard_of_devotion: 3, vial_of_pure_blood: 1, aggrails_signet: 1 },
       },
     },
+    level_11: {
+      enemies: [
+        { key: 'crimson_basilica.aggrails_blasphemer',         cell: 0, item_id: 'death_resistance_potion' },
+        { key: 'crimson_basilica.exalted_evangelist',          cell: 2, item_id: 'sanctified_bulwark' },
+        { key: 'crimson_basilica.aggrails_lion',               cell: 4 },
+        { key: 'crimson_basilica.grand_keeper',                cell: 3 },
+        { key: 'crimson_basilica.crimson_stalker',             cell: 1, item_id: 'frost_cloak' },
+      ],
+      rewards: {
+        gold: 175, xp: 375,
+        crystals:        [{ type: 'Crystals_Life', amount: 17 }, { type: 'Crystals_Fire', amount: 17 }],
+        trophies:        { vial_of_pure_blood: 2, aggrails_signet: 2 },
+      },
+    },
+    level_12: {
+      enemies: [
+        { key: 'crimson_basilica.crimson_inquisitor',          cell: 2, item_id: 'aldras_patience' },
+        { key: 'crimson_basilica.aggrails_blasphemer',         cell: 0 },
+        { key: 'crimson_basilica.aggrails_lion',               cell: 4, item_id: 'divine_circlet' },
+        { key: 'crimson_basilica.grand_keeper',                cell: 3 },
+        { key: 'crimson_basilica.keeper_of_the_bloodied_veil', cell: 1 },
+      ],
+      rewards: {
+        gold: 200, xp: 425,
+        crystals:        [{ type: 'Crystals_Life', amount: 19 }, { type: 'Crystals_Fire', amount: 19 }],
+        trophies:        { shard_of_devotion: 2, aggrails_signet: 1 },
+      },
+    },
+    level_13: {
+      enemies: [
+        { key: 'crimson_basilica.aggrails_lion',               cell: 0, item_id: 'aegis_of_the_first_ward' },
+        { key: 'crimson_basilica.exalted_evangelist',          cell: 2, item_id: 'sanctified_bulwark' },
+        { key: 'crimson_basilica.aggrails_blasphemer',         cell: 4, item_id: 'mace' },
+        { key: 'crimson_basilica.keeper_of_the_bloodied_veil', cell: 1, item_id: 'fire_resistance_potion' },
+        { key: 'crimson_basilica.grand_keeper',                cell: 3 },
+        { key: 'crimson_basilica.crimson_stalker',             cell: 5 },
+      ],
+      rewards: {
+        gold: 225, xp: 475,
+        crystals:        [{ type: 'Crystals_Life', amount: 21 }, { type: 'Crystals_Fire', amount: 21 }],
+        trophies:        { vial_of_pure_blood: 2, aggrails_signet: 2, shard_of_devotion: 1 },
+      },
+    },
+    level_14: {
+      enemies: [
+        { key: 'crimson_basilica.aggrails_blasphemer',         cell: 0, item_id: 'death_resistance_potion' },
+        { key: 'crimson_basilica.exalted_evangelist',          cell: 2, item_id: 'aegis_of_the_first_ward' },
+        { key: 'crimson_basilica.aggrails_lion',               cell: 4, item_id: 'divine_circlet' },
+        { key: 'crimson_basilica.keeper_of_the_bloodied_veil', cell: 1, item_id: 'frost_cloak' },
+        { key: 'crimson_basilica.grand_keeper',                cell: 3, item_id: 'fire_resistance_potion' },
+        { key: 'crimson_basilica.crimson_stalker',             cell: 5, item_id: 'mace' },
+      ],
+      rewards: {
+        gold: 250, xp: 525,
+        crystals:        [{ type: 'Crystals_Life', amount: 23 }, { type: 'Crystals_Fire', amount: 23 }],
+        trophies:        { vial_of_pure_blood: 2, aggrails_signet: 2, shard_of_devotion: 2 },
+      },
+    },
+    level_15: {
+      enemies: [
+        { key: 'crimson_basilica.crimson_inquisitor',          cell: 2, item_id: 'aldras_patience' },
+        { key: 'crimson_basilica.sister_aldra_3',              cell: 3, item_id: 'aldras_devotion',
+          spells: [{ spell_id: 'boss_resurrect', power: 4 }] },
+        { key: 'crimson_basilica.aggrails_lion',               cell: 0, item_id: 'aegis_of_the_first_ward' },
+        { key: 'crimson_basilica.aggrails_blasphemer',         cell: 4, item_id: 'death_resistance_potion' },
+        { key: 'crimson_basilica.keeper_of_the_bloodied_veil', cell: 1, item_id: 'divine_circlet' },
+        { key: 'crimson_basilica.grand_keeper',                cell: 5 },
+      ],
+      rewards: {
+        gold: 300, xp: 600,
+        crystals:        [{ type: 'Crystals_Life', amount: 25 }, { type: 'Crystals_Fire', amount: 25 }],
+        trophies:        { shard_of_devotion: 4, vial_of_pure_blood: 2, aggrails_signet: 2 },
+      },
+    },
   },
 
   glittering_abyss: {

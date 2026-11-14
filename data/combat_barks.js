@@ -69,7 +69,7 @@ const BARK_UNIT_GROUPS = {
   basilica_enemies: [
     'opb_e1', 'opb_e2', 'opb_e3', 'opb_e21', 'opb_e5', 'opb_e11',
     'opb_e41', 'opb_e31', 'opb_e51', 'opb_e311', 'opb_e411', 'opb_e111',
-    'opb_e211', 'opb_e212', 'opb_e3112', 'opb_e511',
+    'opb_e211', 'opb_e212', 'opb_e3112', 'opb_e511', 'crimson_inquisitor',
   ],
   abyss_enemies: [
     'mv_e3', 'mv_e2', 'mv_e1', 'mv_e4', 'mv_e21', 'mv_e31',

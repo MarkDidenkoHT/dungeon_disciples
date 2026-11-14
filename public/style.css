@@ -5902,7 +5902,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   text-wrap: balance;
   overflow-wrap: anywhere;
   text-shadow: 0 0 8px rgba(224, 187, 98, 0.45);
-  box-shadow: inset 3px 0 0 var(--bark-faction-accent), 0 0 14px var(--bark-glow), 0 3px 10px rgba(0,0,0,0.65);
+  box-shadow: 0 0 14px var(--bark-glow), 0 3px 10px rgba(0,0,0,0.65);
   pointer-events: none;
   z-index: 12;
   animation: bark-toast-in-square 0.18s ease-out;
