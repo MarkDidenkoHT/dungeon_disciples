@@ -205,6 +205,11 @@ const ABANDON_SHARE = 0.5;
 // of templates that fit a level caps how many secondary fights it can have.
 //
 // Cells: 0 1 / 2 3 / 4 5 — even cells are the front column.
+//
+// Every lineup needs at least as many attackers as supports. Heralds and
+// Evangelists only shield and Initiates and Keepers only heal: a room made of
+// them cannot hurt the squad and is a slow, pointless grind (a herald + initiate
+// room shipped like that once). test/expedition-map.test.js enforces the rule.
 const SECONDARY_ENCOUNTERS = {
   crimson_basilica: [
     // ── Levels 1–4 ──
@@ -225,8 +230,9 @@ const SECONDARY_ENCOUNTERS = {
       { key: 'crimson_basilica.crimson_scout',   cell: 5 },
     ] },
     { id: 'cb_sermon',        min: 2,  max: 4,  enemies: [
+      { key: 'crimson_basilica.scarlet_recruit', cell: 0 },
       { key: 'crimson_basilica.aggrails_herald', cell: 2 },
-      { key: 'crimson_basilica.initiate',        cell: 3 },
+      { key: 'crimson_basilica.crimson_scout',   cell: 3 },
     ] },
     { id: 'cb_vigil',         min: 3,  max: 5,  enemies: [
       { key: 'crimson_basilica.scarlet_recruit', cell: 0 },
@@ -236,7 +242,9 @@ const SECONDARY_ENCOUNTERS = {
 
     // ── Levels 4–9 ──
     { id: 'cb_herald_keeper', min: 4,  max: 6,  enemies: [
-      { key: 'crimson_basilica.exalted_herald',   cell: 0 },
+      { key: 'crimson_basilica.aggrails_devoted', cell: 0 },
+      { key: 'crimson_basilica.exalted_herald',   cell: 2 },
+      { key: 'crimson_basilica.crimson_hunter',   cell: 1 },
       { key: 'crimson_basilica.keeper_of_purity', cell: 3 },
     ] },
     { id: 'cb_devoted_pair',  min: 4,  max: 6,  enemies: [
@@ -249,9 +257,9 @@ const SECONDARY_ENCOUNTERS = {
       { key: 'crimson_basilica.crimson_hunter',    cell: 1 },
     ] },
     { id: 'cb_choir',         min: 4,  max: 7,  enemies: [
-      { key: 'crimson_basilica.exalted_herald', cell: 2 },
-      { key: 'crimson_basilica.initiate',       cell: 1 },
-      { key: 'crimson_basilica.initiate',       cell: 5 },
+      { key: 'crimson_basilica.aggrails_devoted',  cell: 0 },
+      { key: 'crimson_basilica.aggrails_exorcist', cell: 4 },
+      { key: 'crimson_basilica.initiate',          cell: 1 },
     ] },
     { id: 'cb_hunt',          min: 4,  max: 6,  enemies: [
       { key: 'crimson_basilica.scarlet_recruit', cell: 2 },
@@ -266,7 +274,7 @@ const SECONDARY_ENCOUNTERS = {
     { id: 'cb_procession',    min: 5,  max: 8,  enemies: [
       { key: 'crimson_basilica.exalted_herald', cell: 0 },
       { key: 'crimson_basilica.crimson_hunter', cell: 3 },
-      { key: 'crimson_basilica.initiate',       cell: 5 },
+      { key: 'crimson_basilica.crimson_scout',  cell: 5 },
     ] },
     { id: 'cb_champion',      min: 6,  max: 9,  enemies: [
       { key: 'crimson_basilica.aggrails_champion', cell: 2 },
@@ -280,7 +288,9 @@ const SECONDARY_ENCOUNTERS = {
 
     // ── Levels 7–12 ──
     { id: 'cb_evangel',       min: 7,  max: 10, enemies: [
+      { key: 'crimson_basilica.aggrails_champion',  cell: 0 },
       { key: 'crimson_basilica.exalted_evangelist', cell: 2 },
+      { key: 'crimson_basilica.crimson_hunter',     cell: 1 },
       { key: 'crimson_basilica.high_keeper',        cell: 3 },
     ] },
     { id: 'cb_desecration',   min: 7,  max: 10, enemies: [
@@ -294,9 +304,9 @@ const SECONDARY_ENCOUNTERS = {
       { key: 'crimson_basilica.keeper_of_purity',  cell: 5 },
     ] },
     { id: 'cb_tribunal',      min: 8,  max: 11, enemies: [
-      { key: 'crimson_basilica.exalted_evangelist', cell: 0 },
-      { key: 'crimson_basilica.aggrails_exorcist',  cell: 4 },
-      { key: 'crimson_basilica.high_keeper',        cell: 1 },
+      { key: 'crimson_basilica.aggrails_crusader', cell: 0 },
+      { key: 'crimson_basilica.aggrails_exorcist', cell: 4 },
+      { key: 'crimson_basilica.high_keeper',       cell: 1 },
     ] },
     { id: 'cb_crossfire',     min: 8,  max: 11, enemies: [
       { key: 'crimson_basilica.aggrails_champion', cell: 2 },

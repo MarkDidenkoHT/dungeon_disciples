@@ -210,6 +210,9 @@ const BT = {
   // Expedition fights (screens/expedition.js). A secondary room banks its loot
   // into the run instead of paying it; only the run's end pays out.
   expRoomCleared: { en: 'Room cleared',       ru: 'Комната зачищена' },
+  expGoalDown:    { en: 'Goal defeated',      ru: 'Цель повержена' },
+  expGoalNote:    { en: 'The level is cleared. Explore on, or head home from anywhere with the whole haul.',
+                    ru: 'Уровень пройден. Исследуйте дальше или возвращайтесь домой из любой клетки со всей добычей.' },
   expBanked:      { en: 'Added to the expedition haul:', ru: 'Добавлено в добычу похода:' },
   expBackToMap:   { en: 'Back to the map',    ru: 'Назад к карте' },
   expComplete:    { en: 'Expedition complete', ru: 'Поход завершён' },
@@ -3935,7 +3938,9 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
             chip(`<img class="reward-chip-img" src="${assetUrl(`/assets/icons/recources/${id}.png`)}" alt="${id.replace(/_/g, ' ')}">`, a)),
         ].join('');
         rewardsEl.innerHTML = `
-          <div class="result-outcome result-outcome--win">${BTx('expRoomCleared')}</div>
+          <div class="result-outcome result-outcome--win">${expeditionResult.goal ? BTx('expGoalDown') : BTx('expRoomCleared')}</div>
+          ${expeditionResult.goal && result.progress_unlocked ? `<div class="reward-unlock">${BT.unlocked[BL](result.next_level)}</div>` : ''}
+          ${expeditionResult.goal ? `<p class="result-pending">${BTx('expGoalNote')}</p>` : ''}
           ${chips ? `<div class="reward-xp-head">${BTx('expBanked')}</div><div class="reward-grid">${chips}</div>` : ''}
           ${questProgressHtml(result.quest_progress)}`;
       } else if (expeditionResult?.outcome === 'wiped') {

@@ -273,6 +273,16 @@ const TUTORIAL_STEPS = {
       text: 'Каждая победа пополняет добычу, но она ваша, только когда вы уйдёте. Выход ⇲ уносит всё. Если бросить поход в другом месте, сохранится половина, а отряд останется с 1 HP. Проигранный бой — и пропадёт всё.',
     },
   },
+  expedition_goal_done: {
+    en: {
+      title: 'Level Cleared',
+      text: 'The goal is down and the next level is open. The run is not over: explore the rest of the map if you like, then tap Return home — from any cell — to bring the whole haul back. Lose a fight before then and the haul is lost.',
+    },
+    ru: {
+      title: 'Уровень пройден',
+      text: 'Цель повержена, следующий уровень открыт. Поход не окончен: исследуйте остаток карты, если хотите, а затем нажмите «Вернуться домой» — из любой клетки, — чтобы забрать всю добычу. Проиграете бой раньше — добыча пропадёт.',
+    },
+  },
   // Milestone 2 rooms: each explained once, the first time it matters.
   expedition_torch: {
     en: {

@@ -336,3 +336,20 @@ test('formation check: all living units, real cells, no overlap', () => {
   assert.ok(M.validateFormation(['a', 'c'], { a: 1, c: 0 }, size), 'row unit covers 0 and 1');
   assert.equal(M.validateFormation(['a', 'c'], { a: 4, c: 0 }, size), null);
 });
+
+// A room of shielders and healers cannot hurt the squad: every secondary
+// lineup needs attackers, at least as many as its supports, and every goal
+// encounter needs at least one.
+test('every lineup can deal damage', () => {
+  const def = key => { const [r, s] = key.split('.'); return UNITS.enemies[r][s]; };
+  const attacks = u => (typeof u.action === 'object' ? u.action.target_type : u.target_type) !== 'ally';
+  for (const t of EXP.SECONDARY_ENCOUNTERS[REGION]) {
+    const att = t.enemies.filter(e => attacks(def(e.key))).length;
+    const sup = t.enemies.length - att;
+    assert.ok(att >= 1 && att >= sup, `${t.id}: ${att} attackers vs ${sup} supports`);
+  }
+  const { REGION_ENCOUNTERS } = require('../data/embark');
+  for (const [lvl, enc] of Object.entries(REGION_ENCOUNTERS[REGION])) {
+    assert.ok(enc.enemies.some(e => attacks(def(e.key))), `goal ${lvl} has no attacker`);
+  }
+});

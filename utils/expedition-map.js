@@ -689,6 +689,9 @@ function clientView(run) {
     moves:     allowedMoves(data),
     pending:   data.pending ? { ...data.pending, goal: cellAt(map, data.pending.x, data.pending.y)?.type === 'goal' } : null,
     at_exit:   here?.type === 'exit' && !data.pending,
+    // The goal has fallen: the level is cleared and leaving from anywhere keeps
+    // the whole haul.
+    goal_cleared: !!data.goal_cleared,
     offer,
     torch:     data.torch ? { ...data.torch, stage: stage?.id || null } : null,
     effects:   (data.effects || []).map(e => ({ ...e })),

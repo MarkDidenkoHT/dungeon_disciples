@@ -5204,42 +5204,50 @@ async function woundExpeditionSquad(chat_id, data) {
   }));
 }
 
-// Pays a finished run: the bank (scaled by `share` for an early exit), plus the
-// level's own reward, event drops, progress and first-clear tokens on a goal
-// kill. Everything goes through payRegionRewards, so unit passives, buildings
-// and events apply exactly as they do to a single-fight embark — once, to the
-// whole payout.
-async function payExpedition(chat_id, run, data, { share = 1, goal = false } = {}) {
+// Clears the run's level the moment its goal falls: progress to the next level
+// and first-clear tokens, through payRegionRewards' own progress branch so the
+// rules stay in one place. Nothing else is paid here (no resources, no XP, no
+// squad changes) — that is the haul's job when the run ends.
+async function clearExpeditionLevel(chat_id, run) {
+  const region = REGIONS.find(r => r.id === run.region_id);
+  const r = await payRegionRewards(chat_id, {
+    region_id: run.region_id, level: run.level, region,
+    tuned: { gold: 0, crystals: [], trophies: {} }, xp: 0,
+    participantIds: [], survivorIds: [],
+    withEventDrops: false, advanceProgress: true, regen: false,
+  });
+  return {
+    progress_unlocked: !!r.progress_unlocked,
+    next_level:        r.next_level ?? null,
+    tokens_gained:     r.tokens_gained || null,
+  };
+}
+
+// Pays a finished run: the bank, scaled by `share` for an early exit. The goal's
+// own reward and event drops were already banked when it fell, and progress and
+// tokens granted then (clearExpeditionLevel). Everything goes through
+// payRegionRewards, so unit passives, buildings and events apply exactly as they
+// do to a single-fight embark — once, to the whole payout.
+async function payExpedition(chat_id, run, data, { share = 1 } = {}) {
   const region = REGIONS.find(r => r.id === run.region_id);
   const bank   = share === 1 ? data.bank : EXPMAP.scaleBank(data.bank, share);
-  let gold = Number(bank.gold) || 0;
-  let xp   = Number(bank.xp) || 0;
-  const crystals = { ...(bank.crystals || {}) };
-  const trophies = { ...(bank.trophies || {}) };
-  if (goal) {
-    const lvl = getLevelRewards(run.region_id, run.level);
-    gold += lvl.gold || 0;
-    xp   += lvl.xp || 0;
-    for (const { type, amount } of lvl.crystals) if (type && amount) crystals[type] = (crystals[type] || 0) + amount;
-    for (const [id, amount] of Object.entries(lvl.trophies)) if (amount) trophies[id] = (trophies[id] || 0) + amount;
-  }
   const participantIds = expeditionSquadIds(data);
   const fallen = new Set((data.fallen || []).map(String));
   const payout = await payRegionRewards(chat_id, {
     region_id: run.region_id, level: run.level, region,
     tuned: {
-      gold,
-      crystals: Object.entries(crystals).filter(([, a]) => a > 0).map(([type, amount]) => ({ type, amount })),
-      trophies: Object.fromEntries(Object.entries(trophies).filter(([, a]) => a > 0)),
+      gold:     Number(bank.gold) || 0,
+      crystals: Object.entries(bank.crystals || {}).filter(([, a]) => a > 0).map(([type, amount]) => ({ type, amount })),
+      trophies: Object.fromEntries(Object.entries(bank.trophies || {}).filter(([, a]) => a > 0)),
     },
-    xp,
+    xp:              Number(bank.xp) || 0,
     participantIds,
     survivorIds:     participantIds.filter(id => !fallen.has(id)),
-    withEventDrops:  goal,
-    advanceProgress: goal,
+    withEventDrops:  false,
+    advanceProgress: false,
     regen:           share === 1,
   });
-  return { ...payout, share, goal };
+  return { ...payout, share, goal: !!data.goal_cleared };
 }
 
 // A fight inside a run has finished (claimed by /battle/reward, or closed by
@@ -5276,10 +5284,27 @@ async function settleExpeditionBattle(chat_id, record, { abandoned = false } = {
 
   const cell = EXPMAP.settleWonFight(data, { fallenIds });
   if (cell?.type === 'goal') {
-    const ended = await endExpedition(run, data, 'goal');
-    if (!ended) return { ended: false, conflict: true };
-    const payout = await payExpedition(chat_id, ended, data, { share: 1, goal: true });
-    return { ended: true, outcome: 'goal', payout, run: expeditionView(ended, chat_id) };
+    // The goal does not end the run (changed 2026-11-14): the level is cleared
+    // at once — next level and first-clear tokens — but its gold, crystals, XP,
+    // trophies and any event drops join the haul, which is only paid on the way
+    // out and is still lost to a wipe. From here the player may leave from any
+    // cell with the whole haul.
+    const lvl = getLevelRewards(run.region_id, run.level);
+    const drops = eventDropsFor(await getActiveEvent(supabase), run.region_id, run.level);
+    const trophies = { ...lvl.trophies };
+    for (const [id, n] of Object.entries(drops || {})) if (n) trophies[id] = (trophies[id] || 0) + n;
+    const goalLoot = {
+      gold: lvl.gold || 0,
+      xp:   lvl.xp || 0,
+      crystals: Object.fromEntries(lvl.crystals.filter(c => c.type && c.amount).map(c => [c.type, c.amount])),
+      trophies,
+    };
+    data.bank = EXPMAP.addLoot(data.bank, goalLoot);
+    data.goal_cleared = true;
+    const saved = await writeExpedition(run, data);
+    if (!saved) return { ended: false, conflict: true };
+    const progress = await clearExpeditionLevel(chat_id, run);
+    return { ended: false, goal: true, loot: goalLoot, bank: data.bank, progress, run: expeditionView(saved, chat_id) };
   }
 
   const saved = await writeExpedition(run, data);
@@ -5649,8 +5674,10 @@ router.post('/expedition/leave', requireAuth, async (req, res) => {
     if (data.battle_id) return res.status(400).json({ error: 'Finish or abandon the fight first', code: 'expedition_in_battle' });
 
     const here = EXPMAP.cellAt(data.map, data.pos.x, data.pos.y);
-    const atExit = here?.type === 'exit' && !data.pending;
-    const outcome = atExit ? 'exit' : 'abandoned';
+    // Once the goal is down the level is cleared: walking out from anywhere is
+    // going home, not abandoning.
+    const atExit = (here?.type === 'exit' || !!data.goal_cleared) && !data.pending;
+    const outcome = data.goal_cleared ? 'goal' : atExit ? 'exit' : 'abandoned';
     const ended = await endExpedition(run, data, outcome);
     if (!ended) return res.status(409).json({ error: 'The expedition changed, try again', code: 'expedition_conflict' });
 
@@ -8279,6 +8306,7 @@ router.post('/battle/reward', requireAuth, async (req, res) => {
       return res.json({
         ...base,
         ...(expedition?.payout || {}),
+        ...(expedition?.progress || {}),
         won,
         expedition,
         quest_progress: await questReport,

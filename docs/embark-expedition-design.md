@@ -446,3 +446,16 @@ All numbers live in `data/expedition.js` (`TORCH`, `CAMP`, `BOONS`, `CURSES`, `E
 - **Tutorial:** one-time hints for the torch, camp, shrine, event, curse and elite.
 - **Not done yet:** the battle screen does not show which modifiers are active; dark-room
   loot bonus; revives.
+
+## 15. The goal no longer ends the run (2026-11-14)
+
+- **Beating the goal clears the level at once:** next level unlocked and first-clear tokens
+  granted on the kill (`clearExpeditionLevel`).
+- **The goal's gold, crystals, XP, trophies and event drops join the haul.** They are paid
+  with the rest when the player leaves, and lost with the rest to a wipe.
+- **After the goal, leaving from any cell is going home:** full haul, no HP penalty,
+  outcome `goal`. Abandoning a fight is still half, and a wipe still loses everything.
+- The map shows **Return home** in place of the exit/abandon buttons, and a one-time hint
+  (`expedition_goal_done`) explains the choice.
+- Lineup rule (same day): every secondary lineup has at least as many attackers as
+  supports; four Basilica rooms were support-only and could not deal damage.

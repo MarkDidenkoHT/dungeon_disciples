@@ -79,6 +79,9 @@ const T = {
   noticeRest:   { en: 'The squad rests.',        ru: 'Отряд отдыхает.' },
   noticeLoot:   { en: 'Added to the haul',       ru: 'Добавлено в добычу' },
   eliteNote:    { en: 'Elite — stronger enemies, double loot', ru: 'Элита — враги сильнее, двойная добыча' },
+  goalDone:     { en: 'Goal defeated — explore on, or head home.', ru: 'Цель повержена — исследуйте дальше или возвращайтесь.' },
+  goHome:       { en: 'Return home',              ru: 'Вернуться домой' },
+  goHomeNote:   { en: 'The level is cleared: the whole haul comes home from anywhere.', ru: 'Уровень пройден: вся добыча вернётся домой из любой клетки.' },
 };
 
 // Placeholder glyphs until cells have art.
@@ -321,6 +324,12 @@ export function renderExpedition(root, { player, summary = null } = {}) {
   }
 
   function footerHtml() {
+    // After the goal, leaving from anywhere is going home with everything.
+    if (run.goal_cleared) {
+      return `
+        <button class="action-btn expd-exit-btn" type="button" data-act="exit">${t(T.goHome)}</button>
+        <div class="expd-muted">${t(T.goHomeNote)}</div>`;
+    }
     return `
       ${run.at_exit ? `
         <button class="action-btn expd-exit-btn" type="button" data-act="exit">${t(T.exitHere)}</button>
@@ -384,7 +393,7 @@ export function renderExpedition(root, { player, summary = null } = {}) {
     setHtml('#expd-title', `${regionLabel(run.region_id)} · ${t(T.level)} ${run.level}`);
     setHtml('#expd-haul-chips', chips(run.bank), JSON.stringify(run.bank));
     setHtml('#expd-board', gridHtml());
-    setHtml('#expd-hint', run.pending ? '' : t(T.tapToMove));
+    setHtml('#expd-hint', run.pending ? '' : run.goal_cleared ? t(T.goalDone) : t(T.tapToMove));
     setHtml('#expd-torch', torchHtml());
     setHtml('#expd-effects', effectsHtml());
     setHtml('#expd-notice', noticeHtml());
@@ -568,8 +577,7 @@ export function renderExpedition(root, { player, summary = null } = {}) {
   // A short explain-and-continue chain over the board the first time.
   function runTutorial() {
     if (!run) return;
-    if (run.size !== 3) { runNodeHints(); return; }
-    if (isTutorialDone(player, 'expedition_map')) return;
+    if (run.size !== 3 || isTutorialDone(player, 'expedition_map')) { runNodeHints(); return; }
     showTutorialSpotlight(player, 'expedition_map', root.querySelector('#expd-board'), {
       showContinue: true,
       onAdvance: () => {
@@ -595,6 +603,7 @@ export function renderExpedition(root, { player, summary = null } = {}) {
       showTutorialSpotlight(player, step, el, { showContinue: true, onAdvance: () => markTutorialDone(player, step) });
       return true;
     };
+    if (run.goal_cleared && hint('expedition_goal_done', root.querySelector('#expd-footer'))) return;
     if (run.torch && hint('expedition_torch', root.querySelector('#expd-torch'))) return;
     const offer = run.offer?.kind;
     if (offer === 'camp' && hint('expedition_camp', root.querySelector('#expd-pending'))) return;
