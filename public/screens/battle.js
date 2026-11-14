@@ -2851,6 +2851,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     { key: 'burn',    icon: 'burn.jpg',    en: 'Burning',          ru: 'Горение',        n: c => num(c, 'dot_dmg'),             unit: 'dmg' },
     { key: 'bleed',   icon: 'bleed.jpg',   en: 'Bleeding',         ru: 'Кровотечение',   n: c => num(c, '_bleed_dmg'),          unit: 'dmg' },
     { key: 'poison',  icon: 'poison.jpg',  en: 'Poisoned',         ru: 'Отравление',     n: c => num(c, '_poison_dmg'),         unit: 'dmg' },
+    { key: 'holy_fire', icon: 'holy_fire.jpg', en: 'Holy Fire', ru: 'Священный Огонь', n: c => num(c, '_holy_fire_dmg'), unit: 'dmg' },
     { key: 'chill',   icon: 'chill.jpg',   en: 'Chilled',          ru: 'Обморожение',    n: c => num(c, '_chill_dmg'),          unit: 'dmg' },
     { key: 'terror',  icon: 'terror.jpg',  en: 'Terror',           ru: 'Ужас',           n: c => num(c, '_terror_rounds'),      unit: 'rounds' },
     { key: 'fear',    icon: 'fear.jpg',    en: 'Fear',             ru: 'Страх',          n: c => num(c, '_fear_dmg_reduction'), unit: 'pct' },
@@ -3000,7 +3001,7 @@ export function renderBattle(root, { player, battle_id, region_id, level, snapsh
     setTimeout(() => flash.remove(), 900); // fallback if animationend never fires
   }
 
-  // 'Bleed'/'Chill'/'DoT' passive ticks carry a dot_kind; anything else is not a DoT.
+  // Damage-over-time passive ticks carry a dot_kind; anything else is not a DoT.
   function dotTickKind(entry) {
     if (entry.type !== 'passive') return null;
     return entry.dot_kind || null;

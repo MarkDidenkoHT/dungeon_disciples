@@ -5085,6 +5085,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   100% { opacity: 0; }
 }
 .bc-status-flash--burn   { background: radial-gradient(circle, rgba(255,130,25,0.95), rgba(255,60,0,0.35) 65%, transparent 85%); }
+.bc-status-flash--holy_fire { background: radial-gradient(circle, rgba(255,245,170,0.98), rgba(255,185,55,0.45) 65%, transparent 85%); }
 .bc-status-flash--poison { background: radial-gradient(circle, rgba(130,235,60,0.9),  rgba(45,160,20,0.35) 65%, transparent 85%); }
 .bc-status-flash--bleed  { background: radial-gradient(circle, rgba(235,25,45,0.9),   rgba(140,0,10,0.35) 65%, transparent 85%); }
 .bc-status-flash--chill  { background: radial-gradient(circle, rgba(125,205,255,0.9), rgba(30,120,220,0.35) 65%, transparent 85%); }

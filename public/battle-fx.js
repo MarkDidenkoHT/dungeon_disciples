@@ -3681,6 +3681,103 @@ export async function holy_shock(cellEl, opts = {}) {
   console.log('[battle-fx] holy_shock END', dataId);
 }
 
+// ── holy_fire — a consecrating pillar of flame ────────────────────────────
+// Unlike Holy Shock's forked strike, Holy Fire gathers beneath the target and
+// blooms upward in a bright, lingering column.
+export async function holy_fire(cellEl) {
+  console.log('[battle-fx] holy_fire START', cellEl?.dataset?.id);
+  if (!cellEl || !app || !window.PIXI) return;
+
+  const dataId = cellEl.dataset.id;
+  const clamp01 = v => Math.max(0, Math.min(1, v));
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const TAU = Math.PI * 2;
+  const ADD = PIXI.BLEND_MODES.ADD;
+  const GOLD = 0xffc43d;
+  const WHITE = 0xfffbe0;
+  const AMBER = 0xff8a16;
+  const motes = Array.from({ length: 24 }, () => ({
+    angle: rand(0, TAU),
+    reach: rand(0.18, 0.62),
+    delay: rand(0, 0.52),
+    size: rand(1.5, 4),
+    speed: rand(0.45, 1),
+  }));
+  const rays = Array.from({ length: 9 }, (_, i) => ({
+    angle: (i / 9) * TAU + rand(-0.15, 0.15),
+    length: rand(0.34, 0.68),
+    width: rand(1.5, 3.5),
+  }));
+
+  const layer = new PIXI.Container();
+  const glow = new PIXI.Graphics();
+  glow.blendMode = ADD;
+  glow.filters = [new PIXI.BlurFilter(8)];
+  const flame = new PIXI.Graphics();
+  flame.blendMode = ADD;
+  const sigil = new PIXI.Graphics();
+  sigil.blendMode = ADD;
+  layer.addChild(glow, flame, sigil);
+  app.stage.addChild(layer);
+
+  await animate(860, t => {
+    const b = cellBoundsFor(dataId);
+    if (!b) { layer.visible = false; return; }
+    layer.visible = true;
+    const cx = b.x + b.width / 2;
+    const cy = b.y + b.height * 0.72;
+    const R = Math.min(b.width, b.height);
+    const rise = clamp01(t / 0.34);
+    const fade = clamp01((t - 0.60) / 0.40);
+    const alpha = 1 - fade;
+    const pulse = 0.82 + Math.sin(t * Math.PI * 7) * 0.18;
+
+    glow.clear();
+    flame.clear();
+    sigil.clear();
+
+    const columnTop = cy - R * 1.15 * rise;
+    const columnWidth = R * (0.13 + Math.sin(t * Math.PI * 5) * 0.025);
+    glow.beginFill(AMBER, 0.30 * alpha);
+    glow.drawRoundedRect(cx - columnWidth, columnTop, columnWidth * 2, cy - columnTop, columnWidth);
+    glow.endFill();
+    flame.beginFill(GOLD, 0.72 * alpha);
+    flame.drawRoundedRect(cx - columnWidth * 0.52, columnTop + R * 0.08, columnWidth * 1.04, Math.max(0, cy - columnTop - R * 0.08), columnWidth * 0.52);
+    flame.endFill();
+    flame.beginFill(WHITE, 0.80 * alpha);
+    flame.drawRoundedRect(cx - columnWidth * 0.17, columnTop + R * 0.12, columnWidth * 0.34, Math.max(0, cy - columnTop - R * 0.12), columnWidth * 0.17);
+    flame.endFill();
+
+    const ringProgress = clamp01((t - 0.08) / 0.72);
+    const ringRadius = R * (0.12 + ringProgress * 0.68);
+    sigil.lineStyle(Math.max(1, R * 0.025 * (1 - ringProgress * 0.55)), GOLD, alpha * (1 - ringProgress * 0.35));
+    sigil.drawEllipse(cx, cy, ringRadius, ringRadius * 0.32);
+    sigil.lineStyle(0);
+    for (const ray of rays) {
+      const length = R * ray.length * rise;
+      const sx = cx + Math.cos(ray.angle) * ringRadius * 0.72;
+      const sy = cy + Math.sin(ray.angle) * ringRadius * 0.24;
+      flame.lineStyle(ray.width, GOLD, alpha * 0.78);
+      flame.moveTo(sx, sy);
+      flame.lineTo(sx + Math.cos(ray.angle) * length, sy + Math.sin(ray.angle) * length);
+      flame.lineStyle(0);
+    }
+
+    softGlow(glow, cx, cy, R * 0.28 * pulse, WHITE, 0.68 * alpha);
+    for (const mote of motes) {
+      const progress = clamp01((t - mote.delay) / (0.72 - mote.delay));
+      if (progress <= 0) continue;
+      const distance = R * mote.reach * progress;
+      const x = cx + Math.cos(mote.angle) * distance * 0.58;
+      const y = cy - distance * mote.speed;
+      softGlow(glow, x, y, mote.size * (1 - progress * 0.45), mote.angle % 2 < 1 ? GOLD : WHITE, alpha * (1 - progress) * 0.9);
+    }
+  });
+
+  layer.destroy({ children: true });
+  console.log('[battle-fx] holy_fire END', dataId);
+}
+
 // ── fellfire — one strike, every burning enemy ─────────────────────────────
 // A fan-out effect: the passive splashes damage to EVERY already-burning enemy
 // at once, so this fires once for the whole group rather than once per victim
@@ -7712,6 +7809,7 @@ export const EFFECTS = {
   claw_strike,
   frost_claw,
   holy_shock,
+  holy_fire,
   fellfire,
   blood_mist,
   aegis,

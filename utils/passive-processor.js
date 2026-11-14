@@ -77,7 +77,7 @@ function pctFor(p, engine, side, flatKey, perTagKey) {
 
 const DEBUFF_MAGNITUDE_PARAMS = [
   'dot_dmg_pct', 'bleed_dmg_pct', 'chill_dmg_pct',
-  'burn_per_tag', 'bleed_per_tag', 'poison_per_tag',
+  'burn_per_tag', 'bleed_per_tag', 'poison_per_tag', 'holy_fire_per_tag',
   'armor_shred', 'initiative_shred', 'dissipate_resistance_pct',
   'adjacent_physical_dmg_reduction_pct', 'physical_dmg_reduction_pct',
   'stun_initiative_reduction_pct',
@@ -1973,6 +1973,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     engine.dispelEffects(target, 'negative');
     target.dot_dmg = 0;
     target._poison_dmg = 0;
+    target._holy_fire_dmg = 0;
     target._dot_permanent = 0;
     target._hot = 0;
     target._bleed_dmg = 0;
@@ -2205,7 +2206,7 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
   }
 
 
-  // ── Conflagration / Hemorrhage / Virulence ────────────────────────────────
+  // ── Conflagration / Hemorrhage / Virulence / Holy Fire ───────────────────
   // One shape, three schools: a damage-over-time written DIRECTLY onto the
   // target rather than rolled off a hit, so it does not care what the caster's
   // attack would have done. Each STACKS onto whatever is already there, exactly
@@ -2222,6 +2223,9 @@ function executeActiveAbility(actor, target, combatants, UNIT_ABILITIES, engine)
     { param: 'poison_per_tag', key: 'poison', verb: 'festers',
       field: '_poison_dmg', sourceField: '_poison_source_key',
       clear: { _poison_dmg: 0, _poison_source_key: null } },
+    { param: 'holy_fire_per_tag', key: 'holy_fire', verb: 'burns with holy fire',
+      field: '_holy_fire_dmg', sourceField: '_holy_fire_source_key',
+      clear: { _holy_fire_dmg: 0, _holy_fire_source_key: null } },
   ];
   for (const dot of PER_TAG_DOTS) {
     if (p[dot.param] == null || !target || def.target !== 'enemy') continue;

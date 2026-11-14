@@ -450,12 +450,14 @@ class BattleEngine {
       defend_armor_bonus: 0,
       dot_dmg:            0,
       _poison_dmg:        0,
+      _holy_fire_dmg:     0,
       _dot_permanent:     0,
       _bleed_permanent:   0,
       _chill_permanent:   0,
       _hot_permanent:     0,
       _dot_source_key:    null,
       _poison_source_key: null,
+      _holy_fire_source_key: null,
       _bleed_source_key:  null,
       _chill_source_key:  null,
       _dodge_count:       0,
@@ -1966,6 +1968,7 @@ class BattleEngine {
       chill:  ['_chill_dmg', '_chill_permanent'],
       dot:    ['dot_dmg',    '_dot_permanent'],
       poison: ['_poison_dmg', null],
+      holy_fire: ['_holy_fire_dmg', null],
       decay:  ['_decay',     null],
       shield: ['_shield',    null],
       hot:    ['_hot',       '_hot_permanent'],
@@ -2246,6 +2249,17 @@ class BattleEngine {
       unit._poison_source_key = null;
       tick(p, 'Poison', '☠️', { dot_kind: 'poison' }, 'nature');
       this.clearEffect(unit, 'poison');
+    }
+    if (unit.alive && unit._holy_fire_dmg > 0) {
+      const holyFireKey = unit._holy_fire_source_key ?? null;
+      const holyFireRank = holyFireKey && this.ABILITIES
+        ? (this.ABILITIES[holyFireKey]?.rank ?? 1)
+        : 1;
+      const damage = Math.max(holyFireRank, unit._holy_fire_dmg);
+      unit._holy_fire_dmg = 0;
+      unit._holy_fire_source_key = null;
+      tick(damage, 'Holy Fire', '✨', { dot_kind: 'holy_fire' }, 'life');
+      this.clearEffect(unit, 'holy_fire');
     }
     // Renew (_hot) — the heal-over-time ticks on the same schedule as the damage
     // ones: once, at the start of the healed unit's own turn. It used to tick
@@ -4237,12 +4251,14 @@ class BattleEngine {
           _bleed_dmg:          c._bleed_dmg ?? 0,
           _chill_dmg:          c._chill_dmg ?? 0,
           _poison_dmg:         c._poison_dmg ?? 0,
+          _holy_fire_dmg:      c._holy_fire_dmg ?? 0,
           _dot_type:           c._dot_type ?? null,
           _dot_permanent:      c._dot_permanent ?? 0,
           _bleed_permanent:    c._bleed_permanent ?? 0,
           _chill_permanent:    c._chill_permanent ?? 0,
           _dot_source_key:   c._dot_source_key   ?? null,
           _poison_source_key: c._poison_source_key ?? null,
+          _holy_fire_source_key: c._holy_fire_source_key ?? null,
           _bleed_source_key: c._bleed_source_key ?? null,
           _chill_source_key: c._chill_source_key ?? null,
           _dodge_count:        c._dodge_count ?? 0,
@@ -4351,9 +4367,11 @@ class BattleEngine {
       const b              = s.buffs || {};
       c.dot_dmg            = b.dot_dmg            ?? 0;
       c._poison_dmg        = b._poison_dmg        ?? 0;
+      c._holy_fire_dmg     = b._holy_fire_dmg     ?? 0;
       c._dot_type          = b._dot_type          ?? null;
       c._dot_source_key   = b._dot_source_key   ?? null;
       c._poison_source_key = b._poison_source_key ?? null;
+      c._holy_fire_source_key = b._holy_fire_source_key ?? null;
       c._bleed_source_key = b._bleed_source_key ?? null;
       c._chill_source_key = b._chill_source_key ?? null;
       c._hot               = b._hot               ?? 0;
