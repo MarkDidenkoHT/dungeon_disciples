@@ -1,16 +1,4 @@
 const UNIT_ABILITIES = {
-  'purge 1': {
-    id: 'purge 1',
-    name: 'Purge',
-    name_ru: "Изгнание",
-    rank: 1,
-    type: 'active',
-    target: 'enemy',
-    description: 'Strips all positive effects (buffs) from an enemy.',
-    description_ru: "Снимает с врага все положительные эффекты (усиления).",
-    params: { dispel_positive: true },
-    effect_name: 'dispel',
-  },
   'dispel 1': {
     id: 'dispel 1',
     name: 'Dispel',
@@ -599,9 +587,9 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'After dealing damage, heals the lowest HP ally for 4% of the damage per Holy ally on the field.',
-    description_ru: "После нанесения урона исцеляет союзника с наименьшим HP на 4% урона за каждого святого союзника.",
-    params: { lowest_ally_heal_pct_per_tag: 5, tag_required: 'Holy' },
+    description: 'After dealing damage, heals the lowest HP ally for 4% of the damage per Holy ally on the field. If the target has Holy Fire, deals 1 Life damage per enemy Demon.',
+    description_ru: "После нанесения урона исцеляет союзника с наименьшим HP на 4% урона за каждого святого союзника. Если цель поражена Священным Огнём, наносит 1 ед. урона Жизнью за каждого демона противника.",
+    params: { lowest_ally_heal_pct_per_tag: 4, tag_required: 'Holy', holy_fire_dmg_per_demon: 1 },
   },
   'mithrails_light 2': {
     id: 'mithrails_light 2',
@@ -611,9 +599,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
-    description: 'After dealing damage, heals the lowest HP ally for 5% of the damage per Holy ally on the field.',
-    description_ru: "После нанесения урона исцеляет союзника с наименьшим HP на 5% урона за каждого святого союзника.",
-    params: { lowest_ally_heal_pct_per_tag: 8, tag_required: 'Holy' },
+    description: 'After dealing damage, heals the lowest HP ally for 5% of the damage per Holy ally on the field. If the target has Holy Fire, deals 2 Life damage per enemy Demon.',
+    description_ru: "После нанесения урона исцеляет союзника с наименьшим HP на 5% урона за каждого святого союзника. Если цель поражена Священным Огнём, наносит 2 ед. урона Жизнью за каждого демона противника.",
+    params: { lowest_ally_heal_pct_per_tag: 5, tag_required: 'Holy', holy_fire_dmg_per_demon: 2 },
   },
   'last_verse 1': {
     id: 'last_verse 1',
@@ -1526,53 +1514,6 @@ const UNIT_ABILITIES = {
     description_ru: "Перескакивает ещё на 3 случайных врагов с 40%, 30% и 20% урона.",
     params: { chain_targets: 3, chain_damage_pct: [40, 30, 20] },
     effect_name: 'chain',
-  },
-  // Chain Lightning — an ACTIVE, and deliberately a separate mechanic from the
-  // Chain passive above. Each hop leaps from the unit just struck to a fresh
-  // enemy, for a falling share of the caster's power. It deals its damage
-  // directly (see the chain_lightning block in executeActiveAbility) and fires
-  // no on_hit, so a caster that also carries Chain does not chain the chains.
-  'chain_lightning 1': {
-    id: 'chain_lightning 1',
-    name: 'Chain Lightning',
-    name_ru: "Цепная Молния",
-    rank: 1,
-    type: 'active',
-    target: 'enemy',
-    range: 3,
-    description: "Strikes an enemy with air for this unit's power, then leaps to 1 more enemy for 50%.",
-    description_ru: "Бьёт врага воздухом с силой этого юнита, затем перескакивает ещё на 1 врага с 50%.",
-    params: { chain_lightning_power_pct: 100, chain_lightning_hops: [50] },
-    effect_name: 'chain_lightning',
-    animation_sound: 'shock',
-  },
-  'chain_lightning 2': {
-    id: 'chain_lightning 2',
-    name: 'Chain Lightning',
-    name_ru: "Цепная Молния",
-    rank: 2,
-    type: 'active',
-    target: 'enemy',
-    range: 3,
-    description: "Strikes an enemy with air for this unit's power, then leaps to 2 more enemies for 50% and 40%.",
-    description_ru: "Бьёт врага воздухом с силой этого юнита, затем перескакивает ещё на 2 врагов с 50% и 40%.",
-    params: { chain_lightning_power_pct: 100, chain_lightning_hops: [50, 40] },
-    effect_name: 'chain_lightning',
-    animation_sound: 'shock',
-  },
-  'chain_lightning 3': {
-    id: 'chain_lightning 3',
-    name: 'Chain Lightning',
-    name_ru: "Цепная Молния",
-    rank: 3,
-    type: 'active',
-    target: 'enemy',
-    range: 3,
-    description: "Strikes an enemy with air for this unit's power, then leaps to 3 more enemies for 50%, 40% and 30%.",
-    description_ru: "Бьёт врага воздухом с силой этого юнита, затем перескакивает ещё на 3 врагов с 50%, 40% и 30%.",
-    params: { chain_lightning_power_pct: 100, chain_lightning_hops: [50, 40, 30] },
-    effect_name: 'chain_lightning',
-    animation_sound: 'shock',
   },
   'dissipate 1': {
     id: 'dissipate 1',
@@ -2684,11 +2625,6 @@ const UNIT_ABILITIES = {
     description_ru: "Атаки этого юнита также наносят 30% своего урона каждому врагу с ознобом.",
     params: { fellfire_pct: 30, fellfire_dot: 'chill' },
   },
-  // Fellfire's opposite number, for the Vampires: same shape, same family of
-  // params, reading Bleed instead of Burn. Gated on Vampire rather than Caster
-  // so a Grail caster line scales it off the bodies it already fields, and the
-  // trigger is on_hit — item_rules refuses it on anything that does not attack,
-  // which is why Mother's Chalice line (action 'none') cannot wear Envy.
   'blood_bolt 1': {
     id: 'blood_bolt 1',
     name: 'Blood Bolt',
@@ -3141,10 +3077,6 @@ const UNIT_ABILITIES = {
     params: { shared_pool_stat: 'damage', shared_pool_value: 6, tag_required: 'Holy' },
     effect_name: 'divided_flame',
   },
-  // The Holy arm of the shared-damage pool. Rank 2 doubles the pot exactly as
-  // its siblings do — divided_flame goes 6 -> 12 for Demons and rite_of_battle
-  // 6 -> 12 for Warriors — so the three tag variants stay one ability with
-  // three audiences rather than three balance curves.
   'inner_fire 2': {
     id: 'inner_fire 2',
     name: 'Divided Flame',
@@ -3404,9 +3336,9 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'active',
     target: 'enemy',
-    description: 'Sets an enemy on fire for 3 Burn per Caster ally on the field.',
-    description_ru: "Поджигает врага: 3 горения за каждого союзника-Заклинателя на поле.",
-    params: { burn_per_tag: 3, tag_required: 'Caster' },
+    description: 'Sets an enemy on fire for 2 Burn per Caster ally on the field.',
+    description_ru: "Поджигает врага: 2 горения за каждого союзника-Заклинателя на поле.",
+    params: { burn_per_tag: 2, tag_required: 'Caster' },
   },
   'conflagration 2': {
     id: 'conflagration 2',
@@ -3415,9 +3347,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'active',
     target: 'enemy',
-    description: 'Sets an enemy on fire for 4 Burn per Caster ally on the field.',
-    description_ru: "Поджигает врага: 4 горения за каждого союзника-Заклинателя на поле.",
-    params: { burn_per_tag: 4, tag_required: 'Caster' },
+    description: 'Sets an enemy on fire for 3 Burn per Caster ally on the field.',
+    description_ru: "Поджигает врага: 3 горения за каждого союзника-Заклинателя на поле.",
+    params: { burn_per_tag: 3, tag_required: 'Caster' },
   },
   'conflagration 3': {
     id: 'conflagration 3',
@@ -3426,9 +3358,9 @@ const UNIT_ABILITIES = {
     rank: 3,
     type: 'active',
     target: 'enemy',
-    description: 'Sets an enemy on fire for 5 Burn per Caster ally on the field.',
-    description_ru: "Поджигает врага: 5 горения за каждого союзника-Заклинателя на поле.",
-    params: { burn_per_tag: 5, tag_required: 'Caster' },
+    description: 'Sets an enemy on fire for 4 Burn per Caster ally on the field.',
+    description_ru: "Поджигает врага: 4 горения за каждого союзника-Заклинателя на поле.",
+    params: { burn_per_tag: 4, tag_required: 'Caster' },
   },
   'hemorrhage 1': {
     id: 'hemorrhage 1',
@@ -3437,9 +3369,9 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'active',
     target: 'enemy',
-    description: 'Inflicts 3 Bleed per Caster ally on the field.',
-    description_ru: "Накладывает 3 кровотечения за каждого союзника-Заклинателя на поле.",
-    params: { bleed_per_tag: 3, tag_required: 'Caster' },
+    description: 'Inflicts 2 Bleed per Caster ally on the field.',
+    description_ru: "Накладывает 2 кровотечения за каждого союзника-Заклинателя на поле.",
+    params: { bleed_per_tag: 2, tag_required: 'Caster' },
     effect_name: 'blood_bolt',
   },
   'hemorrhage 2': {
@@ -3449,9 +3381,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'active',
     target: 'enemy',
-    description: 'Inflicts 4 Bleed per Caster ally on the field.',
-    description_ru: "Накладывает 4 кровотечения за каждого союзника-Заклинателя на поле.",
-    params: { bleed_per_tag: 4, tag_required: 'Caster' },
+    description: 'Inflicts 3 Bleed per Caster ally on the field.',
+    description_ru: "Накладывает 3 кровотечения за каждого союзника-Заклинателя на поле.",
+    params: { bleed_per_tag: 3, tag_required: 'Caster' },
     effect_name: 'blood_bolt',
   },
   'hemorrhage 3': {
@@ -3461,9 +3393,9 @@ const UNIT_ABILITIES = {
     rank: 3,
     type: 'active',
     target: 'enemy',
-    description: 'Inflicts 5 Bleed per Caster ally on the field.',
-    description_ru: "Накладывает 5 кровотечения за каждого союзника-Заклинателя на поле.",
-    params: { bleed_per_tag: 5, tag_required: 'Caster' },
+    description: 'Inflicts 4 Bleed per Caster ally on the field.',
+    description_ru: "Накладывает 4 кровотечения за каждого союзника-Заклинателя на поле.",
+    params: { bleed_per_tag: 4, tag_required: 'Caster' },
     effect_name: 'blood_bolt',
   },
   'blight 1': {
@@ -3473,9 +3405,9 @@ const UNIT_ABILITIES = {
     rank: 1,
     type: 'active',
     target: 'enemy',
-    description: 'Inflicts 3 Poison per Caster ally on the field.',
-    description_ru: "Накладывает 3 яда за каждого союзника-Заклинателя на поле.",
-    params: { poison_per_tag: 3, tag_required: 'Caster' },
+    description: 'Inflicts 2 Poison per Caster ally on the field.',
+    description_ru: "Накладывает 2 яда за каждого союзника-Заклинателя на поле.",
+    params: { poison_per_tag: 2, tag_required: 'Caster' },
     effect_name: 'poison_dart',
   },
   'blight 2': {
@@ -3485,9 +3417,9 @@ const UNIT_ABILITIES = {
     rank: 2,
     type: 'active',
     target: 'enemy',
-    description: 'Inflicts 4 Poison per Caster ally on the field.',
-    description_ru: "Накладывает 4 яда за каждого союзника-Заклинателя на поле.",
-    params: { poison_per_tag: 4, tag_required: 'Caster' },
+    description: 'Inflicts 3 Poison per Caster ally on the field.',
+    description_ru: "Накладывает 3 яда за каждого союзника-Заклинателя на поле.",
+    params: { poison_per_tag: 3, tag_required: 'Caster' },
     effect_name: 'poison_dart',
   },
   'blight 3': {
@@ -3497,9 +3429,9 @@ const UNIT_ABILITIES = {
     rank: 3,
     type: 'active',
     target: 'enemy',
-    description: 'Inflicts 5 Poison per Caster ally on the field.',
-    description_ru: "Накладывает 5 яда за каждого союзника-Заклинателя на поле.",
-    params: { poison_per_tag: 5, tag_required: 'Caster' },
+    description: 'Inflicts 4 Poison per Caster ally on the field.',
+    description_ru: "Накладывает 4 яда за каждого союзника-Заклинателя на поле.",
+    params: { poison_per_tag: 4, tag_required: 'Caster' },
     effect_name: 'poison_dart',
   },
   'holy_fire 1': {
@@ -3571,7 +3503,6 @@ const UNIT_ABILITIES = {
     description_ru: "Окутывается углями: +45 к сопротивлению огню на 2 раунда и восстанавливает 50% максимального здоровья.",
     params: { ember_shroud_resist: 45, ember_shroud_resist_type: 'fire', ember_shroud_heal_pct: 50, duration_rounds: 2 },
   },
-
   'dragons_breath 1': {
     id: 'dragons_breath 1',
     name: "Dragon's Breath",
@@ -3677,7 +3608,7 @@ const UNIT_ABILITIES = {
   'weight_of_steel 1': {
     id: 'weight_of_steel 1',
     name: 'Weight of Steel',
-    name_ru: "Тяжесть стали",
+    name_ru: "Тяжесть Стали",
     rank: 1,
     type: 'passive',
     trigger: 'on_hit',
@@ -3688,7 +3619,7 @@ const UNIT_ABILITIES = {
   'weight_of_steel 2': {
     id: 'weight_of_steel 2',
     name: 'Weight of Steel',
-    name_ru: "Тяжесть стали",
+    name_ru: "Тяжесть Стали",
     rank: 2,
     type: 'passive',
     trigger: 'on_hit',
@@ -3699,7 +3630,7 @@ const UNIT_ABILITIES = {
   'weight_of_steel 3': {
     id: 'weight_of_steel 3',
     name: 'Weight of Steel',
-    name_ru: "Тяжесть стали",
+    name_ru: "Тяжесть Стали",
     rank: 3,
     type: 'passive',
     trigger: 'on_hit',
@@ -3710,7 +3641,7 @@ const UNIT_ABILITIES = {
   'lancing_steel 1': {
     id: 'lancing_steel 1',
     name: 'Lancing Steel',
-    name_ru: 'Пронзающая сталь',
+    name_ru: 'Пронзающая Сталь',
     rank: 1,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -3721,7 +3652,7 @@ const UNIT_ABILITIES = {
   'lancing_steel 2': {
     id: 'lancing_steel 2',
     name: 'Lancing Steel',
-    name_ru: 'Пронзающая сталь',
+    name_ru: 'Пронзающая Сталь',
     rank: 2,
     type: 'passive',
     trigger: 'on_battle_start',
@@ -3732,7 +3663,7 @@ const UNIT_ABILITIES = {
   'lancing_steel 3': {
     id: 'lancing_steel 3',
     name: 'Lancing Steel',
-    name_ru: 'Пронзающая сталь',
+    name_ru: 'Пронзающая Сталь',
     rank: 3,
     type: 'passive',
     trigger: 'on_battle_start',

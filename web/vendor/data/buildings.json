@@ -868,12 +868,29 @@
           "category": "barracks",
           "tier": 4,
           "unit_id": "e2111",
-          "upgrades": [],
+          "upgrades": [
+            "mithrails_ascended_exemplar_keep"
+          ],
           "cost": {
             "gold": 160,
             "Crystals_Life": 80,
             "Crystals_Air": 20,
             "Crystals_Fire": 20
+          }
+        },
+        {
+          "id": "mithrails_ascended_exemplar_keep",
+          "label": "Ascended Exemplar Keep",
+          "label_ru": "Твердыня вознесённых экземпларов",
+          "category": "barracks",
+          "tier": 5,
+          "unit_id": "e21111",
+          "upgrades": [],
+          "cost": {
+            "gold": 320,
+            "Crystals_Life": 160,
+            "Crystals_Air": 40,
+            "Crystals_Fire": 40
           }
         },
         {
@@ -1595,8 +1612,8 @@
           "tier": 1,
           "upgrades": [],
           "art": "proving_grounds",
-          "desc": "Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4. Level 3 teaches the litanies.",
-          "desc_ru": "Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4. 3 уровень обучает литаниям.",
+          "desc": "Raises the tier your units may reach: level 1 allows tier 3, level 2 tier 4, and level 3 tier 5 and the litanies.",
+          "desc_ru": "Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4, 3 уровень — ранг 5 и литании.",
           "cost": {
             "gold": 200,
             "Crystals_Life": 60
@@ -3047,8 +3064,8 @@
           "tier": 1,
           "upgrades": [],
           "art": "proving_grounds",
-          "desc": "Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4. Level 3 teaches the chants.",
-          "desc_ru": "Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4. 3 уровень обучает распевам.",
+          "desc": "Raises the tier your units may reach: level 1 allows tier 3, level 2 tier 4, and level 3 tier 5 and the chants.",
+          "desc_ru": "Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4, 3 уровень — ранг 5 и распевы.",
           "cost": {
             "gold": 200,
             "Crystals_Fire": 60
@@ -4740,8 +4757,8 @@
           "tier": 1,
           "upgrades": [],
           "art": "proving_grounds",
-          "desc": "Raises the tier your units may reach: level 1 allows tier 3, level 2 allows tier 4. Level 3 teaches the dirges.",
-          "desc_ru": "Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4. 3 уровень обучает панихидам.",
+          "desc": "Raises the tier your units may reach: level 1 allows tier 3, level 2 tier 4, and level 3 tier 5 and the dirges.",
+          "desc_ru": "Повышает предельный ранг бойцов: 1 уровень — ранг 3, 2 уровень — ранг 4, 3 уровень — ранг 5 и панихиды.",
           "cost": {
             "gold": 200,
             "Crystals_Death": 60
@@ -5202,6 +5219,14 @@
           "building_id": "mithrails_exemplar_keep",
           "label": "Mithrails Exemplar Keep",
           "label_ru": "Твердыня экземпларов Митраила"
+        }
+      ],
+      "e2111": [
+        {
+          "unit_id": "e21111",
+          "building_id": "mithrails_ascended_exemplar_keep",
+          "label": "Ascended Exemplar Keep",
+          "label_ru": "Твердыня вознесённых экземпларов"
         }
       ],
       "e22": [

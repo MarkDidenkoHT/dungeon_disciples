@@ -1999,7 +1999,7 @@ button.cost-bar-item:active { transform: scale(0.9); }
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 16px;
+  /* padding: 16px; */
   color: var(--text);
   line-height: 1.5;
 }
@@ -4825,6 +4825,16 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .result-outcome--win  { color: var(--accent); }
 .result-outcome--loss { color: var(--danger); }
 
+.result-concession {
+  padding-top: 5px;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: none;
+}
+
 .result-body {
   display: flex;
   flex-direction: column;
@@ -5510,20 +5520,43 @@ button.cost-bar-item:active { transform: scale(0.9); }
   font-size: 11px;
 }
 
-.spell-track {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 2px 2px 10px;
-  margin-bottom: 10px;
-  border-bottom: 1px solid var(--border);
-  scrollbar-width: none;
+.modal-overlay:has(.spell-cast-picker) {
+  align-items: center;
+  padding: 12px;
 }
-.spell-track::-webkit-scrollbar { display: none; }
+.modal:has(.spell-cast-picker) {
+  width: min(100%, 780px);
+  height: min(80vh, 680px);
+  height: min(80dvh, 680px);
+  max-height: calc(100% - 24px);
+  border-bottom: 1px solid var(--border);
+  border-radius: 16px;
+}
+.modal-body:has(.spell-cast-picker) {
+  min-height: 0;
+  overflow: hidden;
+  padding: 12px;
+}
+.spell-cast-picker {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(0, 1.6fr);
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+}
+.spell-cast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 2px;
+}
 .spell-pick {
-  flex: 0 0 auto;
-  width: 54px;
-  height: 54px;
+  width: 100%;
+  aspect-ratio: 1;
   padding: 3px;
   border: 2px solid var(--border);
   border-radius: 9px;
@@ -5544,7 +5577,14 @@ button.cost-bar-item:active { transform: scale(0.9); }
   display: block;
 }
 
-.spell-detail { min-height: 190px; }
+.spell-detail {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 2px;
+}
 .spell-detail .spell-cast-name { font-size: 1rem; }
 
 .spell-cast-row {
@@ -5604,7 +5644,21 @@ button.cost-bar-item:active { transform: scale(0.9); }
   font-weight: 700;
   cursor: pointer;
 }
+.spell-detail .spell-cast-btn { margin-top: auto; flex: 0 0 auto; }
 .spell-cast-btn:active { transform: scale(0.98); }
+
+@media (max-width: 560px) {
+  .spell-cast-picker {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 10px;
+  }
+  .spell-cast-grid {
+    grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+    max-height: 22vh;
+    max-height: 22dvh;
+  }
+}
 
 .battle-half-label {
   font-size: 0.62rem;
@@ -5819,6 +5873,8 @@ button.cost-bar-item:active { transform: scale(0.9); }
 .battle-grid--bark { z-index: 20; }
 
 .bark-toast {
+  --bark-faction-accent: #e0bb62;
+  --bark-glow: rgba(224, 187, 98, 0.35);
   position: absolute;
   inset: 4px;
   box-sizing: border-box;
@@ -5846,10 +5902,64 @@ button.cost-bar-item:active { transform: scale(0.9); }
   text-wrap: balance;
   overflow-wrap: anywhere;
   text-shadow: 0 0 8px rgba(224, 187, 98, 0.45);
-  box-shadow: 0 0 14px rgba(224, 187, 98, 0.35), 0 3px 10px rgba(0,0,0,0.65);
+  box-shadow: inset 3px 0 0 var(--bark-faction-accent), 0 0 14px var(--bark-glow), 0 3px 10px rgba(0,0,0,0.65);
   pointer-events: none;
   z-index: 12;
   animation: bark-toast-in-square 0.18s ease-out;
+}
+
+.bark-toast[data-faction="empire"] {
+  --bark-faction-accent: #d9a341;
+  --bark-glow: rgba(217, 163, 65, 0.42);
+  background: rgba(48, 36, 14, 0.97);
+  border-color: #d9a341;
+  color: #fff5d4;
+  text-shadow: 0 0 8px rgba(255, 231, 160, 0.5);
+}
+
+.bark-toast[data-faction="grail_of_sorrow"] {
+  --bark-faction-accent: #7fb03a;
+  --bark-glow: rgba(197, 47, 58, 0.42);
+  background: rgba(35, 14, 20, 0.97);
+  border-color: #b8202e;
+  color: #e4efc6;
+  text-shadow: 0 0 8px rgba(127, 176, 58, 0.45);
+}
+
+.bark-toast[data-faction="choir_of_the_cursed"] {
+  --bark-faction-accent: #e0761f;
+  --bark-glow: rgba(224, 118, 31, 0.42);
+  background: rgba(35, 20, 31, 0.97);
+  border-color: #e0761f;
+  color: #ffe0bb;
+  text-shadow: 0 0 8px rgba(120, 98, 127, 0.55);
+}
+
+.bark-toast[data-speaker="enemy"][data-region="crimson_basilica"] {
+  --bark-faction-accent: #fff4f1;
+  --bark-glow: rgba(220, 48, 62, 0.5);
+  background: rgba(76, 8, 17, 0.97);
+  border-color: #fff4f1;
+  color: #fff4f1;
+  text-shadow: 0 0 8px rgba(255, 95, 105, 0.55);
+}
+
+.bark-toast[data-speaker="enemy"][data-region="chamber_of_unrest"] {
+  --bark-faction-accent: #48a84c;
+  --bark-glow: rgba(83, 190, 75, 0.42);
+  background: rgba(7, 18, 10, 0.97);
+  border-color: #48a84c;
+  color: #c9f2c5;
+  text-shadow: 0 0 8px rgba(94, 210, 89, 0.5);
+}
+
+.bark-toast[data-speaker="enemy"][data-region="glittering_abyss"] {
+  --bark-faction-accent: #63baf2;
+  --bark-glow: rgba(74, 164, 235, 0.48);
+  background: rgba(8, 26, 55, 0.97);
+  border-color: #63baf2;
+  color: #e0f3ff;
+  text-shadow: 0 0 8px rgba(99, 186, 242, 0.5);
 }
 
 .prep-bark-toast--ok {
@@ -10469,6 +10579,11 @@ body[data-faction="grail_of_sorrow"] .castle-layer-arrow--live,
 body[data-faction="grail_of_sorrow"] .utree-cell--current,
 body[data-faction="grail_of_sorrow"] .tutorial-ring {
   border-color: transparent;
+}
+body[data-faction="grail_of_sorrow"] .tutorial-ring {
+  --accent-ring-w: 2.4px;
+  box-shadow: none;
+  animation: none;
 }
 @keyframes accent-ring-spin {
   to { --accent-spin: 360deg; }

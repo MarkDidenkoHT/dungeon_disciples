@@ -1158,6 +1158,21 @@ function dispatchPassive(trigger, owner, def, ctx) {
         engine.pushLog({ type: 'passive', passive: def.name, actorName: owner.unit_name, actorCell: owner.cellIndex, targetName: lowest.unit_name, targetCell: lowest.cellIndex, value: extra, heal: false });
       }
     }
+    if (p.holy_fire_dmg_per_demon != null && target.alive && target.side !== owner.side && (target._holy_fire_dmg ?? 0) > 0) {
+      const base = p.holy_fire_dmg_per_demon * tagCount(engine, target.side, 'Demon');
+      if (base > 0) {
+        const extra = typedAmount(target, base, 'life');
+        const actual = hurt(target, extra, engine, 'life');
+        const dead = target.battle_hp <= 0;
+        if (dead) { target.alive = false; engine.applyOnDeathPassives(target); }
+        engine.pushLog({
+          type: 'passive', passive: def.name,
+          actorId: owner.id, actorName: owner.unit_name, actorCell: owner.cellIndex,
+          targetId: target.id, targetName: target.unit_name, targetCell: target.cellIndex,
+          value: actual, heal: false, killed: dead,
+        });
+      }
+    }
     if (p.self_heal_pct != null && !target?._drain_immune) {
       const infectFactor = 1 - Math.min(100, (owner._infect_stacks ?? 0) * 10) / 100;
       const heal = Math.floor(dmg * drainPct(p.self_heal_pct, owner) / 100 * infectFactor * engine.fatigueHealMult() * drainSweepMult(owner));
