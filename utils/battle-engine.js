@@ -3167,7 +3167,11 @@ class BattleEngine {
     // Purge — only if an enemy actually carries a buff.
     if (p.dispel_positive != null) return targets.find(hasPositive) || null;
     // Drain from an ally — only from a healthy-ish donor (never the near-dead).
+    // Pact / Grail's Blessing heal the caster for what they drain, so they are
+    // held until the caster is below 75% HP: cast at full HP the heal is wasted
+    // and the donor is hurt for nothing but the damage bonus.
     if (p.ally_drain_pct != null) {
+      if (actor.battle_hp / actor.max_hp >= 0.75) return null;
       return targets.filter(c => c.id !== actor.id && c.battle_hp / c.max_hp > 0.5)
         .sort((a, b) => b.battle_hp - a.battle_hp)[0] || null;
     }
@@ -3334,6 +3338,9 @@ class BattleEngine {
     // take half of what it has left.
     if (p.stone_form_heal_pct != null || p.ember_shroud_heal_pct != null) {
       if (!targets.includes(actor)) return null;
+      // Stone Form: only below 75% HP, whatever the incoming threat — a cast at
+      // full HP wastes the heal and spends the once-per-battle active.
+      if (p.stone_form_heal_pct != null) return actor.battle_hp / actor.max_hp < 0.75 ? actor : null;
       const pct     = p.stone_form_heal_pct ?? p.ember_shroud_heal_pct;
       const heal    = Math.floor(actor.max_hp * pct / 100);
       const missing = actor.max_hp - actor.battle_hp;
