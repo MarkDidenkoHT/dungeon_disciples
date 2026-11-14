@@ -26,9 +26,7 @@ const T = {
   tapToMove:    { en: 'Tap a lit cell — up, down, left or right — to move.', ru: 'Коснитесь подсвеченной клетки — вверх, вниз, влево или вправо, — чтобы идти.' },
   fightTitle:   { en: 'Enemies ahead',           ru: 'Впереди враги' },
   goalTitle:    { en: 'The goal of this expedition', ru: 'Цель похода' },
-  fightBody:    { en: 'Fight now, or step back the way you came. Damage carries over to the next room.', ru: 'Сражайтесь или отступите туда, откуда пришли. Урон сохраняется до следующей комнаты.' },
   fight:        { en: 'Fight',                   ru: 'В бой' },
-  stepBack:     { en: 'Step back',               ru: 'Отступить' },
   exitHere:     { en: 'Leave through the exit',  ru: 'Выйти через выход' },
   exitNote:     { en: 'Keeps the whole haul. No goal reward.', ru: 'Вся добыча сохраняется. Без награды за цель.' },
   abandon:      { en: 'Abandon expedition',      ru: 'Бросить поход' },
@@ -89,6 +87,13 @@ export function renderExpedition(root, { player, summary = null } = {}) {
 
   root.innerHTML = `<div class="screen screen-expedition"><div class="expd" id="expd"></div></div>`;
   const host = () => root.querySelector('#expd');
+  // Footer and fallback-fight buttons, delegated once for the screen's life.
+  host().addEventListener('click', e => {
+    const act = e.target.closest('[data-act]')?.dataset.act;
+    if (act === 'fight') onFight();
+    else if (act === 'exit') onLeave(true);
+    else if (act === 'abandon') onLeave(false);
+  });
 
   function regionLabel(id) {
     const r = REGION_CARDS.find(x => x.id === id);
@@ -106,28 +111,6 @@ export function renderExpedition(root, { player, summary = null } = {}) {
       xp > 0 ? chip('⭐', `${xp}${xpLabel ? ` ${xpLabel}` : ''}`) : '',
     ].join('');
     return out || `<span class="expd-muted">${t(T.haulEmpty)}</span>`;
-  }
-
-  // ── Squad strip ── HP from /bootstrap, which is invalidated after every fight.
-  async function squadHtml() {
-    const boot = await bootstrapCache.get(player.chat_id).catch(() => null);
-    const roster = boot?.roster || [];
-    const fallen = new Set(run.squad?.fallen || []);
-    return (run.squad?.roster_ids || []).map(id => {
-      const row = roster.find(r => String(r.id) === String(id));
-      if (!row) return '';
-      const def = resolveUnitDef(row);
-      const max = Number(row.unit_data?.max_hp ?? def?.hp ?? 1) || 1;
-      const cur = fallen.has(String(id)) ? 0 : Math.max(0, Number(row.unit_data?.current_hp ?? max));
-      const pct = Math.round((cur / max) * 100);
-      const img = portraitUrl(def);
-      return `
-        <div class="expd-unit${fallen.has(String(id)) ? ' expd-unit--fallen' : ''}" title="${unitName(row, player)}">
-          ${img ? `<img class="expd-unit-img" src="${img}" alt="" onerror="this.style.visibility='hidden'">` : '<span class="expd-unit-img"></span>'}
-          <div class="expd-unit-hp"><span style="width:${pct}%"></span></div>
-          <div class="expd-unit-num">${fallen.has(String(id)) ? t(T.fallen) : `${cur}/${max}`}</div>
-        </div>`;
-    }).join('');
   }
 
   // ── The grid ──
@@ -168,6 +151,9 @@ export function renderExpedition(root, { player, summary = null } = {}) {
     return `<div class="expd-grid expd-grid--${size}" style="--expd-size:${size}">${cells.join('')}</div>`;
   }
 
+  // Only shown when a step into a fight room could not open the battle (a
+  // dropped connection, the app closed between the two). Normally a fight
+  // starts the moment the player walks in.
   function pendingHtml() {
     const p = run.pending;
     if (!p) return '';
@@ -181,20 +167,63 @@ export function renderExpedition(root, { player, summary = null } = {}) {
         </div>`;
     }).join('');
     return `
-      <div class="expd-pending" id="expd-pending">
+      <div class="expd-pending">
         <div class="expd-pending-title">${p.goal ? t(T.goalTitle) : t(T.fightTitle)}</div>
         <div class="expd-enemies">${enemies}</div>
-        <div class="expd-pending-body">${t(T.fightBody)}</div>
         <div class="expd-actions">
-          <button class="action-btn action-btn--cancel" id="expd-step-back" type="button" ${run.prev ? '' : 'disabled'}>${t(T.stepBack)}</button>
-          <button class="action-btn" id="expd-fight" type="button">${t(T.fight)}</button>
+          <button class="action-btn" type="button" data-act="fight">${t(T.fight)}</button>
         </div>
       </div>`;
   }
 
-  async function draw() {
+  function footerHtml() {
+    return `
+      ${run.at_exit ? `
+        <button class="action-btn expd-exit-btn" type="button" data-act="exit">${t(T.exitHere)}</button>
+        <div class="expd-muted">${t(T.exitNote)}</div>` : ''}
+      <button class="expd-abandon" type="button" data-act="abandon">${t(T.abandon)}</button>`;
+  }
+
+  // ── Drawing ──
+  // The frame (header, squad, board, footer) is built once per run and then
+  // only the parts that changed are rewritten, so a step does not reload the
+  // squad's portraits or flash the header.
+  let mountedRunId = null;
+  const last = {};
+
+  function setHtml(sel, html, key = html) {
+    if (last[sel] === key) return;
+    last[sel] = key;
+    const el = root.querySelector(sel);
+    if (el) el.innerHTML = html;
+  }
+
+  function mountFrame() {
+    host().innerHTML = `
+      <header class="expd-head">
+        <div class="expd-title" id="expd-title"></div>
+        <div class="expd-haul"><span class="expd-label">${t(T.haul)}</span><span id="expd-haul-chips"></span></div>
+      </header>
+      <div class="expd-squad" id="expd-squad"></div>
+      <div class="expd-board" id="expd-board"></div>
+      <p class="expd-hint" id="expd-hint"></p>
+      <div id="expd-pending"></div>
+      <div class="expd-footer" id="expd-footer"></div>`;
+    for (const k of Object.keys(last)) delete last[k];
+    squadEls = null;
+    mountedRunId = run.id;
+
+    // One listener per area, for the life of the frame.
+    root.querySelector('#expd-board').addEventListener('click', e => {
+      const cell = e.target.closest('.expd-cell');
+      if (cell) onCell(Number(cell.dataset.x), Number(cell.dataset.y));
+    });
+  }
+
+  function draw() {
     if (destroyed) return;
     if (!run) {
+      mountedRunId = null;
       host().innerHTML = `
         <div class="expd-empty">
           <p>${t(T.none)}</p>
@@ -203,39 +232,60 @@ export function renderExpedition(root, { player, summary = null } = {}) {
       host().querySelector('#expd-back').addEventListener('click', () => navigate('embark', { player }));
       return;
     }
-    host().innerHTML = `
-      <header class="expd-head">
-        <div class="expd-title">${regionLabel(run.region_id)} · ${t(T.level)} ${run.level}</div>
-        <div class="expd-haul"><span class="expd-label">${t(T.haul)}</span>${chips(run.bank)}</div>
-      </header>
-      <div class="expd-squad" id="expd-squad"></div>
-      <div class="expd-board" id="expd-board">${gridHtml()}</div>
-      <p class="expd-hint">${run.pending ? '' : t(T.tapToMove)}</p>
-      ${pendingHtml()}
-      <div class="expd-footer" id="expd-footer">
-        ${run.at_exit ? `
-          <button class="action-btn expd-exit-btn" id="expd-exit" type="button">${t(T.exitHere)}</button>
-          <div class="expd-muted">${t(T.exitNote)}</div>` : ''}
-        <button class="expd-abandon" id="expd-abandon" type="button">${t(T.abandon)}</button>
-      </div>`;
+    if (mountedRunId !== run.id || !root.querySelector('#expd-board')) mountFrame();
 
-    squadHtml().then(html => {
-      const el = root.querySelector('#expd-squad');
-      if (el) el.innerHTML = html;
-    });
-
-    host().querySelectorAll('.expd-cell').forEach(btn => {
-      btn.addEventListener('click', () => onCell(Number(btn.dataset.x), Number(btn.dataset.y)));
-    });
-    host().querySelector('#expd-fight')?.addEventListener('click', onFight);
-    host().querySelector('#expd-step-back')?.addEventListener('click', () => run.prev && onCell(run.prev.x, run.prev.y));
-    host().querySelector('#expd-exit')?.addEventListener('click', () => onLeave(true));
-    host().querySelector('#expd-abandon')?.addEventListener('click', () => onLeave(false));
+    setHtml('#expd-title', `${regionLabel(run.region_id)} · ${t(T.level)} ${run.level}`);
+    setHtml('#expd-haul-chips', chips(run.bank), JSON.stringify(run.bank));
+    setHtml('#expd-board', gridHtml());
+    setHtml('#expd-hint', run.pending ? '' : t(T.tapToMove));
+    setHtml('#expd-pending', pendingHtml());
+    setHtml('#expd-footer', footerHtml());
 
     runTutorial();
   }
 
+  // ── Squad strip ── portraits are created once; later updates only touch the
+  // HP bar, the number and the fallen state. HP comes from /bootstrap, which is
+  // invalidated after every fight.
+  let squadEls = null;
+  async function refreshSquad() {
+    if (!run) return;
+    const boot = await bootstrapCache.get(player.chat_id).catch(() => null);
+    const strip = root.querySelector('#expd-squad');
+    if (!strip || !run) return;
+    const roster = boot?.roster || [];
+    const fallen = new Set(run.squad?.fallen || []);
+    const ids = (run.squad?.roster_ids || []).map(String);
+    if (!squadEls || squadEls.ids.join(',') !== ids.join(',')) {
+      strip.innerHTML = ids.map(id => {
+        const row = roster.find(r => String(r.id) === id);
+        if (!row) return '';
+        const img = portraitUrl(resolveUnitDef(row));
+        return `
+          <div class="expd-unit" data-unit="${id}" title="${unitName(row, player)}">
+            ${img ? `<img class="expd-unit-img" src="${img}" alt="" onerror="this.style.visibility='hidden'">` : '<span class="expd-unit-img"></span>'}
+            <div class="expd-unit-hp"><span></span></div>
+            <div class="expd-unit-num"></div>
+          </div>`;
+      }).join('');
+      squadEls = { ids };
+    }
+    for (const id of ids) {
+      const el = strip.querySelector(`[data-unit="${id}"]`);
+      const row = roster.find(r => String(r.id) === id);
+      if (!el || !row) continue;
+      const def = resolveUnitDef(row);
+      const max = Number(row.unit_data?.max_hp ?? def?.hp ?? 1) || 1;
+      const dead = fallen.has(id);
+      const cur = dead ? 0 : Math.max(0, Number(row.unit_data?.current_hp ?? max));
+      el.classList.toggle('expd-unit--fallen', dead);
+      el.querySelector('.expd-unit-hp > span').style.width = `${Math.round((cur / max) * 100)}%`;
+      el.querySelector('.expd-unit-num').textContent = dead ? t(T.fallen) : `${cur}/${max}`;
+    }
+  }
+
   function drawSummary(s) {
+    mountedRunId = null;
     const outcome = s?.outcome || 'abandoned';
     const p = s?.payout || null;
     const crystals = p?.crystals_gained || {};
@@ -273,25 +323,33 @@ export function renderExpedition(root, { player, summary = null } = {}) {
     }
   }
 
+  const newBattleId = () => `${player.chat_id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+  function enterBattle(battle) {
+    hideTutorial();
+    navigate('battle', {
+      player, battle_id: battle.battle_id, region_id: run.region_id, level: run.level,
+      snapshot: battle.state, selectedSpells: [], logs: battle.logs || [],
+    });
+  }
+
+  // A step. Walking into a fight room starts its battle in the same request.
   function onCell(x, y) {
-    if (!(run.moves || []).some(m => m.x === x && m.y === y)) return;
+    if (!run || !(run.moves || []).some(m => m.x === x && m.y === y)) return;
     return guarded(async () => {
-      const r = await api('/expedition/move', { chat_id: player.chat_id, run_id: run.id, x, y });
+      const r = await api('/expedition/move', { chat_id: player.chat_id, run_id: run.id, x, y, battle_id: newBattleId() });
       run = r.run;
+      if (r.battle) { enterBattle(r.battle); return; }
       draw();
-      if (run.pending) root.querySelector('#expd-pending')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     });
   }
 
   function onFight() {
     return guarded(async () => {
-      const battle_id = `${player.chat_id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const battle_id = newBattleId();
       const r = await api('/expedition/fight', { chat_id: player.chat_id, run_id: run.id, battle_id });
-      hideTutorial();
-      navigate('battle', {
-        player, battle_id, region_id: run.region_id, level: run.level,
-        snapshot: r.state, selectedSpells: [], logs: r.logs || [],
-      });
+      run = r.run || run;
+      enterBattle({ battle_id, state: r.state, logs: r.logs });
     });
   }
 
@@ -306,39 +364,25 @@ export function renderExpedition(root, { player, summary = null } = {}) {
   }
 
   // ── First-run teaching (3x3 maps only) ──
-  // A short chain over the board the first time, and the fight panel the first
-  // time a fight is pending. Each step is explain-and-continue.
+  // A short explain-and-continue chain over the board the first time.
   function runTutorial() {
-    if (!run || run.size !== 3) return;
-    const board = root.querySelector('#expd-board');
-    if (!isTutorialDone(player, 'expedition_map')) {
-      showTutorialSpotlight(player, 'expedition_map', board, {
-        showContinue: true,
-        onAdvance: () => {
-          markTutorialDone(player, 'expedition_map');
-          showTutorialSpotlight(player, 'expedition_move', root.querySelector('#expd-board'), {
-            showContinue: true,
-            onAdvance: () => {
-              markTutorialDone(player, 'expedition_move');
-              showTutorialSpotlight(player, 'expedition_haul', root.querySelector('#expd-footer'), {
-                showContinue: true,
-                onAdvance: () => markTutorialDone(player, 'expedition_haul'),
-              });
-            },
-          });
-        },
-      });
-      return;
-    }
-    if (run.pending && !isTutorialDone(player, 'expedition_fight')) {
-      const panel = root.querySelector('#expd-pending');
-      if (panel) {
-        showTutorialSpotlight(player, 'expedition_fight', panel, {
+    if (!run || run.size !== 3 || isTutorialDone(player, 'expedition_map')) return;
+    showTutorialSpotlight(player, 'expedition_map', root.querySelector('#expd-board'), {
+      showContinue: true,
+      onAdvance: () => {
+        markTutorialDone(player, 'expedition_map');
+        showTutorialSpotlight(player, 'expedition_move', root.querySelector('#expd-board'), {
           showContinue: true,
-          onAdvance: () => markTutorialDone(player, 'expedition_fight'),
+          onAdvance: () => {
+            markTutorialDone(player, 'expedition_move');
+            showTutorialSpotlight(player, 'expedition_haul', root.querySelector('#expd-footer'), {
+              showContinue: true,
+              onAdvance: () => markTutorialDone(player, 'expedition_haul'),
+            });
+          },
         });
-      }
-    }
+      },
+    });
   }
 
   async function load() {
@@ -350,6 +394,7 @@ export function renderExpedition(root, { player, summary = null } = {}) {
       run = null;
     }
     draw();
+    refreshSquad();
   }
 
   function show(params = {}) {
@@ -358,7 +403,8 @@ export function renderExpedition(root, { player, summary = null } = {}) {
       drawSummary(params.summary);
       return;
     }
-    // HP changed in the fight the player is coming back from.
+    // HP changed in the fight the player is coming back from; load() redraws
+    // only what changed and refreshes the squad strip.
     bootstrapCache.invalidate();
     load();
   }

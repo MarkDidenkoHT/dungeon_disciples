@@ -256,11 +256,11 @@ const TUTORIAL_STEPS = {
   expedition_move: {
     en: {
       title: 'Moving',
-      text: 'Tap a lit cell next to you — up, down, left or right, never diagonally. Each step reveals a few cells around you: you see what kind of room it is, but not what waits inside until you step in.',
+      text: 'Tap a lit cell next to you — up, down, left or right, never diagonally. Each step reveals a few cells around you. Step into a fight room ⚔ and the battle starts at once — there is no turning back.',
     },
     ru: {
       title: 'Движение',
-      text: 'Коснитесь подсвеченной соседней клетки — вверх, вниз, влево или вправо, но не по диагонали. Каждый шаг открывает несколько клеток вокруг: видно, что это за комната, но не что ждёт внутри, пока вы не войдёте.',
+      text: 'Коснитесь подсвеченной соседней клетки — вверх, вниз, влево или вправо, но не по диагонали. Каждый шаг открывает несколько клеток вокруг. Войдёте в комнату с боем ⚔ — сражение начнётся сразу, назад пути нет.',
     },
   },
   expedition_haul: {
@@ -271,16 +271,6 @@ const TUTORIAL_STEPS = {
     ru: {
       title: 'Добыча',
       text: 'Каждая победа пополняет добычу, но она ваша, только когда вы уйдёте. Выход ⇲ уносит всё. Если бросить поход в другом месте, сохранится половина, а отряд останется с 1 HP. Проигранный бой — и пропадёт всё.',
-    },
-  },
-  expedition_fight: {
-    en: {
-      title: 'Enemies Ahead',
-      text: 'This is who holds the room. Fight them, or step back the way you came. Your squad keeps its wounds from room to room — nobody heals until the expedition is over.',
-    },
-    ru: {
-      title: 'Впереди враги',
-      text: 'Вот кто держит комнату. Сразитесь или отступите туда, откуда пришли. Раны отряда сохраняются от комнаты к комнате — лечения до конца похода не будет.',
     },
   },
   battle_prep_start: {

@@ -137,7 +137,7 @@ test('a reveal shows 2-3 open neighbours, never across a wall', () => {
   }
 });
 
-test('stepping onto a fight makes it pending; the only way out is back', () => {
+test('stepping onto a fight commits to it: no move at all until it is fought', () => {
   for (let seed = 1; seed <= 200; seed++) {
     const data = runOn(5, seed);
     const fightNext = M.allowedMoves(data).find(m => M.cellAt(data.map, m.x, m.y).type === 'fight');
@@ -145,11 +145,12 @@ test('stepping onto a fight makes it pending; the only way out is back', () => {
     const start = { ...data.pos };
     assert.equal(M.applyMove(data, fightNext), null);
     assert.deepEqual(data.pending, fightNext);
-    assert.deepEqual(M.allowedMoves(data), [start]);
-    const elsewhere = M.openNeighbours(data.map, data.pos).find(c => c.x !== start.x || c.y !== start.y);
-    if (elsewhere) assert.equal(M.applyMove(data, elsewhere)?.code, 'expedition_fight_pending');
-    assert.equal(M.applyMove(data, start), null, 'step back');
-    assert.equal(data.pending, null);
+    assert.deepEqual(M.allowedMoves(data), []);
+    assert.equal(M.applyMove(data, start)?.code, 'expedition_fight_pending', 'no stepping back');
+    for (const n of M.openNeighbours(data.map, data.pos)) {
+      assert.equal(M.applyMove(data, n)?.code, 'expedition_fight_pending');
+    }
+    assert.deepEqual(data.pending, fightNext);
     return;
   }
   assert.fail('no seed put a fight next to the entrance');

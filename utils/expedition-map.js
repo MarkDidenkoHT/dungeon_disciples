@@ -331,11 +331,10 @@ function isLiveFight(data, cell) {
   return !data.cleared.includes(keyOf(cell));
 }
 
-// Where the player may step from here. While a fight is pending the only way
-// out is back where they came from.
+// Where the player may step from here. Walking into a fight room commits to the
+// fight: while one is pending or under way there is no move at all.
 function allowedMoves(data) {
-  if (data.battle_id) return [];
-  if (data.pending) return data.prev ? [{ ...data.prev }] : [];
+  if (data.battle_id || data.pending) return [];
   return openNeighbours(data.map, data.pos);
 }
 
@@ -348,12 +347,10 @@ function applyMove(data, to) {
   if (data.battle_id) return { code: 'expedition_in_battle', error: 'Finish the fight first' };
   const allowed = allowedMoves(data).some(c => c.x === target.x && c.y === target.y);
   if (!allowed) {
-    if (data.pending) return { code: 'expedition_fight_pending', error: 'Fight or step back' };
+    if (data.pending) return { code: 'expedition_fight_pending', error: 'The fight in this room has to be fought' };
     return { code: 'expedition_bad_move', error: 'You can only move to an open cell up, down, left or right' };
   }
 
-  // Stepping back off a pending fight: the fight stays where it is.
-  data.pending = null;
   data.prev = { ...data.pos };
   data.pos  = target;
   data.steps += 1;

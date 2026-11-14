@@ -183,8 +183,8 @@ that two runs of the same level rarely share more than one fight.
   lineups and loot are only shown when you step in.
 - Optional: **dark rooms** that never reveal from outside. A natural hook for a scouting
   litany or boon.
-- When you step into a combat room, the enemies are shown before the fight starts, as
-  today. The player can still step back to the previous cell, paying the torch for the step.
+- Stepping into a combat room starts its fight at once. There is no preview and no
+  stepping back: walking into the room is the decision.
 
 ### 5.2 The torch
 
@@ -296,8 +296,9 @@ Still open:
   and crystals, with an occasional trophy. Tuned during the pilot.
 - **XP is banked** with everything else and paid when the run ends. Units do not level up
   mid-run.
-- **Fight preview:** stepping into a fight cell shows the lineup with *Fight* / *Step back*.
-  Stepping back is free until the torch exists.
+- **No fight preview (changed 2026-11-14):** stepping into a fight cell starts the battle in
+  the same request. No lineup screen, no stepping back. Only if the battle could not be
+  opened (connection lost) does the map show the room with a Fight button.
 - **Cleared fight cells become empty** and can be walked through again.
 - **Dead units stay dead** until the run ends. The run continues while one unit lives.
 - **Level progress and first-clear tokens only on the goal kill.** Exiting does not unlock

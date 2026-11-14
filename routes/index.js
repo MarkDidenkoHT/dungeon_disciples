@@ -5395,10 +5395,12 @@ router.post('/expedition/start', requireAuth, async (req, res) => {
 });
 
 // POST /expedition/move — one step, up/down/left/right. Stepping onto a fight
-// that has not been won makes it pending: the only moves then are to fight it
-// (/expedition/fight) or to step back the way the player came.
+// that has not been won starts it at once, in the same request: there is no
+// preview and no stepping back (walking into a room is the decision). The
+// client sends the `battle_id` to use. If the battle cannot be opened here the
+// fight is left pending and /expedition/fight opens it.
 router.post('/expedition/move', requireAuth, async (req, res) => {
-  const { chat_id, run_id, x, y } = req.body;
+  const { chat_id, run_id, x, y, battle_id } = req.body;
   if (!chat_id || !run_id) return res.status(400).json({ error: 'chat_id and run_id required' });
   try {
     const run = await getActiveExpedition(chat_id);
@@ -5408,80 +5410,109 @@ router.post('/expedition/move', requireAuth, async (req, res) => {
     if (refused) return res.status(400).json(refused);
     const saved = await writeExpedition(run, data);
     if (!saved) return res.status(409).json({ error: 'The expedition changed, try again', code: 'expedition_conflict' });
+
+    if (saved.data.pending && validBattleId(battle_id)) {
+      try {
+        const fight = await startExpeditionFight(chat_id, saved, battle_id);
+        if (fight.ok) return res.json({ run: fight.run, battle: fight.battle });
+        console.error('[expedition] fight on step not opened:', fight.body?.code);
+      } catch (err) {
+        console.error('[expedition] fight on step failed:', err?.message || err);
+      }
+    }
     res.json({ run: expeditionView(saved, chat_id) });
   } catch (err) {
     serverError(res, err);
   }
 });
 
-// POST /expedition/fight — start the pending fight. The squad is the run's
-// squad minus the fallen, in the run's placement, at whatever HP the roster has
-// now. No supply: the run already paid for itself.
+function validBattleId(battle_id) {
+  return typeof battle_id === 'string' && battle_id.length > 0 && battle_id.length <= 100;
+}
+
+// Opens the pending fight of `run`: the run's squad minus the fallen, in the
+// run's placement, at whatever HP the roster has now. No supply — the run
+// already paid for itself. Returns { ok: true, run, battle } or
+// { ok: false, status, body } for the caller to answer with.
+async function startExpeditionFight(chat_id, run, battle_id) {
+  const refuse = (status, error, code) => ({ ok: false, status, body: { error, code } });
+  const existing = await getActiveBattle(chat_id);
+  if (existing) return refuse(400, 'A battle is already in progress', 'battle_in_progress');
+  const data = JSON.parse(JSON.stringify(run.data));
+  if (data.battle_id) return refuse(400, 'A fight is already under way', 'expedition_in_battle');
+  if (!data.pending) return refuse(400, 'There is nothing to fight here', 'expedition_no_fight');
+
+  const cell = EXPMAP.cellAt(data.map, data.pending.x, data.pending.y);
+  const enemies = expeditionEnemies(run, cell);
+  if (!enemies.length) return refuse(400, 'No enemies in this room', 'expedition_no_fight');
+
+  const living = livingSquadEntries(data);
+  if (!living.length) return refuse(400, 'No one is left to fight', 'expedition_no_squad');
+  const playerUnits = await buildArmyFor(chat_id, living);
+  const placement = {};
+  for (const e of living) placement[e.id] = data.squad.placement[e.id];
+
+  const engine = await BattleEngine.fromSetup(playerUnits, enemies, placement, {
+    litaniesUnlockedBySide: { player: await litaniesUnlockedFor(chat_id), enemy: true },
+  });
+  engine.firePendingRoundEffects();
+  if (!engine.done) engine.runAiTurns();
+
+  const battle_data = buildBattleData(engine, {
+    region_id: run.region_id, level: run.level, selected_spells: [],
+    setup: { playerUnitIds: playerUnits.map(u => ({ id: u.id, _rosterId: u._rosterId })), placement },
+    expedition: {
+      run_id: run.id, x: cell.x, y: cell.y, goal: cell.type === 'goal',
+      template: cell.type === 'fight' ? cell.template : null,
+    },
+  });
+
+  // The run is marked BEFORE the battle exists, under its version lock, so a
+  // double tap cannot open two battles for one room.
+  data.battle_id = battle_id;
+  const reserved = await writeExpedition(run, data);
+  if (!reserved) return refuse(409, 'The expedition changed, try again', 'expedition_conflict');
+
+  let record;
+  try {
+    record = await createBattleState({ chat_id, battle_id, battle_data });
+  } catch (err) {
+    try {
+      await writeExpedition(reserved, { ...data, battle_id: null });
+    } catch (undoErr) {
+      console.error('Failed to release expedition after battle create failed:', undoErr);
+    }
+    throw err;
+  }
+  let initialLogs = [];
+  try {
+    const initialEvents = Array.isArray(engine.log) ? engine.log : [];
+    if (initialEvents.length) {
+      const inserted = await appendBattleLogEntries(battle_id, initialEvents);
+      initialLogs = (inserted || []).map(row => ({ id: row.id, ...row.event }));
+    }
+  } catch (err) {
+    console.error('Failed to persist initial battle log:', err);
+  }
+  return {
+    ok: true,
+    run: expeditionView(reserved, chat_id),
+    battle: { battle_id, record, state: engine.getSnapshot(), logs: initialLogs },
+  };
+}
+
+// POST /expedition/fight — opens a fight left pending (the step that walked
+// into it could not open the battle, or the app closed in between).
 router.post('/expedition/fight', requireAuth, async (req, res) => {
   const { chat_id, run_id, battle_id } = req.body;
   if (!chat_id || !run_id || !battle_id) return res.status(400).json({ error: 'chat_id, run_id and battle_id required' });
-  if (typeof battle_id !== 'string' || battle_id.length > 100) return res.status(400).json({ error: 'Invalid battle_id' });
+  if (!validBattleId(battle_id)) return res.status(400).json({ error: 'Invalid battle_id' });
   try {
-    const [run, existing] = await Promise.all([getActiveExpedition(chat_id), getActiveBattle(chat_id)]);
+    const run = await getActiveExpedition(chat_id);
     if (!run || run.id !== run_id) return res.status(404).json({ error: 'No expedition in progress', code: 'expedition_none' });
-    if (existing) return res.status(400).json({ error: 'A battle is already in progress', code: 'battle_in_progress' });
-    const data = JSON.parse(JSON.stringify(run.data));
-    if (data.battle_id) return res.status(400).json({ error: 'A fight is already under way', code: 'expedition_in_battle' });
-    if (!data.pending) return res.status(400).json({ error: 'There is nothing to fight here', code: 'expedition_no_fight' });
-
-    const cell = EXPMAP.cellAt(data.map, data.pending.x, data.pending.y);
-    const enemies = expeditionEnemies(run, cell);
-    if (!enemies.length) return res.status(400).json({ error: 'No enemies in this room', code: 'expedition_no_fight' });
-
-    const living = livingSquadEntries(data);
-    if (!living.length) return res.status(400).json({ error: 'No one is left to fight', code: 'expedition_no_squad' });
-    const playerUnits = await buildArmyFor(chat_id, living);
-    const placement = {};
-    for (const e of living) placement[e.id] = data.squad.placement[e.id];
-
-    const engine = await BattleEngine.fromSetup(playerUnits, enemies, placement, {
-      litaniesUnlockedBySide: { player: await litaniesUnlockedFor(chat_id), enemy: true },
-    });
-    engine.firePendingRoundEffects();
-    if (!engine.done) engine.runAiTurns();
-
-    const battle_data = buildBattleData(engine, {
-      region_id: run.region_id, level: run.level, selected_spells: [],
-      setup: { playerUnitIds: playerUnits.map(u => ({ id: u.id, _rosterId: u._rosterId })), placement },
-      expedition: {
-        run_id: run.id, x: cell.x, y: cell.y, goal: cell.type === 'goal',
-        template: cell.type === 'fight' ? cell.template : null,
-      },
-    });
-
-    // The run is marked BEFORE the battle exists, under its version lock, so a
-    // double tap cannot open two battles for one room.
-    data.battle_id = battle_id;
-    const reserved = await writeExpedition(run, data);
-    if (!reserved) return res.status(409).json({ error: 'The expedition changed, try again', code: 'expedition_conflict' });
-
-    let record;
-    try {
-      record = await createBattleState({ chat_id, battle_id, battle_data });
-    } catch (err) {
-      try {
-        await writeExpedition(reserved, { ...data, battle_id: null });
-      } catch (undoErr) {
-        console.error('Failed to release expedition after battle create failed:', undoErr);
-      }
-      throw err;
-    }
-    let initialLogs = [];
-    try {
-      const initialEvents = Array.isArray(engine.log) ? engine.log : [];
-      if (initialEvents.length) {
-        const inserted = await appendBattleLogEntries(battle_id, initialEvents);
-        initialLogs = (inserted || []).map(row => ({ id: row.id, ...row.event }));
-      }
-    } catch (err) {
-      console.error('Failed to persist initial battle log:', err);
-    }
-    res.json({ record, state: engine.getSnapshot(), logs: initialLogs, run: expeditionView(reserved, chat_id) });
+    const fight = await startExpeditionFight(chat_id, run, battle_id);
+    if (!fight.ok) return res.status(fight.status).json(fight.body);
+    res.json({ ...fight.battle, run: fight.run });
   } catch (err) {
     serverError(res, err);
   }
