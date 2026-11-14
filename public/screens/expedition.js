@@ -35,7 +35,7 @@ const T = {
   abandonYes:   { en: 'Abandon',                 ru: 'Бросить' },
   abandonNo:    { en: 'Stay',                    ru: 'Остаться' },
   none:         { en: 'No expedition in progress.', ru: 'Нет активного похода.' },
-  toEmbark:     { en: 'Back to Embark',          ru: 'К походам' },
+  toEmbark:     { en: 'Return home',             ru: 'Вернуться домой' },
   outcome: {
     goal:      { en: 'Expedition complete',      ru: 'Поход завершён' },
     exit:      { en: 'You left through the exit', ru: 'Вы вышли через выход' },

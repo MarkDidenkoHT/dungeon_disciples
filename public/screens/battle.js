@@ -217,7 +217,7 @@ const BT = {
   expBackToMap:   { en: 'Back to the map',    ru: 'Назад к карте' },
   expComplete:    { en: 'Expedition complete', ru: 'Поход завершён' },
   expLost:        { en: 'The expedition is lost. Nothing was brought back.', ru: 'Поход провален. Добыча потеряна.' },
-  expToEmbark:    { en: 'Back to Embark',     ru: 'К походам' },
+  expToEmbark:    { en: 'Return home',        ru: 'Вернуться домой' },
   calculating:  { en: 'Calculating rewards…', ru: 'Подсчёт наград…' },
   noRewards:    { en: 'No rewards on defeat.', ru: 'При поражении наград нет.' },
   colossusSlain: { en: 'Colossus slain',   ru: 'Колосс повержен' },
