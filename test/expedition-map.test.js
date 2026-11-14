@@ -188,3 +188,151 @@ test('the client view hides unrevealed cells and the walls of unvisited rooms', 
   assert.equal(JSON.stringify(view).includes('template'), false, 'no fight contents');
   assert.equal(JSON.stringify(view).includes('loot'), false, 'no loot');
 });
+
+// ── Milestone 2: torch, camps, shrines, curses, events, elites ──────────────
+
+function runAt(level, seed) {
+  const map = gen(level, seed);
+  return M.newRunData({ map, squad: { playerUnitIds: [{ id: '1', _rosterId: '1' }], placement: { 1: 1 } } });
+}
+function findSeed(level, pred) {
+  for (let seed = 1; seed <= 400; seed++) {
+    const d = runAt(level, seed * 7);
+    if (pred(d)) return d;
+  }
+  return null;
+}
+function standOn(data, cell) {
+  // Put the player on the open neighbour of `cell`, then step into it.
+  const from = M.openNeighbours(data.map, cell)[0];
+  data.pos = { ...from };
+  data.pending = null;
+  return M.applyMove(data, cell);
+}
+
+test('node types unlock by level and every torch map has a camp', () => {
+  for (const level of LEVELS) {
+    const unlocked = EXP.unlockedNodeTypes(level);
+    for (let seed = 1; seed <= 60; seed++) {
+      const map = gen(level, seed * 31);
+      for (const c of map.cells) {
+        if (!['entrance', 'goal', 'exit'].includes(c.type)) assert.ok(unlocked.includes(c.type), `L${level}: ${c.type}`);
+      }
+      if (level >= 4) assert.ok(map.cells.some(c => c.type === 'camp'), `L${level} seed ${seed}: camp`);
+    }
+  }
+});
+
+test('levels 1-3 have no torch; level 4+ starts with a full one sized to the route', () => {
+  assert.equal(runAt(2, 5).torch, null);
+  const d = runAt(6, 5);
+  const route = M.distancesFrom(d.map, d.map.entrance).get(M.keyOf(d.map.goal));
+  assert.equal(d.torch.max, Math.max(EXP.TORCH.min_max, Math.ceil(route * EXP.TORCH.budget_factor)));
+  assert.equal(d.torch.value, d.torch.max);
+});
+
+test('each step burns the torch, and the stage follows what is left', () => {
+  const d = runAt(6, 9);
+  const m = M.allowedMoves(d)[0];
+  M.applyMove(d, m);
+  assert.equal(d.torch.value, d.torch.max - 1);
+  const stage = v => EXP.torchStage({ max: 10, value: v }).id;
+  assert.equal(stage(10), 'bright');
+  assert.equal(stage(5), 'dim');
+  assert.equal(stage(2), 'dark');
+  assert.equal(stage(0), 'out');
+});
+
+test('torch stage, effects and elite rooms add up into fight modifiers', () => {
+  const d = runAt(10, 3);
+  d.torch.value = 0; // out: -10 initiative, enemy +30%
+  d.effects = [{ id: 'haste', kind: 'boon', fights_left: 2 }, { id: 'exposure', kind: 'curse', fights_left: 1 }];
+  const mods = M.fightMods(d, { type: 'elite' });
+  assert.equal(mods.player.initiative, -10 + 5);
+  assert.equal(mods.player.armor, -4);
+  assert.equal(mods.enemy.power_pct, 30 + 20);
+  assert.equal(mods.enemy.armor, 3);
+  assert.deepEqual(mods.sources.map(s => s.id), ['out', 'haste', 'exposure', 'elite']);
+  M.tickEffects(d);
+  assert.deepEqual(d.effects, [{ id: 'haste', kind: 'boon', fights_left: 1 }]);
+});
+
+test('a camp rests once: torch refuelled and a heal requested; formation can be checked there', () => {
+  const d = findSeed(6, x => x.map.cells.some(c => c.type === 'camp'));
+  const camp = d.map.cells.find(c => c.type === 'camp');
+  assert.equal(standOn(d, camp), null);
+  assert.equal(d.offer.kind, 'camp');
+  d.torch.value = 1;
+  const r = M.chooseOffer(d, 'rest');
+  assert.deepEqual(r.ops, [{ heal_pct: EXP.CAMP.heal_pct }]);
+  assert.equal(d.torch.value, Math.min(d.torch.max, 1 + Math.round(d.torch.max * EXP.CAMP.torch_refuel_pct / 100)));
+  assert.equal(M.chooseOffer(d, 'rest').code, 'expedition_rested');
+});
+
+test('a shrine grants one of its two boons, once', () => {
+  const d = findSeed(6, x => x.map.cells.some(c => c.type === 'shrine'));
+  const shrine = d.map.cells.find(c => c.type === 'shrine');
+  standOn(d, shrine);
+  assert.equal(d.offer.kind, 'shrine');
+  assert.equal(M.chooseOffer(d, 'not_offered').code, 'expedition_bad_choice');
+  const pick = shrine.options[0];
+  assert.equal(M.chooseOffer(d, pick).code, undefined);
+  assert.ok(d.used.includes(M.keyOf(shrine)));
+  if (EXP.BOONS[pick].fights) assert.ok(d.effects.some(e => e.id === pick));
+  assert.equal(d.offer, null);
+  // walking back in offers nothing
+  standOn(d, shrine);
+  assert.equal(d.offer, null);
+});
+
+test('a curse triggers on entry, once', () => {
+  const d = findSeed(8, x => x.map.cells.some(c => c.type === 'curse'));
+  const curse = d.map.cells.find(c => c.type === 'curse');
+  standOn(d, curse);
+  assert.ok(d.notices.some(n => n.kind === 'curse' && n.id === curse.curse));
+  const def = EXP.CURSES[curse.curse];
+  if (def.fights) assert.ok(d.effects.some(e => e.id === curse.curse));
+  if (def.instant?.hurt_pct) assert.deepEqual(d._ops, [{ hurt_pct: def.instant.hurt_pct }]);
+  const before = d.effects.length;
+  standOn(d, curse);
+  assert.equal(d.effects.length, before, 'no second trigger');
+});
+
+test('an event can be declined for nothing, or accepted for its trade', () => {
+  const d = findSeed(8, x => x.map.cells.filter(c => c.type === 'event').length >= 1);
+  const ev = d.map.cells.find(c => c.type === 'event');
+  standOn(d, ev);
+  assert.equal(d.offer.kind, 'event');
+  const snapshot = JSON.parse(JSON.stringify({ bank: d.bank, effects: d.effects, torch: d.torch }));
+  assert.deepEqual(M.chooseOffer(d, 'decline').ops, []);
+  assert.deepEqual({ bank: d.bank, effects: d.effects, torch: d.torch }, snapshot);
+  // accept on a fresh run
+  const d2 = findSeed(8, x => x.map.cells.some(c => c.type === 'event' && c.event === 'reliquary'));
+  if (d2) {
+    const rel = d2.map.cells.find(c => c.type === 'event' && c.event === 'reliquary');
+    standOn(d2, rel);
+    M.chooseOffer(d2, 'accept');
+    assert.ok(d2.bank.gold > 0, 'reliquary loot banked');
+    assert.ok(d2.notices.some(n => n.kind === 'curse'), 'and a curse');
+  }
+});
+
+test('elite rooms draw harder lineups and pay double', () => {
+  const d = findSeed(10, x => x.map.cells.some(c => c.type === 'elite'));
+  const elite = d.map.cells.find(c => c.type === 'elite');
+  const t = EXP.getSecondaryTemplate(REGION, elite.template);
+  assert.ok(t.max >= 10 + EXP.ELITE.lead_min, `${t.id} is from a harder band`);
+  const normal = gen(10, 1).cells.find(c => c.type === 'fight').loot;
+  assert.ok(elite.loot.gold >= normal.gold * 2 - 1);
+  assert.ok(M.isLiveFight(d, elite));
+});
+
+test('formation check: all living units, real cells, no overlap', () => {
+  const size = id => ({ a: 'tile', b: 'tile', c: 'row' }[id]);
+  assert.equal(M.validateFormation(['a', 'b'], { a: 0, b: 1 }, size), null);
+  assert.ok(M.validateFormation(['a', 'b'], { a: 0 }, size));
+  assert.ok(M.validateFormation(['a', 'b'], { a: 0, b: 0 }, size));
+  assert.ok(M.validateFormation(['a', 'b'], { a: 0, b: 6 }, size));
+  assert.ok(M.validateFormation(['a', 'c'], { a: 1, c: 0 }, size), 'row unit covers 0 and 1');
+  assert.equal(M.validateFormation(['a', 'c'], { a: 4, c: 0 }, size), null);
+});

@@ -129,23 +129,33 @@ function corners(size) {
   return [{ x: 0, y: 0 }, { x: m, y: 0 }, { x: 0, y: m }, { x: m, y: m }];
 }
 
-function rollLoot(levelRewards, rng) {
+function rollLoot(levelRewards, rng, { mult = 1, pct = null, trophy = null } = {}) {
   const L = EXP.SECONDARY_LOOT;
-  const pct = (n, p) => Math.round((Number(n) || 0) * p / 100);
+  const share = (n, p) => Math.round((Number(n) || 0) * p / 100 * mult);
+  const goldPct = pct ?? L.gold_pct;
   const crystals = {};
   for (const { type, amount } of levelRewards?.crystals || []) {
     if (!type || !amount) continue;
-    crystals[type] = Math.max(1, pct(amount, L.crystal_pct));
+    crystals[type] = Math.max(1, share(amount, pct ?? L.crystal_pct));
   }
   const trophies = {};
   const trophyIds = Object.keys(levelRewards?.trophies || {});
-  if (trophyIds.length && rng.next() < L.trophy_chance) trophies[rng.pick(trophyIds)] = 1;
+  const dropTrophy = trophy ?? (rng.next() < L.trophy_chance);
+  if (trophyIds.length && dropTrophy) trophies[rng.pick(trophyIds)] = mult > 1 ? Math.round(mult) : 1;
   return {
-    gold: pct(levelRewards?.gold, L.gold_pct),
-    xp:   pct(levelRewards?.xp,   L.xp_pct),
+    gold: share(levelRewards?.gold, goldPct),
+    xp:   pct == null ? share(levelRewards?.xp, L.xp_pct) : 0,
     crystals,
     trophies,
   };
+}
+
+const torchOnLevel = level => Number(level) >= EXP.TORCH.from_level;
+
+// Effects that touch the torch are never offered on a map without one.
+function effectPool(table, level) {
+  const torch = torchOnLevel(level);
+  return Object.keys(table).filter(id => torch || !table[id].needs_torch);
 }
 
 // One attempt at a layout. Returns null when this seed cannot satisfy the
@@ -158,7 +168,7 @@ function tryLayout({ seed, region_id, level, levelRewards }) {
 
   const entrance = rng.pick(corners(size));
   const walls    = mode.walls ? carveWalls(size, entrance, rng, mode.openExtraWalls || 0) : [];
-  const map      = { size, mode: modeId, walls, cells: [], entrance, goal: null };
+  const map      = { size, mode: modeId, level: Number(level), walls, cells: [], entrance, goal: null };
   const dist     = distancesFrom(map, entrance);
   if (dist.size !== size * size) return null;
 
@@ -191,11 +201,21 @@ function tryLayout({ seed, region_id, level, levelRewards }) {
   if (exits.length !== mode.fixed.exit) return null;
   for (const e of exits) taken.add(keyOf(e));
 
-  // Everything else: the fixed fights and empties first, then the pool.
-  const templates = rng.shuffle(EXP.secondaryTemplatesFor(region_id, level));
-  const nextTemplate = () => templates.shift() || null;
+  // Everything else: the fixed fights and empties first, then the level's pool,
+  // then the pool's guaranteed minimums (a camp on every torch-lit map).
+  const usedTemplates = new Set();
+  const fightQueue = rng.shuffle(EXP.secondaryTemplatesFor(region_id, level));
+  const eliteQueue = rng.shuffle(EXP.eliteTemplatesFor(region_id, level));
+  const nextFrom = queue => {
+    while (queue.length) {
+      const t = queue.shift();
+      if (!usedTemplates.has(t.id)) { usedTemplates.add(t.id); return t; }
+    }
+    return null;
+  };
   const unlocked = EXP.unlockedNodeTypes(level);
-  const poolTypes = Object.entries(mode.pool).filter(([t, w]) => w > 0 && unlocked.includes(t));
+  const pool = EXP.poolForLevel(level);
+  const poolTypes = Object.entries(pool.weights).filter(([t, w]) => w > 0 && unlocked.includes(t));
   const poolTotal = poolTypes.reduce((s, [, w]) => s + w, 0);
   const drawPool = () => {
     let r = rng.next() * poolTotal;
@@ -207,21 +227,49 @@ function tryLayout({ seed, region_id, level, levelRewards }) {
   const wanted = [];
   for (let i = 0; i < mode.fixed.fight; i++) wanted.push('fight');
   for (let i = 0; i < mode.fixed.empty; i++) wanted.push('empty');
+  const poolStart = wanted.length;
   while (wanted.length < rest.length) wanted.push(drawPool());
+  for (const [type, n] of Object.entries(pool.min || {})) {
+    if (!unlocked.includes(type)) continue;
+    let have = wanted.filter(t => t === type).length;
+    for (let i = poolStart; i < wanted.length && have < n; i++) {
+      if (wanted[i] === 'empty') { wanted[i] = type; have++; }
+    }
+  }
 
+  const boons   = effectPool(EXP.BOONS, level);
+  const curses  = effectPool(EXP.CURSES, level);
+  const events  = effectPool(EXP.EVENTS, level);
   const cells = [
     { ...entrance, type: 'entrance' },
     { ...goal,     type: 'goal' },
     ...exits.map(e => ({ ...e, type: 'exit' })),
   ];
   rest.forEach((c, i) => {
-    let type = wanted[i];
-    if (type === 'fight') {
+    const type = wanted[i];
+    if (type === 'fight' || type === 'elite') {
       // A map never repeats a template, so a level with few templates simply
       // gets fewer fights; the spare cell is left empty.
-      const t = nextTemplate();
+      const t = type === 'elite' ? nextFrom(eliteQueue) : nextFrom(fightQueue);
       if (!t) { cells.push({ ...c, type: 'empty' }); return; }
-      cells.push({ ...c, type: 'fight', template: t.id, loot: rollLoot(levelRewards, rng) });
+      const mult = type === 'elite' ? EXP.ELITE.loot_mult : 1;
+      cells.push({ ...c, type, template: t.id, loot: rollLoot(levelRewards, rng, { mult }) });
+      return;
+    }
+    if (type === 'shrine') {
+      cells.push({ ...c, type, options: rng.shuffle(boons).slice(0, 2) });
+      return;
+    }
+    if (type === 'curse') {
+      cells.push({ ...c, type, curse: rng.pick(curses) });
+      return;
+    }
+    if (type === 'event') {
+      const id = rng.pick(events);
+      const ev = EXP.EVENTS[id];
+      const cell = { ...c, type, event: id };
+      if (ev.accept.loot_pct) cell.loot = rollLoot(levelRewards, rng, { pct: ev.accept.loot_pct, trophy: !!ev.accept.trophy });
+      cells.push(cell);
       return;
     }
     cells.push({ ...c, type });
@@ -261,7 +309,6 @@ function validateMap(map, { level } = {}) {
   if (count('entrance') !== 1) return 'entrance count';
   if (count('goal') !== 1) return 'goal count';
   if (count('exit') !== mode.fixed.exit) return 'exit count';
-  if (count('empty') < mode.fixed.empty) return 'empty count';
   const entrance = map.cells.find(c => c.type === 'entrance');
   const goal     = map.cells.find(c => c.type === 'goal');
   if (!corners(size).some(c => keyOf(c) === keyOf(entrance))) return 'entrance not in a corner';
@@ -273,12 +320,22 @@ function validateMap(map, { level } = {}) {
     if (!dist.has(keyOf(e))) return 'exit unreachable';
     if (Math.abs(e.x - goal.x) + Math.abs(e.y - goal.y) <= 1) return 'exit next to goal';
   }
-  const templates = map.cells.filter(c => c.type === 'fight').map(c => c.template);
-  if (templates.some(t => !t)) return 'fight without template';
+  const fights = map.cells.filter(c => c.type === 'fight' || c.type === 'elite');
+  if (fights.some(c => !c.template)) return 'fight without template';
+  const templates = fights.map(c => c.template);
   if (new Set(templates).size !== templates.length) return 'repeated template';
+  if (count('fight') < mode.fixed.fight) return 'fight count';
+  if (count('empty') + count('camp') < mode.fixed.empty) return 'empty count';
+  if (map.cells.some(c => c.type === 'shrine' && !(c.options?.length))) return 'shrine without boons';
+  if (map.cells.some(c => c.type === 'curse' && !EXP.CURSES[c.curse])) return 'curse unknown';
+  if (map.cells.some(c => c.type === 'event' && !EXP.EVENTS[c.event])) return 'event unknown';
   if (level != null) {
-    const allowed = new Set(['entrance', 'goal', 'exit', ...EXP.unlockedNodeTypes(level)]);
+    const unlocked = EXP.unlockedNodeTypes(level);
+    const allowed = new Set(['entrance', 'goal', 'exit', ...unlocked]);
     if (map.cells.some(c => !allowed.has(c.type))) return 'locked node type';
+    for (const [type, n] of Object.entries(EXP.poolForLevel(level).min || {})) {
+      if (unlocked.includes(type) && count(type) < n) return `${type} minimum`;
+    }
   }
   return null;
 }
@@ -299,14 +356,28 @@ function newRunData({ map, squad }) {
     visited:  [keyOf(map.entrance)],
     revealed: [keyOf(map.entrance)],
     cleared:  [],
+    // Camps, shrines, curses and events that have been used up.
+    used:     [],
     pending:  null,
+    // The choice on offer where the player stands: { kind, x, y }.
+    offer:    null,
+    // Lasting boons and curses: { id, kind: 'boon'|'curse', fights_left }.
+    effects:  [],
+    torch:    null,
     squad,
     fallen:   [],
     bank:     { gold: 0, xp: 0, crystals: {}, trophies: {} },
     battle_id: null,
     steps:    0,
     fights:   0,
+    // What the last action did, for the client to announce. Replaced each step.
+    notices:  [],
   };
+  if (torchOnLevel(map.level)) {
+    const route = distancesFrom(map, map.entrance).get(keyOf(map.goal)) || 0;
+    const max = Math.max(EXP.TORCH.min_max, Math.ceil(route * EXP.TORCH.budget_factor));
+    data.torch = { max, value: max };
+  }
   revealAround(data);
   return data;
 }
@@ -324,12 +395,15 @@ function revealAround(data) {
   return data;
 }
 
-// A fight cell that has not been won yet. The goal counts.
+const FIGHT_TYPES = new Set(['fight', 'elite', 'goal']);
+
+// A fight cell that has not been won yet. Elites and the goal count.
 function isLiveFight(data, cell) {
-  if (!cell) return false;
-  if (cell.type !== 'fight' && cell.type !== 'goal') return false;
+  if (!cell || !FIGHT_TYPES.has(cell.type)) return false;
   return !data.cleared.includes(keyOf(cell));
 }
+
+const isUsed = (data, cell) => (data.used || []).includes(keyOf(cell));
 
 // Where the player may step from here. Walking into a fight room commits to the
 // fight: while one is pending or under way there is no move at all.
@@ -338,7 +412,54 @@ function allowedMoves(data) {
   return openNeighbours(data.map, data.pos);
 }
 
-// Mutates `data`. Returns null on success or { code, error } on refusal.
+// A seeded pick that changes every step, so the same map does not always roll
+// the same curse from a reliquary.
+function stepRng(data, salt) {
+  return makeRng(((Number(data.seed) >>> 0) ^ Math.imul(data.steps + 7, 40503) ^ Math.imul(salt + 1, 2246822519)) >>> 0);
+}
+
+function changeTorch(data, pct) {
+  if (!data.torch) return;
+  const delta = Math.round(data.torch.max * pct / 100);
+  data.torch.value = Math.max(0, Math.min(data.torch.max, data.torch.value + delta));
+}
+
+// Applies a boon or curse. Lasting ones join `effects`; instant ones happen
+// now. Returns the roster HP changes the server has to make ({ heal_pct } or
+// { hurt_pct }), which this pure module cannot.
+function applyEffect(data, kind, id) {
+  const def = (kind === 'boon' ? EXP.BOONS : EXP.CURSES)[id];
+  if (!def) return [];
+  const ops = [];
+  if (def.fights) {
+    data.effects = [...(data.effects || []), { id, kind, fights_left: def.fights }];
+  }
+  const inst = def.instant || {};
+  if (inst.torch_pct) changeTorch(data, inst.torch_pct);
+  if (inst.heal_pct) ops.push({ heal_pct: inst.heal_pct });
+  if (inst.hurt_pct) ops.push({ hurt_pct: inst.hurt_pct });
+  if (inst.reveal_all) data.revealed = data.map.cells.map(keyOf);
+  data.notices.push({ kind, id });
+  return ops;
+}
+
+function randomEffect(data, kind, salt) {
+  const ids = effectPool(kind === 'boon' ? EXP.BOONS : EXP.CURSES, data.map.level);
+  return stepRng(data, salt).pick(ids);
+}
+
+// What standing on this cell offers, if anything.
+function offerFor(data, cell) {
+  if (!cell) return null;
+  if (cell.type === 'camp') return { kind: 'camp', x: cell.x, y: cell.y, rested: isUsed(data, cell) };
+  if ((cell.type === 'shrine' || cell.type === 'event') && !isUsed(data, cell)) {
+    return { kind: cell.type, x: cell.x, y: cell.y };
+  }
+  return null;
+}
+
+// Mutates `data`. Returns null on success or { code, error } on refusal. Roster
+// HP changes the step caused (a curse) are left in `data._ops` for the server.
 function applyMove(data, to) {
   const target = { x: Number(to?.x), y: Number(to?.y) };
   if (!Number.isInteger(target.x) || !Number.isInteger(target.y)) {
@@ -351,14 +472,135 @@ function applyMove(data, to) {
     return { code: 'expedition_bad_move', error: 'You can only move to an open cell up, down, left or right' };
   }
 
+  data.notices = [];
+  data._ops = [];
   data.prev = { ...data.pos };
   data.pos  = target;
   data.steps += 1;
+  if (data.torch) data.torch.value = Math.max(0, data.torch.value - EXP.TORCH.step_cost);
   if (!data.visited.includes(keyOf(target))) data.visited.push(keyOf(target));
   revealAround(data);
 
   const cell = cellAt(data.map, target.x, target.y);
-  if (isLiveFight(data, cell)) data.pending = { ...target };
+  data.offer = offerFor(data, cell);
+  if (isLiveFight(data, cell)) {
+    data.pending = { ...target };
+  } else if (cell?.type === 'curse' && !isUsed(data, cell)) {
+    data.used = [...(data.used || []), keyOf(cell)];
+    data._ops.push(...applyEffect(data, 'curse', cell.curse));
+  }
+  return null;
+}
+
+// Answers the offer where the player stands. Returns { code, error } on
+// refusal, or { ops } — roster HP changes for the server to make.
+function chooseOffer(data, choice) {
+  const offer = data.offer;
+  if (!offer || offer.x !== data.pos.x || offer.y !== data.pos.y) {
+    return { code: 'expedition_no_offer', error: 'Nothing to choose here' };
+  }
+  if (data.battle_id || data.pending) return { code: 'expedition_in_battle', error: 'Finish the fight first' };
+  const cell = cellAt(data.map, offer.x, offer.y);
+  data.notices = [];
+  const ops = [];
+  const useUp = () => { if (!isUsed(data, cell)) data.used = [...(data.used || []), keyOf(cell)]; };
+
+  if (offer.kind === 'camp') {
+    if (choice !== 'rest') return { code: 'expedition_bad_choice', error: 'Unknown choice' };
+    if (isUsed(data, cell)) return { code: 'expedition_rested', error: 'You already rested at this camp' };
+    useUp();
+    changeTorch(data, EXP.CAMP.torch_refuel_pct);
+    ops.push({ heal_pct: EXP.CAMP.heal_pct });
+    data.notices.push({ kind: 'camp', id: 'rest' });
+    data.offer = offerFor(data, cell);
+    return { ops };
+  }
+  if (offer.kind === 'shrine') {
+    if (!(cell.options || []).includes(choice)) return { code: 'expedition_bad_choice', error: 'That boon is not offered here' };
+    useUp();
+    ops.push(...applyEffect(data, 'boon', choice));
+    data.offer = null;
+    return { ops };
+  }
+  if (offer.kind === 'event') {
+    if (choice !== 'accept' && choice !== 'decline') return { code: 'expedition_bad_choice', error: 'Unknown choice' };
+    useUp();
+    data.offer = null;
+    if (choice === 'decline') return { ops };
+    const acc = EXP.EVENTS[cell.event]?.accept || {};
+    if (cell.loot) data.bank = addLoot(data.bank, cell.loot);
+    if (acc.torch_pct) changeTorch(data, acc.torch_pct);
+    if (acc.hurt_pct) ops.push({ hurt_pct: acc.hurt_pct });
+    if (acc.boon) ops.push(...applyEffect(data, 'boon', randomEffect(data, 'boon', 1)));
+    if (acc.curse) ops.push(...applyEffect(data, 'curse', randomEffect(data, 'curse', 2)));
+    data.notices.unshift({ kind: 'event', id: cell.event, loot: cell.loot || null });
+    return { ops };
+  }
+  return { code: 'expedition_no_offer', error: 'Nothing to choose here' };
+}
+
+// The modifiers for a fight started now in `cell`: the torch stage, every
+// lasting boon and curse, and an elite room's own. Summed per side, plus the
+// list of what contributed, for the client.
+function fightMods(data, cell) {
+  const total = { player: { initiative: 0, armor: 0, power_pct: 0 }, enemy: { initiative: 0, armor: 0, power_pct: 0 } };
+  const sources = [];
+  const add = (mods, source) => {
+    let any = false;
+    for (const side of ['player', 'enemy']) {
+      for (const [k, v] of Object.entries(mods?.[side] || {})) {
+        if (!v) continue;
+        total[side][k] = (total[side][k] || 0) + v;
+        any = true;
+      }
+    }
+    if (any) sources.push(source);
+  };
+  const stage = EXP.torchStage(data.torch);
+  if (stage) add(stage.mods, { kind: 'torch', id: stage.id });
+  for (const e of data.effects || []) {
+    const def = (e.kind === 'boon' ? EXP.BOONS : EXP.CURSES)[e.id];
+    if (def?.mods) add(def.mods, { kind: e.kind, id: e.id });
+  }
+  if (cell?.type === 'elite') add(EXP.ELITE.mods, { kind: 'elite', id: 'elite' });
+  return { ...total, sources };
+}
+
+// After a won fight: every lasting effect has one fight fewer to run.
+function tickEffects(data) {
+  data.effects = (data.effects || [])
+    .map(e => ({ ...e, fights_left: e.fights_left - 1 }))
+    .filter(e => e.fights_left > 0);
+}
+
+// Formation check for a camp reshuffle: every living squad unit on a cell of
+// its side (0–5), and no two footprints overlapping. `sizeOf(id)` gives a
+// unit's size: 'tile', 'row' or 'column'.
+function footprint(cell, size) {
+  const rows = 3, cols = 2;
+  const r = Math.floor(cell / cols), c = cell % cols;
+  if (size === 'row') return [r * cols, r * cols + 1];
+  if (size === 'column') {
+    const top = r <= rows - 2 ? r : r - 1;
+    return [top * cols + c, (top + 1) * cols + c];
+  }
+  return [cell];
+}
+
+function validateFormation(livingIds, placement, sizeOf) {
+  if (!placement || typeof placement !== 'object') return 'Invalid placement';
+  const ids = livingIds.map(String);
+  const keys = Object.keys(placement).map(String);
+  if (keys.length !== ids.length || keys.some(k => !ids.includes(k))) return 'Every living unit must be placed';
+  const taken = new Set();
+  for (const id of ids) {
+    const cell = Number(placement[id]);
+    if (!Number.isInteger(cell) || cell < 0 || cell > 5) return 'Invalid cell';
+    for (const c of footprint(cell, sizeOf(id))) {
+      if (taken.has(c)) return 'Units overlap';
+      taken.add(c);
+    }
+  }
   return null;
 }
 
@@ -383,16 +625,19 @@ function scaleBank(bank, share) {
   return addLoot({ gold: 0, xp: 0, crystals: {}, trophies: {} }, bank, share);
 }
 
-// A won fight: the cell is cleared, its loot banked, and the dead noted.
+// A won fight: the cell is cleared, its loot banked, the dead noted, and the
+// lasting effects tick down.
 function settleWonFight(data, { fallenIds = [] } = {}) {
   const at = data.pending || data.pos;
   const cell = cellAt(data.map, at.x, at.y);
   if (cell && !data.cleared.includes(keyOf(cell))) data.cleared.push(keyOf(cell));
-  if (cell?.type === 'fight') data.bank = addLoot(data.bank, cell.loot);
+  if (cell?.type === 'fight' || cell?.type === 'elite') data.bank = addLoot(data.bank, cell.loot);
   data.fallen = [...new Set([...(data.fallen || []), ...fallenIds.map(String)])];
   data.pending = null;
   data.battle_id = null;
   data.fights += 1;
+  data.notices = [];
+  tickEffects(data);
   return cell;
 }
 
@@ -404,6 +649,7 @@ function clientView(run) {
   const visited  = new Set(data.visited);
   const revealed = new Set(data.revealed);
   const cleared  = new Set(data.cleared);
+  const used     = new Set(data.used || []);
 
   const cells = map.cells.map(c => {
     const k = keyOf(c);
@@ -414,12 +660,20 @@ function clientView(run) {
       type:    known ? c.type : null,
       visited: visited.has(k),
       cleared: cleared.has(k),
+      used:    used.has(k),
     };
   });
   // Walls are seen from inside a room: those on the edges of visited cells.
   const walls = map.walls.filter(w => w.split('|').some(k => visited.has(k)));
 
   const here = cellAt(map, data.pos.x, data.pos.y);
+  const stage = EXP.torchStage(data.torch);
+  let offer = null;
+  if (data.offer && !data.pending && !data.battle_id) {
+    offer = { ...data.offer };
+    if (offer.kind === 'shrine') offer.options = (here?.options || []).slice();
+    if (offer.kind === 'event') offer.event = here?.event || null;
+  }
   return {
     id:        run.id,
     region_id: run.region_id,
@@ -435,9 +689,17 @@ function clientView(run) {
     moves:     allowedMoves(data),
     pending:   data.pending ? { ...data.pending, goal: cellAt(map, data.pending.x, data.pending.y)?.type === 'goal' } : null,
     at_exit:   here?.type === 'exit' && !data.pending,
+    offer,
+    torch:     data.torch ? { ...data.torch, stage: stage?.id || null } : null,
+    effects:   (data.effects || []).map(e => ({ ...e })),
+    notices:   (data.notices || []).map(n => ({ ...n })),
     battle_id: data.battle_id || null,
     bank:      data.bank,
-    squad:     { roster_ids: (data.squad?.playerUnitIds || []).map(u => String(u._rosterId || u.id)), fallen: data.fallen || [] },
+    squad:     {
+      roster_ids: (data.squad?.playerUnitIds || []).map(u => String(u._rosterId || u.id)),
+      fallen:     data.fallen || [],
+      placement:  { ...(data.squad?.placement || {}) },
+    },
     steps:     data.steps,
     fights:    data.fights,
   };
@@ -446,5 +708,6 @@ function clientView(run) {
 module.exports = {
   makeRng, cellKey, keyOf, edgeKey, openNeighbours, canStep, distancesFrom,
   generateMap, validateMap, cellAt, newRunData, revealAround, allowedMoves,
-  applyMove, isLiveFight, addLoot, scaleBank, settleWonFight, clientView,
+  applyMove, chooseOffer, applyEffect, fightMods, tickEffects, footprint, validateFormation,
+  isLiveFight, addLoot, scaleBank, settleWonFight, clientView,
 };

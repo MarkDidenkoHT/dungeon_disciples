@@ -186,7 +186,13 @@ that two runs of the same level rarely share more than one fight.
 - Stepping into a combat room starts its fight at once. There is no preview and no
   stepping back: walking into the room is the decision.
 
-### 5.2 The torch
+### 5.2 The torch — shown to players as Resolve
+
+**Renamed 2026-11-14:** players see this meter as **Resolve / Решимость**, the squad's nerve
+wearing down in hostile ground, with stages **Steadfast / Wavering / Shaken / Broken**
+(Стойкость / Колебание / Смятение / Надлом). The rules below are unchanged; `torch` remains
+the internal name in code and data. Lantern became **Rally**, Gloom became **Dread**, and the
+Dark Well became the **Whispering Well**.
 
 A per-run meter, not a unit stat. Every step costs torch. Torch stages apply a modifier
 to **every fight started at that stage**. Stored unit data is never touched.
@@ -408,3 +414,35 @@ every new player gets the same teachable map?
   turn. `battle_data.expedition.template` names the room's lineup so the rebuild uses it
   (`expeditionBattleEnemies`); without it every room turned into the goal fight after
   the first turn.
+
+## 14. Milestone 2 — implementation notes (2026-11-14)
+
+All numbers live in `data/expedition.js` (`TORCH`, `CAMP`, `BOONS`, `CURSES`, `EVENTS`,
+`ELITE`, `POOLS`) and are first guesses for the pilot.
+
+- **Torch (level 4+):** max = 1.5 × the shortest route to the goal (at least 6); each step
+  burns 1. Stages by what is left: Bright > 50%, Dim > 25% (squad −3 initiative), Dark
+  (−6, enemies +15% power), Out (−10, enemies +30%). Not on 3x3 maps.
+- **Camp (4+, at least one per map):** rest once — torch +50%, living units heal 20% of
+  max HP. Standing on a camp also allows reshuffling the squad (no overlap; the fallen
+  keep their cells).
+- **Shrine (5+):** two boons offered, one taken, once. Boons: Valor (+15% power, 2 fights),
+  Haste (+5 initiative, 2), Aegis (+4 armor, 2), Lantern (torch +50%), Mending (heal 25%),
+  Farsight (reveal the map).
+- **Curse (7+):** triggers on entry, once. Frailty (−15% power, 2), Torpor (−5 initiative,
+  2), Exposure (−4 armor, 2), Gloom (torch −30%), Bleeding (−15% of current HP, never
+  below 1). A revealed curse room is visible as such, so it can be walked around.
+- **Event (7+):** accept or walk on, once. Reliquary (40% of the level's gold and
+  crystals + a trophy, and a random curse), Blood Altar (−20% HP for a random boon), Dark
+  Well (torch +40%, and a random curse).
+- **Elite (9+):** a template from 2–3 levels further in (clamped to the hardest band),
+  enemies +20% power and +3 armor, double loot.
+- **Fight-modifier slot:** torch stage + lasting boons/curses + elite, summed per side
+  (`fightMods`), stored on the battle as `battle_data.expedition.mods` and applied to both
+  armies at creation and on every rebuild between turns (`applyFightMods`). Power scales
+  attacks only, not heals. Lasting effects tick down after each won fight.
+- **Routes:** `POST /expedition/choose` (rest / boon id / accept / decline) and
+  `POST /expedition/formation` (camp only).
+- **Tutorial:** one-time hints for the torch, camp, shrine, event, curse and elite.
+- **Not done yet:** the battle screen does not show which modifiers are active; dark-room
+  loot bonus; revives.

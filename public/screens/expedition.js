@@ -12,7 +12,8 @@ import { assetUrl } from '../asset_base.js';
 import { lang } from './settings.js';
 import { REGIONS as REGION_CARDS } from './embark.js';
 import { UNITS } from '../../data/units.js';
-import { CRYSTAL_ICONS, GOLD_ICON, resolveUnitDef, unitName, gameConfirm, gameAlert } from '../utils.js';
+import { CRYSTAL_ICONS, GOLD_ICON, resolveUnitDef, unitName, gameConfirm, gameAlert, cellFootprint } from '../utils.js';
+import { BOONS, CURSES, EVENTS, CAMP } from '../../data/expedition.js';
 import { showTutorialSpotlight, hideTutorial, isTutorialDone, markTutorialDone } from '../tutorial.js';
 
 const T = {
@@ -51,17 +52,51 @@ const T = {
   xpEach:       { en: 'XP each',                 ru: 'опыта каждому' },
   conflict:     { en: 'The expedition changed elsewhere — refreshed.', ru: 'Поход изменился на другом устройстве — обновлено.' },
   failed:       { en: 'Something went wrong. Try again.', ru: 'Что-то пошло не так. Попробуйте ещё раз.' },
+  torch:        { en: 'Resolve',                 ru: 'Решимость' },
+  stage: {
+    bright: { en: 'Steadfast', ru: 'Стойкость' },
+    dim:    { en: 'Wavering',  ru: 'Колебание' },
+    dark:   { en: 'Shaken',    ru: 'Смятение' },
+    out:    { en: 'Broken',    ru: 'Надлом' },
+  },
+  stageNote: {
+    bright: { en: 'No penalty', ru: 'Без штрафа' },
+    dim:    { en: 'Squad −3 initiative in fights', ru: 'Отряд: −3 к инициативе в бою' },
+    dark:   { en: 'Squad −6 initiative, enemies +15% power', ru: 'Отряд: −6 к инициативе, враги +15% к силе' },
+    out:    { en: 'Squad −10 initiative, enemies +30% power', ru: 'Отряд: −10 к инициативе, враги +30% к силе' },
+  },
+  fightsLeft:   { en: n => n === 1 ? '1 fight' : `${n} fights`, ru: n => `боёв: ${n}` },
+  campTitle:    { en: 'Camp',                    ru: 'Лагерь' },
+  rest:         { en: `Rest — resolve +${CAMP.torch_refuel_pct}%, heal ${CAMP.heal_pct}%`, ru: `Отдых — решимость +${CAMP.torch_refuel_pct}%, лечение ${CAMP.heal_pct}%` },
+  rested:       { en: 'You have rested here',    ru: 'Вы уже отдохнули здесь' },
+  formation:    { en: 'Formation — tap a unit, then a cell', ru: 'Построение — коснитесь бойца, затем клетки' },
+  back:         { en: 'Back',                    ru: 'Тыл' },
+  front:        { en: 'Front',                   ru: 'Фронт' },
+  shrineTitle:  { en: 'Shrine — choose a boon',  ru: 'Святилище — выберите благословение' },
+  decline:      { en: 'Walk on',                 ru: 'Пройти мимо' },
+  noticeBoon:   { en: 'Boon',                    ru: 'Благословение' },
+  noticeCurse:  { en: 'Cursed',                  ru: 'Проклятие' },
+  noticeRest:   { en: 'The squad rests.',        ru: 'Отряд отдыхает.' },
+  noticeLoot:   { en: 'Added to the haul',       ru: 'Добавлено в добычу' },
+  eliteNote:    { en: 'Elite — stronger enemies, double loot', ru: 'Элита — враги сильнее, двойная добыча' },
 };
 
 // Placeholder glyphs until cells have art.
-const GLYPH = { entrance: '⌂', goal: '♛', exit: '⇲', fight: '⚔', empty: '' };
+const GLYPH = { entrance: '⌂', goal: '♛', exit: '⇲', fight: '⚔', empty: '', camp: '⛺', shrine: '✧', curse: '☠', event: '❖', elite: '✪' };
 const TYPE_LABEL = {
   entrance: { en: 'Entrance', ru: 'Вход' },
   goal:     { en: 'Goal',     ru: 'Цель' },
   exit:     { en: 'Exit',     ru: 'Выход' },
   fight:    { en: 'Fight',    ru: 'Бой' },
   empty:    { en: 'Empty',    ru: 'Пусто' },
+  camp:     { en: 'Camp',     ru: 'Лагерь' },
+  shrine:   { en: 'Shrine',   ru: 'Святилище' },
+  curse:    { en: 'Curse',    ru: 'Проклятие' },
+  event:    { en: 'Event',    ru: 'Событие' },
+  elite:    { en: 'Elite fight', ru: 'Элитный бой' },
 };
+
+const effectDef = (kind, id) => (kind === 'boon' ? BOONS : CURSES)[id] || null;
 
 const keyOf = c => `${c.x},${c.y}`;
 
@@ -90,9 +125,14 @@ export function renderExpedition(root, { player, summary = null } = {}) {
   // Footer and fallback-fight buttons, delegated once for the screen's life.
   host().addEventListener('click', e => {
     const act = e.target.closest('[data-act]')?.dataset.act;
+    const el = e.target.closest('[data-act]');
     if (act === 'fight') onFight();
     else if (act === 'exit') onLeave(true);
     else if (act === 'abandon') onLeave(false);
+    else if (act === 'rest') onChoose('rest');
+    else if (act === 'boon') onChoose(el.dataset.id);
+    else if (act === 'accept' || act === 'decline') onChoose(act);
+    else if (act === 'slot') onSlot(Number(el.dataset.cell));
   });
 
   function regionLabel(id) {
@@ -132,13 +172,14 @@ export function renderExpedition(root, { player, summary = null } = {}) {
         cls.push(c.known ? `expd-cell--${c.type}` : 'expd-cell--unknown');
         if (c.visited) cls.push('expd-cell--visited');
         if (c.cleared) cls.push('expd-cell--cleared');
+        if (c.used) cls.push('expd-cell--used');
         if (here) cls.push('expd-cell--here');
         if (canMove) cls.push('expd-cell--move');
         if (x < size - 1 && wallOn(c, { x: x + 1, y })) cls.push('expd-wall-r');
         if (y < size - 1 && wallOn(c, { x, y: y + 1 })) cls.push('expd-wall-b');
         if (x > 0 && wallOn(c, { x: x - 1, y })) cls.push('expd-wall-l');
         if (y > 0 && wallOn(c, { x, y: y - 1 })) cls.push('expd-wall-t');
-        const glyph = c.known ? (c.cleared && c.type === 'fight' ? '✓' : GLYPH[c.type] ?? '') : '?';
+        const glyph = c.known ? (c.cleared && (c.type === 'fight' || c.type === 'elite') ? '✓' : GLYPH[c.type] ?? '') : '?';
         const label = c.known ? t(TYPE_LABEL[c.type] || {}) : '';
         cells.push(`
           <button class="${cls.join(' ')}" type="button" data-x="${x}" data-y="${y}"
@@ -176,6 +217,109 @@ export function renderExpedition(root, { player, summary = null } = {}) {
       </div>`;
   }
 
+  function torchHtml() {
+    const tr = run.torch;
+    if (!tr) return '';
+    const pct = Math.round((tr.value / tr.max) * 100);
+    return `
+      <span class="expd-label">${t(T.torch)}</span>
+      <span class="expd-torch-bar expd-torch-bar--${tr.stage}"><span style="width:${pct}%"></span></span>
+      <span class="expd-torch-stage expd-torch-stage--${tr.stage}">${t(T.stage[tr.stage] || {})} · ${tr.value}/${tr.max}</span>
+      <span class="expd-torch-note">${t(T.stageNote[tr.stage] || {})}</span>`;
+  }
+
+  function effectsHtml() {
+    return (run.effects || []).map(e => {
+      const def = effectDef(e.kind, e.id);
+      if (!def) return '';
+      return `<span class="expd-effect expd-effect--${e.kind}" title="${t(def.desc)}">${t(def.name)} · ${t(T.fightsLeft)(e.fights_left)}</span>`;
+    }).join('');
+  }
+
+  // What the last action did — only right after the player's own action.
+  let showNotices = false;
+  function noticeHtml() {
+    if (!showNotices) return '';
+    return (run.notices || []).map(n => {
+      if (n.kind === 'boon' || n.kind === 'curse') {
+        const def = effectDef(n.kind, n.id);
+        if (!def) return '';
+        return `<div class="expd-note expd-note--${n.kind}"><b>${t(n.kind === 'boon' ? T.noticeBoon : T.noticeCurse)}: ${t(def.name)}</b> — ${t(def.desc)}</div>`;
+      }
+      if (n.kind === 'camp') return `<div class="expd-note expd-note--boon">${t(T.noticeRest)}</div>`;
+      if (n.kind === 'event' && n.loot) return `<div class="expd-note expd-note--boon">${t(T.noticeLoot)}: ${chips(n.loot)}</div>`;
+      return '';
+    }).join('');
+  }
+
+  // ── Camp formation ── a 3×2 grid of the player's side; column 1 is the front.
+  let selectedUnit = null;
+  let squadRoster = [];
+  function unitSize(id) {
+    const row = squadRoster.find(r => String(r.id) === String(id));
+    return resolveUnitDef(row || {})?.size || 'tile';
+  }
+  function formationHtml() {
+    const fallen = new Set(run.squad?.fallen || []);
+    const living = (run.squad?.roster_ids || []).filter(id => !fallen.has(id));
+    const placement = run.squad?.placement || {};
+    const covered = {};
+    for (const id of living) for (const c of cellFootprint(Number(placement[id]), unitSize(id))) covered[c] = id;
+    const cells = [];
+    for (let i = 0; i < 6; i++) {
+      const id = covered[i];
+      const anchor = id != null && Number(placement[id]) === i;
+      const row = id != null ? squadRoster.find(r => String(r.id) === String(id)) : null;
+      const img = anchor && row ? portraitUrl(resolveUnitDef(row)) : null;
+      cells.push(`
+        <button type="button" class="expd-slot${id != null ? ' expd-slot--taken' : ''}${selectedUnit != null && String(selectedUnit) === String(id) ? ' expd-slot--selected' : ''}"
+                data-act="slot" data-cell="${i}">
+          ${img ? `<img src="${img}" alt="" onerror="this.style.visibility='hidden'">` : (id != null ? '·' : '')}
+        </button>`);
+    }
+    return `
+      <div class="expd-formation">
+        <div class="expd-label">${t(T.formation)}</div>
+        <div class="expd-formation-cols"><span>${t(T.back)}</span><span>${t(T.front)}</span></div>
+        <div class="expd-formation-grid">${cells.join('')}</div>
+      </div>`;
+  }
+
+  function offerHtml() {
+    const o = run.offer;
+    if (!o) return '';
+    if (o.kind === 'camp') {
+      return `
+        <div class="expd-panel expd-panel--camp">
+          <div class="expd-pending-title">${t(T.campTitle)}</div>
+          <button class="action-btn" type="button" data-act="rest" ${o.rested ? 'disabled' : ''}>${o.rested ? t(T.rested) : t(T.rest)}</button>
+          ${formationHtml()}
+        </div>`;
+    }
+    if (o.kind === 'shrine') {
+      return `
+        <div class="expd-panel expd-panel--shrine">
+          <div class="expd-pending-title">${t(T.shrineTitle)}</div>
+          ${(o.options || []).map(id => {
+            const b = BOONS[id];
+            return b ? `<button class="expd-choice" type="button" data-act="boon" data-id="${id}"><b>${t(b.name)}</b><span>${t(b.desc)}</span></button>` : '';
+          }).join('')}
+        </div>`;
+    }
+    if (o.kind === 'event') {
+      const ev = EVENTS[o.event];
+      if (!ev) return '';
+      return `
+        <div class="expd-panel expd-panel--event">
+          <div class="expd-pending-title">${t(ev.name)}</div>
+          <p class="expd-pending-body">${t(ev.desc)}</p>
+          <button class="expd-choice" type="button" data-act="accept"><b>${t(ev.acceptLabel)}</b></button>
+          <button class="expd-choice expd-choice--muted" type="button" data-act="decline"><b>${t(T.decline)}</b></button>
+        </div>`;
+    }
+    return '';
+  }
+
   function footerHtml() {
     return `
       ${run.at_exit ? `
@@ -203,8 +347,11 @@ export function renderExpedition(root, { player, summary = null } = {}) {
       <header class="expd-head">
         <div class="expd-title" id="expd-title"></div>
         <div class="expd-haul"><span class="expd-label">${t(T.haul)}</span><span id="expd-haul-chips"></span></div>
+        <div class="expd-torch" id="expd-torch"></div>
+        <div class="expd-effects" id="expd-effects"></div>
       </header>
       <div class="expd-squad" id="expd-squad"></div>
+      <div class="expd-notice" id="expd-notice"></div>
       <div class="expd-board" id="expd-board"></div>
       <p class="expd-hint" id="expd-hint"></p>
       <div id="expd-pending"></div>
@@ -238,7 +385,10 @@ export function renderExpedition(root, { player, summary = null } = {}) {
     setHtml('#expd-haul-chips', chips(run.bank), JSON.stringify(run.bank));
     setHtml('#expd-board', gridHtml());
     setHtml('#expd-hint', run.pending ? '' : t(T.tapToMove));
-    setHtml('#expd-pending', pendingHtml());
+    setHtml('#expd-torch', torchHtml());
+    setHtml('#expd-effects', effectsHtml());
+    setHtml('#expd-notice', noticeHtml());
+    setHtml('#expd-pending', run.pending ? pendingHtml() : offerHtml());
     setHtml('#expd-footer', footerHtml());
 
     runTutorial();
@@ -256,6 +406,9 @@ export function renderExpedition(root, { player, summary = null } = {}) {
     const roster = boot?.roster || [];
     const fallen = new Set(run.squad?.fallen || []);
     const ids = (run.squad?.roster_ids || []).map(String);
+    squadRoster = roster.filter(r => ids.includes(String(r.id)));
+    // The camp grid draws portraits from this; redraw it once they are known.
+    if (run.offer?.kind === 'camp') { delete last['#expd-pending']; draw(); }
     if (!squadEls || squadEls.ids.join(',') !== ids.join(',')) {
       strip.innerHTML = ids.map(id => {
         const row = roster.find(r => String(r.id) === id);
@@ -340,6 +493,54 @@ export function renderExpedition(root, { player, summary = null } = {}) {
       const r = await api('/expedition/move', { chat_id: player.chat_id, run_id: run.id, x, y, battle_id: newBattleId() });
       run = r.run;
       if (r.battle) { enterBattle(r.battle); return; }
+      selectedUnit = null;
+      showNotices = true;
+      draw();
+      // A curse or heal changed HP.
+      if ((run.notices || []).length) { bootstrapCache.invalidate(); refreshSquad(); }
+    });
+  }
+
+  function onChoose(choice) {
+    return guarded(async () => {
+      const r = await api('/expedition/choose', { chat_id: player.chat_id, run_id: run.id, choice });
+      run = r.run;
+      showNotices = true;
+      draw();
+      bootstrapCache.invalidate();
+      refreshSquad();
+    });
+  }
+
+  // Camp grid: tap a unit to pick it up, tap a cell to put it there. Two
+  // single-cell units swap; anything else the server checks for overlap.
+  function onSlot(cell) {
+    const placement = { ...(run.squad?.placement || {}) };
+    const fallen = new Set(run.squad?.fallen || []);
+    const living = (run.squad?.roster_ids || []).filter(id => !fallen.has(id));
+    const at = living.find(id => cellFootprint(Number(placement[id]), unitSize(id)).includes(cell));
+    if (selectedUnit == null) {
+      if (at == null) return;
+      selectedUnit = at;
+      delete last['#expd-pending'];
+      draw();
+      return;
+    }
+    const moving = selectedUnit;
+    selectedUnit = null;
+    if (at === moving) { delete last['#expd-pending']; draw(); return; }
+    const next = {};
+    for (const id of living) next[id] = Number(placement[id]);
+    if (at != null) next[at] = Number(placement[moving]);
+    next[moving] = cell;
+    return guarded(async () => {
+      try {
+        const r = await api('/expedition/formation', { chat_id: player.chat_id, run_id: run.id, placement: next });
+        run = r.run;
+      } catch (err) {
+        if (err?.code !== 'invalid_placement') throw err;
+      }
+      delete last['#expd-pending'];
       draw();
     });
   }
@@ -366,7 +567,9 @@ export function renderExpedition(root, { player, summary = null } = {}) {
   // ── First-run teaching (3x3 maps only) ──
   // A short explain-and-continue chain over the board the first time.
   function runTutorial() {
-    if (!run || run.size !== 3 || isTutorialDone(player, 'expedition_map')) return;
+    if (!run) return;
+    if (run.size !== 3) { runNodeHints(); return; }
+    if (isTutorialDone(player, 'expedition_map')) return;
     showTutorialSpotlight(player, 'expedition_map', root.querySelector('#expd-board'), {
       showContinue: true,
       onAdvance: () => {
@@ -385,10 +588,27 @@ export function renderExpedition(root, { player, summary = null } = {}) {
     });
   }
 
+  // One-time hints as each Milestone 2 room type first matters (design doc §12).
+  function runNodeHints() {
+    const hint = (step, el) => {
+      if (!el || isTutorialDone(player, step)) return false;
+      showTutorialSpotlight(player, step, el, { showContinue: true, onAdvance: () => markTutorialDone(player, step) });
+      return true;
+    };
+    if (run.torch && hint('expedition_torch', root.querySelector('#expd-torch'))) return;
+    const offer = run.offer?.kind;
+    if (offer === 'camp' && hint('expedition_camp', root.querySelector('#expd-pending'))) return;
+    if (offer === 'shrine' && hint('expedition_shrine', root.querySelector('#expd-pending'))) return;
+    if (offer === 'event' && hint('expedition_event', root.querySelector('#expd-pending'))) return;
+    if (showNotices && (run.notices || []).some(n => n.kind === 'curse') && hint('expedition_curse', root.querySelector('#expd-notice'))) return;
+    if (run.cells.some(c => c.known && c.type === 'elite')) hint('expedition_elite', root.querySelector('#expd-board'));
+  }
+
   async function load() {
     try {
       const r = await api(`/expedition/active?chat_id=${encodeURIComponent(player.chat_id)}`);
       run = r.run || null;
+      showNotices = false;
     } catch (err) {
       console.error('[expedition] load failed', err);
       run = null;

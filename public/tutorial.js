@@ -273,6 +273,67 @@ const TUTORIAL_STEPS = {
       text: 'Каждая победа пополняет добычу, но она ваша, только когда вы уйдёте. Выход ⇲ уносит всё. Если бросить поход в другом месте, сохранится половина, а отряд останется с 1 HP. Проигранный бой — и пропадёт всё.',
     },
   },
+  // Milestone 2 rooms: each explained once, the first time it matters.
+  expedition_torch: {
+    en: {
+      title: 'Resolve',
+      text: 'Every step in hostile ground wears down your squad\'s resolve. While they are steadfast nothing is lost; as it wavers they react slower, and once shaken the enemy hits harder too. Resting at a camp restores it. Explore if you like — but nerve runs out.',
+    },
+    ru: {
+      title: 'Решимость',
+      text: 'Каждый шаг по враждебной земле подтачивает решимость отряда. Пока он стоек — потерь нет; когда решимость колеблется, бойцы реагируют медленнее, а в смятении и враг бьёт сильнее. Отдых в лагере восстанавливает её. Исследуйте, если хотите, — но нервы не бесконечны.',
+    },
+  },
+  expedition_camp: {
+    en: {
+      title: 'Camp',
+      text: 'Rest here once: the squad\'s resolve is restored and your living units heal a little. While you stand in a camp you can also reshuffle the squad — tap a unit, then the cell to move it to.',
+    },
+    ru: {
+      title: 'Лагерь',
+      text: 'Здесь можно отдохнуть один раз: решимость отряда восстановится, а живые бойцы немного подлечатся. Стоя в лагере, можно и перестроить отряд — коснитесь бойца, затем клетки, куда его поставить.',
+    },
+  },
+  expedition_shrine: {
+    en: {
+      title: 'Shrine',
+      text: 'Choose one of two boons. Some last for the next fights, some take effect at once. A shrine gives only once.',
+    },
+    ru: {
+      title: 'Святилище',
+      text: 'Выберите одно из двух благословений. Одни действуют несколько следующих боёв, другие — сразу. Святилище одаряет лишь однажды.',
+    },
+  },
+  expedition_curse: {
+    en: {
+      title: 'Cursed',
+      text: 'That room was a trap. A curse weakens the squad for its next fights, or strikes at once. You can see curse rooms ☠ once revealed — step around them when you can.',
+    },
+    ru: {
+      title: 'Проклятие',
+      text: 'Эта комната оказалась ловушкой. Проклятие ослабляет отряд на следующие бои или бьёт сразу. Открытые комнаты с проклятием ☠ видны заранее — обходите их, если можете.',
+    },
+  },
+  expedition_event: {
+    en: {
+      title: 'An Event',
+      text: 'Something is offered here, at a price. Accept for what it gives and pay what it costs, or walk on. Either way the moment passes.',
+    },
+    ru: {
+      title: 'Событие',
+      text: 'Здесь что-то предлагают — за свою цену. Примите и заплатите или пройдите мимо. В любом случае второго шанса не будет.',
+    },
+  },
+  expedition_elite: {
+    en: {
+      title: 'Elite Room ✪',
+      text: 'Elite rooms hold enemies from deeper in the region, and stronger than usual. They pay double. Walk in only if your squad can take it.',
+    },
+    ru: {
+      title: 'Элитная комната ✪',
+      text: 'В элитных комнатах враги из глубин региона, и они сильнее обычного. Награда двойная. Входите, только если отряд справится.',
+    },
+  },
   battle_prep_start: {
     en: {
       title: 'Prepare for Battle',

@@ -991,6 +991,10 @@ async function rehydrateEngine(record) {
                  : bd.expedition            ? expeditionBattleEnemies(bd)
                  : getEncounter(bd.region_id, bd.level),
     });
+    if (bd.expedition?.mods) {
+      armies.playerUnits = applyFightMods(armies.playerUnits, bd.expedition.mods.player);
+      armies.enemies     = applyFightMods(armies.enemies, bd.expedition.mods.enemy);
+    }
   }
 
   return freshLog(BattleEngine.rehydrate({
@@ -5100,7 +5104,7 @@ function livingSquadEntries(data) {
 function expeditionSlots(run, cell) {
   if (!cell) return [];
   if (cell.type === 'goal') return REGION_ENCOUNTERS[run.region_id]?.[`level_${run.level}`]?.enemies || [];
-  if (cell.type === 'fight') return EXP_DATA.getSecondaryTemplate(run.region_id, cell.template)?.enemies || [];
+  if (cell.type === 'fight' || cell.type === 'elite') return EXP_DATA.getSecondaryTemplate(run.region_id, cell.template)?.enemies || [];
   return [];
 }
 
@@ -5132,6 +5136,59 @@ function expeditionView(run, chat_id) {
 
 // Leaving early: every living squad unit drops to 1 HP, the same penalty as
 // abandoning a battle (persistBattleRosterState with `abandoned`).
+// The fight-modifier slot (design doc §7): torch stage, boons, curses and an
+// elite room's strength, summed per side by EXPMAP.fightMods and applied to the
+// armies before the engine is built — at creation AND at every rebuild between
+// turns (rehydrateEngine), because attack power is re-read from unit data each
+// time. Initiative and armor are also saved per combatant, so both paths agree.
+function applyFightMods(units, mods) {
+  if (!mods) return units;
+  const { initiative = 0, armor = 0, power_pct = 0 } = mods;
+  if (!initiative && !armor && !power_pct) return units;
+  return (units || []).map(u => {
+    const wrapped = !!(u.unit_data && Object.keys(u.unit_data).length);
+    const d = { ...(wrapped ? u.unit_data : u) };
+    if (initiative) d.initiative = Math.max(1, (Number(d.initiative) || 40) + initiative);
+    if (armor) d.armor = Math.max(0, (Number(d.armor) || 0) + armor);
+    // Power scales attacks only; a healer's heal is not "damage dealt".
+    const targetType = typeof d.action === 'object' ? d.action?.target_type : d.target_type;
+    if (power_pct && targetType !== 'ally') {
+      const scale = v => Math.max(1, Math.round(Number(v) * (1 + power_pct / 100)));
+      if (d.action && typeof d.action === 'object' && Number.isFinite(Number(d.action.value))) {
+        d.action = { ...d.action, value: scale(d.action.value) };
+      } else if (Number.isFinite(Number(d.action_power))) {
+        d.action_power = scale(d.action_power);
+      }
+    }
+    return wrapped ? { ...u, unit_data: d } : d;
+  });
+}
+
+// Roster HP changes from camps, boons, curses and events, on the living squad:
+// { heal_pct } heals that share of max HP, { hurt_pct } takes that share of
+// current HP (never below 1 — a curse wounds, it does not kill).
+async function adjustExpeditionHp(chat_id, data, ops) {
+  if (!ops?.length) return;
+  const ids = livingSquadEntries(data).map(e => String(e._rosterId || e.id));
+  if (!ids.length) return;
+  const rows = await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&id=in.(${ids.join(',')})&select=id,unit_data`);
+  await Promise.all(rows.map(row => {
+    const ud = row.unit_data || {};
+    if (ud.alive === false) return null;
+    const maxHp = Number(ud.max_hp ?? 0) || 1;
+    let hp = Number(ud.current_hp ?? maxHp);
+    for (const op of ops) {
+      if (op.heal_pct) hp = Math.min(maxHp, hp + Math.round(maxHp * op.heal_pct / 100));
+      if (op.hurt_pct) hp = Math.max(1, hp - Math.round(hp * op.hurt_pct / 100));
+    }
+    if (hp === Number(ud.current_hp)) return null;
+    return supabase(`/roster?id=eq.${encodeURIComponent(row.id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ unit_data: { ...ud, current_hp: hp } }),
+    });
+  }));
+}
+
 async function woundExpeditionSquad(chat_id, data) {
   const ids = livingSquadEntries(data).map(e => String(e._rosterId || e.id));
   if (!ids.length) return;
@@ -5408,8 +5465,11 @@ router.post('/expedition/move', requireAuth, async (req, res) => {
     const data = JSON.parse(JSON.stringify(run.data));
     const refused = EXPMAP.applyMove(data, { x, y });
     if (refused) return res.status(400).json(refused);
+    const ops = data._ops || [];
+    delete data._ops;
     const saved = await writeExpedition(run, data);
     if (!saved) return res.status(409).json({ error: 'The expedition changed, try again', code: 'expedition_conflict' });
+    await adjustExpeditionHp(chat_id, data, ops);
 
     if (saved.data.pending && validBattleId(battle_id)) {
       try {
@@ -5452,7 +5512,9 @@ async function startExpeditionFight(chat_id, run, battle_id) {
   const placement = {};
   for (const e of living) placement[e.id] = data.squad.placement[e.id];
 
-  const engine = await BattleEngine.fromSetup(playerUnits, enemies, placement, {
+  const mods = EXPMAP.fightMods(data, cell);
+  const engine = await BattleEngine.fromSetup(
+    applyFightMods(playerUnits, mods.player), applyFightMods(enemies, mods.enemy), placement, {
     litaniesUnlockedBySide: { player: await litaniesUnlockedFor(chat_id), enemy: true },
   });
   engine.firePendingRoundEffects();
@@ -5463,7 +5525,8 @@ async function startExpeditionFight(chat_id, run, battle_id) {
     setup: { playerUnitIds: playerUnits.map(u => ({ id: u.id, _rosterId: u._rosterId })), placement },
     expedition: {
       run_id: run.id, x: cell.x, y: cell.y, goal: cell.type === 'goal',
-      template: cell.type === 'fight' ? cell.template : null,
+      template: cell.type === 'fight' || cell.type === 'elite' ? cell.template : null,
+      mods: { player: mods.player, enemy: mods.enemy, sources: mods.sources },
     },
   });
 
@@ -5513,6 +5576,61 @@ router.post('/expedition/fight', requireAuth, async (req, res) => {
     const fight = await startExpeditionFight(chat_id, run, battle_id);
     if (!fight.ok) return res.status(fight.status).json(fight.body);
     res.json({ ...fight.battle, run: fight.run });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// POST /expedition/choose — answer what the room offers: rest at a camp
+// ('rest'), take a shrine's boon (its id), or accept/decline an event.
+router.post('/expedition/choose', requireAuth, async (req, res) => {
+  const { chat_id, run_id, choice } = req.body;
+  if (!chat_id || !run_id || typeof choice !== 'string') return res.status(400).json({ error: 'chat_id, run_id and choice required' });
+  try {
+    const run = await getActiveExpedition(chat_id);
+    if (!run || run.id !== run_id) return res.status(404).json({ error: 'No expedition in progress', code: 'expedition_none' });
+    const data = JSON.parse(JSON.stringify(run.data));
+    const result = EXPMAP.chooseOffer(data, choice);
+    if (result.code) return res.status(400).json(result);
+    const saved = await writeExpedition(run, data);
+    if (!saved) return res.status(409).json({ error: 'The expedition changed, try again', code: 'expedition_conflict' });
+    await adjustExpeditionHp(chat_id, data, result.ops);
+    res.json({ run: expeditionView(saved, chat_id) });
+  } catch (err) {
+    serverError(res, err);
+  }
+});
+
+// POST /expedition/formation — reshuffle the squad, only while standing on a
+// camp. Every living unit placed, no overlapping footprints; the fallen keep
+// their old cells (they do not fight).
+router.post('/expedition/formation', requireAuth, async (req, res) => {
+  const { chat_id, run_id, placement } = req.body;
+  if (!chat_id || !run_id || !placement || typeof placement !== 'object') {
+    return res.status(400).json({ error: 'chat_id, run_id and placement required' });
+  }
+  try {
+    const run = await getActiveExpedition(chat_id);
+    if (!run || run.id !== run_id) return res.status(404).json({ error: 'No expedition in progress', code: 'expedition_none' });
+    const data = JSON.parse(JSON.stringify(run.data));
+    const here = EXPMAP.cellAt(data.map, data.pos.x, data.pos.y);
+    if (here?.type !== 'camp' || data.pending || data.battle_id) {
+      return res.status(400).json({ error: 'The squad can only be reshuffled at a camp', code: 'expedition_not_camp' });
+    }
+    const living = livingSquadEntries(data).map(e => String(e._rosterId || e.id));
+    const rows = living.length
+      ? await supabase(`/roster?chat_id=eq.${encodeURIComponent(chat_id)}&id=in.(${living.join(',')})&select=id,unit_data`)
+      : [];
+    const sizeOf = id => getUnitByDataId(rows.find(r => String(r.id) === String(id))?.unit_data?.unit_id)?.size || 'tile';
+    const clean = {};
+    for (const id of living) clean[id] = Number(placement[id]);
+    // Only the living are checked; a missing one reads as NaN and is refused.
+    const bad = EXPMAP.validateFormation(living, clean, sizeOf);
+    if (bad) return res.status(400).json({ error: bad, code: 'invalid_placement' });
+    data.squad.placement = { ...data.squad.placement, ...clean };
+    const saved = await writeExpedition(run, data);
+    if (!saved) return res.status(409).json({ error: 'The expedition changed, try again', code: 'expedition_conflict' });
+    res.json({ run: expeditionView(saved, chat_id) });
   } catch (err) {
     serverError(res, err);
   }
